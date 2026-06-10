@@ -15,7 +15,7 @@ Mersennet Trade is live at **[https://trade.mersennet.com](https://trade.mersenn
 | **Type** | Order book trading terminal |
 | **Order Engine** | PrimeOrders native precompile (`0x0100`) |
 | **Order Types** | Limit, Market |
-| **Chain** | Mersennet Testnet (Chain ID 7919) |
+| **Chain** | Mersennet Testnet (Chain ID 131071) |
 | **Wallet** | MetaMask or any EVM-compatible wallet |
 
 ## How It Works
@@ -47,7 +47,7 @@ Mersennet Trade supports any pair listed on the PrimeOrders book. Current testne
 ## Getting Started
 
 1. Visit [https://trade.mersennet.com](https://trade.mersennet.com)
-2. Connect your MetaMask wallet to Mersennet (Chain ID 7919)
+2. Connect your MetaMask wallet to Mersennet (Chain ID 131071)
 3. Get testnet MRSN from the [Faucet](/getting-started/faucet)
 4. Get test stablecoins by calling `faucet()` on the [mock token contracts](/resources/contracts)
 5. Approve the token you want to trade
