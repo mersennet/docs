@@ -16,7 +16,7 @@
 4. [Parallel EVM Execution](#4-parallel-evm-execution)
 5. [HotStuff-2 Consensus](#5-hotstuff-2-consensus)
 6. [CometBFT-Style Consensus](#6-cometbft-style-consensus)
-7. [MersennetOrders — CLOB Matching Engine](#7-mersennetorders--clob-matching-engine)
+7. [MersennetOrders — CLOB Matching Engine](#7-mersennet_orders--clob-matching-engine)
 8. [CLOB Precompile](#8-clob-precompile)
 9. [Frequent Batch Auctions (FBA)](#9-frequent-batch-auctions-fba)
 10. [Commit-Reveal MEV Protection](#10-commit-reveal-mev-protection)

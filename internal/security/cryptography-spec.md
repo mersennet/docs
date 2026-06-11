@@ -75,8 +75,8 @@ bytes N..end : width*width            × 32-byte LE Fr MDS matrix entries
 **Generator derivation:** Try-and-increment hash-to-curve.
 
 ```
-G_i = derive("PrimeChain-Pedersen-v0-G", i)
-H   = derive("PrimeChain-Pedersen-v0-H", 0)
+G_i = derive("MersennetChain-Pedersen-v0-G", i)
+H   = derive("MersennetChain-Pedersen-v0-H", 0)
 
 derive(domain, index):
   ctr = 0
@@ -118,7 +118,7 @@ Encrypt(m, pk):
   sample r  ∈ Fr_bls uniformly
   c₁ = r·G              ∈ G1_bls    (ephemeral)
   shared = r·pk         ∈ G1_bls
-  K = Keccak256("PrimeChain-BLSThreshold-v0-KDF" || compress(shared) || epoch_LE)
+  K = Keccak256("MersennetChain-BLSThreshold-v0-KDF" || compress(shared) || epoch_LE)
   nonce ∈ {0,1}^96 fresh
   body  = ChaCha20Poly1305.encrypt(K, nonce, m)
   return concat(compress(c₁), nonce, body)
@@ -155,7 +155,7 @@ bytes 60..end : AEAD body (plaintext + 16-byte tag)
 1. `c₁` must be in the prime-order subgroup; reject otherwise.
 2. Shares must be compressed-G1 of exactly 48 bytes; the size guard
    is in `submit_share`.
-3. `KDF` separator must include `"PrimeChain-BLSThreshold-v0-KDF"`
+3. `KDF` separator must include `"MersennetChain-BLSThreshold-v0-KDF"`
    to prevent cross-protocol key reuse.
 4. Lagrange basis evaluation uses `Scalar::invert` from `blstrs`,
    which is constant-time; reject if `i == j` (would divide by
@@ -177,7 +177,7 @@ party ever holding `sk`.
 2. Broadcasts the Pedersen commitments
    `Cᵢⱼ = aᵢⱼ·G + bᵢⱼ·H` for `j = 0…t-1` where `bᵢⱼ` is fresh
    randomness and `H` is an independent generator
-   `H = HashToCurveG1("PrimeChain-DKG-H-v0")`.
+   `H = HashToCurveG1("MersennetChain-DKG-H-v0")`.
 
 **Round 2 — Distribute.** Each `Pᵢ` sends to every `Pⱼ` (j ≠ i):
 
@@ -287,8 +287,8 @@ At activation height `H`, every transparent EOA `A` with positive
 balance `B` is migrated by deriving:
 
 ```
-rho_A   = Hₖ("PrimeChain-MigrationRho" || A || H)
-psi_A   = Hₖ("PrimeChain-MigrationPsi" || A || H)
+rho_A   = Hₖ("MersennetChain-MigrationRho" || A || H)
+psi_A   = Hₖ("MersennetChain-MigrationPsi" || A || H)
 owner_pk_A = Hₚ(Keccak256(A))         (folded into Fr_bn)
 note_A  = Note{ value = B, asset_id = 0, owner_pk = owner_pk_A, rho = rho_A, psi = psi_A }
 c_A     = Commit(note_A)
@@ -315,15 +315,15 @@ commitment table.
 Every Keccak / Poseidon invocation uses a domain-separated input:
 
 ```
-"PrimeChain-Poseidon-v0"           : fallback round-constant synthesis (D1)
-"PrimeChain-Pedersen-v0-G"         : Pedersen generators (D2)
-"PrimeChain-Pedersen-v0-H"         : Pedersen blinding generator (D2)
-"PrimeChain-BLSThreshold-v0-KDF"   : threshold ElGamal symmetric key derivation (D3)
-"PrimeChain-DKG-H-v0"              : DKG blinding generator (D4)
-"PrimeChain-DKG-AggPk-v0"          : DKG aggregated-pk fingerprint (default lane only)
-"PrimeChain-DummyThreshold"        : test-only XOR mask (DummyThreshold)
-"PrimeChain-MigrationRho"          : migration rho derivation
-"PrimeChain-MigrationPsi"          : migration psi derivation
+"MersennetChain-Poseidon-v0"           : fallback round-constant synthesis (D1)
+"MersennetChain-Pedersen-v0-G"         : Pedersen generators (D2)
+"MersennetChain-Pedersen-v0-H"         : Pedersen blinding generator (D2)
+"MersennetChain-BLSThreshold-v0-KDF"   : threshold ElGamal symmetric key derivation (D3)
+"MersennetChain-DKG-H-v0"              : DKG blinding generator (D4)
+"MersennetChain-DKG-AggPk-v0"          : DKG aggregated-pk fingerprint (default lane only)
+"MersennetChain-DummyThreshold"        : test-only XOR mask (DummyThreshold)
+"MersennetChain-MigrationRho"          : migration rho derivation
+"MersennetChain-MigrationPsi"          : migration psi derivation
 ```
 
 **Audit check:** No domain separator may be reused across protocols

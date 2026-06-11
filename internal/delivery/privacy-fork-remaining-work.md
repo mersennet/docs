@@ -116,7 +116,7 @@ dependency.
 - **F4** — migration UX.
 - **G1–G4** — Ethereum bridge: `MersennetVerifier.sol`,
   `MersennetBridge.sol`, Foundry suite, audit-prep. Confirmed absent —
-  `contracts/src/` contains only DEX / foundation / mersennetorders
+  `contracts/src/` contains only DEX / foundation / mersennet_orders
   contracts, no verifier or bridge.
 - **K3** — `cargo llvm-cov` coverage artifacts in CI.
 - **K4** — `Dockerfile.dev` (Rust + Foundry + nargo + sp1up + Node 20).

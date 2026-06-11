@@ -1931,7 +1931,7 @@ Domain events provide a structured log of state changes:
 $$Event = (domain, kind, data, blockNumber, eventIndex)$$
 
 Where:
-- $domain \in \{mersennetorders, bridge\}$: Event domain
+- $domain \in \{mersennet_orders, bridge\}$: Event domain
 - $kind \in \Sigma^*$: Event type
 - $data \in \mathbb{B}^*$: Event-specific data
 - $blockNumber$: Block containing event
@@ -1989,7 +1989,7 @@ Events are included in block structure and queryable via RPC.
 RPC method `mersennet_getDomainEvents` supports filtering:
 
 - **Block Range**: $fromBlock$ to $toBlock$
-- **Domain Filter**: Filter by domain (mersennetorders, bridge)
+- **Domain Filter**: Filter by domain (mersennet_orders, bridge)
 - **Kind Filter**: Filter by event kind
 
 Query result:

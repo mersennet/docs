@@ -140,7 +140,7 @@ Blocks now include deterministic domain events for MersennetOrders and the bridg
 **Filter fields**:
 - `fromBlock` (optional): hex block number or `"latest"`. Defaults to `0`.
 - `toBlock` (optional): hex block number or `"latest"`. Defaults to `latest`.
-- `domain` (optional): `"mersennetorders"` or `"bridge"`.
+- `domain` (optional): `"mersennet_orders"` or `"bridge"`.
 - `kind` (optional): event kind string (e.g., `"order_submitted"`, `"trade"`, `"bridge_enqueued"`).
 
 **Example params**:
@@ -148,7 +148,7 @@ Blocks now include deterministic domain events for MersennetOrders and the bridg
 {
   "fromBlock": "0x1",
   "toBlock": "latest",
-  "domain": "mersennetorders",
+  "domain": "mersennet_orders",
   "kind": "order_submitted"
 }
 ```

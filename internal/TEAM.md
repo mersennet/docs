@@ -96,7 +96,7 @@ mersennet/
 ├── contracts/                 # Solidity smart contracts (Foundry)
 │   ├── src/foundation/        #   Multicall3, WMRSN, MockERC20
 │   ├── src/dex/               #   Mersennet Swap (UniV2 fork)
-│   ├── src/mersennetorders/       #   CLOB strategy examples
+│   ├── src/mersennet_orders/       #   CLOB strategy examples
 │   ├── src/interfaces/        #   IMersennetOrders.sol
 │   ├── test/                  #   Foundry test suite
 │   └── script/                #   Deploy + seed scripts

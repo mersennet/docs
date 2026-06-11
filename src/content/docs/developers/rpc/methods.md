@@ -823,7 +823,7 @@ Enqueue a cross-domain message from the MersennetOrders domain to the EVM domain
 
 1. `payload` — Hex-encoded message payload (`0x…`)
 
-**Returns:** The enqueued bridge message — `{ nonce, from, to, payload }` (`from: "mersennetorders"`, `to: "mersennetevm"`).
+**Returns:** The enqueued bridge message — `{ nonce, from, to, payload }` (`from: "mersennet_orders"`, `to: "mersennet_evm"`).
 
 ---
 
@@ -835,7 +835,7 @@ Enqueue a cross-domain message from the EVM domain to the MersennetOrders domain
 
 1. `payload` — Hex-encoded message payload (`0x…`)
 
-**Returns:** The enqueued bridge message — `{ nonce, from, to, payload }` (`from: "mersennetevm"`, `to: "mersennetorders"`).
+**Returns:** The enqueued bridge message — `{ nonce, from, to, payload }` (`from: "mersennet_evm"`, `to: "mersennet_orders"`).
 
 ---
 

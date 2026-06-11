@@ -134,7 +134,7 @@ The idea of combining blockchain consensus with specialized execution layers has
 
 **Part II: Execution**
 5. [Execution Engine](#5-execution-engine)
-6. [MersennetOrders Matching Engine](#6-mersennetorders-matching-engine)
+6. [MersennetOrders Matching Engine](#6-mersennet_orders-matching-engine)
 7. [Cross-Domain Bridge](#7-cross-domain-bridge)
 8. [Fee Market and Token Economics](#8-fee-market-and-token-economics)
 
@@ -1927,7 +1927,7 @@ Domain events provide a structured log of state changes:
 $$Event = (domain, kind, data, blockNumber, eventIndex)$$
 
 Where:
-- $domain \in \{mersennetorders, bridge\}$: Event domain
+- $domain \in \{mersennet_orders, bridge\}$: Event domain
 - $kind \in \Sigma^*$: Event type
 - $data \in \mathbb{B}^*$: Event-specific data
 - $blockNumber$: Block containing event
@@ -1985,7 +1985,7 @@ Events are included in block structure and queryable via RPC.
 RPC method `mersennet_getDomainEvents` supports filtering:
 
 - **Block Range**: $fromBlock$ to $toBlock$
-- **Domain Filter**: Filter by domain (mersennetorders, bridge)
+- **Domain Filter**: Filter by domain (mersennet_orders, bridge)
 - **Kind Filter**: Filter by event kind
 
 Query result:
