@@ -11,14 +11,14 @@ Complete reference of smart contracts deployed on Mersennet testnet (Chain ID 13
 | **Multicall3** | `0x973ee1bf0907287d1eb8a144d88b34f515c83f29` | Batched RPC reads. Used by wagmi, viem, ethers.js for efficient multi-call queries. |
 | **WMRSN** | `0x079bf1207b51acda83e2e8178344f62a883f8479` | ERC-20 wrapped MRSN. Required for DEX pairs and DeFi protocols that need ERC-20 native token representation. |
 
-## DeFi — PrimeSwap V2
+## DeFi — Mersennet Swap V2
 
 | Contract | Address | Description |
 |----------|---------|-------------|
-| **PrimeSwapFactory** | `0x63f7a64db6d2b965189b8b48b7435668021f6b17` | Creates and tracks liquidity pairs. Uniswap V2–style AMM factory. |
-| **PrimeSwapRouter** | `0x9f337f433e71ce969b991511f1dcd3d0622116bb` | Router for adding/removing liquidity and executing swaps. User-facing entry point for PrimeSwap V2. |
+| **MersennetSwapFactory** | `0x63f7a64db6d2b965189b8b48b7435668021f6b17` | Creates and tracks liquidity pairs. Uniswap V2–style AMM factory. |
+| **MersennetSwapRouter** | `0x9f337f433e71ce969b991511f1dcd3d0622116bb` | Router for adding/removing liquidity and executing swaps. User-facing entry point for Mersennet Swap V2. |
 
-## DeFi — PrimeSwap V3
+## DeFi — Mersennet Swap V3
 
 | Contract | Address | Description |
 |----------|---------|-------------|
@@ -28,7 +28,7 @@ Complete reference of smart contracts deployed on Mersennet testnet (Chain ID 13
 | **Quoter** | *Recently deployed* | Off-chain quote simulation for swap amounts. |
 
 :::note
-PrimeSwap V3 contracts are live at [http://46.225.30.187:4002](http://46.225.30.187:4002). Verified addresses will be added here once confirmed on-chain. See [PrimeSwap V3](/ecosystem/primeswap-v3) for protocol documentation.
+Mersennet Swap V3 contracts are live at [http://46.225.30.187:4002](http://46.225.30.187:4002). Verified addresses will be added here once confirmed on-chain. See [Mersennet Swap V3](/ecosystem/swap-v3) for protocol documentation.
 :::
 
 ## Mock Tokens
@@ -43,7 +43,7 @@ PrimeSwap V3 contracts are live at [http://46.225.30.187:4002](http://46.225.30.
 Mock tokens (MockUSDC, MockUSDT, MockDAI) include a public `faucet()` function. Anyone can call it to receive test tokens—no approval or whitelist required. Use this for development and testing.
 :::
 
-## DeFi — PrimeOrders CLOB Integration
+## DeFi — MersennetOrders CLOB Integration
 
 | Contract | Address | Description |
 |----------|---------|-------------|
@@ -59,14 +59,14 @@ These contracts demonstrate Mersennet's unique capability: **atomic composabilit
 
 ```
 Chain ID: 131071
-PrimeOrders CLOB:    0x0000000000000000000000000000000000000100 (precompile)
+MersennetOrders CLOB:    0x0000000000000000000000000000000000000100 (precompile)
 Multicall3:          0x973ee1bf0907287d1eb8a144d88b34f515c83f29
 WMRSN:               0x079bf1207b51acda83e2e8178344f62a883f8479
 MockUSDC:            0xb22f77d89122e9e3784bfd3eee9616273f38238d
 MockUSDT:            0x877feca38919acd7aaf7cb81f100e0454aa95c17
 MockDAI:             0xb88d63a65691effbf4b6808325b1588912c15cf4
-PrimeSwapV2Factory:  0x63f7a64db6d2b965189b8b48b7435668021f6b17
-PrimeSwapV2Router:   0x9f337f433e71ce969b991511f1dcd3d0622116bb
+MersennetSwapV2Factory:  0x63f7a64db6d2b965189b8b48b7435668021f6b17
+MersennetSwapV2Router:   0x9f337f433e71ce969b991511f1dcd3d0622116bb
 VaultStrategy:       0x3beef509cb30609ba62c56dae369c545d9b359a8
 SmartContractMM:     0x9f6d643f12eae11b53509598016be83e9f5bc412
 AtomicArbitrage:     0x77c6de42d5629ac7e454910a46d06fab34be8f14
@@ -106,18 +106,18 @@ function deposit() external payable;
 function withdraw(uint256 wad) external;
 ```
 
-### PrimeSwap
+### Mersennet Swap
 
-See [PrimeSwap V2](/ecosystem/primeswap) and [PrimeSwap V3](/ecosystem/primeswap-v3) for swap and liquidity examples.
+See [Mersennet Swap V2](/ecosystem/swap) and [Mersennet Swap V3](/ecosystem/swap-v3) for swap and liquidity examples.
 
 ## Upcoming Deployments
 
 | Contract | Status |
 |----------|--------|
-| PrimeFi (Lending) | Ready for deployment |
-| Primeport (Seaport) | Ready for deployment |
+| Mersennet Lend (Lending) | Ready for deployment |
+| Mersennet NFTs (Seaport) | Ready for deployment |
 | Liquid Staking | Contracts ready |
-| PrimeOrders Batch Orders (`primeorders_submitBatchOrder`) | In development |
+| MersennetOrders Batch Orders (`mersennet_orders_submitBatchOrder`) | In development |
 | MEV Commit-Reveal Protection | In development |
 
 Contract addresses for new deployments will be added to this page and the [Network Information](/getting-started/network-info) doc.

@@ -2,8 +2,8 @@
 
 **Status:** Accepted (scaffold landed in `crates/core/src/liquidation_auction.rs`)
 **Date:** 2026-05-21
-**Supersedes:** `PrimeOrdersState::is_liquidatable(addr)` /
-`PrimeOrdersState::liquidate(addr)` in `crates/core/src/prime_orders.rs`.
+**Supersedes:** `MersennetOrdersState::is_liquidatable(addr)` /
+`MersennetOrdersState::liquidate(addr)` in `crates/core/src/mersennet_orders.rs`.
 
 ## Context
 

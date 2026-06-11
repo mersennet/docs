@@ -52,15 +52,15 @@ Mersennet supports all standard Ethereum precompiles:
 | 0x07 | ecMul | Elliptic curve scalar multiplication |
 | 0x08 | ecPairing | BN254 pairing |
 
-### Mersennet Extension: PrimeOrders
+### Mersennet Extension: MersennetOrders
 
 Mersennet adds a **custom precompile** for the native order matching engine:
 
 | Address | Precompile | Description |
 |---------|------------|-------------|
-| **0x0100** | **PrimeOrders** | Native on-chain CLOB |
+| **0x0100** | **MersennetOrders** | Native on-chain CLOB |
 
-See [PrimeOrders (On-chain CLOB)](/architecture/prime-orders) for full documentation.
+See [MersennetOrders (On-chain CLOB)](/architecture/order-book) for full documentation.
 
 ## Gas Metering
 
@@ -92,7 +92,7 @@ Validators earn primarily from **block rewards**, not transaction fees. Fee mark
 Mersennet blocks include additional fields beyond standard Ethereum:
 
 - **Rewards**: Per-validator block reward distribution
-- **PrimeOrders events**: Order submissions, trades, liquidations (if applicable)
+- **MersennetOrders events**: Order submissions, trades, liquidations (if applicable)
 
 The RPC and block structure expose these for explorers and indexers.
 
@@ -110,9 +110,9 @@ Same decimal precision, so contract logic that assumes 18 decimals works unchang
 | Shanghai EVM | ✅ Supported |
 | Standard opcodes | ✅ Supported |
 | Standard precompiles | ✅ Supported |
-| PrimeOrders precompile (0x0100) | ✅ Supported |
+| MersennetOrders precompile (0x0100) | ✅ Supported |
 | Custom tx format | ✅ Custom binary + Ethereum RLP (EIP-155) both accepted |
 | EIP-1559 | ✅ Dynamic base fee (no priority tip) |
 | Gas metering | ✅ Ethereum-compatible |
 
-Mersennet is designed for **EVM ecosystem compatibility**—deploy your contracts, use your tools, and leverage the native PrimeOrders precompile for advanced DeFi strategies.
+Mersennet is designed for **EVM ecosystem compatibility**—deploy your contracts, use your tools, and leverage the native MersennetOrders precompile for advanced DeFi strategies.

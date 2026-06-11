@@ -2,7 +2,7 @@
 title: "Python SDK"
 ---
 
-The Mersennet Python SDK (`mersennet-sdk`) provides a client for the JSON-RPC API, PrimeOrders (on-chain order book), and WebSocket subscriptions.
+The Mersennet Python SDK (`mersennet-sdk`) provides a client for the JSON-RPC API, MersennetOrders (on-chain order book), and WebSocket subscriptions.
 
 ## Installation
 
@@ -28,10 +28,10 @@ pip install requests websocket-client
 ## Quick Start
 
 ```python
-from mersennet import PrimeProvider, PrimeOrders
+from mersennet import MersennetProvider, MersennetOrders
 
-provider = PrimeProvider("http://46.225.30.187:8545")
-orders = PrimeOrders(provider)
+provider = MersennetProvider("http://46.225.30.187:8545")
+orders = MersennetOrders(provider)
 
 # Query chain
 block_num = provider.block_number()
@@ -50,9 +50,9 @@ print(f"Bids: {book.bids}, Asks: {book.asks}")
 ## Creating a Provider
 
 ```python
-from mersennet import PrimeProvider
+from mersennet import MersennetProvider
 
-provider = PrimeProvider("http://46.225.30.187:8545")
+provider = MersennetProvider("http://46.225.30.187:8545")
 ```
 
 ## Basic Usage
@@ -113,10 +113,10 @@ tx_hash = provider.send_raw_transaction("0xSignedTxHex")
 ```
 
 :::note
-`eth_sendRawTransaction` accepts standard Ethereum RLP-encoded transactions (e.g. signed with `eth-account`/web3.py) as well as Mersennet's custom binary format. Alternatively, use `eth_sendTransaction` or `prime_sendTransaction` when the node has the account unlocked.
+`eth_sendRawTransaction` accepts standard Ethereum RLP-encoded transactions (e.g. signed with `eth-account`/web3.py) as well as Mersennet's custom binary format. Alternatively, use `eth_sendTransaction` or `mersennet_sendTransaction` when the node has the account unlocked.
 :::
 
-## PrimeOrders
+## MersennetOrders
 
 ### Get Order Book
 
@@ -177,10 +177,10 @@ market_id = orders.add_market(
 ## WebSocket Subscriptions
 
 ```python
-from mersennet import PrimeSubscriber
+from mersennet import MersennetSubscriber
 
-# PrimeSubscriber takes the WebSocket URL directly
-subscriber = PrimeSubscriber("ws://46.225.30.187:8546")
+# MersennetSubscriber takes the WebSocket URL directly
+subscriber = MersennetSubscriber("ws://46.225.30.187:8546")
 
 # Connect
 subscriber.connect()
@@ -191,7 +191,7 @@ def on_block(block):
 
 sub_id = subscriber.subscribe_blocks(on_block)
 
-# Subscribe to PrimeOrders trades for a market
+# Subscribe to MersennetOrders trades for a market
 def on_trade(trade):
     print("Trade:", trade)
 
@@ -215,10 +215,10 @@ WebSocket support may vary by node configuration. If subscriptions fail, use HTT
 ## Error Handling
 
 ```python
-from mersennet import PrimeProvider
+from mersennet import MersennetProvider
 from mersennet.provider import MersennetError
 
-provider = PrimeProvider("http://46.225.30.187:8545")
+provider = MersennetProvider("http://46.225.30.187:8545")
 
 try:
     balance = provider.get_balance("0x...")

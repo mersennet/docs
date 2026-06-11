@@ -20,11 +20,11 @@ This roadmap defines a 4-quarter path from the current testnet (Chain ID 131071,
 |-------|-----------|--------|
 | **Consensus** | HotStuff-2 + CometBFT (DPoS) | Implemented, tested in simulation |
 | **EVM** | revm v12, Shanghai spec, parallel execution | Implemented |
-| **PrimeOrders** | Native CLOB via precompile at 0x0100 | Implemented |
+| **MersennetOrders** | Native CLOB via precompile at 0x0100 | Implemented |
 | **Networking** | Custom UDP gossip, TCP block sync, Noise encryption | Implemented |
 | **State** | Sled + ReDB backends, Merkle proofs, snapshots | Implemented |
 | **Mempool** | Fee-ordered pool with replacement/eviction | Implemented |
-| **RPC** | Core eth_* methods, prime_* extensions | Partial |
+| **RPC** | Core eth_* methods, mersennet_* extensions | Partial |
 | **Testnet** | 4 validators, explorer, DEX, faucet, docs, monitoring | Live |
 | **CI** | cargo check/test/clippy/fmt via GitHub Actions | Basic |
 | **Monitoring** | Prometheus + Grafana dashboards | Configured |
@@ -63,7 +63,7 @@ This roadmap defines a 4-quarter path from the current testnet (Chain ID 131071,
 |------|-----------------|-------------|
 | Wire consensus over P2P | `crates/core/src/consensus.rs`, `crates/network/src/p2p.rs` | Replace `NetworkSim` with real UDP gossip for vote/proposal propagation. Consensus messages become first-class gossip topics alongside block/tx announcements. |
 | Block header timestamps | `crates/core/src/engine.rs`, `crates/core/src/state.rs` | Add Unix timestamp to block headers. Validate monotonic increase. Expose via `eth_getBlockByNumber` response. |
-| RPC: subscription support | `crates/rpc/src/ws.rs`, `crates/rpc/src/rpc.rs` | Implement `eth_subscribe` (newHeads, logs, pendingTransactions) and `eth_unsubscribe` over WebSocket. Current WS only serves PrimeOrders trade events. |
+| RPC: subscription support | `crates/rpc/src/ws.rs`, `crates/rpc/src/rpc.rs` | Implement `eth_subscribe` (newHeads, logs, pendingTransactions) and `eth_unsubscribe` over WebSocket. Current WS only serves MersennetOrders trade events. |
 | RPC: filter APIs | `crates/rpc/src/rpc_router.rs` | Implement `eth_newFilter`, `eth_newBlockFilter`, `eth_newPendingTransactionFilter`, `eth_getFilterChanges`, `eth_getFilterLogs`, `eth_uninstallFilter`. |
 | RPC: fee history | `crates/rpc/src/rpc.rs` | Implement `eth_feeHistory` and `eth_maxPriorityFeePerGas` for EIP-1559 tooling compatibility. |
 | Snap sync protocol | `crates/network/src/net_transport.rs` | Implement state trie download by key range. New nodes sync state at a recent block, then backfill headers. Reduces sync from hours to minutes. |
@@ -73,9 +73,9 @@ This roadmap defines a 4-quarter path from the current testnet (Chain ID 131071,
 
 | Task | Location | Description |
 |------|----------|-------------|
-| Docker image CI | `.github/workflows/ci.yml` | Build multi-arch Docker images on push/tag. Push to GitHub Container Registry (`ghcr.io/primenumberslabs/mersennet`). |
+| Docker image CI | `.github/workflows/ci.yml` | Build multi-arch Docker images on push/tag. Push to GitHub Container Registry (`ghcr.io/mersennet/mersennet`). |
 | Integration test job | `.github/workflows/integration.yml` | Spin up 3-node Docker testnet in CI. Run RPC conformance test suite against it (eth_* method coverage). |
-| Contract test suite | `contracts/test/` | Hardhat/Foundry tests for WMRSN, PrimeSwapFactory, PrimeSwapRouter, MockERC20 tokens. Cover swap, liquidity, edge cases. |
+| Contract test suite | `contracts/test/` | Hardhat/Foundry tests for WMRSN, MersennetSwapFactory, MersennetSwapRouter, MockERC20 tokens. Cover swap, liquidity, edge cases. |
 | Release automation | `.github/workflows/release.yml` | Tag-based builds. Auto-generate changelog from conventional commits. Attach binaries + Docker tags to GitHub Releases. |
 | Benchmark regression | `.github/workflows/ci.yml` | Run `tps_bench` and `parallel_bench` in CI. Fail if TPS drops below threshold. Store results as artifacts for trend tracking. |
 
@@ -128,10 +128,10 @@ This roadmap defines a 4-quarter path from the current testnet (Chain ID 131071,
 
 | Task | Description |
 |------|-------------|
-| TypeScript SDK | Publish `@mersennet/sdk` to npm. Wraps ethers.js/viem with Mersennet defaults (chain config, PrimeOrders ABI, contract addresses). |
-| Python SDK | Publish `mersennet-sdk` to PyPI. Web3.py wrapper with PrimeOrders support. |
-| SDK documentation | API reference, getting-started guide, code examples for common operations (connect, send tx, call PrimeOrders, read events). |
-| Hardhat plugin | `@mersennet/hardhat-plugin`: auto-configure network, deploy helpers, PrimeOrders task integration. |
+| TypeScript SDK | Publish `@mersennet/sdk` to npm. Wraps ethers.js/viem with Mersennet defaults (chain config, MersennetOrders ABI, contract addresses). |
+| Python SDK | Publish `mersennet-sdk` to PyPI. Web3.py wrapper with MersennetOrders support. |
+| SDK documentation | API reference, getting-started guide, code examples for common operations (connect, send tx, call MersennetOrders, read events). |
+| Hardhat plugin | `@mersennet/hardhat-plugin`: auto-configure network, deploy helpers, MersennetOrders task integration. |
 
 ### 2.4 Security Hardening
 
@@ -141,7 +141,7 @@ This roadmap defines a 4-quarter path from the current testnet (Chain ID 131071,
 | RPC rate limiting | Per-IP and per-method rate limits on the public RPC endpoint. Configurable via node config. Return HTTP 429 with Retry-After header. |
 | Validator key rotation | Tooling to rotate validator keys without downtime: generate new key, register on-chain, switch config, deregister old key. |
 | Noise protocol review | Internal review of the Noise_XX_25519_ChaChaPoly_BLAKE2s implementation in `crates/network/src/noise.rs`. Document threat model and known limitations. |
-| Audit scope document | Define the scope for the external security audit: consensus, EVM execution, PrimeOrders precompile, bridge contracts, P2P networking. Select 2-3 audit firms and request proposals. |
+| Audit scope document | Define the scope for the external security audit: consensus, EVM execution, MersennetOrders precompile, bridge contracts, P2P networking. Select 2-3 audit firms and request proposals. |
 
 ### 2.5 Ecosystem App Hardening
 
@@ -188,7 +188,7 @@ This roadmap defines a 4-quarter path from the current testnet (Chain ID 131071,
 |------|-------------|
 | Light client protocol | Header-only sync mode. Verify block hashes and state proofs without downloading full state. Enables mobile wallets and browser-based verification. |
 | DAG mempool | Integrate `crates/core/src/dag_mempool.rs` for higher throughput transaction ordering. Evaluate impact on block production latency. |
-| PrimeOrders per-market locking | Replace global `Arc<Mutex<>>` with per-market locks in the precompile. Enables parallel order matching across different markets. |
+| MersennetOrders per-market locking | Replace global `Arc<Mutex<>>` with per-market locks in the precompile. Enables parallel order matching across different markets. |
 | State pruning automation | Configurable state retention window. Automatic pruning of old state beyond the window. Reduces disk usage for long-running nodes. |
 | Cancun EVM evaluation | Evaluate adding EIP-4844 (blob transactions), EIP-1153 (transient storage), EIP-6780 (SELFDESTRUCT restriction). Implement if feasible without consensus-breaking changes. |
 
@@ -206,7 +206,7 @@ This roadmap defines a 4-quarter path from the current testnet (Chain ID 131071,
 | Task | Timeline |
 |------|----------|
 | Audit kickoff | Month 7 |
-| Audit scope: consensus, EVM, PrimeOrders, bridge, P2P | Month 7-8 |
+| Audit scope: consensus, EVM, MersennetOrders, bridge, P2P | Month 7-8 |
 | Receive preliminary findings | Month 8 |
 | Address critical and high-severity findings | Month 8-9 |
 | Final audit report | Month 9 |
@@ -219,7 +219,7 @@ This roadmap defines a 4-quarter path from the current testnet (Chain ID 131071,
 - [ ] Faucet hardened with rate limits and CAPTCHA
 - [ ] Light client protocol implemented
 - [ ] DAG mempool evaluated/integrated
-- [ ] PrimeOrders per-market locking implemented
+- [ ] MersennetOrders per-market locking implemented
 - [ ] On-chain governance module deployed
 - [ ] Multi-sig deployed for protocol operations
 - [ ] Incident response runbook documented
@@ -239,7 +239,7 @@ This roadmap defines a 4-quarter path from the current testnet (Chain ID 131071,
 | Audit remediation verification | All critical and high-severity findings resolved. Re-verified by auditor or internal review. |
 | Genesis validator set | Minimum 7 validators confirmed. Target 21. Hardware requirements met (`mainnet/validator-requirements.md`: 16+ cores, 64 GB RAM, 2 TB NVMe). |
 | Genesis ceremony | Multi-party genesis generation. Each validator generates keys independently. Genesis block assembled from validator registrations. Chain ID 8191. |
-| Stress test | Sustained load test for 72+ hours. Target: 1,000+ TPS with mixed workload (transfers, DEX swaps, PrimeOrders). Monitor for memory leaks, state bloat, consensus liveness. |
+| Stress test | Sustained load test for 72+ hours. Target: 1,000+ TPS with mixed workload (transfers, DEX swaps, MersennetOrders). Monitor for memory leaks, state bloat, consensus liveness. |
 | Mainnet dry run | Deploy mainnet binary on an isolated network. Run through the full launch sequence. Verify monitoring, alerting, and incident response procedures. |
 
 ### 4.2 Launch (Month 11)

@@ -111,11 +111,11 @@ Row reconciliation (status after consolidation, and the branch that satisfies it
 | E5 | ✅ | `feat/zk-bridge` — Groth16 verifier wired to bridge |
 | F1 | ✅ | `feat/zk-sdk-client` — WASM Noir prover |
 | F2 | ✅ | `feat/zk-sdk-client` — owner-side note scanner |
-| F3 | ⬜ (separate repo) | `PrimeNumbersLabs/prime-trade` — out of this repo |
+| F3 | ⬜ (separate repo) | `mersennet/prime-trade` — out of this repo |
 | F4 | ✅ | `feat/zk-sdk-client` — migration UX |
-| F5 | 🟡 | `feat/zk-sdk-client` — selective-disclosure grants + **client-side** `reconstructOpenOrders`/`reconstructPositions` shipped; chain-level note-minting + `prime_viewPositions`/`prime_viewOrders` RPC intentionally deferred (decision: skip until post-audit) |
-| G1 | ✅ | `feat/zk-bridge` — `PrimeChainVerifier` (Groth16) |
-| G2 | ✅ | `feat/zk-bridge` — `PrimeChainBridge` state-proof verifier + deposit/withdraw |
+| F5 | 🟡 | `feat/zk-sdk-client` — selective-disclosure grants + **client-side** `reconstructOpenOrders`/`reconstructPositions` shipped; chain-level note-minting + `mersennet_viewPositions`/`mersennet_viewOrders` RPC intentionally deferred (decision: skip until post-audit) |
+| G1 | ✅ | `feat/zk-bridge` — `MersennetVerifier` (Groth16) |
+| G2 | ✅ | `feat/zk-bridge` — `MersennetBridge` state-proof verifier + deposit/withdraw |
 | G3 | ✅ | `feat/zk-bridge` — Foundry test suite |
 | G4 | ✅ | `feat/zk-bridge` — audit-prep pass |
 | K3 | ✅ | `feat/zk-tooling` — coverage lane in CI |
@@ -133,63 +133,63 @@ None of these are buildable in the dev sandbox (no prover-class hardware, no ext
 ### E3 — release-grade SP1 prove/verify transcript
 - **State:** prep complete. Expected public output is pinned in `docs/security/privacy-fork-audit-packet.md`; `scripts/zk/sp1-verify-request.request.json` is pre-filled with deterministic roots/hashes, leaving only `proofBytesHex` and `programElfPath` to fill from a real run.
 - **Needs:** a machine with 28GB+ RAM and the SP1 toolchain (`sp1up`).
-- **Owner:** `@PrimeNumbersLabs/zk`, `@PrimeNumbersLabs/docs`.
+- **Owner:** `@mersennet/zk`, `@mersennet/docs`.
 - **Do:**
   ```bash
   cd programs/state-transition && cargo-prove prove build
   cargo-prove prove vkey --elf target/elf-compilation/riscv64im-succinct-zkvm-elf/release/mersennet-state-transition
 
-  PRIME_SP1_MODE=local cargo run --release \
+  MERSENNET_SP1_MODE=local cargo run --release \
     --manifest-path programs/state-transition-host/Cargo.toml --features real-sp1 -- \
     --prove-request scripts/zk/sp1-prove-request.request.json \
     --prove-response scripts/zk/sp1-prove-response.json
 
-  PRIME_SP1_MODE=local cargo run --release \
+  MERSENNET_SP1_MODE=local cargo run --release \
     --manifest-path programs/state-transition-host/Cargo.toml --features real-sp1 -- \
     --verify-request scripts/zk/sp1-verify-request.request.json \
     --verify-response scripts/zk/sp1-verify-response.json
   ```
-  (On Windows, drive the same commands through `PRIME_SP1_HOST_EXECUTOR=wsl`.)
-- **Exit:** public values in the response match the pinned set in the audit packet; the pinned `PRIME_SP1_VKEY_HASH` matches the freshly built ELF; transcript attached to the audit packet. E3 is independent of the E4 network cut-over.
+  (On Windows, drive the same commands through `MERSENNET_SP1_HOST_EXECUTOR=wsl`.)
+- **Exit:** public values in the response match the pinned set in the audit packet; the pinned `MERSENNET_SP1_VKEY_HASH` matches the freshly built ELF; transcript attached to the audit packet. E3 is independent of the E4 network cut-over.
 
 ### E4 — `ProverClient::network()` cut-over (final delegated proof)
 - **State:** the `c-kzg` link conflict between `revm` (1.x) and `sp1-sdk/network` (2.x) is resolved — the host no longer depends on `revm` (it depends on the revm-free `mersennet-state-proof` crate). `cargo check --features network` resolves to a single `c-kzg 2.x`.
 - **Needs:** `crates.io` access (to download the `network` feature deps) plus a Succinct network account/API key.
-- **Owner:** `@PrimeNumbersLabs/zk`.
+- **Owner:** `@mersennet/zk`.
 - **Do:**
   ```bash
   cargo check --manifest-path programs/state-transition-host/Cargo.toml --features network
-  PRIME_SP1_MODE=network SP1_PRIVATE_KEY=<key> cargo run --release \
+  MERSENNET_SP1_MODE=network SP1_PRIVATE_KEY=<key> cargo run --release \
     --manifest-path programs/state-transition-host/Cargo.toml --features network -- \
     --prove-request scripts/zk/sp1-prove-request.request.json \
     --prove-response scripts/zk/sp1-prove-response.json
   ```
-- **Exit:** `PRIME_SP1_MODE=network` produces a verifiable proof against the real host path; documented in the audit packet. Until then the host fails loudly rather than silently falling back.
+- **Exit:** `MERSENNET_SP1_MODE=network` produces a verifiable proof against the real host path; documented in the audit packet. Until then the host fails loudly rather than silently falling back.
 
-### F3 — PrimeTrade shielded order UI
-- **State:** lives in `PrimeNumbersLabs/prime-trade`; nothing to build in this repo.
+### F3 — Mersennet Trade shielded order UI
+- **State:** lives in `mersennet/prime-trade`; nothing to build in this repo.
 - **Owner:** front-end team on `prime-trade`.
-- **Integration contract to hand over** (all shipped on `feat/zk-sdk-client`): the SDK note scanner (F2), the WASM Noir prover (F1), the migration UX helpers (F4), and `reconstructOpenOrders` / `reconstructPositions` from `sdk/src/positions.ts`, plus the grant-token lifecycle (`prime_viewGrantToken` / `prime_viewRevokeToken` / `prime_viewGrantStatus` / `prime_viewNotes`).
-- **Exit:** PrimeTrade can submit a `0x7E` shielded order, scan for owned notes, and render reconstructed positions/orders against a privacy testnet node.
+- **Integration contract to hand over** (all shipped on `feat/zk-sdk-client`): the SDK note scanner (F2), the WASM Noir prover (F1), the migration UX helpers (F4), and `reconstructOpenOrders` / `reconstructPositions` from `sdk/src/positions.ts`, plus the grant-token lifecycle (`mersennet_viewGrantToken` / `mersennet_viewRevokeToken` / `mersennet_viewGrantStatus` / `mersennet_viewNotes`).
+- **Exit:** Mersennet Trade can submit a `0x7E` shielded order, scan for owned notes, and render reconstructed positions/orders against a privacy testnet node.
 
 ### H6 — 8-week pre-mainnet bake
 - **State:** checklist drafted; clock has not started.
 - **Needs:** all E blockers cleared (E3 transcript + E4 network proof) and the audit cycle funded — this is calendar-gated, not code-gated.
-- **Owner:** `@PrimeNumbersLabs/core`, `@PrimeNumbersLabs/docs`.
+- **Owner:** `@mersennet/core`, `@mersennet/docs`.
 - **Do:** execute the T-8 activation lane in `docs/runbooks/zk-fork-activation.md`; restart chain 7920 on the candidate release using `testnet/scripts/bootstrap-privacy-genesis.sh`; rerun the section-2 SP1 lanes every two weeks; capture bake evidence in `docs/STATUS.md`.
 - **Exit:** STATUS H6 moves from "checklist drafted" to an active bake with a start date; incident-free through the full 8-week window.
 
 ### I1-I6 — third-party audit
 - **State:** audit packet largely assembled in `docs/security/privacy-fork-audit-packet.md` (+ `cryptography-spec.md`, `privacy-invariants.md`, `SECURITY_AUDIT.md`).
 - **Needs:** funding + auditor engagement; gated on E being complete and I0 assembled.
-- **Owner:** `@PrimeNumbersLabs/zk`, `@PrimeNumbersLabs/core`, `@PrimeNumbersLabs/contracts`, `@PrimeNumbersLabs/docs`.
+- **Owner:** `@mersennet/zk`, `@mersennet/core`, `@mersennet/contracts`, `@mersennet/docs`.
 - **Do:** refresh CI/static-analysis evidence (section 2) at hand-off; kick off crypto (I1), protocol (I2), Solidity (I3) scopes; launch the ImmuneFi bounty (I4); run the fix cycle (I5) and re-audit (I6).
 - **Exit:** all external findings fixed, documented, and re-verified.
 
 ### J1-J6 — governance + activation
 - **State:** activation runbook drafted in `docs/runbooks/zk-fork-activation.md`.
 - **Needs:** an on-chain activation vote, a validator upgrade schedule, comms, and authority to execute — not a code task.
-- **Owner:** `@PrimeNumbersLabs/core`.
+- **Owner:** `@mersennet/core`.
 - **Do:** run the activation vote (J1), publish the validator upgrade schedule (J2) and comms (J3), execute the runbook (J4), open the deprecation window (J5), and file the post-mortem (J6).
 - **Exit:** privacy fork activated at the agreed height with validators upgraded and the transparent path deprecated on schedule.
 
@@ -198,4 +198,4 @@ None of these are buildable in the dev sandbox (no prover-class hardware, no ext
 ## 5. What was explicitly NOT done (and why)
 - **Branch merges** — left to Rodolfo per his instruction; section 1 is the runbook.
 - **In-place `docs/STATUS.md` edit** — the truthful status depends on the merge that has not happened yet, so the reconciled rows ship here (section 3) instead of editing a branch that does not yet reflect the consolidated tree.
-- **F5 chain-level note-minting + `prime_viewPositions`/`prime_viewOrders` RPC** — intentionally skipped (decision: revisit post-audit). It is consensus-critical and would change the note format; the client-side reconstruction on `feat/zk-sdk-client` covers the wallet UX in the meantime.
+- **F5 chain-level note-minting + `mersennet_viewPositions`/`mersennet_viewOrders` RPC** — intentionally skipped (decision: revisit post-audit). It is consensus-critical and would change the note format; the client-side reconstruction on `feat/zk-sdk-client` covers the wallet UX in the meantime.

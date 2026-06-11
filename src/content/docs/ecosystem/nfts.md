@@ -1,12 +1,12 @@
 ---
-title: "Primeport NFT Marketplace"
+title: "Mersennet NFTs NFT Marketplace"
 ---
 
-**Primeport** is the native NFT marketplace on Mersennet, built on OpenSea's Seaport protocol. It supports ERC-721 and ERC-1155 NFTs with listing, buying, selling, and auction functionality.
+**Mersennet NFTs** is the native NFT marketplace on Mersennet, built on OpenSea's Seaport protocol. It supports ERC-721 and ERC-1155 NFTs with listing, buying, selling, and auction functionality.
 
 ## Overview
 
-| Feature | Primeport |
+| Feature | Mersennet NFTs |
 |---------|-----------|
 | **Protocol** | Seaport-based |
 | **Standards** | ERC-721, ERC-1155 |
@@ -49,13 +49,13 @@ Multi-token NFTs (multiple token IDs in one contract, with fungible and non-fung
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                    Primeport Ecosystem                       │
+│                    Mersennet NFTs Ecosystem                       │
 ├─────────────────────────────────────────────────────────────┤
-│  Primeport UI (Next.js 15)                                   │
+│  Mersennet NFTs UI (Next.js 15)                                   │
 │  - Browse, list, buy, sell, bid                              │
-│  - Wallet connect (MetaMask, PrimeXDC)                       │
+│  - Wallet connect (MetaMask, Mersennet Wallet)                       │
 ├─────────────────────────────────────────────────────────────┤
-│  Primeport Server (NestJS)                                   │
+│  Mersennet NFTs Server (NestJS)                                   │
 │  - GraphQL API                                               │
 │  - Prisma ORM, indexing                                      │
 │  - Order validation, metadata                                │
@@ -79,18 +79,18 @@ Multi-token NFTs (multiple token IDs in one contract, with fungible and non-fung
 
 | Component | Status |
 |-----------|--------|
-| Primeport UI | Built (.next/) |
-| Primeport Server | Ready (NestJS, Prisma) |
+| Mersennet NFTs UI | Built (.next/) |
+| Mersennet NFTs Server | Ready (NestJS, Prisma) |
 | Seaport contracts | To be deployed to Mersennet |
 
 ## Integration
 
-- **PrimeXDC Wallet** — Connect and sign transactions.
+- **Mersennet Wallet** — Connect and sign transactions.
 - **Mersennet** — All NFT and marketplace activity on-chain.
-- **PrimeSwap** — Optional: trade NFT-related tokens or royalties.
+- **Mersennet Swap** — Optional: trade NFT-related tokens or royalties.
 
 ## Related Resources
 
-- [PrimeXDC Wallet](/ecosystem/wallet) — Recommended wallet for Primeport
+- [Mersennet Wallet](/ecosystem/wallet) — Recommended wallet for Mersennet NFTs
 - [Deployed Contracts](/resources/contracts) — Seaport addresses when live
 - [Network Information](/getting-started/network-info) — RPC and configuration

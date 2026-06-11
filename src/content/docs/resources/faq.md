@@ -8,7 +8,7 @@ title: "FAQ"
 
 ### What is Mersennet?
 
-**Mersennet** is a high-performance, EVM-compatible Layer 1 blockchain built for speed, composability, and institutional-grade DeFi. It combines Ethereum's smart contract ecosystem with a **native order matching engine (PrimeOrders)**—enabling atomic cross-domain workflows (EVM + CLOB) in a single transaction. Key features include ~1 second block times, HotStuff-2 BFT Proof-of-Stake consensus, and a 1 billion MRSN max supply with halving block rewards.
+**Mersennet** is a high-performance, EVM-compatible Layer 1 blockchain built for speed, composability, and institutional-grade DeFi. It combines Ethereum's smart contract ecosystem with a **native order matching engine (MersennetOrders)**—enabling atomic cross-domain workflows (EVM + CLOB) in a single transaction. Key features include ~1 second block times, HotStuff-2 BFT Proof-of-Stake consensus, and a 1 billion MRSN max supply with halving block rewards.
 
 ### Is Mersennet EVM compatible?
 
@@ -18,9 +18,9 @@ Yes. Mersennet is fully EVM compatible. You can deploy Solidity contracts withou
 
 **131071** (hex: `0x1FFFF`) for Mersennet testnet.
 
-### What is PrimeOrders?
+### What is MersennetOrders?
 
-**PrimeOrders** is Mersennet's native central limit order book (CLOB). It's an on-chain matching engine accessible via an EVM precompile, allowing smart contracts to place, cancel, and fill orders atomically in the same transaction. This enables DeFi strategies that combine AMM liquidity with order book execution—something not possible on traditional EVM-only chains.
+**MersennetOrders** is Mersennet's native central limit order book (CLOB). It's an on-chain matching engine accessible via an EVM precompile, allowing smart contracts to place, cancel, and fill orders atomically in the same transaction. This enables DeFi strategies that combine AMM liquidity with order book execution—something not possible on traditional EVM-only chains.
 
 ## Tokens & Faucet
 
@@ -36,7 +36,7 @@ Yes. Mersennet is fully EVM compatible. You can deploy Solidity contracts withou
 
 ### What is WMRSN?
 
-**WMRSN** is the ERC-20 wrapped version of native MRSN. It's required for DEX pairs (e.g., WMRSN/USDC on PrimeSwap) and DeFi protocols that expect ERC-20 tokens. Wrap with `deposit()` and unwrap with `withdraw()`. Address: `0x079bf1207b51acda83e2e8178344f62a883f8479`.
+**WMRSN** is the ERC-20 wrapped version of native MRSN. It's required for DEX pairs (e.g., WMRSN/USDC on Mersennet Swap) and DeFi protocols that expect ERC-20 tokens. Wrap with `deposit()` and unwrap with `withdraw()`. Address: `0x079bf1207b51acda83e2e8178344f62a883f8479`.
 
 ## Development
 
@@ -46,9 +46,9 @@ Use Hardhat or Foundry with Mersennet as a network. Add the RPC URL `http://46.2
 
 ### What wallets are supported?
 
-- **PrimeXDC Wallet** — Native Chrome extension for Mersennet (Chain ID 131071 preconfigured).
+- **Mersennet Wallet** — Native Chrome extension for Mersennet (Chain ID 131071 preconfigured).
 - **MetaMask** — Add Mersennet manually via [Wallet Setup](/getting-started/wallet-setup).
-- **PrimeXDC Mobile** — React Native wallet (APK available).
+- **Mersennet Wallet Mobile** — React Native wallet (APK available).
 
 Any EIP-1193–compatible wallet can connect once Mersennet is added as a custom network.
 
@@ -73,17 +73,17 @@ Approximately **1 second** per block.
 
 ## Ecosystem
 
-### What is PrimeSwap?
+### What is Mersennet Swap?
 
-PrimeSwap is the native AMM/DEX on Mersennet—a Uniswap V2 fork with 0.3% swap fee. See [PrimeSwap DEX](/ecosystem/primeswap).
+Mersennet Swap is the native AMM/DEX on Mersennet—a Uniswap V2 fork with 0.3% swap fee. See [Mersennet Swap DEX](/ecosystem/swap).
 
-### What is PrimeFi?
+### What is Mersennet Lend?
 
-PrimeFi is an Aave-style lending/borrowing protocol. Contracts are built and ready for deployment. See [PrimeFi Lending](/ecosystem/primefi).
+Mersennet Lend is an Aave-style lending/borrowing protocol. Contracts are built and ready for deployment. See [Mersennet Lend Lending](/ecosystem/lend).
 
-### What is Primeport?
+### What is Mersennet NFTs?
 
-Primeport is a Seaport-based NFT marketplace supporting ERC-721 and ERC-1155. See [Primeport NFT Marketplace](/ecosystem/primeport).
+Mersennet NFTs is a Seaport-based NFT marketplace supporting ERC-721 and ERC-1155. See [Mersennet NFTs NFT Marketplace](/ecosystem/nfts).
 
 ---
 

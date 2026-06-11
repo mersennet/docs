@@ -142,7 +142,7 @@ For each token, host a JSON file at `{baseTokenURI}{tokenId}.json`:
 
 ```json
 {
-  "name": "Prime NFT #1",
+  "name": "Mersennet NFT #1",
   "description": "A unique NFT on Mersennet",
   "image": "ipfs://Qm...",
   "attributes": [
@@ -158,8 +158,8 @@ For each token, host a JSON file at `{baseTokenURI}{tokenId}.json`:
 ```typescript
 const MersennetNFT = await ethers.getContractFactory("MersennetNFT");
 const nft = await MersennetNFT.deploy(
-  "Prime Collectibles",
-  "PRIME",
+  "Mersennet Collectibles",
+  "MERSENNET",
   "https://api.mysite.com/metadata/"
 );
 await nft.waitForDeployment();
@@ -170,7 +170,7 @@ console.log("NFT deployed to:", await nft.getAddress());
 
 1. Compile the contract in Remix.
 2. Connect MetaMask to Mersennet (Chain ID 131071).
-3. Deploy with constructor args: `"Prime Collectibles"`, `"PRIME"`, `"https://api.mysite.com/metadata/"`.
+3. Deploy with constructor args: `"Mersennet Collectibles"`, `"MERSENNET"`, `"https://api.mysite.com/metadata/"`.
 
 ## Interacting with the NFT
 
@@ -217,10 +217,10 @@ console.log("Balance:", balance.toString());
 await nft.transferFrom(wallet.address, "0xNewOwner", tokenId);
 ```
 
-## Integration with Primeport
+## Integration with Mersennet NFTs
 
-[Primeport](/ecosystem/primeport) is the NFT marketplace on Mersennet. To list your collection:
+[Mersennet NFTs](/ecosystem/nfts) is the NFT marketplace on Mersennet. To list your collection:
 
 1. Deploy your NFT contract.
 2. Mint tokens and host metadata (IPFS or your API).
-3. Integrate with Primeport's listing flow (Seaport protocol).
+3. Integrate with Mersennet NFTs's listing flow (Seaport protocol).

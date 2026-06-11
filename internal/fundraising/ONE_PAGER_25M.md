@@ -104,8 +104,8 @@
 ║   Mersennet has atomic CLOB + full EVM + institutional focus at           ║
 ║   early-stage pricing.                                                       ║
 ║                                                                              ║
-║   Contact: [founders@primechain.network]                                     ║
-║   Docs: docs.primechain.network  ·  GitHub: PrimeNumbersLabs                ║
+║   Contact: [founders@mersennet.com]                                     ║
+║   Docs: docs.mersennet.com  ·  GitHub: Mersennet                ║
 ║                                                                              ║
 ╚══════════════════════════════════════════════════════════════════════════════╝
 ```

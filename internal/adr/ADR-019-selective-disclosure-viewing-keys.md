@@ -23,7 +23,7 @@ shielded state without reopening public account-level leakage:
    narrowly scoped legal process.
 
 The current branch has placeholder RPC methods
-`prime_viewGrantToken` and `prime_viewRevokeToken`, but no repo-level
+`mersennet_viewGrantToken` and `mersennet_viewRevokeToken`, but no repo-level
 decision for what a viewing key is, how delegation works, how
 revocation works, or what the node is allowed to reveal.
 
@@ -63,7 +63,7 @@ to be sent to the RPC server.
 
 ### Grant token model
 
-`prime_viewGrantToken` will mint a signed **grant token** bound to a
+`mersennet_viewGrantToken` will mint a signed **grant token** bound to a
 specific grantee public key.
 
 Canonical fields:
@@ -105,7 +105,7 @@ multiple explicit scopes, not a magic "admin" bit.
 
 ### Revocation model
 
-`prime_viewRevokeToken` records a revocation commitment on chain using
+`mersennet_viewRevokeToken` records a revocation commitment on chain using
 `grant_id` (or its hash). Nodes treat a revoked token as invalid from the
 first block after inclusion.
 
@@ -123,10 +123,10 @@ Revocation rules:
 The view-key flow is split into two responsibilities:
 
 1. **Capability lifecycle RPC**
-   - `prime_viewGrantToken(...)` returns a signed grant token.
-   - `prime_viewRevokeToken(grantId)` publishes revocation.
+   - `mersennet_viewGrantToken(...)` returns a signed grant token.
+   - `mersennet_viewRevokeToken(grantId)` publishes revocation.
 2. **Scope-limited data RPC**
-   - future `prime_view*` methods accept a grant token and return only
+   - future `mersennet_view*` methods accept a grant token and return only
      the encrypted/indexed material required for the declared scopes.
 
 Those future read methods must satisfy two constraints:
@@ -160,8 +160,8 @@ Implementation is phased:
    - finalize scope names and canonical serialization
    - define signature domain separation and chain-id binding
 2. **Core / RPC**
-   - implement `prime_viewGrantToken`
-   - implement `prime_viewRevokeToken`
+   - implement `mersennet_viewGrantToken`
+   - implement `mersennet_viewRevokeToken`
    - add on-chain revocation storage and verification
 3. **SDK / wallet**
    - derive `ivk`, `nvk`, and `dsk`

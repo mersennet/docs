@@ -820,7 +820,7 @@ Mersennet is the **only Layer 1 blockchain with native, deterministic order matc
   - ✅ Native order matching (provable fairness)
   - ✅ EVM compatibility (full DeFi ecosystem)
   - ✅ RWA-ready (margin, liquidation, positions built-in)
-- **Visual**: Architecture diagram with EVM + PrimeOrders + Bridge
+- **Visual**: Architecture diagram with EVM + MersennetOrders + Bridge
 
 ### Slide 4: Market Opportunity
 - **RWA Trading TAM**: $16T tokenization by 2030 (BCG)

@@ -14,7 +14,7 @@ This guide walks you through setting up Hardhat and deploying a smart contract t
 Create a new project or use an existing one:
 
 ```bash
-mkdir my-prime-dapp && cd my-prime-dapp
+mkdir my-mersennet-dapp && cd my-mersennet-dapp
 npm init -y
 npm install --save-dev hardhat @nomicfoundation/hardhat-toolbox
 npx hardhat init
@@ -33,7 +33,7 @@ import "@nomicfoundation/hardhat-toolbox";
 const config: HardhatUserConfig = {
   solidity: "0.8.20",
   networks: {
-    prime: {
+    mersennet: {
       url: "http://46.225.30.187:8545",
       chainId: 131071,
       accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
@@ -112,7 +112,7 @@ export PRIVATE_KEY="0x_your_private_key_here"
 3. **Run the deployment**:
 
 ```bash
-npx hardhat run scripts/deploy.ts --network prime
+npx hardhat run scripts/deploy.ts --network mersennet
 ```
 
 Expected output:
@@ -128,7 +128,7 @@ MyToken deployed to: 0x...
 Query the deployed contract:
 
 ```bash
-npx hardhat console --network prime
+npx hardhat console --network mersennet
 ```
 
 ```javascript

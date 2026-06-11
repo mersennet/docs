@@ -19,7 +19,7 @@ The proof and its public outputs are retrievable over JSON-RPC:
 # Fetch the latest state-transition proof
 curl -s http://46.225.30.187:8545 \
   -H 'content-type: application/json' \
-  -d '{"jsonrpc":"2.0","id":1,"method":"prime_getLatestStateProof","params":[]}'
+  -d '{"jsonrpc":"2.0","id":1,"method":"mersennet_getLatestStateProof","params":[]}'
 ```
 
 ```json
@@ -37,7 +37,7 @@ curl -s http://46.225.30.187:8545 \
 }
 ```
 
-A stateless verifier is available as `prime_verifyStateProof`, and `prime_getStateProof` fetches the proof for any specific block.
+A stateless verifier is available as `mersennet_verifyStateProof`, and `mersennet_getStateProof` fetches the proof for any specific block.
 
 ## The Ethereum bridge (Groth16)
 
@@ -58,8 +58,8 @@ The bridge contract consumes the proof together with the block program's public 
 
 A light client does not need to re-execute Mersennet or trust a specific RPC provider. It only needs to:
 
-1. Obtain the latest state proof (`prime_getLatestStateProof`).
-2. Verify it (`prime_verifyStateProof`, or via the Ethereum Groth16 verifier).
+1. Obtain the latest state proof (`mersennet_getLatestStateProof`).
+2. Verify it (`mersennet_verifyStateProof`, or via the Ethereum Groth16 verifier).
 3. Trust the resulting state root.
 
 This is the foundation for trustless bridges, cross-chain messaging, and independent verification of the chain's privacy invariants.

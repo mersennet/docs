@@ -49,9 +49,9 @@ Rebuild private balances locally from encrypted notes (see [Note scanning](/priv
 import { scanAndReconstructBalances } from '@mersennet/sdk';
 
 const result = await scanAndReconstructBalances(
-  provider,          // PrimeProvider
+  provider,          // MersennetProvider
   viewingMaterial,   // GrantedViewingMaterial (carries the grant id)
-  { limit: 100 },    // options: drives a paged prime_viewBalances scan
+  { limit: 100 },    // options: drives a paged mersennet_viewBalances scan
 );
 // result.perAsset → per-asset totals, spent notes excluded via nullifiers
 ```
@@ -73,7 +73,7 @@ Types: `OrderSide`, `OrderRecord`, `FillRecord`, `OpenOrder`, `ReconstructedPosi
 
 ## Selective disclosure
 
-A grantee uses the same reconstruction primitives, but over the data a [viewing grant](/privacy/selective-disclosure/) authorizes. Fetch authorized notes/records via the grant-gated RPC methods (`prime_viewNotes`, `prime_viewBalances`, `prime_viewPositions`, `prime_viewOrders`) and run `reconstructPortfolio` / `reconstructPositions` / `reconstructOpenOrders` client-side.
+A grantee uses the same reconstruction primitives, but over the data a [viewing grant](/privacy/selective-disclosure/) authorizes. Fetch authorized notes/records via the grant-gated RPC methods (`mersennet_viewNotes`, `mersennet_viewBalances`, `mersennet_viewPositions`, `mersennet_viewOrders`) and run `reconstructPortfolio` / `reconstructPositions` / `reconstructOpenOrders` client-side.
 
 ## Migration
 
@@ -83,7 +83,7 @@ Drive transparent → shielded migration with a plan-then-confirm flow (see [Mig
 import { planMigration, confirmMigration } from '@mersennet/sdk';
 
 const plan = planMigration(accounts);            // accounts: MigrationNoteParams[]
-// plan → pre-fork per-asset totals to preview; submit each via prime_submitShield ...
+// plan → pre-fork per-asset totals to preview; submit each via mersennet_submitShield ...
 const result = confirmMigration(accounts, scannedNotes); // post-fork landed-note confirmation
 ```
 
@@ -92,4 +92,4 @@ Types: `MigrationNote`, `MigrationNoteParams`, `MigrationPlan`, `MigrationConfir
 ## See also
 
 - [Shielded JSON-RPC reference](/developers/privacy/shielded-rpc/) — the methods these helpers call.
-- [JavaScript SDK](/developers/sdks/javascript/) — the transparent (eth_* / prime_* / primeorders_*) surface.
+- [JavaScript SDK](/developers/sdks/javascript/) — the transparent (eth_* / mersennet_* / mersennet_orders_*) surface.

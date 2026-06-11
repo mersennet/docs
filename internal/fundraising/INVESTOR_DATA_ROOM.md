@@ -48,17 +48,17 @@ This data room contains all materials required for due diligence on Mersennet's 
 │
 ├── 📁 6. PRODUCT & ECOSYSTEM
 │   ├── 📄 Live Products (testnet)
-│   │   ├── PrimeScan Explorer                       → http://46.225.30.187/
-│   │   ├── PrimeSwap DEX                            → http://46.225.30.187:4000
-│   │   ├── PrimeNodes Dashboard                     → http://46.225.30.187:4001
+│   │   ├── Mersennet Explorer Explorer                       → http://46.225.30.187/
+│   │   ├── Mersennet Swap DEX                            → http://46.225.30.187:4000
+│   │   ├── MersennetNodes Dashboard                     → http://46.225.30.187:4001
 │   │   ├── Faucet                                   → http://46.225.30.187:8080
 │   │   ├── Documentation Portal                     → http://46.225.30.187:3001
 │   │   └── Grafana Monitoring                       → http://46.225.30.187:3000
 │   │
 │   ├── 📄 Built Products (ready to deploy)
-│   │   ├── PrimeFi (Lending/Borrowing)              ← primefi-contracts/
-│   │   ├── Primeport (NFT Marketplace)              ← primeport-ui/
-│   │   ├── PrimeXDC Wallet (Browser + Mobile)       ← primexdc-wallet/
+│   │   ├── Mersennet Lend (Lending/Borrowing)              ← lend-contracts/
+│   │   ├── Mersennet NFTs (NFT Marketplace)              ← nfts-ui/
+│   │   ├── Mersennet Wallet (Browser + Mobile)       ← primexdc-wallet/
 │   │   ├── Prediction Markets                       ← xdc-markets/
 │   │   ├── Liquid Staking                           ← liquid-staking-contracts/
 │   │   └── DeFi Vaults                              ← prime-xdc-vaults/
@@ -71,7 +71,7 @@ This data room contains all materials required for due diligence on Mersennet's 
 ├── 📁 7. TEAM & ORGANIZATION
 │   ├── 📄 Team Handbook                              ← docs/TEAM.md
 │   ├── 📄 Contributing Guidelines                    ← CONTRIBUTING.md
-│   └── 📄 GitHub Organization: PrimeNumbersLabs
+│   └── 📄 GitHub Organization: Mersennet
 │
 ├── 📁 8. CODEBASE (available on request)
 │   ├── 📄 Core Chain (Rust)                          ← crates/ (6-crate workspace, 44,000+ LOC)
@@ -118,7 +118,7 @@ This data room contains all materials required for due diligence on Mersennet's 
 
 ### Technical Due Diligence
 
-- [ ] Review whitepaper v7.0 (architecture, consensus, PrimeOrders)
+- [ ] Review whitepaper v7.0 (architecture, consensus, MersennetOrders)
 - [ ] Review technical reference (implementation details)
 - [ ] Test live testnet (Chain ID 131071, RPC: http://46.225.30.187:8545)
 - [ ] Review codebase (Rust core — 6-crate workspace, 44,000+ LOC)
@@ -164,7 +164,7 @@ This data room contains all materials required for due diligence on Mersennet's 
 | Testnet RPC | http://46.225.30.187:8545 | Public |
 | WebSocket RPC | ws://46.225.30.187:8546 | Public |
 | Block Explorer | http://46.225.30.187/ | Public |
-| DEX (PrimeSwap) | http://46.225.30.187:4000 | Public |
+| DEX (Mersennet Swap) | http://46.225.30.187:4000 | Public |
 | Validator Dashboard | http://46.225.30.187:4001 | Public |
 | Faucet | http://46.225.30.187:8080 | Public |
 | Documentation | http://46.225.30.187:3001 | Public |
@@ -174,16 +174,16 @@ This data room contains all materials required for due diligence on Mersennet's 
 
 1. Add Mersennet to MetaMask: Chain ID `131071`, RPC `http://46.225.30.187:8545`
 2. Get testnet MRSN from the faucet: http://46.225.30.187:8080
-3. Trade on PrimeSwap: http://46.225.30.187:4000
+3. Trade on Mersennet Swap: http://46.225.30.187:4000
 4. View your transactions: http://46.225.30.187/
 
 ---
 
 ## Contact & Access
 
-**Primary Contact:** [founders@primechain.network]
-**GitHub:** github.com/PrimeNumbersLabs
-**Docs:** docs.primechain.network
+**Primary Contact:** [founders@mersennet.com]
+**GitHub:** github.com/mersennet
+**Docs:** docs.mersennet.com
 
 For additional materials or questions not covered in this data room, please contact the team directly.
 

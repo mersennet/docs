@@ -20,7 +20,7 @@ This document is a technical whitepaper describing the Mersennet protocol—a La
 
 ## Abstract
 
-We propose Mersennet, a novel Layer 1 blockchain that **decouples the consensus layer from a multi-domain execution model**. Unlike single-domain chains (Bitcoin, Ethereum) or multi-chain frameworks (Polkadot, Cosmos), Mersennet embeds a deterministic order matching engine (PrimeOrders) alongside the EVM within a **single canonical state**—enabling atomic cross-domain workflows that are infeasible on separate chains. The system finalizes blocks via **BFT proof-of-stake** consensus (two-round prevote/precommit with stake-weighted proposer election) and escalating slashing, implements EIP-1559 fee markets, and provides a cross-domain bridge for ordered message passing. A two-phase **HotStuff-2** pipeline is implemented in the node as the optimized upgrade path (benchmarked at sub-200ms finality).
+We propose Mersennet, a novel Layer 1 blockchain that **decouples the consensus layer from a multi-domain execution model**. Unlike single-domain chains (Bitcoin, Ethereum) or multi-chain frameworks (Polkadot, Cosmos), Mersennet embeds a deterministic order matching engine (MersennetOrders) alongside the EVM within a **single canonical state**—enabling atomic cross-domain workflows that are infeasible on separate chains. The system finalizes blocks via **BFT proof-of-stake** consensus (two-round prevote/precommit with stake-weighted proposer election) and escalating slashing, implements EIP-1559 fee markets, and provides a cross-domain bridge for ordered message passing. A two-phase **HotStuff-2** pipeline is implemented in the node as the optimized upgrade path (benchmarked at sub-200ms finality).
 
 **v7.0 builds on v6.0's five breakthrough capabilities with production-grade infrastructure:**
 
@@ -35,7 +35,7 @@ We propose Mersennet, a novel Layer 1 blockchain that **decouples the consensus 
 6. **Production Storage Engine (redb)**: ACID-compliant, pure-Rust MVCC storage replacing dev-grade sled, with pluggable backend via `StateBackend` trait.
 7. **Account Abstraction (ERC-4337)**: UserOperation bundling, EntryPoint validation, paymaster support, and smart contract wallet infrastructure for institutional UX.
 8. **Cross-Chain Bridge Infrastructure**: Multi-chain deposit/withdrawal with relayer verification, supporting Ethereum, Arbitrum, Optimism, Base, and custom chains.
-9. **WebSocket Subscriptions**: Real-time event streaming for blocks, transactions, logs, PrimeOrders trades, order book updates, and batch auction results.
+9. **WebSocket Subscriptions**: Real-time event streaming for blocks, transactions, logs, MersennetOrders trades, order book updates, and batch auction results.
 10. **Noise Protocol Encryption**: Authenticated, encrypted P2P communication using Noise_XX_25519_ChaChaPoly_BLAKE2s.
 11. **ZK State Proofs**: Modular proof framework with mock prover, batch aggregation, and checkpoint system for future SP1/STARK integration.
 12. **Block Pipeline**: Overlapping execution and consensus for doubled throughput (Monad-class pipelining).
@@ -66,9 +66,9 @@ By unifying general-purpose smart contracts with institutional-grade order books
 | **BASE** | Optimistic Rollup | EVM (L2) | Contract-based | No | N/A | L2 finality depends on L1 |
 | **XDC Network** | XDPoS | EVM-compatible | Contract-based | No | N/A | Limited DeFi ecosystem |
 | **TRON** | DPoS | TVM (EVM-like) | Contract-based | No | N/A | Centralization concerns |
-| **Mersennet** | **BFT PoS (HotStuff-2 path)** | **Parallel EVM + PrimeOrders + Bridge** | **Native, same state + FBA** | **Yes (Block-STM)** | **Precompile (atomic)** | New architecture, unproven at scale |
+| **Mersennet** | **BFT PoS (HotStuff-2 path)** | **Parallel EVM + MersennetOrders + Bridge** | **Native, same state + FBA** | **Yes (Block-STM)** | **Precompile (atomic)** | New architecture, unproven at scale |
 
-**Decoupling insight (Polkadot):** Polkadot separates *canonicality* (which history is valid) from *validity* (whether state transitions are correct). Mersennet adopts a related insight: *execution domains* (EVM, PrimeOrders) can be distinct while sharing a single canonicality layer and state root.
+**Decoupling insight (Polkadot):** Polkadot separates *canonicality* (which history is valid) from *validity* (whether state transitions are correct). Mersennet adopts a related insight: *execution domains* (EVM, MersennetOrders) can be distinct while sharing a single canonicality layer and state root.
 
 **Mersennet's contribution:** The first L1 to embed a **parallel EVM** and a native CLOB in **one block, one state, one finality**—with a precompile enabling **atomic** EVM ↔ CLOB interaction in a **single transaction**. This avoids the composability gap of separate chains (dYdX), the async latency of dual-execution designs (Hyperliquid's HyperEVM reads previous-block state and CoreWriter actions are delayed by seconds), the performance gap of EVM-only CLOBs, and the centralization of off-chain matching (Vertex). The combination of parallel execution (Monad/Sei-class throughput), native order matching (12x faster than Hyperliquid), true atomic composability (no other chain achieves this), MEV-resistant batch auctions, and full EVM ecosystem compatibility is unique among all existing architectures.
 
@@ -90,7 +90,7 @@ But:
 
 $$\text{APPLY}(\{ \text{Alice}: \$50, \text{Bob}: \$50 \}, \text{"send \$70 from Alice to Bob"}) = \text{ERROR}$$
 
-In **Bitcoin**, the state is the collection of unspent transaction outputs (UTXOs), each with a denomination and an owner. Transactions consume UTXOs and create new ones. In **Ethereum**, the state comprises accounts—each with a balance, nonce, code, and storage—and state transitions execute arbitrary contract code. **Mersennet** extends this paradigm by introducing a **multi-domain state**: in addition to EVM accounts (balance, nonce, code, storage), Mersennet maintains **PrimeOrders state** (markets, order books, positions, collateral) and **Bridge state** (cross-domain message queues). The state transition function $\mathcal{T}$ of Mersennet therefore operates over a tuple:
+In **Bitcoin**, the state is the collection of unspent transaction outputs (UTXOs), each with a denomination and an owner. Transactions consume UTXOs and create new ones. In **Ethereum**, the state comprises accounts—each with a balance, nonce, code, and storage—and state transitions execute arbitrary contract code. **Mersennet** extends this paradigm by introducing a **multi-domain state**: in addition to EVM accounts (balance, nonce, code, storage), Mersennet maintains **MersennetOrders state** (markets, order books, positions, collateral) and **Bridge state** (cross-domain message queues). The state transition function $\mathcal{T}$ of Mersennet therefore operates over a tuple:
 
 $$S = (S_{evm}, S_{orders}, S_{bridge})$$
 
@@ -111,20 +111,20 @@ Implementing a full-featured order matching engine purely in EVM bytecode is pos
 
 Mersennet addresses this tension by architecting a **single blockchain** with **multiple execution domains**:
 
-1. **PrimeEVM**: Full EVM compatibility (Shanghai spec) for general computation
-2. **PrimeOrders**: A native, deterministic order matching engine with price-time priority
-3. **Bridge**: Ordered message queues enabling PrimeOrders and PrimeEVM to interoperate atomically
+1. **MersennetEVM**: Full EVM compatibility (Shanghai spec) for general computation
+2. **MersennetOrders**: A native, deterministic order matching engine with price-time priority
+3. **Bridge**: Ordered message queues enabling MersennetOrders and MersennetEVM to interoperate atomically
 
 All three domains share one consensus layer, one canonical state, and one block structure. A block may contain EVM transactions, order submissions, and bridge messages; the state transition applies all of them in a defined order, producing a single new state and state root. This design preserves:
 
 - **Composability**: Smart contracts can read order books, trigger liquidations, and settle trades
-- **Performance**: PrimeOrders executes natively with O(log n) order book operations
-- **Determinism**: Both EVM and PrimeOrders are fully deterministic
+- **Performance**: MersennetOrders executes natively with O(log n) order book operations
+- **Determinism**: Both EVM and MersennetOrders are fully deterministic
 - **Atomicity**: Cross-domain operations commit or revert together
 
 ### History and Precedents
 
-The idea of combining blockchain consensus with specialized execution layers has precedents. **Colored coins** (2012) assigned metadata to Bitcoin UTXOs to represent custom assets. **Mastercoin** (2013) layered a protocol on top of Bitcoin for tokens and simple contracts. **Ethereum** (2015) introduced a general-purpose VM. **Cosmos** (2017) and **Polkadot** (2020) pioneered multi-chain architectures with shared security. **dYdX** and **Vertex** built order matching into Layer 2 rollups. Mersennet adopts a different approach: instead of a separate chain or rollup, it embeds the order matching engine directly into the Layer 1 state and consensus, ensuring that EVM and PrimeOrders share the same block, the same finality, and the same state root.
+The idea of combining blockchain consensus with specialized execution layers has precedents. **Colored coins** (2012) assigned metadata to Bitcoin UTXOs to represent custom assets. **Mastercoin** (2013) layered a protocol on top of Bitcoin for tokens and simple contracts. **Ethereum** (2015) introduced a general-purpose VM. **Cosmos** (2017) and **Polkadot** (2020) pioneered multi-chain architectures with shared security. **dYdX** and **Vertex** built order matching into Layer 2 rollups. Mersennet adopts a different approach: instead of a separate chain or rollup, it embeds the order matching engine directly into the Layer 1 state and consensus, ensuring that EVM and MersennetOrders share the same block, the same finality, and the same state root.
 
 ---
 
@@ -138,7 +138,7 @@ The idea of combining blockchain consensus with specialized execution layers has
 
 **Part II: Execution**
 5. [Execution Engine](#5-execution-engine)
-6. [PrimeOrders Matching Engine](#6-primeorders-matching-engine)
+6. [MersennetOrders Matching Engine](#6-mersennetorders-matching-engine)
 7. [Cross-Domain Bridge](#7-cross-domain-bridge)
 8. [Fee Market and Token Economics](#8-fee-market-and-token-economics)
 
@@ -189,7 +189,7 @@ Mersennet addresses this by architecting a **unified system** that maintains ful
 
 1. **Determinism**: All state transitions must be fully deterministic and verifiable
 2. **Atomicity**: Cross-domain operations must be atomic within a single block
-3. **Composability**: EVM contracts and PrimeOrders must seamlessly interoperate
+3. **Composability**: EVM contracts and MersennetOrders must seamlessly interoperate
 4. **Security**: Economic security through staking and slashing mechanisms
 5. **Performance**: Optimized for both general computation and high-frequency operations
 6. **Transparency**: All state transitions and events are publicly verifiable
@@ -205,7 +205,7 @@ Mersennet addresses this by architecting a **unified system** that maintains ful
 - **Parallel EVM Execution** *(v6.0)*: Block-STM optimistic concurrency control with static dependency analysis, multi-version memory (MVCC), and automatic fallback to sequential execution on conflict
 - **HotStuff-2 Consensus** *(v6.0)*: Two-phase BFT protocol with linear communication complexity, optimistic responsiveness, and 33% lower finality latency than three-phase CometBFT
 - **CLOB Precompile** *(v6.0)*: EVM precompile at address `0x0100` enabling Solidity smart contracts to atomically place orders, cancel orders, deposit/withdraw collateral, and query positions—the first native EVM ↔ order book bridge
-- **Frequent Batch Auctions** *(v6.0)*: Uniform-price discrete auctions for PrimeOrders that eliminate front-running by executing all orders within a batch window at a single clearing price
+- **Frequent Batch Auctions** *(v6.0)*: Uniform-price discrete auctions for MersennetOrders that eliminate front-running by executing all orders within a batch window at a single clearing price
 - **Commit-Reveal MEV Protection** *(v6.0)*: Two-phase EVM transaction submission with cryptographic commitment, preventing sandwich attacks and transaction information leakage
 
 ---
@@ -225,7 +225,7 @@ Mersennet consists of four primary execution domains unified under a single cons
           ┌─────────────────────┼─────────────────────┐
           │                     │                     │
 ┌─────────▼──────────┐  ┌──────▼──────────┐  ┌───────▼────────┐
-│  PrimeEVM          │  │  PrimeOrders    │  │  Bridge        │
+│  MersennetEVM          │  │  MersennetOrders    │  │  Bridge        │
 │  ┌───────────────┐ │  │  ┌────────────┐ │  │  (Queues)      │
 │  │ Parallel Exec │ │  │  │ CLOB Engine│ │  │                │
 │  │ (Block-STM)   │ │  │  │            │ │  │  Commit-Reveal │
@@ -259,7 +259,7 @@ Mersennet consists of four primary execution domains unified under a single cons
 - **State Management**: Account balances, storage, contract code with incremental dirty-account tracking
 - **Gas Metering**: EIP-1559 fee market with base fee adjustment
 
-#### 2.2.2 PrimeOrders Engine
+#### 2.2.2 MersennetOrders Engine
 - **Matching Engine**: Deterministic price-time priority matching with match-time margin validation
 - **Frequent Batch Auctions** *(v6.0)*: Uniform-price discrete auctions for MEV-resistant order execution
 - **Risk Engine**: Margin calculations, liquidation, insurance fund, auto-deleveraging (ADL)
@@ -269,7 +269,7 @@ Mersennet consists of four primary execution domains unified under a single cons
 
 #### 2.2.3 Bridge System
 - **Message Queues**: FIFO queues with nonce-based ordering
-- **Domain Routing**: PrimeOrders ↔ PrimeEVM message passing
+- **Domain Routing**: MersennetOrders ↔ MersennetEVM message passing
 - **Replay Protection**: Nonce sequencing prevents duplicate processing
 - **Queue Limits**: Configurable maximum queue lengths
 - **Commit-Reveal Pool** *(v6.0)*: Two-phase MEV protection for EVM transactions
@@ -326,8 +326,8 @@ The transition function $\mathcal{T}$ executes in phases:
 1. **Transaction Selection**: Select transactions from multi-pool mempool by fee priority; drain commit-reveal pool for revealed transactions
 2. **Dependency Analysis** *(v6.0)*: Analyze transaction read/write sets; group non-conflicting transactions for parallel execution
 3. **Parallel EVM Execution** *(v6.0)*: Execute independent transaction groups in parallel on forked DB snapshots using Block-STM; validate via MVCC; merge results (falls back to sequential if < 8 txs or on conflict)
-4. **Batch Auction Execution** *(v6.0)*: Execute pending Frequent Batch Auctions across all markets; apply fills to PrimeOrders state
-5. **PrimeOrders Matching**: Process remaining order submissions, match orders, update positions
+4. **Batch Auction Execution** *(v6.0)*: Execute pending Frequent Batch Auctions across all markets; apply fills to MersennetOrders state
+5. **MersennetOrders Matching**: Process remaining order submissions, match orders, update positions
 6. **Bridge Processing**: Dequeue and process bridge messages
 7. **Consensus Finalization**: Run HotStuff-2 round (propose → vote → QC → 2-chain commit); apply slashing
 8. **State Commit**: Compute Merkle state root (incremental, dirty accounts only), persist to database
@@ -344,7 +344,7 @@ The algorithm for validating a block $B_t$ at height $t$ can be expressed as:
 4. For each EVM transaction TX_i in B_t.transactions:
      S[i+1] = APPLY_EVM(S[i], TX_i)
      If APPLY_EVM returns ERROR, reject block.
-5. For each PrimeOrders operation OP_j (orders, collateral, etc.):
+5. For each MersennetOrders operation OP_j (orders, collateral, etc.):
      S = APPLY_ORDERS(S, OP_j)
      If APPLY_ORDERS returns ERROR, reject block.
 6. Dequeue bridge messages; for each message M_k:
@@ -382,9 +382,9 @@ $$Account(addr) = (balance \in \mathbb{U}_{256}, nonce \in \mathbb{N}, codeHash 
 Storage slots are keyed by $(address, slot)$ pairs:
 $$Storage(addr, slot) = value \in \mathbb{U}_{256}$$
 
-#### 3.1.2 PrimeOrders State ($S_{orders}$)
+#### 3.1.2 MersennetOrders State ($S_{orders}$)
 
-PrimeOrders state includes:
+MersennetOrders state includes:
 - **Markets**: $M = \{marketId \rightarrow (symbol, tickSize, lotSize, lastPrice)\}$
 - **Orders**: $O = \{orderId \rightarrow (owner, market, side, price, size, tif)\}$
 - **Order Books**: $B = \{marketId \rightarrow (bids, asks)\}$
@@ -403,14 +403,14 @@ $$Position(owner, market) = (size \in \mathbb{Z}_{128}, entryPrice \in \mathbb{U
 #### 3.1.3 Bridge State ($S_{bridge}$)
 
 Bridge state consists of two FIFO queues:
-- $Q_{orders \to evm}$: Messages from PrimeOrders to PrimeEVM
-- $Q_{evm \to orders}$: Messages from PrimeEVM to PrimeOrders
+- $Q_{orders \to evm}$: Messages from MersennetOrders to MersennetEVM
+- $Q_{evm \to orders}$: Messages from MersennetEVM to MersennetOrders
 
 Each queue is a sequence of messages:
 $$Q = [m_1, m_2, \ldots, m_n]$$
 
 Where each message:
-$$Message = (nonce \in \mathbb{N}, from \in \{PrimeOrders, PrimeEVM\}, to \in \{PrimeOrders, PrimeEVM\}, payload \in \mathbb{B}^*)$$
+$$Message = (nonce \in \mathbb{N}, from \in \{MersennetOrders, MersennetEVM\}, to \in \{MersennetOrders, MersennetEVM\}, payload \in \mathbb{B}^*)$$
 
 ### 3.2 State Root Computation
 
@@ -435,7 +435,7 @@ State is persisted using **sled**, an embedded key-value database:
 
 - **Accounts Tree**: `accounts` - Maps addresses to account records
 - **Storage Tree**: `storage` - Maps (address, slot) to values
-- **PrimeOrders Tree**: `prime_orders` - Serialized PrimeOrders state snapshot
+- **MersennetOrders Tree**: `mersennet_orders` - Serialized MersennetOrders state snapshot
 - **Bridge Trees**: `bridge_orders_to_evm`, `bridge_evm_to_orders` - Queue snapshots
 
 Each tree is flushed atomically on block commit, ensuring consistency.
@@ -453,7 +453,7 @@ SnapshotRecord {
     state_root: [u8; 32],
     accounts: Vec<(Address, AccountRecord)>,
     storage: Vec<((Address, U256), U256)>,
-    prime_orders: Option<Vec<u8>>,
+    mersennet_orders: Option<Vec<u8>>,
     bridge_orders_to_evm: Option<Vec<u8>>,
     bridge_evm_to_orders: Option<Vec<u8>>,
 }
@@ -854,7 +854,7 @@ Block execution proceeds as:
 
 3. **State Commit**:
    - Commit EVM state changes
-   - Commit PrimeOrders state changes
+   - Commit MersennetOrders state changes
    - Commit bridge queue changes
    - Compute state root
 
@@ -950,7 +950,7 @@ Mersennet's approach prioritizes correctness: static analysis groups most indepe
 
 ### 5.9 CLOB Precompile *(v6.0)*
 
-The CLOB Precompile is Mersennet's defining innovation: a custom EVM precompile at address `0x0000000000000000000000000000000000000100` that gives Solidity smart contracts **direct, atomic access** to the PrimeOrders matching engine.
+The CLOB Precompile is Mersennet's defining innovation: a custom EVM precompile at address `0x0000000000000000000000000000000000000100` that gives Solidity smart contracts **direct, atomic access** to the MersennetOrders matching engine.
 
 #### 5.9.1 Motivation
 
@@ -960,7 +960,7 @@ On every other blockchain, smart contract interaction with order books requires 
 3. **Contract-based CLOB**: Implement matching in Solidity (gas-intensive: ~500K gas per match vs. ~50K for precompile)
 
 The CLOB Precompile eliminates these limitations. A single Solidity call can atomically:
-1. Place an order on PrimeOrders
+1. Place an order on MersennetOrders
 2. Receive the fill result
 3. Execute follow-up logic based on the fill
 4. All within one EVM transaction, one block, one state
@@ -968,7 +968,7 @@ The CLOB Precompile eliminates these limitations. A single Solidity call can ato
 #### 5.9.2 Interface (Solidity)
 
 ```solidity
-interface IPrimeOrders {
+interface IMersennetOrders {
     function placeOrder(uint64 marketId, bool isBuy, uint256 price, uint256 size, uint8 tif)
         external returns (uint256 orderId, uint256 filled, uint256 remaining);
     
@@ -1009,17 +1009,17 @@ The precompile uses a global context pattern for state access:
 
 ```
 Block Execution Start
-    └─► set_prime_orders_context(Arc<Mutex<PrimeOrdersState>>)
+    └─► set_mersennet_orders_context(Arc<Mutex<MersennetOrdersState>>)
          │
          ├─► execute_tx_1 (EVM sees precompile at 0x0100)
-         │    └─► CALL to 0x0100 → decode ABI → route to handler → mutate PrimeOrders state
+         │    └─► CALL to 0x0100 → decode ABI → route to handler → mutate MersennetOrders state
          ├─► execute_tx_2 ...
          └─► ...
-    └─► clear_prime_orders_context()
+    └─► clear_mersennet_orders_context()
 Block Execution End
 ```
 
-The `Arc<Mutex<PrimeOrdersState>>` is shared between the EVM execution context and the precompile handlers, ensuring that state mutations from precompile calls are immediately visible to subsequent transactions in the same block.
+The `Arc<Mutex<MersennetOrdersState>>` is shared between the EVM execution context and the precompile handlers, ensuring that state mutations from precompile calls are immediately visible to subsequent transactions in the same block.
 
 #### 5.9.5 Use Cases Enabled
 
@@ -1027,7 +1027,7 @@ The `Arc<Mutex<PrimeOrdersState>>` is shared between the EVM execution context a
 ```solidity
 contract TradingVault {
     function rebalance(uint64 market, uint256 price, uint256 size) external {
-        IPrimeOrders orders = IPrimeOrders(0x0100);
+        IMersennetOrders orders = IMersennetOrders(0x0100);
         (uint256 id, uint256 filled, ) = orders.placeOrder(market, true, price, size, 1);
         if (filled > 0) {
             // Update vault accounting based on fill
@@ -1041,7 +1041,7 @@ contract TradingVault {
 ```solidity
 contract LiquidationBot {
     function liquidateAndHedge(address target, uint64 market) external {
-        IPrimeOrders orders = IPrimeOrders(0x0100);
+        IMersennetOrders orders = IMersennetOrders(0x0100);
         if (orders.isLiquidatable(target)) {
             // Liquidate target's position
             // Simultaneously hedge by placing opposite order
@@ -1054,9 +1054,9 @@ contract LiquidationBot {
 
 **3. Automated Market Making:**
 ```solidity
-contract PrimeMM {
+contract MersennetMM {
     function refreshQuotes(uint64 market, uint256 mid, uint256 spread, uint256 size) external {
-        IPrimeOrders orders = IPrimeOrders(0x0100);
+        IMersennetOrders orders = IMersennetOrders(0x0100);
         orders.placeOrder(market, true,  mid - spread, size, 0);  // GTC bid
         orders.placeOrder(market, false, mid + spread, size, 0);  // GTC ask
     }
@@ -1065,11 +1065,11 @@ contract PrimeMM {
 
 ---
 
-## 6. PrimeOrders Matching Engine
+## 6. MersennetOrders Matching Engine
 
 ### 6.1 Overview
 
-PrimeOrders is a deterministic order matching engine designed for high-throughput trading with provable correctness. It supports limit orders, market orders, and various time-in-force (TIF) options.
+MersennetOrders is a deterministic order matching engine designed for high-throughput trading with provable correctness. It supports limit orders, market orders, and various time-in-force (TIF) options.
 
 ### 6.2 Market Model
 
@@ -1176,7 +1176,7 @@ Matching is fully deterministic:
 
 #### 6.5.4 Worked Example: Price-Time Priority Matching
 
-Consider market "PRIME-PERP" with tick size 1 and lot size 1. Order book state:
+Consider market "MERSENNET-PERP" with tick size 1 and lot size 1. Order book state:
 
 **Bids**: 100@5 (Alice), 100@5 (Bob), 99@3 (Carol)  
 **Asks**: 101@2 (Dave), 100@4 (Eve)
@@ -1194,7 +1194,7 @@ Matching proceeds:
 Matching proceeds:
 1. Best bid: Frank 100@8. 99 ≥ 99? Yes. Fill min(4, 8) = 4. Frank: 4 units filled, 4 remaining. Grace: 4 filled.
 2. Frank's order: 100@4 remains. Grace's IOC: remainder (0) discarded.
-3. Trade: (taker=Grace, maker=Frank, market=PRIME-PERP, side=Sell, price=99, size=4).
+3. Trade: (taker=Grace, maker=Frank, market=MERSENNET-PERP, side=Sell, price=99, size=4).
 
 **Taker order**: Henry submits Buy 100@5 size 3, FOK.
 
@@ -1283,7 +1283,7 @@ Position updates on fills:
 
 ### 6.9 Frequent Batch Auctions *(v6.0)*
 
-Mersennet v6.0 introduces Frequent Batch Auctions (FBA) as an alternative matching mode for PrimeOrders markets. FBA eliminates front-running and MEV extraction by executing all orders within a batch window at a single uniform clearing price.
+Mersennet v6.0 introduces Frequent Batch Auctions (FBA) as an alternative matching mode for MersennetOrders markets. FBA eliminates front-running and MEV extraction by executing all orders within a batch window at a single uniform clearing price.
 
 #### 6.9.1 Motivation
 
@@ -1410,10 +1410,10 @@ If the account fails the margin check at match time, the fill is rejected and th
 
 ### 7.1 Architecture
 
-The bridge enables secure message passing between PrimeOrders and PrimeEVM domains:
+The bridge enables secure message passing between MersennetOrders and MersennetEVM domains:
 
 ```
-PrimeOrders Domain          Bridge Queues          PrimeEVM Domain
+MersennetOrders Domain          Bridge Queues          MersennetEVM Domain
      │                           │                       │
      │───enqueue(msg)───────────►│                       │
      │                           │                       │
@@ -1432,15 +1432,15 @@ $$BridgeMessage = (nonce, from, to, payload)$$
 
 Where:
 - $nonce \in \mathbb{N}$: Sequential message identifier
-- $from, to \in \{PrimeOrders, PrimeEVM\}$: Source and destination domains
+- $from, to \in \{MersennetOrders, MersennetEVM\}$: Source and destination domains
 - $payload \in \mathbb{B}^*$: Arbitrary byte payload
 
 ### 7.3 Queue Management
 
 Each direction has a separate FIFO queue:
 
-- $Q_{orders \to evm}$: PrimeOrders → PrimeEVM
-- $Q_{evm \to orders}$: PrimeEVM → PrimeOrders
+- $Q_{orders \to evm}$: MersennetOrders → MersennetEVM
+- $Q_{evm \to orders}$: MersennetEVM → MersennetOrders
 
 #### 7.3.1 Enqueue Operation
 
@@ -1481,19 +1481,19 @@ Bridge messages are processed atomically within blocks:
 
 Common bridge use cases:
 
-1. **Order Settlement**: PrimeOrders fills trigger EVM contract callbacks
-2. **Collateral Management**: EVM contracts deposit/withdraw PrimeOrders collateral
-3. **Oracle Integration**: EVM oracles provide price feeds to PrimeOrders
-4. **Cross-Domain DeFi**: EVM protocols interact with PrimeOrders positions
+1. **Order Settlement**: MersennetOrders fills trigger EVM contract callbacks
+2. **Collateral Management**: EVM contracts deposit/withdraw MersennetOrders collateral
+3. **Oracle Integration**: EVM oracles provide price feeds to MersennetOrders
+4. **Cross-Domain DeFi**: EVM protocols interact with MersennetOrders positions
 
 ### 7.7 Worked Example: EVM-Triggered Collateral Deposit
 
-A DeFi vault contract holds user funds. Users can allocate vault shares to PrimeOrders collateral. Flow:
+A DeFi vault contract holds user funds. Users can allocate vault shares to MersennetOrders collateral. Flow:
 
 1. **EVM**: User calls `Vault.allocateToOrders(amount)`. Contract validates balance, updates internal accounting.
-2. **EVM**: Contract calls bridge `primebridge_enqueueEvmToOrders` with payload `[action=deposit, user=0x..., amount=...]`.
-3. **Next block**: Bridge message is dequeued. Engine invokes `prime_orders_deposit_collateral(user, amount)`.
-4. **PrimeOrders**: User's collateral increases. User can now open leveraged positions.
+2. **EVM**: Contract calls bridge `mersennet_bridge_enqueueEvmToOrders` with payload `[action=deposit, user=0x..., amount=...]`.
+3. **Next block**: Bridge message is dequeued. Engine invokes `mersennet_orders_deposit_collateral(user, amount)`.
+4. **MersennetOrders**: User's collateral increases. User can now open leveraged positions.
 5. **EVM**: Contract emits event `CollateralAllocated(user, amount)` for indexers.
 
 The bridge ensures atomicity: if the block is reverted, neither the vault deduction nor the collateral credit is applied. The payload format is application-defined; the bridge only guarantees ordered, nonce-sequenced delivery.
@@ -1782,8 +1782,8 @@ Approximate size: 64 KB max (configurable receive buffer).
 ```
 BridgeMessage {
   nonce: u64,         // Sequential identifier
-  from: enum { PrimeOrders, PrimeEvm },
-  to: enum { PrimeOrders, PrimeEvm },
+  from: enum { MersennetOrders, MersennetEvm },
+  to: enum { MersennetOrders, MersennetEvm },
   payload: bytes      // Arbitrary; application-defined
 }
 ```
@@ -1879,7 +1879,7 @@ Peers are:
 
 Snapshots enable fast node synchronization by providing a complete state checkpoint:
 
-$$Snapshot = (height, stateRoot, accounts, storage, primeOrders, bridgeQueues)$$
+$$Snapshot = (height, stateRoot, accounts, storage, mersennetOrders, bridgeQueues)$$
 
 Serialization uses **bincode** for efficient binary encoding.
 
@@ -1889,7 +1889,7 @@ Snapshot creation process:
 
 1. **State Freeze**: Pause state mutations
 2. **Serialize EVM State**: Accounts and storage
-3. **Serialize PrimeOrders**: Markets, orders, positions, order books
+3. **Serialize MersennetOrders**: Markets, orders, positions, order books
 4. **Serialize Bridge**: Queue snapshots
 5. **Compute Hash**: Keccak-256 of serialized data
 6. **Package**: Create snapshot record with height and hash
@@ -1931,13 +1931,13 @@ Domain events provide a structured log of state changes:
 $$Event = (domain, kind, data, blockNumber, eventIndex)$$
 
 Where:
-- $domain \in \{primeorders, bridge\}$: Event domain
+- $domain \in \{mersennetorders, bridge\}$: Event domain
 - $kind \in \Sigma^*$: Event type
 - $data \in \mathbb{B}^*$: Event-specific data
 - $blockNumber$: Block containing event
 - $eventIndex$: Index within block
 
-### 12.2 PrimeOrders Events
+### 12.2 MersennetOrders Events
 
 #### 12.2.1 Market Events
 
@@ -1986,10 +1986,10 @@ Events are included in block structure and queryable via RPC.
 
 ### 12.5 Event Queries
 
-RPC method `prime_getDomainEvents` supports filtering:
+RPC method `mersennet_getDomainEvents` supports filtering:
 
 - **Block Range**: $fromBlock$ to $toBlock$
-- **Domain Filter**: Filter by domain (primeorders, bridge)
+- **Domain Filter**: Filter by domain (mersennetorders, bridge)
 - **Kind Filter**: Filter by event kind
 
 Query result:
@@ -2224,13 +2224,13 @@ For workloads with high conflict rates (e.g., all transactions touching the same
 
 #### 14.1.3 Order Matching Throughput
 
-PrimeOrders matching is highly efficient:
+MersennetOrders matching is highly efficient:
 - **Order book lookup**: O(log n) per price level (BTreeMap)
 - **Queue operations**: O(1) FIFO enqueue/dequeue
 - **Matching per order**: O(levels × orders_per_level) in worst case; typically O(1)–O(10) for liquid markets
 
 **Benchmarked order throughput (v6.0):**
-- **PrimeOrders continuous matching**: ~1,500,000 operations/second (single-threaded)
+- **MersennetOrders continuous matching**: ~1,500,000 operations/second (single-threaded)
 - **FBA batch auctions**: ~500,000 orders/second per batch (batch execution + clearing price calculation)
 - **CLOB precompile calls**: ~50,000 gas per `placeOrder` (3-4x cheaper than Uniswap swap)
 
@@ -2287,7 +2287,7 @@ Estimated: ~100 KB per block (highly variable).
 Snapshot size equals state size plus metadata:
 - Accounts: ~100 bytes each
 - Storage: ~32 bytes per slot
-- PrimeOrders: Variable
+- MersennetOrders: Variable
 
 Estimated: ~10-100 MB for typical network (highly variable).
 
@@ -2351,7 +2351,7 @@ The following benchmarks are from the Mersennet reference implementation (Rust, 
 **Derived throughput (v6.0):**
 - EVM (parallel, 8 cores): **~60,000-65,000 TPS** for independent transfers
 - EVM (parallel, mixed DeFi): **~15,000-25,000 TPS** (typical conflict rate)
-- PrimeOrders: **~1,500,000 operations/second** (matching-bound)
+- MersennetOrders: **~1,500,000 operations/second** (matching-bound)
 - FBA: **~200,000 orders/batch** at 100ms intervals → **~2M orders/second** throughput
 - CLOB precompile: **3-4x cheaper** than Uniswap V3 swaps
 - End-to-end block: **~200ms finality** (HotStuff-2) vs ~2-3s (CometBFT)
@@ -2459,14 +2459,14 @@ Mersennet supports two storage backends via the `StateBackend` trait, selectable
 **Sled** (legacy/development):
 - `accounts`: Address → AccountRecord
 - `storage`: (Address, U256) → U256
-- `prime_orders`: "state" → PrimeOrdersSnapshot
+- `mersennet_orders`: "state" → MersennetOrdersSnapshot
 - `bridge_orders_to_evm`: "queue" → BridgeQueueRecord
 - `bridge_evm_to_orders`: "queue" → BridgeQueueRecord
 
 **redb** (production, v7.0):
 - `accounts`: \[u8\] → \[u8\] (bincode-encoded AccountRecord)
 - `storage`: \[u8\] → \[u8\] (contract storage slots)
-- `prime_orders`: \[u8\] → \[u8\] (PrimeOrdersSnapshot)
+- `mersennet_orders`: \[u8\] → \[u8\] (MersennetOrdersSnapshot)
 - `bridge_to_evm`: \[u8\] → \[u8\] (bridge queue records)
 - `bridge_to_orders`: \[u8\] → \[u8\] (bridge queue records)
 - `blocks`: u64 → \[u8\] (bincode-encoded Block)
@@ -2505,8 +2505,8 @@ sdk/                            # TypeScript SDK (@mersennet/sdk)
 sdk-python/                     # Python SDK (mersennet-sdk)
 sdk-go/                         # Go SDK
 validator-explorer/             # Block explorer web UI (index.html, app.js)
-contracts/                      # Solidity (IPrimeOrders.sol, PrimeChainBridge.sol,
-                                # Groth16Verifier.sol, PrimeSwap, examples)
+contracts/                      # Solidity (IMersennetOrders.sol, MersennetBridge.sol,
+                                # Groth16Verifier.sol, Mersennet Swap, examples)
 ```
 
 **Total implementation**: ~44,000 lines of Rust across ~97 source files in the workspace, plus the TypeScript/Python/Go SDKs and block explorer. 241 Rust tests passing.
@@ -2529,7 +2529,7 @@ Configuration is JSON-based with hot-reload support:
     "max_per_sender": 1000,
     "bump_bps": 1000
   },
-  "prime_orders": {
+  "mersennet_orders": {
     "initial_margin_bps": 0,
     "maintenance_margin_bps": 0
   },
@@ -2616,13 +2616,13 @@ The following items from v5.0's roadmap have been implemented:
 ### 16.2 Completed *(v7.0)*
 
 - ✅ **Production Storage Engine (redb)**: Pure-Rust ACID-compliant MVCC storage via pluggable `StateBackend` trait, replacing dev-grade sled. Runtime-selectable via config (`storage_backend: "redb"` or `"sled"`).
-- ✅ **WebSocket Subscriptions**: Real-time event streaming for `NewHeads`, `NewPendingTransactions`, `Logs`, `PrimeOrdersTrades`, `PrimeOrdersBook`, and `BatchAuctionResults`. Configurable via `ws.enabled` / `ws.addr`.
+- ✅ **WebSocket Subscriptions**: Real-time event streaming for `NewHeads`, `NewPendingTransactions`, `Logs`, `MersennetOrdersTrades`, `MersennetOrdersBook`, and `BatchAuctionResults`. Configurable via `ws.enabled` / `ws.addr`.
 - ✅ **Block Pipeline**: Overlapping execution of block N+1 with consensus of block N (Monad-class pipelining). Configurable depth, automatic drain-and-commit.
 - ✅ **Noise Protocol Encryption**: Authenticated P2P using `Noise_XX_25519_ChaChaPoly_BLAKE2s` (same pattern as libp2p and WireGuard). X25519 keypair generation, mutual authentication, encrypted message exchange.
 - ✅ **ZK State Proofs**: Modular prover framework with `StateProver` trait, `MockProver` implementation, batch aggregation (`BatchProofAggregator`), and checkpoint chain verification (`CheckpointStore`). Wired into block production loop for periodic proof checkpoints.
 - ✅ **Account Abstraction (ERC-4337)**: Full `UserOperation` lifecycle—`EntryPoint` with nonce/gas/signature validation, `UserOpMempool` with sender indexing, `Bundler` for bundle creation, paymaster staking support.
 - ✅ **Cross-Chain Bridge Infrastructure**: Multi-chain deposit/withdrawal (Ethereum, Arbitrum, Optimism, Base, custom chains), relayer verification, token configuration with min/max/daily limits, Merkle proof generation for withdrawal finalization.
-- ✅ **TypeScript SDK**: `PrimeProvider` (JSON-RPC), `PrimeSubscription` (WebSocket), `PrimeOrders` (CLOB interaction), `PrimePrecompile` (ABI encoding for `0x0100`). 1,012 lines.
+- ✅ **TypeScript SDK**: `MersennetProvider` (JSON-RPC), `MersennetSubscription` (WebSocket), `MersennetOrders` (CLOB interaction), `MersennetPrecompile` (ABI encoding for `0x0100`). 1,012 lines.
 - ✅ **Block Explorer**: Standalone dark-themed web UI for blocks, transactions, order book, validators, and search. 1,272 lines.
 - ✅ **Production Hardening**: Graceful shutdown (Ctrl+C handler), health check logging, startup banner, ZK checkpoint scheduling.
 - ✅ **Test Suite Expansion**: 241 tests passing (including integration tests covering redb lifecycle, parallel execution, WebSocket subscriptions, pipeline, ZK proofs, Noise encryption, FBA, and commit-reveal).
@@ -2650,14 +2650,14 @@ The following items from v5.0's roadmap have been implemented:
 
 - **DAG-Based Mempool**: Narwhal-style [11] DAG mempool for parallel data dissemination, eliminating redundant transaction broadcasts and enabling horizontal bandwidth scaling.
 - **Consensus Upgrade Path**: Evaluate Bullshark [11] and Shoal for DAG-based consensus with zero communication overhead, potentially achieving 40-80% latency reduction over HotStuff-2.
-- **State Sharding**: Partition PrimeOrders markets across shards for horizontal throughput scaling. Each shard processes its own order book independently; cross-shard trades use atomic commit protocols.
+- **State Sharding**: Partition MersennetOrders markets across shards for horizontal throughput scaling. Each shard processes its own order book independently; cross-shard trades use atomic commit protocols.
 - **SDK Expansion**: Python (`sdk-python/`) and Go (`sdk-go/`) client libraries now ship alongside the TypeScript SDK; a Rust client library remains future work.
 - **Public Testnet**: Community-operated testnet with incentivized testing and bug bounties.
 - **Mainnet Launch**: Production deployment with genesis validator ceremony.
 
 ### 16.6 Research Areas
 
-- **Parallel PrimeOrders**: Extend Block-STM to order matching. Independent markets can be matched in parallel; cross-market risk calculations require coordination.
+- **Parallel MersennetOrders**: Extend Block-STM to order matching. Independent markets can be matched in parallel; cross-market risk calculations require coordination.
 - **Verifiable Delay Functions (VDFs)**: Time-based randomness for fair leader election in adversarial environments.
 - **Intent-Based Execution**: Users express trade intents ("buy 10 ETH at best available price across all liquidity sources") and solvers compete to fill them optimally.
 - **Recursive ZK Proofs**: Prove the correctness of proving, enabling infinite scalability through proof aggregation.
@@ -2672,7 +2672,7 @@ Mersennet's unified architecture—combining EVM programmability with native ord
 
 **Problem**: Traditional assets—bonds, equities, real estate, commodities—are illiquid, opaque, and difficult to fractionalize. Settlement takes days; custody is expensive; ownership transfer requires intermediaries.
 
-**Mersennet Solution**: Tokenize RWAs as EVM-compatible assets (ERC-20 or custom contracts) and trade them on PrimeOrders. The native order book provides:
+**Mersennet Solution**: Tokenize RWAs as EVM-compatible assets (ERC-20 or custom contracts) and trade them on MersennetOrders. The native order book provides:
 
 - **Deterministic matching**: Price-time priority with provable correctness
 - **Atomic settlement**: Trades and token transfers occur in the same block
@@ -2680,7 +2680,7 @@ Mersennet's unified architecture—combining EVM programmability with native ord
 
 **Example Workflow**:
 1. Issuer deploys an RWA token contract (e.g., a bond token representing $1M face value)
-2. Buyers and sellers submit limit orders via `primeorders_submitOrder`
+2. Buyers and sellers submit limit orders via `mersennet_orders_submitOrder`
 3. Matching engine executes trades; EVM updates token balances
 4. Bridge messages can trigger off-chain settlement (e.g., delivery vs. payment) via EVM callbacks
 
@@ -2690,18 +2690,18 @@ Mersennet's unified architecture—combining EVM programmability with native ord
 
 **Problem**: Institutional credit markets—bonds, loans, credit default swaps (CDS), asset-backed securities (ABS)—are fragmented, over-the-counter, and lack transparent pricing. On-chain credit protocols (e.g., Centrifuge, Maple, Goldfinch) have emerged but typically lack native order books; trading occurs via AMMs or OTC.
 
-**Mersennet Solution**: PrimeOrders can host **credit instrument order books**:
+**Mersennet Solution**: MersennetOrders can host **credit instrument order books**:
 
 - **Bond trading**: Tokenized bonds with limit order books for price discovery
 - **Loan syndication**: Primary issuance and secondary trading of loan tokens
 - **Credit derivatives**: CDS-like instruments with deterministic matching and settlement
 - **ABS tranches**: Senior/subordinate structures with order books for each tranche
 
-The bridge enables EVM contracts (e.g., collateral managers, oracles) to interact with credit positions. Margin and liquidation logic in PrimeOrders provide risk management for leveraged credit positions.
+The bridge enables EVM contracts (e.g., collateral managers, oracles) to interact with credit positions. Margin and liquidation logic in MersennetOrders provide risk management for leveraged credit positions.
 
 **Use Case—Tokenized Bond Market**:
 1. Issuer mints bond tokens (ERC-20) with maturity, coupon, and face value
-2. Market created via `primeorders_addMarket` for the bond token
+2. Market created via `mersennet_orders_addMarket` for the bond token
 3. Institutional buyers and sellers submit limit orders
 4. Trades execute with price-time priority; EVM records ownership
 5. Coupon payments and principal redemption are triggered by EVM logic (oracle or time-based)
@@ -2712,20 +2712,20 @@ The bridge enables EVM contracts (e.g., collateral managers, oracles) to interac
 
 **Problem**: Decentralized perpetual exchanges (e.g., dYdX, GMX, Hyperliquid) require either off-chain order books with on-chain settlement (hybrid) or AMM-based pricing. Hybrid models introduce centralization; AMMs suffer from impermanent loss and poor execution for large orders.
 
-**Mersennet Solution**: **Fully on-chain order books** with PrimeOrders:
+**Mersennet Solution**: **Fully on-chain order books** with MersennetOrders:
 
 - **Perpetual futures**: Market per asset (e.g., BTC-PERP, ETH-PERP); users deposit collateral, open long/short positions via limit or market orders
 - **Options**: Markets for strike/expiry combinations; matching engine handles bid/ask
 - **Swaps**: Fixed-for-floating or basis swaps with order books
 
-Margin and liquidation are native to PrimeOrders; no need for separate vault contracts. EVM contracts can build on top: automated market makers providing liquidity, insurance funds, or vault strategies.
+Margin and liquidation are native to MersennetOrders; no need for separate vault contracts. EVM contracts can build on top: automated market makers providing liquidity, insurance funds, or vault strategies.
 
 ### 17.4 Token Systems and Sub-Currencies
 
 As with Ethereum, token systems are straightforward on Mersennet. The key operation is: subtract X units from A and give X units to B, with A's approval. Mersennet adds:
 
-- **Trading**: Tokens can be listed on PrimeOrders for limit order trading
-- **Collateral**: Tokens can back PrimeOrders collateral for leveraged positions
+- **Trading**: Tokens can be listed on MersennetOrders for limit order trading
+- **Collateral**: Tokens can back MersennetOrders collateral for leveraged positions
 
 Example: A stablecoin (e.g., USDC) is deployed as an ERC-20. A market is created for USDC/ETH. Users deposit USDC as collateral, trade ETH-perpetuals, and settle in USDC—all within Mersennet's unified state.
 
@@ -2733,21 +2733,21 @@ Example: A stablecoin (e.g., USDC) is deployed as an ERC-20. A market is created
 
 Mersennet supports derivatives beyond perps:
 
-- **Hedging contracts**: User A is long ETH, User B is short; they enter a swap contract (EVM) that references PrimeOrders positions
-- **Structured products**: Tranched products where each tranche trades on PrimeOrders
-- **Insurance**: Parametric insurance with EVM oracles and PrimeOrders for secondary trading of policy tokens
+- **Hedging contracts**: User A is long ETH, User B is short; they enter a swap contract (EVM) that references MersennetOrders positions
+- **Structured products**: Tranched products where each tranche trades on MersennetOrders
+- **Insurance**: Parametric insurance with EVM oracles and MersennetOrders for secondary trading of policy tokens
 
 ### 17.6 Decentralized Autonomous Organizations (DAOs)
 
 DAOs can use Mersennet for:
 
-- **Treasury management**: DAO holds tokens; governance votes on orders to execute via PrimeOrders
-- **Token distribution**: Vesting contracts (EVM) release tokens; recipients trade on PrimeOrders
+- **Treasury management**: DAO holds tokens; governance votes on orders to execute via MersennetOrders
+- **Token distribution**: Vesting contracts (EVM) release tokens; recipients trade on MersennetOrders
 - **Governance over markets**: DAO controls fee parameters, market creation, or margin requirements via on-chain governance
 
 ### 17.7 Identity and Compliance
 
-- **KYC-gated markets**: EVM contracts check identity credentials before allowing PrimeOrders access
+- **KYC-gated markets**: EVM contracts check identity credentials before allowing MersennetOrders access
 - **Whitelisted participants**: Only approved addresses can submit orders
 - **Audit trails**: Domain events provide a complete, queryable log of all order and trade activity
 
@@ -2756,7 +2756,7 @@ DAOs can use Mersennet for:
 Mersennet can serve as a **trading hub** for bridged assets:
 
 - Assets bridged from Ethereum, Cosmos, etc., appear as EVM tokens
-- PrimeOrders provides deep liquidity and price discovery
+- MersennetOrders provides deep liquidity and price discovery
 - Bridge messages can trigger cross-chain settlements (e.g., lock-mint, burn-unlock)
 
 ---
@@ -2782,7 +2782,7 @@ Mersennet's EVM is Turing-complete. As with Ethereum, malicious or buggy contrac
 - **Bounded computation**: No transaction can run indefinitely
 - **Predictable cost**: Senders know maximum cost upfront (gas_limit × gas_price)
 
-PrimeOrders, by contrast, is **not** Turing-complete. Its logic is fixed: order matching, margin checks, liquidations. This simplifies verification and eliminates gas as a concern for the matching engine. The separation of domains—Turing-complete EVM for flexibility, fixed logic for PrimeOrders—provides both power and predictability.
+MersennetOrders, by contrast, is **not** Turing-complete. Its logic is fixed: order matching, margin checks, liquidations. This simplifies verification and eliminates gas as a concern for the matching engine. The separation of domains—Turing-complete EVM for flexibility, fixed logic for MersennetOrders—provides both power and predictability.
 
 ### 18.3 Scalability Considerations
 
@@ -2814,7 +2814,7 @@ Like Ethereum and Bitcoin, Mersennet requires every full node to process every t
 - **Network encryption**: P2P messages are unencrypted; TLS or noise protocol is planned.
 - **Bridge queue limits**: Queues have configurable max length; under high load, oldest messages may be evicted (FIFO). Applications must handle backpressure.
 - **Parallel execution accuracy** *(v6.0)*: Static dependency analysis uses heuristic address extraction. Delegate calls or self-modifying contracts may produce inaccurate access sets. MVCC validation detects these cases and triggers sequential fallback.
-- **CLOB precompile global state** *(v6.0)*: The precompile uses a global `Arc<Mutex<>>` for PrimeOrders state access. This is thread-safe but limits precompile calls to serial execution within a block. Future work: per-market locking for parallel precompile calls.
+- **CLOB precompile global state** *(v6.0)*: The precompile uses a global `Arc<Mutex<>>` for MersennetOrders state access. This is thread-safe but limits precompile calls to serial execution within a block. Future work: per-market locking for parallel precompile calls.
 - **FBA clearing price precision** *(v6.0)*: Pro-rata fills use integer division which may leave small residuals. These are allocated to the last matched order.
 
 ### 18.6 Comparison with Existing Systems
@@ -3074,7 +3074,7 @@ $n$ = mempool/batch size, $k$ = txs per sender or parallel groups, $m$ = selecte
 | $fee = gasUsed \cdot gasPrice$ | Transaction fee |
 | $burned = baseFee \cdot G_{used}$ | Burned per block |
 
-### PrimeOrders
+### MersennetOrders
 
 | Formula | Description |
 |---------|-------------|
@@ -3125,26 +3125,26 @@ $n$ = mempool/batch size, $k$ = txs per sender or parallel groups, $m$ = selecte
 | Method | Description |
 |--------|-------------|
 | `mersennetId` | Returns chain ID |
-| `prime_blockNumber` | Returns latest block number |
-| `prime_getBalance` | Returns account balance |
-| `prime_getBlockByNumber` | Returns block by number |
-| `prime_sendTransaction` | Submits transaction |
-| `prime_getTransactionReceipt` | Returns receipt by hash |
-| `prime_getDomainEvents` | Returns filtered domain events |
+| `mersennet_blockNumber` | Returns latest block number |
+| `mersennet_getBalance` | Returns account balance |
+| `mersennet_getBlockByNumber` | Returns block by number |
+| `mersennet_sendTransaction` | Submits transaction |
+| `mersennet_getTransactionReceipt` | Returns receipt by hash |
+| `mersennet_getDomainEvents` | Returns filtered domain events |
 
-**PrimeOrders Methods:**
+**MersennetOrders Methods:**
 
 | Method | Description |
 |--------|-------------|
-| `primeorders_addMarket` | Creates new market |
-| `primeorders_submitOrder` | Submits limit order (continuous CLOB) |
-| `primeorders_cancelOrder` | Cancels order |
-| `primeorders_getOrderBook` | Returns order book |
-| `primeorders_getOpenOrders` | Returns user's open orders |
-| `primeorders_depositCollateral` | Deposits collateral |
-| `primeorders_setMarginParams` | Sets market margin parameters |
-| `primeorders_isLiquidatable` | Checks if an account can be liquidated |
-| `primeorders_liquidate` | Liquidates undercollateralized account |
+| `mersennet_orders_addMarket` | Creates new market |
+| `mersennet_orders_submitOrder` | Submits limit order (continuous CLOB) |
+| `mersennet_orders_cancelOrder` | Cancels order |
+| `mersennet_orders_getOrderBook` | Returns order book |
+| `mersennet_orders_getOpenOrders` | Returns user's open orders |
+| `mersennet_orders_depositCollateral` | Deposits collateral |
+| `mersennet_orders_setMarginParams` | Sets market margin parameters |
+| `mersennet_orders_isLiquidatable` | Checks if an account can be liquidated |
+| `mersennet_orders_liquidate` | Liquidates undercollateralized account |
 
 Collateral withdrawal is performed via the CLOB precompile (`withdrawCollateral(uint256)` at `0x0100`), not a dedicated RPC method.
 
@@ -3152,18 +3152,18 @@ Collateral withdrawal is performed via the CLOB precompile (`withdrawCollateral(
 
 | Method | Description |
 |--------|-------------|
-| `primebridge_enqueueOrdersToEvm` | Enqueues message to EVM |
-| `primebridge_enqueueEvmToOrders` | Enqueues message to Orders |
-| `primebridge_dequeueOrdersToEvm` | Dequeues from Orders→EVM queue |
-| `primebridge_dequeueEvmToOrders` | Dequeues from EVM→Orders queue |
+| `mersennet_bridge_enqueueOrdersToEvm` | Enqueues message to EVM |
+| `mersennet_bridge_enqueueEvmToOrders` | Enqueues message to Orders |
+| `mersennet_bridge_dequeueOrdersToEvm` | Dequeues from Orders→EVM queue |
+| `mersennet_bridge_dequeueEvmToOrders` | Dequeues from EVM→Orders queue |
 
 **Ethereum Compatibility Layer:**
 
 | Method | Alias For | Description |
 |--------|-----------|-------------|
 | `eth_chainId` | `mersennetId` | Returns chain ID |
-| `eth_blockNumber` | `prime_blockNumber` | Returns latest block number |
-| `eth_getBalance` | `prime_getBalance` | Returns account balance |
+| `eth_blockNumber` | `mersennet_blockNumber` | Returns latest block number |
+| `eth_getBalance` | `mersennet_getBalance` | Returns account balance |
 | `eth_getBlockByHash` | — | Returns block by hash |
 | `eth_gasPrice` | — | Returns current gas price |
 | `eth_getCode` | — | Returns contract code |
@@ -3171,7 +3171,7 @@ Collateral withdrawal is performed via the CLOB precompile (`withdrawCollateral(
 | `eth_getTransactionCount` | — | Returns account nonce |
 | `eth_call` | — | Simulates call (no state change) |
 | `eth_estimateGas` | — | Estimates gas for call |
-| `eth_sendRawTransaction` | `prime_sendTransaction` | Submits signed transaction |
+| `eth_sendRawTransaction` | `mersennet_sendTransaction` | Submits signed transaction |
 | `net_version` | — | Returns network ID |
 | `web3_clientVersion` | — | Returns client version |
 

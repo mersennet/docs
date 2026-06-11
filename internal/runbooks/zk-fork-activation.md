@@ -18,17 +18,17 @@ the transparent testnet runs chain ID 131071).
 
 - [ ] Record the SP1 proving artifact set for the candidate release:
       - program ELF build provenance
-      - pinned `PRIME_SP1_VKEY_HASH`
-      - one successful `PRIME_SP1_MODE=local` prove + verify transcript against the checked-in host runner
+      - pinned `MERSENNET_SP1_VKEY_HASH`
+      - one successful `MERSENNET_SP1_MODE=local` prove + verify transcript against the checked-in host runner
 - [ ] Tag `v1.0.0-zk-rc.0` on `feat/zk-privacy`.
 - [ ] Pre-mainnet testnet (chain ID 7920) restarts from snapshot
       with the new genesis. Migration runs. Every faucet account
       should hold one shielded note.
 - [ ] Validators sign the testnet activation block. Confirm
-      `prime_blockNumber` advances on every validator.
-- [ ] Confirm `prime_getShieldedBalance` returns the migrated
+      `mersennet_blockNumber` advances on every validator.
+- [ ] Confirm `mersennet_getShieldedBalance` returns the migrated
       balance for at least 50 sample addresses.
-- [ ] Confirm `prime_submitShieldedOrder` round-trips for at least
+- [ ] Confirm `mersennet_submitShieldedOrder` round-trips for at least
       1 000 orders without a single rejection that wasn't
       explicitly expected (stale anchor, oracle mismatch, etc.).
 - [ ] Confirm the bonded liquidator auction settles at least 10
@@ -56,7 +56,7 @@ Every two weeks:
 - [ ] Distribute updated `mersennet` binaries.
 - [ ] Distribute updated `@mersennet/sdk` (npm), `mersennet-go`,
       `mersennet-python`.
-- [ ] PrimeTrade UI ships the shielded mode behind a feature flag.
+- [ ] Mersennet Trade UI ships the shielded mode behind a feature flag.
 - [ ] Validators that have not upgraded by T-48h get a personal
       Slack ping.
 
@@ -65,27 +65,27 @@ Every two weeks:
 - [ ] Every validator restarts on `v1.0.0-zk` (no `-rc` suffix).
 - [ ] Confirm `web3_clientVersion` returns `mersennet/1.0.0-zk`.
 - [ ] Confirm validator count and voting power match expectations
-      via `prime_validators`.
+      via `mersennet_validators`.
 
 ## T-1h: final dry-run
 
 - [ ] On testnet, run `migration-dry-run.sh` and confirm:
-      - the migration plan size matches `prime_getStateTrieSize`
+      - the migration plan size matches `mersennet_getStateTrieSize`
       - the resulting tree root matches the deterministic recomputation
       - elapsed time is `<10 minutes`
 - [ ] Re-run one SP1 prove + verify round-trip against the exact release
-      artifact set (`program ELF`, `PRIME_SP1_VKEY_HASH`, host runner build),
+      artifact set (`program ELF`, `MERSENNET_SP1_VKEY_HASH`, host runner build),
       using `scripts/zk/sp1-prove-request.template.json` and
       `scripts/zk/sp1-verify-request.template.json` as the request
       skeletons. On Windows, run the checked-in host runner through
-      `PRIME_SP1_HOST_EXECUTOR=wsl`; keep `PRIME_SP1_MODE=local` until
+      `MERSENNET_SP1_HOST_EXECUTOR=wsl`; keep `MERSENNET_SP1_MODE=local` until
       the delegated E4 network-prover path is qualified for release use.
-- [ ] Record one delegated `PRIME_SP1_MODE=network` prove + verify round-trip
+- [ ] Record one delegated `MERSENNET_SP1_MODE=network` prove + verify round-trip
       for the candidate artifact set and archive:
       - `scripts/zk/sp1-network-prove-response.json`
       - `scripts/zk/sp1-network-verify-request.request.json`
       - `scripts/zk/sp1-network-verify-response.json`
-      - ELF provenance + pinned `PRIME_SP1_VKEY_HASH`
+      - ELF provenance + pinned `MERSENNET_SP1_VKEY_HASH`
       - delegated prover account / environment notes
 - [ ] Ethereum bridge (E5 / G1–G4): re-run `cd contracts && forge build
       --sizes && forge test --match-path 'test/zk/*' -vvv` (21 tests) and
@@ -104,18 +104,18 @@ Every two weeks:
 - [ ] Block `H-1` finalized.
 - [ ] Block `H` produced with new header schema, migration
       transaction, `shielded_state_root` non-zero.
-- [ ] `prime_blockNumber` advances within 10 seconds.
+- [ ] `mersennet_blockNumber` advances within 10 seconds.
 - [ ] No validator emits "fork mismatch" event.
 
 ## T+1h: post-activation smoke
 
-- [ ] Every shielded RPC method (`prime_getShieldedBalance`,
-      `prime_submitShieldedOrder`, `prime_getShieldedNotes`,
-      `prime_submitShieldedTransfer`, `prime_submitUnshield`,
-      `prime_submitLiquidationClaim`, `prime_submitLiquidationExecute`,
-      `prime_registerLiquidator`, `prime_getStateProof`,
-      `prime_viewGrantToken`) returns 200 OK for a known good input.
-- [ ] PrimeTrade UI loads the shielded view and renders a balance.
+- [ ] Every shielded RPC method (`mersennet_getShieldedBalance`,
+      `mersennet_submitShieldedOrder`, `mersennet_getShieldedNotes`,
+      `mersennet_submitShieldedTransfer`, `mersennet_submitUnshield`,
+      `mersennet_submitLiquidationClaim`, `mersennet_submitLiquidationExecute`,
+      `mersennet_registerLiquidator`, `mersennet_getStateProof`,
+      `mersennet_viewGrantToken`) returns 200 OK for a known good input.
+- [ ] Mersennet Trade UI loads the shielded view and renders a balance.
 - [ ] At least one community wallet (Argent, Rabby, etc.) lists
       the shielded balance correctly.
 

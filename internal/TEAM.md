@@ -32,11 +32,11 @@
 | **Max Supply** | 1,000,000,000 MRSN |
 | **Consensus** | DPoS (HotStuff-2 BFT design) |
 | **EVM** | Shanghai spec via `revm` |
-| **Native Precompile** | PrimeOrders CLOB at `0x0100` |
+| **Native Precompile** | MersennetOrders CLOB at `0x0100` |
 | **Validators** | 4 nodes on Hetzner VPS |
 | **Primary Server** | `46.225.30.187` (public-facing) |
 | **Secondary Server** | `46.225.183.192` (validator-2, RPC backend) |
-| **GitHub Org** | [PrimeNumbersLabs](https://github.com/PrimeNumbersLabs) |
+| **GitHub Org** | [Mersennet](https://github.com/mersennet) |
 
 ---
 
@@ -50,7 +50,7 @@
                            │                                     │
      :80   Block Explorer  │   Nginx reverse proxy + rate limit  │
      :3001 Documentation   │                                     │
-     :4000 PrimeSwap DEX   │   Static files: /var/www/           │
+     :4000 Mersennet Swap DEX   │   Static files: /var/www/           │
      :4001 Validator Dash  │     explorer/  dex/  validators/    │
      :8080 Faucet          │     docs/ (Docusaurus build)        │
      :8545 JSON-RPC        │                                     │
@@ -75,10 +75,10 @@
 
 | Crate | Path | Purpose |
 |-------|------|---------|
-| `prime-core` | `crates/core/` | Engine, consensus, EVM (revm), PrimeOrders, state, mempool |
-| `prime-rpc` | `crates/rpc/` | JSON-RPC + WebSocket server, filter APIs |
-| `prime-network` | `crates/network/` | P2P gossip, block sync, Noise encryption |
-| `prime-node` | `crates/node/` | Node binary, genesis tool, faucet binary |
+| `mersennet-core` | `crates/core/` | Engine, consensus, EVM (revm), MersennetOrders, state, mempool |
+| `mersennet-rpc` | `crates/rpc/` | JSON-RPC + WebSocket server, filter APIs |
+| `mersennet-network` | `crates/network/` | P2P gossip, block sync, Noise encryption |
+| `mersennet-node` | `crates/node/` | Node binary, genesis tool, faucet binary |
 
 ---
 
@@ -89,20 +89,20 @@
 ```
 mersennet/
 ├── crates/                    # Rust blockchain core
-│   ├── core/                  #   Engine, EVM, consensus, PrimeOrders
+│   ├── core/                  #   Engine, EVM, consensus, MersennetOrders
 │   ├── rpc/                   #   JSON-RPC + WebSocket
 │   ├── network/               #   P2P networking
 │   └── node/                  #   Binaries (mersennet, faucet, genesis)
 ├── contracts/                 # Solidity smart contracts (Foundry)
 │   ├── src/foundation/        #   Multicall3, WMRSN, MockERC20
-│   ├── src/dex/               #   PrimeSwap (UniV2 fork)
-│   ├── src/primeorders/       #   CLOB strategy examples
-│   ├── src/interfaces/        #   IPrimeOrders.sol
+│   ├── src/dex/               #   Mersennet Swap (UniV2 fork)
+│   ├── src/mersennetorders/       #   CLOB strategy examples
+│   ├── src/interfaces/        #   IMersennetOrders.sol
 │   ├── test/                  #   Foundry test suite
 │   └── script/                #   Deploy + seed scripts
-├── explorer/                  # PrimeScan block explorer (vanilla JS SPA)
-├── dex/                       # PrimeSwap DEX frontend (vanilla JS SPA)
-├── validator-explorer/        # PrimeNodes validator dashboard (vanilla JS SPA)
+├── explorer/                  # Mersennet Explorer block explorer (vanilla JS SPA)
+├── dex/                       # Mersennet Swap DEX frontend (vanilla JS SPA)
+├── validator-explorer/        # MersennetNodes validator dashboard (vanilla JS SPA)
 ├── docs-site/                 # Documentation portal (Docusaurus)
 ├── docs/                      # Internal docs, roadmaps, whitepaper
 │   ├── TEAM.md                #   ← You are here
@@ -130,24 +130,24 @@ mersennet/
 └── README.md                  # Public-facing README
 ```
 
-### Related Repos (PrimeNumbersLabs org)
+### Related Repos (Mersennet org)
 
 | Repo | Purpose | Status |
 |------|---------|--------|
 | [`mersennet`](https://github.com/mersennet/mersennet) | Core blockchain + all testnet apps (monorepo) | **Active** — main development |
-| [`primescan-explorer`](https://github.com/PrimeNumbersLabs/primescan-explorer) | Block explorer (standalone) | Synced from monorepo `explorer/` |
-| [`primeswap-dex`](https://github.com/PrimeNumbersLabs/primeswap-dex) | DEX frontend (standalone) | Synced from monorepo `dex/` |
-| [`primenodes-dashboard`](https://github.com/PrimeNumbersLabs/primenodes-dashboard) | Validator dashboard (standalone) | Synced from monorepo `validator-explorer/` |
-| [`mersennet-explorer`](https://github.com/PrimeNumbersLabs/prime-chain-explorer) | Block explorer (legacy standalone) | Synced from monorepo |
-| [`mersennet-sdk`](https://github.com/PrimeNumbersLabs/prime-chain-sdk) | TypeScript SDK | Synced from monorepo `sdk/` |
-| `primefi-omni` | Cross-chain lending (LayerZero v2) | Built, not on Mersennet yet |
-| `primefi-contracts-v3` | Aave v3–style lending contracts | Built, not deployed |
-| `primefi-ui-v3` | Lending frontend | Built |
+| [`primescan-explorer`](https://github.com/mersennet/primescan-explorer) | Block explorer (standalone) | Synced from monorepo `explorer/` |
+| [`primeswap-dex`](https://github.com/mersennet/primeswap-dex) | DEX frontend (standalone) | Synced from monorepo `dex/` |
+| [`primenodes-dashboard`](https://github.com/mersennet/primenodes-dashboard) | Validator dashboard (standalone) | Synced from monorepo `validator-explorer/` |
+| [`mersennet-explorer`](https://github.com/mersennet/prime-chain-explorer) | Block explorer (legacy standalone) | Synced from monorepo |
+| [`mersennet-sdk`](https://github.com/mersennet/prime-chain-sdk) | TypeScript SDK | Synced from monorepo `sdk/` |
+| `lend-omni` | Cross-chain lending (LayerZero v2) | Built, not on Mersennet yet |
+| `lend-contracts-v3` | Aave v3–style lending contracts | Built, not deployed |
+| `lend-ui-v3` | Lending frontend | Built |
 | `primexdc-wallet` | Browser extension wallet | Built, needs chain ID update |
 | `primexdc-mobile` | React Native mobile wallet | Built |
-| `Primeport-v2` | NFT marketplace v2 | Built |
-| `primeport-ui` | NFT marketplace frontend | Built |
-| `primeport-server` | NFT backend (NestJS) | Built |
+| `Mersennet NFTs-v2` | NFT marketplace v2 | Built |
+| `nfts-ui` | NFT marketplace frontend | Built |
+| `nfts-server` | NFT backend (NestJS) | Built |
 | `xdc-markets` | Prediction markets | Built |
 | `xdc-masternode-app` | Validator management app | Built |
 | `liquid-staking-contracts` | LST contracts | Built |
@@ -166,7 +166,7 @@ All services run on `46.225.30.187` unless noted.
 | 2 | **WebSocket** | 8546 | ws://46.225.30.187:8546 | Rust (mersennet binary) | `crates/node/` |
 | 3 | **Block Explorer** | 80 | http://46.225.30.187/ | Vanilla JS SPA + Nginx | `explorer/` |
 | 4 | **Faucet** | 8080 | http://46.225.30.187:8080 | Rust binary (embedded HTML) | `crates/node/src/bin/faucet.html` |
-| 5 | **PrimeSwap DEX** | 4000 | http://46.225.30.187:4000 | Vanilla JS SPA + Nginx | `dex/` |
+| 5 | **Mersennet Swap DEX** | 4000 | http://46.225.30.187:4000 | Vanilla JS SPA + Nginx | `dex/` |
 | 6 | **Validator Dashboard** | 4001 | http://46.225.30.187:4001 | Vanilla JS SPA + Nginx | `validator-explorer/` |
 | 7 | **Documentation** | 3001 | http://46.225.30.187:3001 | Docusaurus (static build) | `docs-site/` |
 | 8 | **Grafana** | 3000 | http://46.225.30.187:3000 | Docker container | `deploy/monitoring/` |
@@ -204,9 +204,9 @@ All services run on `46.225.30.187` unless noted.
 | **MockUSDC** | `0xb22f77d89122e9e3784bfd3eee9616273f38238d` | 6 decimals |
 | **MockUSDT** | `0x877feca38919acd7aaf7cb81f100e0454aa95c17` | 6 decimals |
 | **MockDAI** | `0xb88d63a65691effbf4b6808325b1588912c15cf4` | 18 decimals |
-| **PrimeSwapFactory** | `0x63f7a64db6d2b965189b8b48b7435668021f6b17` | DEX pair factory |
-| **PrimeSwapRouter** | `0x9f337f433e71ce969b991511f1dcd3d0622116bb` | DEX swap router |
-| **PrimeOrders** | `0x0000000000000000000000000000000000000100` | Native CLOB precompile |
+| **MersennetSwapFactory** | `0x63f7a64db6d2b965189b8b48b7435668021f6b17` | DEX pair factory |
+| **MersennetSwapRouter** | `0x9f337f433e71ce969b991511f1dcd3d0622116bb` | DEX swap router |
+| **MersennetOrders** | `0x0000000000000000000000000000000000000100` | Native CLOB precompile |
 
 ---
 
@@ -341,12 +341,12 @@ docker-compose up -d
 - **Config:** `RPC_URL` and `CHAIN_ID` at top of `app.js`
 - **Deploy:** `scp` to `/var/www/explorer/`
 
-### 2. PrimeSwap DEX (`dex/`)
+### 2. Mersennet Swap DEX (`dex/`)
 
 - **Stack:** Vanilla JS SPA, ethers.js v6 from CDN
 - **Files:** `index.html`, `style.css`, `app.js`
 - **Features:** Token swap, add/remove liquidity, pool info, pair analytics
-- **Contracts:** PrimeSwapRouter, PrimeSwapFactory, WMRSN
+- **Contracts:** MersennetSwapRouter, MersennetSwapFactory, WMRSN
 - **Config:** Contract addresses and RPC at top of `app.js`
 - **Deploy:** `scp` to `/var/www/dex/`
 
@@ -375,7 +375,7 @@ docker-compose up -d
 ### 6. Smart Contracts (`contracts/`)
 
 - **Stack:** Foundry (forge, cast)
-- **Test:** `forge test -vv` (28 tests across WMRSN, MockERC20, PrimeSwap)
+- **Test:** `forge test -vv` (28 tests across WMRSN, MockERC20, Mersennet Swap)
 - **Deploy:** `DEPLOYER_KEY=... node script/deploy.cjs`
 - **Seed liquidity:** `DEPLOYER_KEY=... node script/seed-liquidity.cjs`
 
@@ -417,7 +417,7 @@ docker-compose up -d
 | **Code Font** | JetBrains Mono (Google Fonts) |
 | **Gradients** | Always Violet → Pink → Cyan (3-stop) |
 | **Logo** | Violet swirl SVG in `docs-site/static/img/logo.svg` |
-| **Logo repo** | `PrimeNumbersLabs/prime-numbers-labs-logos` |
+| **Logo repo** | `Mersennet/prime-numbers-labs-logos` |
 
 ---
 
@@ -453,7 +453,7 @@ curl -s -X POST -H 'Content-Type: application/json' \
 
 # Check validator count
 curl -s -X POST -H 'Content-Type: application/json' \
-  -d '{"jsonrpc":"2.0","id":1,"method":"prime_validators","params":[]}' \
+  -d '{"jsonrpc":"2.0","id":1,"method":"mersennet_validators","params":[]}' \
   http://46.225.30.187:8545
 
 # SSH to primary server

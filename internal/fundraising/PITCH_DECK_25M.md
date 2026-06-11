@@ -71,7 +71,7 @@
 ╔══════════════════════════════════════════════════════════════════╗
 ║                                                                  ║
 ║    ┌──────────┐    ┌──────────────┐    ┌──────────┐              ║
-║    │   EVM    │◄──►│  PrimeOrders │◄──►│  Bridge  │              ║
+║    │   EVM    │◄──►│  MersennetOrders │◄──►│  Bridge  │              ║
 ║    │ (revm)   │    │   (CLOB)     │    │ (X-Chain)│              ║
 ║    └──────────┘    └──────────────┘    └──────────┘              ║
 ║         │                 │                  │                    ║
@@ -283,8 +283,8 @@ Native order matching requires **consensus-level integration** — you can't bol
 │      ═══════════════════════════════════════════════          │
 │                                                              │
 │      TESTNET LIVE (Chain ID 131071):                           │
-│      ✅ 4-Validator Network  ✅ PrimeScan Explorer            │
-│      ✅ PrimeSwap DEX        ✅ PrimeNodes Dashboard          │
+│      ✅ 4-Validator Network  ✅ Mersennet Explorer Explorer            │
+│      ✅ Mersennet Swap DEX        ✅ MersennetNodes Dashboard          │
 │      ✅ Faucet               ✅ Documentation Portal           │
 │      ✅ Grafana Monitoring   ✅ WebSocket RPC                  │
 │      ✅ 7 Smart Contracts    ✅ 3 Liquidity Pools              │
@@ -296,12 +296,12 @@ Native order matching requires **consensus-level integration** — you can't bol
 
 | Product | Type | Status | Deployment |
 |---------|------|--------|------------|
-| PrimeScan Explorer | Block Explorer | **Live on testnet** | Production |
-| PrimeSwap DEX | AMM (UniV2) | **Live on testnet** | Production |
-| PrimeNodes | Validator Dashboard | **Live on testnet** | Production |
-| PrimeFi | Lending (Aave-style) | **Built** | Ready to deploy |
-| Primeport | NFT Marketplace (Seaport) | **Built** | Ready to deploy |
-| PrimeXDC Wallet | Browser Extension + Mobile | **Built** | Ready to deploy |
+| Mersennet Explorer Explorer | Block Explorer | **Live on testnet** | Production |
+| Mersennet Swap DEX | AMM (UniV2) | **Live on testnet** | Production |
+| MersennetNodes | Validator Dashboard | **Live on testnet** | Production |
+| Mersennet Lend | Lending (Aave-style) | **Built** | Ready to deploy |
+| Mersennet NFTs | NFT Marketplace (Seaport) | **Built** | Ready to deploy |
+| Mersennet Wallet | Browser Extension + Mobile | **Built** | Ready to deploy |
 | xdc-markets | Prediction Markets | **Built** | Ready to deploy |
 | Liquid Staking | LST Contracts | **Built** | Ready to deploy |
 | Developer SDKs | Python, Go, TypeScript | **Built** | Ready to deploy |
@@ -641,17 +641,17 @@ Native order matching requires **consensus-level integration** — you can't bol
 ║                                                                  ║
 ║     ─────────────────────────────────────────                    ║
 ║                                                                  ║
-║     🌐  docs.primechain.network                                  ║
-║     📧  [founders@primechain.network]                            ║
+║     🌐  docs.mersennet.com                                  ║
+║     📧  [founders@mersennet.com]                            ║
 ║     𝕏   [@MersennetHQ]                                         ║
-║     📍  GitHub: PrimeNumbersLabs                                 ║
+║     📍  GitHub: Mersennet                                 ║
 ║                                                                  ║
 ║     ─────────────────────────────────────────                    ║
 ║                                                                  ║
 ║     TESTNET LIVE:  Chain ID 131071                                 ║
-║     Explorer:      primescan.io                                  ║
-║     DEX:           primeswap.io                                  ║
-║     Docs:          docs.primechain.network                       ║
+║     Explorer:      explorer.mersennet.com                                  ║
+║     DEX:           swap.io                                  ║
+║     Docs:          docs.mersennet.com                       ║
 ║                                                                  ║
 ║     NEXT STEPS:                                                  ║
 ║     1. Technical deep-dive call                                  ║
@@ -673,7 +673,7 @@ S = (S_evm, S_orders, S_bridge)
 
 Where:
   S_evm    = Ethereum-compatible state (accounts, storage, code)
-  S_orders = PrimeOrders state (markets, order books, positions, margins)
+  S_orders = MersennetOrders state (markets, order books, positions, margins)
   S_bridge = Cross-chain bridge state (queues, proofs)
 
 All three domains share a SINGLE Merkle root.

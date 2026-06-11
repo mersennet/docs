@@ -29,25 +29,25 @@ const view = await rpc.viewBalances(grant.id);
 
 ```mermaid
 flowchart LR
-  Mint["prime_viewGrantToken (mint)"] --> Active["Active grant"]
-  Active -->|"prime_viewBalances / Positions / Orders"| Read["Grant-gated reads"]
-  Active -->|"prime_viewRevokeToken"| Revoked["Revoked"]
+  Mint["mersennet_viewGrantToken (mint)"] --> Active["Active grant"]
+  Active -->|"mersennet_viewBalances / Positions / Orders"| Read["Grant-gated reads"]
+  Active -->|"mersennet_viewRevokeToken"| Revoked["Revoked"]
   Active -->|"expiresAt reached"| Expired["Expired"]
-  Read -->|"prime_viewGrantStatus"| Active
+  Read -->|"mersennet_viewGrantStatus"| Active
 ```
 
 | Step | Method | Purpose |
 |---|---|---|
-| Mint | `prime_viewGrantToken` | Create a scoped, expiring grant for a grantee. |
-| Status | `prime_viewGrantStatus` | Check whether a grant is active, expired, or revoked. |
-| Read balances | `prime_viewBalances` | Grant-gated `balances:read` reconstruction read. |
-| Read positions | `prime_viewPositions` | Grant-gated `positions:read` reconstruction read. |
-| Read orders | `prime_viewOrders` | Grant-gated `orders:read` open-order reconstruction read. |
-| Revoke | `prime_viewRevokeToken` | Invalidate the grant immediately. |
+| Mint | `mersennet_viewGrantToken` | Create a scoped, expiring grant for a grantee. |
+| Status | `mersennet_viewGrantStatus` | Check whether a grant is active, expired, or revoked. |
+| Read balances | `mersennet_viewBalances` | Grant-gated `balances:read` reconstruction read. |
+| Read positions | `mersennet_viewPositions` | Grant-gated `positions:read` reconstruction read. |
+| Read orders | `mersennet_viewOrders` | Grant-gated `orders:read` open-order reconstruction read. |
+| Revoke | `mersennet_viewRevokeToken` | Invalidate the grant immediately. |
 
 ## The node never decrypts your data
 
-Grant-gated reads are **authorization gates, not decryption oracles**. For balances, `prime_viewBalances` returns the *encrypted* notes the grantee is authorized to see (paginated), and the grantee runs `reconstructPortfolio` client-side — the node never decrypts a balance. Position and order reads return the public per-market clearing context plus the records needed for the grantee to run `reconstructPositions` / `reconstructOpenOrders` locally, authorized by the grant.
+Grant-gated reads are **authorization gates, not decryption oracles**. For balances, `mersennet_viewBalances` returns the *encrypted* notes the grantee is authorized to see (paginated), and the grantee runs `reconstructPortfolio` client-side — the node never decrypts a balance. Position and order reads return the public per-market clearing context plus the records needed for the grantee to run `reconstructPositions` / `reconstructOpenOrders` locally, authorized by the grant.
 
 This keeps the trust model honest: a viewing grant lets a specific party recompute a specific view, without ever placing your plaintext on the server.
 

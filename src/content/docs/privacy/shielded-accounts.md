@@ -40,10 +40,10 @@ flowchart LR
 
 Value enters and leaves the shielded pool through two operations:
 
-- **Shield** (`prime_submitShield`) — move funds from a transparent EOA into a new shielded note commitment.
-- **Unshield** (`prime_submitUnshield`) — spend a shielded note (publishing its nullifier) and credit a transparent EOA.
+- **Shield** (`mersennet_submitShield`) — move funds from a transparent EOA into a new shielded note commitment.
+- **Unshield** (`mersennet_submitUnshield`) — spend a shielded note (publishing its nullifier) and credit a transparent EOA.
 
-Inside the shielded pool, **shielded transfers** (`prime_submitShieldedTransfer`) move value between notes with full privacy.
+Inside the shielded pool, **shielded transfers** (`mersennet_submitShieldedTransfer`) move value between notes with full privacy.
 
 See [Migrating to shielded accounts](/privacy/migration/) for the recommended UX flow, and the [Shielded JSON-RPC reference](/developers/privacy/shielded-rpc/) for payload formats.
 

@@ -24,7 +24,7 @@ Field names use camelCase in JSON to match Ethereum conventions.
 
 ## 2. Shielded RPC methods
 
-### `prime_getChainConfig()` *(planned — not yet implemented; use `mersennetId` / `eth_chainId` today)*
+### `mersennet_getChainConfig()` *(planned — not yet implemented; use `mersennetId` / `eth_chainId` today)*
 
 Returns the chain ID, privacy activation height, and feature flags.
 
@@ -37,7 +37,7 @@ Returns the chain ID, privacy activation height, and feature flags.
 }
 ```
 
-### `prime_getShieldedRoot()`
+### `mersennet_getShieldedRoot()`
 
 Returns the current note commitment tree root.
 
@@ -45,35 +45,35 @@ Returns the current note commitment tree root.
 { "root": "0x…32 bytes…", "blockNumber": "0x..." }
 ```
 
-### `prime_getShieldedBalance({ viewKey, accountTag })`
+### `mersennet_getShieldedBalance({ viewKey, accountTag })`
 
 Wallet-side helper: scans the tree for notes owned by the
 account tag derived from the viewing key. Returns the cumulative
 balance per asset. The chain does *not* learn the address — the
 match happens client-side; this RPC is convenience-only.
 
-### `prime_getShieldedMarketAggregates(marketId)`
+### `mersennet_getShieldedMarketAggregates(marketId)`
 
 Public market-level stats: last clearing price, last matched size,
 intent count for the most recent FBA tick.
 
-### `prime_submitShieldedTransfer({ shieldedTransferBincodeHex })`
+### `mersennet_submitShieldedTransfer({ shieldedTransferBincodeHex })`
 
 Submit a shielded P2P transfer. The payload is a `ShieldedTransferTx`
 carrying input nullifiers, output commitments, and a Noir proof.
 
-### `prime_submitShield({ shieldBincodeHex })`
+### `mersennet_submitShield({ shieldBincodeHex })`
 
 Cross the transparent → shielded bridge. The payload carries the
 transparent EOA, amount, and the new shielded note commitment.
 
-### `prime_submitUnshield({ unshieldBincodeHex })`
+### `mersennet_submitUnshield({ unshieldBincodeHex })`
 
 Cross the shielded → transparent bridge. The payload carries the
 nullifier of the spent shielded note, the recipient EOA, and the
 amount.
 
-### `prime_submitShieldedOrder({ anchorRootHex, nullifierHex, newCommitmentHex, marketId, side, price, size, ownerPkHex, saltHex, tif?, gasLimit?, maxFeePerGas?, proofBytesHex? })`
+### `mersennet_submitShieldedOrder({ anchorRootHex, nullifierHex, newCommitmentHex, marketId, side, price, size, ownerPkHex, saltHex, tif?, gasLimit?, maxFeePerGas?, proofBytesHex? })`
 
 Submit a shielded order intent. The RPC builds the canonical
 `ThresholdOrderIntent { tx, intent }`, wraps the `OrderPlace` proof
@@ -83,32 +83,32 @@ the threshold mempool, and returns the resulting `intentId`. The
 decrypted payload is routed through `run_shielded_tick()` at the next
 block boundary and admitted into the shielded CLOB.
 
-### `prime_submitLiquidationClaim({ claimBincodeHex })`
+### `mersennet_submitLiquidationClaim({ claimBincodeHex })`
 
 Bonded-liquidator-only. Claims that a position is liquidatable at
 the current oracle price. The bid is threshold-encrypted.
 
-### `prime_submitLiquidationExecute({ executeBincodeHex })`
+### `mersennet_submitLiquidationExecute({ executeBincodeHex })`
 
 The auction winner submits the execution payload. Settles the
 victim's nullifier, mints the bounty + insurance commitments.
 
-### `prime_registerLiquidator({ bondCommitment, bondAmount })`
+### `mersennet_registerLiquidator({ bondCommitment, bondAmount })`
 
 One-time registration with a Pedersen bond commitment. Requires
 `bondAmount >= MIN_LIQUIDATOR_BOND` (10,000 MRSN at 18 decimals).
 
-### `prime_getStateProof(blockNumberOrTag?)`
+### `mersennet_getStateProof(blockNumberOrTag?)`
 
 Returns the SP1 state-transition proof for a specific block (or
 `"latest"`).
 
 Parameter forms:
 
-- `prime_getStateProof([])` — latest
-- `prime_getStateProof(["latest"])` — latest
-- `prime_getStateProof(["0x1f4"])` — block 500
-- `prime_getStateProof([500])` — block 500
+- `mersennet_getStateProof([])` — latest
+- `mersennet_getStateProof(["latest"])` — latest
+- `mersennet_getStateProof(["0x1f4"])` — block 500
+- `mersennet_getStateProof([500])` — block 500
 
 Response:
 
@@ -130,11 +130,11 @@ Response:
 If the block does not carry a proof (pre-activation or missing),
 the response is `{ "blockHeight": …, "proof": null, "reason": … }`.
 
-### `prime_getLatestStateProof()`
+### `mersennet_getLatestStateProof()`
 
-Convenience alias for `prime_getStateProof(["latest"])`.
+Convenience alias for `mersennet_getStateProof(["latest"])`.
 
-### `prime_verifyStateProof({ proofBincodeHex })`
+### `mersennet_verifyStateProof({ proofBincodeHex })`
 
 Stateless verifier; returns `{ "ok": true|false }`.
 
@@ -143,9 +143,9 @@ Stateless verifier; returns `{ "ok": true|false }`.
 ## 3. WebSocket subscriptions
 
 Subscribe via either standard `eth_subscribe` (Ethereum-style) or
-`prime_subscribe` (Prime-specific). Both return a hex subscription
+`mersennet_subscribe` (Mersennet-specific). Both return a hex subscription
 ID; events are pushed as JSON-RPC notifications under method
-`eth_subscription` / `prime_subscription`.
+`eth_subscription` / `mersennet_subscription`.
 
 ### Ethereum-style (`eth_subscribe`)
 
@@ -153,12 +153,12 @@ ID; events are pushed as JSON-RPC notifications under method
 - `newPendingTransactions`
 - `logs { address?, topics? }`
 
-### Prime-specific (`prime_subscribe`)
+### Mersennet-specific (`mersennet_subscribe`)
 
 | Subscription | Params | Payload shape |
 |---|---|---|
-| `PrimeOrdersTrades` | `(marketId?)` | `{ marketId, price, size, side, ts }` |
-| `PrimeOrdersBook` | `(marketId)` | `{ bids, asks, ts }` |
+| `MersennetOrdersTrades` | `(marketId?)` | `{ marketId, price, size, side, ts }` |
+| `MersennetOrdersBook` | `(marketId)` | `{ bids, asks, ts }` |
 | `BatchAuctionResults` | `(marketId?)` | `{ marketId, clearingPrice, matchedSize, intentCount }` |
 
 #### Privacy-mode subscriptions (added in C3)
@@ -177,9 +177,9 @@ Example subscription:
 
 ```bash
 wscat -c ws://localhost:8546
-> {"jsonrpc":"2.0","id":1,"method":"prime_subscribe","params":["newShieldedRoot"]}
+> {"jsonrpc":"2.0","id":1,"method":"mersennet_subscribe","params":["newShieldedRoot"]}
 < {"jsonrpc":"2.0","id":1,"result":"0x1"}
-< {"jsonrpc":"2.0","method":"prime_subscription","params":{"subscription":"0x1","result":{"blockNumber":"0x65","newRoot":"0x…","notesAdded":"0x1","nullifiersAdded":"0x0"}}}
+< {"jsonrpc":"2.0","method":"mersennet_subscription","params":{"subscription":"0x1","result":{"blockNumber":"0x65","newRoot":"0x…","notesAdded":"0x1","nullifiersAdded":"0x0"}}}
 ```
 
 ---

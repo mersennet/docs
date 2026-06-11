@@ -1,12 +1,12 @@
 ---
-title: "PrimeSwap V3 DEX"
+title: "Mersennet Swap V3 DEX"
 ---
 
-**PrimeSwap V3** is a concentrated liquidity DEX on Mersennet, built on the Uniswap V3 protocol. It enables capital-efficient liquidity positions with custom price ranges and multiple fee tiers—giving liquidity providers fine-grained control over where their capital is deployed.
+**Mersennet Swap V3** is a concentrated liquidity DEX on Mersennet, built on the Uniswap V3 protocol. It enables capital-efficient liquidity positions with custom price ranges and multiple fee tiers—giving liquidity providers fine-grained control over where their capital is deployed.
 
 ## Overview
 
-| Feature | PrimeSwap V3 |
+| Feature | Mersennet Swap V3 |
 |---------|--------------|
 | **Architecture** | Uniswap V3 fork |
 | **Liquidity** | Concentrated (custom price ranges) |
@@ -17,7 +17,7 @@ title: "PrimeSwap V3 DEX"
 
 ## V3 vs V2
 
-| Feature | PrimeSwap V2 | PrimeSwap V3 |
+| Feature | Mersennet Swap V2 | Mersennet Swap V3 |
 |---------|-------------|--------------|
 | **Liquidity Model** | Full range (x × y = k) | Concentrated (custom ranges) |
 | **Capital Efficiency** | 1× | Up to 4000× for narrow ranges |
@@ -102,7 +102,7 @@ uint256 amountOut = swapRouter.exactInputSingle(params);
 
 ## Related Resources
 
-- [PrimeSwap V2](/ecosystem/primeswap) — AMM DEX with constant product pools
+- [Mersennet Swap V2](/ecosystem/swap) — AMM DEX with constant product pools
 - [Ecosystem Directory](/ecosystem/directory) — All live services and contract addresses
 - [Deployed Contracts](/resources/contracts) — Full contract reference
-- [ERC-20 Guide](/developers/contracts/erc20-guide) — Deploy tokens to list on PrimeSwap
+- [ERC-20 Guide](/developers/contracts/erc20-guide) — Deploy tokens to list on Mersennet Swap

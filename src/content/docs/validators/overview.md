@@ -35,7 +35,7 @@ by validators. See the [Staking Guide](/validators/staking/) for details.
 Each block is produced by a single **proposer**—the validator selected for that height. The proposer:
 
 1. Collects transactions from the mempool
-2. Executes EVM transactions and PrimeOrders operations
+2. Executes EVM transactions and MersennetOrders operations
 3. Applies state transitions
 4. Broadcasts the proposed block to other validators
 

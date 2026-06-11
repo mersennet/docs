@@ -17,29 +17,29 @@ All opaque ZK payloads — proofs, encrypted blobs, intent envelopes — are enc
 
 These reads are always available; before privacy activation they return zero/empty values.
 
-### `prime_getShieldedRoot()`
+### `mersennet_getShieldedRoot()`
 Returns the current note commitment tree state: `{ shieldedStateRoot, blockNumber, noteCount, nullifierCount }`.
 
-### `prime_getShieldedBalance()`
-Returns **aggregate** shielded-pool counters — `{ totalNoteCount, totalNullifierCount, transparentEoaCount }`. The node never decrypts balances; per-account balances are reconstructed **client-side** from notes obtained via a viewing grant (see [`prime_viewBalances`](#selective-disclosure-viewing-grants) and the [Shielded SDK](/developers/privacy/shielded-sdk/)).
+### `mersennet_getShieldedBalance()`
+Returns **aggregate** shielded-pool counters — `{ totalNoteCount, totalNullifierCount, transparentEoaCount }`. The node never decrypts balances; per-account balances are reconstructed **client-side** from notes obtained via a viewing grant (see [`mersennet_viewBalances`](#selective-disclosure-viewing-grants) and the [Shielded SDK](/developers/privacy/shielded-sdk/)).
 
-### `prime_getShieldedNotes()`
-Returns `{ noteCount, currentRoot }`. Per-account note ciphertexts are fetched through grant-gated reads (`prime_viewNotes`), not this method — viewing keys are never handled server-side.
+### `mersennet_getShieldedNotes()`
+Returns `{ noteCount, currentRoot }`. Per-account note ciphertexts are fetched through grant-gated reads (`mersennet_viewNotes`), not this method — viewing keys are never handled server-side.
 
-### `prime_getShieldedMarketAggregates()`
+### `mersennet_getShieldedMarketAggregates()`
 Public per-market stats for the most recent batch-auction tick: `{ markets: [{ marketId, markPrice, longOpenInterest, shortOpenInterest, lastClearingPrice, lastVolume, liquidatableCount }] }`.
 
 ## Shielded mutations
 
 | Method | Purpose |
 |---|---|
-| `prime_submitShieldedTransfer({ envelopeBincodeHex })` | Private P2P transfer: input nullifiers, output commitments, Noir proof. |
-| `prime_submitShield({ envelopeBincodeHex })` | Transparent → shielded: EOA, amount, new note commitment. |
-| `prime_submitUnshield({ envelopeBincodeHex })` | Shielded → transparent: spent nullifier, recipient EOA, amount. |
-| `prime_submitShieldedOrder({ anchorRootHex, nullifierHex, newCommitmentHex, marketId, side, price, size, ownerPkHex, saltHex, tif?, gasLimit?, maxFeePerGas?, proofBytesHex? })` | Submit a threshold-encrypted shielded order intent; returns an `intentId`. |
-| `prime_submitLiquidationClaim({ claimBincodeHex })` | Bonded-liquidator-only encrypted liquidation claim. |
-| `prime_submitLiquidationExecute({ executeBincodeHex })` | Auction winner settles the victim's nullifier; mints bounty + insurance. |
-| `prime_registerLiquidator({ bondCommitmentHex, bondAmount })` | One-time registration with a Pedersen bond (`bondAmount >= 10,000 MRSN`). |
+| `mersennet_submitShieldedTransfer({ envelopeBincodeHex })` | Private P2P transfer: input nullifiers, output commitments, Noir proof. |
+| `mersennet_submitShield({ envelopeBincodeHex })` | Transparent → shielded: EOA, amount, new note commitment. |
+| `mersennet_submitUnshield({ envelopeBincodeHex })` | Shielded → transparent: spent nullifier, recipient EOA, amount. |
+| `mersennet_submitShieldedOrder({ anchorRootHex, nullifierHex, newCommitmentHex, marketId, side, price, size, ownerPkHex, saltHex, tif?, gasLimit?, maxFeePerGas?, proofBytesHex? })` | Submit a threshold-encrypted shielded order intent; returns an `intentId`. |
+| `mersennet_submitLiquidationClaim({ claimBincodeHex })` | Bonded-liquidator-only encrypted liquidation claim. |
+| `mersennet_submitLiquidationExecute({ executeBincodeHex })` | Auction winner settles the victim's nullifier; mints bounty + insurance. |
+| `mersennet_registerLiquidator({ bondCommitmentHex, bondAmount })` | One-time registration with a Pedersen bond (`bondAmount >= 10,000 MRSN`). |
 
 See [Risk checks in zero knowledge](/privacy/zk-risk-checks/) for the liquidation model.
 
@@ -47,9 +47,9 @@ See [Risk checks in zero knowledge](/privacy/zk-risk-checks/) for the liquidatio
 
 | Method | Purpose |
 |---|---|
-| `prime_getStateProof(blockNumberOrTag?)` | SP1 state-transition proof for a block (or `"latest"`). Accepts `[]`, `["latest"]`, `["0x1f4"]`, or `[500]`. |
-| `prime_getLatestStateProof()` | Alias for `prime_getStateProof(["latest"])`. |
-| `prime_verifyStateProof({ proofBincodeHex })` | Stateless verifier; returns `{ "valid": true|false }`. |
+| `mersennet_getStateProof(blockNumberOrTag?)` | SP1 state-transition proof for a block (or `"latest"`). Accepts `[]`, `["latest"]`, `["0x1f4"]`, or `[500]`. |
+| `mersennet_getLatestStateProof()` | Alias for `mersennet_getStateProof(["latest"])`. |
+| `mersennet_verifyStateProof({ proofBincodeHex })` | Stateless verifier; returns `{ "valid": true|false }`. |
 
 Response shape (when a proof exists):
 
@@ -77,20 +77,20 @@ These methods implement the [selective-disclosure grant lifecycle](/privacy/sele
 
 | Method | Scope | Purpose |
 |---|---|---|
-| `prime_viewGrantToken` | — | Mint a scoped, expiring viewing grant for a grantee. |
-| `prime_viewRevokeToken` | — | Revoke a grant immediately. |
-| `prime_viewGrantStatus` | — | Report whether a grant is active, expired, or revoked. |
-| `prime_viewPortfolioDigest` | `exports:portfolio_digest` | Authorized digest of the granted portfolio. |
-| `prime_viewNotes` | `notes:read` | Paginated encrypted notes a grant authorizes (for client decryption). |
-| `prime_viewBalances` | `balances:read` | Encrypted notes for `reconstructPortfolio`; node never decrypts. |
-| `prime_viewPositions` | `positions:read` | Public clearing context for `reconstructPositions`. |
-| `prime_viewOrders` | `orders:read` | Public clearing context for `reconstructOpenOrders`. |
+| `mersennet_viewGrantToken` | — | Mint a scoped, expiring viewing grant for a grantee. |
+| `mersennet_viewRevokeToken` | — | Revoke a grant immediately. |
+| `mersennet_viewGrantStatus` | — | Report whether a grant is active, expired, or revoked. |
+| `mersennet_viewPortfolioDigest` | `exports:portfolio_digest` | Authorized digest of the granted portfolio. |
+| `mersennet_viewNotes` | `notes:read` | Paginated encrypted notes a grant authorizes (for client decryption). |
+| `mersennet_viewBalances` | `balances:read` | Encrypted notes for `reconstructPortfolio`; node never decrypts. |
+| `mersennet_viewPositions` | `positions:read` | Public clearing context for `reconstructPositions`. |
+| `mersennet_viewOrders` | `orders:read` | Public clearing context for `reconstructOpenOrders`. |
 
 Pagination: balance-style reads take `(grantIdHex, [limit], [cursorHex])`.
 
 ## WebSocket subscriptions
 
-Subscribe via `eth_subscribe` (Ethereum-style) or `prime_subscribe` (Mersennet-specific). Both return a hex subscription ID; events arrive as JSON-RPC notifications.
+Subscribe via `eth_subscribe` (Ethereum-style) or `mersennet_subscribe` (Mersennet-specific). Both return a hex subscription ID; events arrive as JSON-RPC notifications.
 
 **Ethereum-style:** `newHeads`, `newPendingTransactions`, `logs { address?, topics? }`.
 
@@ -98,8 +98,8 @@ Subscribe via `eth_subscribe` (Ethereum-style) or `prime_subscribe` (Mersennet-s
 
 | Subscription | Params | Payload |
 |---|---|---|
-| `PrimeOrdersTrades` | `(marketId?)` | `{ marketId, price, size, side, ts }` |
-| `PrimeOrdersBook` | `(marketId)` | `{ bids, asks, ts }` |
+| `MersennetOrdersTrades` | `(marketId?)` | `{ marketId, price, size, side, ts }` |
+| `MersennetOrdersBook` | `(marketId)` | `{ bids, asks, ts }` |
 | `BatchAuctionResults` | `(marketId?)` | `{ marketId, clearingPrice, matchedSize, intentCount }` |
 | `newShieldedRoot` | `()` | `{ blockNumber, newRoot, notesAdded, nullifiersAdded }` |
 | `newClearingPrice` | `(marketId?)` | `{ marketId, clearingPrice, matchedSize, intentCount }` |
@@ -110,7 +110,7 @@ Privacy-mode payloads are **address-free by construction** — CI enforces that 
 
 ```bash
 wscat -c ws://46.225.30.187:8546
-> {"jsonrpc":"2.0","id":1,"method":"prime_subscribe","params":["newShieldedRoot"]}
+> {"jsonrpc":"2.0","id":1,"method":"mersennet_subscribe","params":["newShieldedRoot"]}
 < {"jsonrpc":"2.0","id":1,"result":"0x1"}
 ```
 

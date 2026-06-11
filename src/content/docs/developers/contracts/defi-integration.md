@@ -2,14 +2,14 @@
 title: "DeFi Integration"
 ---
 
-Mersennet has an on-chain DEX called **PrimeSwap** — a Uniswap V2–style AMM. This guide shows how to swap tokens, add liquidity, and query prices using the deployed Router contract.
+Mersennet has an on-chain DEX called **Mersennet Swap** — a Uniswap V2–style AMM. This guide shows how to swap tokens, add liquidity, and query prices using the deployed Router contract.
 
 ## Deployed Contract Addresses
 
 | Contract | Address |
 |----------|---------|
-| PrimeSwapFactory | `0x63f7a64db6d2b965189b8b48b7435668021f6b17` |
-| PrimeSwapRouter | `0x9f337f433e71ce969b991511f1dcd3d0622116bb` |
+| MersennetSwapFactory | `0x63f7a64db6d2b965189b8b48b7435668021f6b17` |
+| MersennetSwapRouter | `0x9f337f433e71ce969b991511f1dcd3d0622116bb` |
 | WMRSN | `0x079bf1207b51acda83e2e8178344f62a883f8479` |
 | MockUSDC | `0xb22f77d89122e9e3784bfd3eee9616273f38238d` |
 | MockUSDT | `0x877feca38919acd7aaf7cb81f100e0454aa95c17` |

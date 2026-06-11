@@ -92,16 +92,16 @@ Used for: hero titles, primary CTA buttons, top bars, logo fills, and accent bor
 
 ```css
 :root {
-  --prime-accent: #00FFF9;
-  --prime-accent-dim: rgba(0, 255, 249, 0.15);
-  --prime-accent-subtle: rgba(0, 255, 249, 0.08);
-  --prime-violet: #4901FF;
-  --prime-violet-light: #6d2fff;
-  --prime-bg-base: #0b0b12;
-  --prime-bg-surface: #111122;
-  --prime-bg-elevated: #14142a;
-  --prime-font-ui: 'Sora', system-ui, -apple-system, sans-serif;
-  --prime-font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+  --mersennet-accent: #00FFF9;
+  --mersennet-accent-dim: rgba(0, 255, 249, 0.15);
+  --mersennet-accent-subtle: rgba(0, 255, 249, 0.08);
+  --mersennet-violet: #4901FF;
+  --mersennet-violet-light: #6d2fff;
+  --mersennet-bg-base: #0b0b12;
+  --mersennet-bg-surface: #111122;
+  --mersennet-bg-elevated: #14142a;
+  --mersennet-font-ui: 'Sora', system-ui, -apple-system, sans-serif;
+  --mersennet-font-mono: 'JetBrains Mono', 'Fira Code', monospace;
 }
 ```
 

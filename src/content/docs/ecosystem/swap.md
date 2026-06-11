@@ -1,16 +1,16 @@
 ---
-title: "PrimeSwap V2 DEX"
+title: "Mersennet Swap V2 DEX"
 ---
 
-**PrimeSwap V2** is the native automated market maker (AMM) and decentralized exchange (DEX) on Mersennet. Built as a Uniswap V2 fork, it provides permissionless token swaps, liquidity provision, and LP token mechanics—enabling the core DeFi primitives that power the Mersennet ecosystem.
+**Mersennet Swap V2** is the native automated market maker (AMM) and decentralized exchange (DEX) on Mersennet. Built as a Uniswap V2 fork, it provides permissionless token swaps, liquidity provision, and LP token mechanics—enabling the core DeFi primitives that power the Mersennet ecosystem.
 
-:::tip[PrimeSwap V3 is live]
-**[PrimeSwap V3](/ecosystem/primeswap-v3)** adds concentrated liquidity with the Uniswap V3 protocol. Choose V2 for simple swaps and full-range liquidity, or V3 for capital-efficient concentrated positions.
+:::tip[Mersennet Swap V3 is live]
+**[Mersennet Swap V3](/ecosystem/swap-v3)** adds concentrated liquidity with the Uniswap V3 protocol. Choose V2 for simple swaps and full-range liquidity, or V3 for capital-efficient concentrated positions.
 :::
 
 ## Overview
 
-| Feature | PrimeSwap |
+| Feature | Mersennet Swap |
 |---------|-----------|
 | **Architecture** | Uniswap V2 fork |
 | **Swap Fee** | 0.3% |
@@ -20,21 +20,21 @@ title: "PrimeSwap V2 DEX"
 
 ## Factory + Router Architecture
 
-PrimeSwap uses a two-contract design:
+Mersennet Swap uses a two-contract design:
 
-- **PrimeSwapFactory** — Creates and tracks liquidity pairs. Each pair is a separate contract.
-- **PrimeSwapRouter** — User-facing contract for adding liquidity, removing liquidity, and executing swaps. Handles approvals, slippage, and deadline checks.
+- **MersennetSwapFactory** — Creates and tracks liquidity pairs. Each pair is a separate contract.
+- **MersennetSwapRouter** — User-facing contract for adding liquidity, removing liquidity, and executing swaps. Handles approvals, slippage, and deadline checks.
 
 ```
 ┌─────────────────┐     createPair()      ┌──────────────────┐
-│ PrimeSwapFactory│ ───────────────────►  │ PrimeSwapPair    │
+│ MersennetSwapFactory│ ───────────────────►  │ MersennetSwapPair    │
 │                 │                       │ (WMRSN/USDC, etc)│
 └────────┬────────┘                       └──────────────────┘
          │
          │ getPair(tokenA, tokenB)
          ▼
 ┌─────────────────┐     swap/addLiquidity  ┌──────────────────┐
-│ PrimeSwapRouter │ ───────────────────►  │ PrimeSwapPair(s) │
+│ MersennetSwapRouter │ ───────────────────►  │ MersennetSwapPair(s) │
 └─────────────────┘                       └──────────────────┘
 ```
 
@@ -42,11 +42,11 @@ PrimeSwap uses a two-contract design:
 
 | Contract | Address |
 |----------|---------|
-| **PrimeSwapFactory** | `0x63f7a64db6d2b965189b8b48b7435668021f6b17` |
-| **PrimeSwapRouter** | `0x9f337f433e71ce969b991511f1dcd3d0622116bb` |
+| **MersennetSwapFactory** | `0x63f7a64db6d2b965189b8b48b7435668021f6b17` |
+| **MersennetSwapRouter** | `0x9f337f433e71ce969b991511f1dcd3d0622116bb` |
 
 :::note
-PrimeSwap depends on **WMRSN** (wrapped MRSN) for native token pairs. WMRSN address: `0x079bf1207b51acda83e2e8178344f62a883f8479`
+Mersennet Swap depends on **WMRSN** (wrapped MRSN) for native token pairs. WMRSN address: `0x079bf1207b51acda83e2e8178344f62a883f8479`
 :::
 
 ## Creating Pairs
@@ -55,7 +55,7 @@ Use the Factory to create a new trading pair:
 
 ```solidity
 // Get the pair address (creates if it doesn't exist)
-address pair = IPrimeSwapFactory(factory).createPair(tokenA, tokenB);
+address pair = IMersennetSwapFactory(factory).createPair(tokenA, tokenB);
 ```
 
 Token order does not matter—the Factory sorts addresses to ensure deterministic pair addresses.
@@ -191,7 +191,7 @@ await router.swapExactTokensForPRIM(amountIn, amountOutMin, path, await signer.g
 
 ## Related Resources
 
-- [PrimeSwap V3](/ecosystem/primeswap-v3) — Concentrated liquidity DEX
+- [Mersennet Swap V3](/ecosystem/swap-v3) — Concentrated liquidity DEX
 - [Deployed Contracts](/resources/contracts) — Full contract reference
-- [ERC-20 Guide](/developers/contracts/erc20-guide) — Deploy tokens to list on PrimeSwap
+- [ERC-20 Guide](/developers/contracts/erc20-guide) — Deploy tokens to list on Mersennet Swap
 - [Network Information](/getting-started/network-info) — RPC, Chain ID, and configuration

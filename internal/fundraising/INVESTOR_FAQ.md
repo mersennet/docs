@@ -59,7 +59,7 @@ These are measured benchmarks, not theoretical maximums.
 | Core blockchain | Rust 2024 edition (44,000+ LOC, 6-crate workspace) |
 | EVM | revm v12 (Shanghai spec) |
 | Consensus | HotStuff-2 BFT (DPoS) |
-| CLOB | Native PrimeOrders engine with FBA matching |
+| CLOB | Native MersennetOrders engine with FBA matching |
 | Storage | sled 0.34 (dev), redb (production) |
 | Networking | Custom UDP gossip, TCP sync, Noise encryption |
 | Cryptography | secp256k1 ECDSA (k256), keccak256 |
@@ -71,7 +71,7 @@ These are measured benchmarks, not theoretical maximums.
 
 ### Q: Is the code open source?
 
-**A:** The codebase lives in the PrimeNumbersLabs GitHub organization. Core protocol code and documentation are available. Smart contracts are verified on-chain. We plan full open-sourcing around mainnet launch.
+**A:** The codebase lives in the Mersennet GitHub organization. Core protocol code and documentation are available. Smart contracts are verified on-chain. We plan full open-sourcing around mainnet launch.
 
 ---
 
@@ -250,7 +250,7 @@ Raising less would risk under-funding business development (the partnerships are
 1. **Staking:** Validators stake MRSN to participate in consensus and earn block rewards
 2. **Gas:** Transaction fees paid in MRSN (EIP-1559 base fee model)
 3. **Governance:** Token-weighted voting on protocol parameters
-4. **Collateral:** Can be used as collateral in PrimeFi lending and PrimeOrders margin
+4. **Collateral:** Can be used as collateral in Mersennet Lend lending and MersennetOrders margin
 
 ---
 
@@ -375,9 +375,9 @@ The native CLOB + EVM combination has value even if RWA tokenization takes longe
 
 ### Contact
 
-**Email:** [founders@primechain.network]
-**Docs:** docs.primechain.network
-**GitHub:** PrimeNumbersLabs
+**Email:** [founders@mersennet.com]
+**Docs:** docs.mersennet.com
+**GitHub:** Mersennet
 **Testnet:** Chain ID 131071
 
 ---

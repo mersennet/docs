@@ -10,14 +10,14 @@ Existing transparent balances do not become private automatically. A user moves 
 ```mermaid
 flowchart TD
   Plan["planMigration(...)"] --> Review["Wallet shows the plan: amount, derived note, commitment"]
-  Review -->|"user approves"| Shield["prime_submitShield"]
+  Review -->|"user approves"| Shield["mersennet_submitShield"]
   Shield --> Confirm["confirmMigration(...)"]
   Confirm --> Verify["Verify on-chain commitment matches the derived note"]
   Verify --> Done["Funds now shielded"]
 ```
 
 1. **Plan** — `planMigration` computes the migration note the wallet will create, including its derived randomness and the expected note commitment, so the UI can show the user exactly what will happen before signing.
-2. **Submit** — the wallet shields the funds via `prime_submitShield`, creating the new note commitment on-chain.
+2. **Submit** — the wallet shields the funds via `mersennet_submitShield`, creating the new note commitment on-chain.
 3. **Confirm** — `confirmMigration` checks that the on-chain commitment matches the planned note, giving the wallet a deterministic success/failure signal.
 
 ## SDK helpers
@@ -40,7 +40,7 @@ const plan = planMigration(accounts); // accounts: MigrationNoteParams[]
 // plan.notes → derived notes + expected commitments
 // plan.totalsByAsset → per-asset totals for user review
 
-// 2. Shield via RPC (prime_submitShield) using each planned note ...
+// 2. Shield via RPC (mersennet_submitShield) using each planned note ...
 
 // 3. Confirm the result deterministically against the scanned notes
 const result = confirmMigration(accounts, scannedNotes);

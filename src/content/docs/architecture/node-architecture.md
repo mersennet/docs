@@ -43,7 +43,7 @@ A running Mersennet node is composed of five cooperating subsystems:
 │                    │  └─────────────────┘    │                          │
 │                    │                         │                          │
 │                    │  ┌─────────────────┐    │                          │
-│                    │  │  PrimeOrders    │    │                          │
+│                    │  │  MersennetOrders    │    │                          │
 │                    │  │  Order Book     │    │                          │
 │                    │  └─────────────────┘    │                          │
 │                    └────────────────────────┘                           │
@@ -78,14 +78,14 @@ The heart of the node. Contains all types, execution logic, and consensus:
 | `flat_state` | `FlatState` — flat key-value representation for fast reads |
 | `state_trait` | `StateBackend` trait abstracting storage (sled, redb, in-memory) |
 | `mempool` | Transaction pool with nonce ordering, gas price priority, per-sender limits, replacement logic |
-| `precompiles` | PrimeOrders EVM precompile registration at address `0x0100` |
+| `precompiles` | MersennetOrders EVM precompile registration at address `0x0100` |
 | `precompile_abi` | ABI encoding/decoding for precompile function selectors |
-| `prime_orders` | Order book state: markets, orders, positions, matching engine |
+| `mersennet_orders` | Order book state: markets, orders, positions, matching engine |
 | `config` | `AppConfig` and all sub-config structs (`EngineConfig`, `P2pConfig`, etc.) |
-| `events` | Domain event types for PrimeOrders and Bridge operations |
-| `errors` | Error types for RPC validation and PrimeOrders |
+| `events` | Domain event types for MersennetOrders and Bridge operations |
+| `errors` | Error types for RPC validation and MersennetOrders |
 | `network` | Network simulation and consensus message types (`Prevote`, `Precommit`, etc.) |
-| `bridge` | Cross-domain bridge queue (EVM ↔ PrimeOrders) |
+| `bridge` | Cross-domain bridge queue (EVM ↔ MersennetOrders) |
 | `prometheus` | Prometheus metrics registry and `/metrics` endpoint |
 | `identity` | Node identity (keypair) generation and persistence |
 | `governance` | On-chain governance proposals and voting |
@@ -116,7 +116,7 @@ HTTP and WebSocket RPC servers:
 
 | File | Purpose |
 |------|---------|
-| `rpc.rs` | HTTP JSON-RPC server using `tiny_http`. Handles `eth_*` and `prime_*` methods. Includes CORS, metrics, and Prometheus `/metrics` endpoint |
+| `rpc.rs` | HTTP JSON-RPC server using `tiny_http`. Handles `eth_*` and `mersennet_*` methods. Includes CORS, metrics, and Prometheus `/metrics` endpoint |
 | `ws.rs` | WebSocket server for `eth_subscribe` (new blocks, pending transactions, logs) |
 | `rpc_router.rs` | Method dispatch router mapping RPC method names to handler functions |
 
@@ -161,7 +161,7 @@ When the block timer fires, the following sequence executes:
   │  3. EVM EXECUTION       │  For each transaction:
   │                         │    a. Build revm::Env (caller, callee, value,
   │                         │       data, gas_limit, gas_price)
-  │                         │    b. Execute via revm with PrimeOrders
+  │                         │    b. Execute via revm with MersennetOrders
   │                         │       precompile at 0x0100
   │                         │    c. Collect ExecutionResult → Receipt
   │                         │    d. Update account states in StateBackend
@@ -170,8 +170,8 @@ When the block timer fires, the following sequence executes:
                ▼
   ┌─────────────────────────┐
   │  4. BRIDGE PROCESSING   │  Process cross-domain bridge messages:
-  │                         │    - EVM → PrimeOrders deposits
-  │                         │    - PrimeOrders → EVM withdrawals
+  │                         │    - EVM → MersennetOrders deposits
+  │                         │    - MersennetOrders → EVM withdrawals
   └────────────┬────────────┘
                │
                ▼
@@ -272,7 +272,7 @@ For each transaction, the engine:
    - Transfer MRSN between accounts
    - Deploy a new contract (when `to` is `None`)
    - Call an existing contract
-   - Interact with the PrimeOrders precompile at `0x0100`
+   - Interact with the MersennetOrders precompile at `0x0100`
 4. Captures the `ExecutionResult` (success/revert/halt, gas used, output, logs)
 5. Commits state changes to the `StateBackend`
 
@@ -282,13 +282,13 @@ Beyond the standard Ethereum precompiles (ecRecover, SHA-256, RIPEMD-160, identi
 
 | Address | Name | Description |
 |---------|------|-------------|
-| `0x0100` | **PrimeOrders** | Native on-chain order book. Solidity contracts can place/cancel orders, query order books, and manage positions atomically within a transaction |
+| `0x0100` | **MersennetOrders** | Native on-chain order book. Solidity contracts can place/cancel orders, query order books, and manage positions atomically within a transaction |
 | `0x0200` | **Shielded Transfer** | Private note-to-note transfer (`shieldedTransfer(bytes)`); activates with the privacy hard fork |
 | `0x0201` | **Shield / Unshield** | Transparent ⇄ shielded bridge (`shield`, `unshield`); activates with the privacy hard fork |
 | `0x0202` | **Code Publication** | Register/revoke a contract code attestation |
 | `0x0300` | **State-Proof Verifier** | Verify an SP1 state-transition proof on-chain (`verifyStateProof(bytes)`) |
 
-The PrimeOrders precompile is registered via a custom `EvmHandler` that injects it into the precompile table before each block's execution. A global context (`PRIME_ORDERS_CTX`) provides the precompile access to the order book state.
+The MersennetOrders precompile is registered via a custom `EvmHandler` that injects it into the precompile table before each block's execution. A global context (`MERSENNET_ORDERS_CTX`) provides the precompile access to the order book state.
 
 ### Gas Metering
 
@@ -297,7 +297,7 @@ Gas follows standard EVM rules:
 - Base transaction cost: 21,000 gas
 - Contract creation: 32,000 gas + code deposit cost
 - Storage operations: 20,000 gas (SSTORE cold), 5,000 gas (SSTORE warm)
-- PrimeOrders precompile calls: fixed gas costs per operation type
+- MersennetOrders precompile calls: fixed gas costs per operation type
 - Block gas limit: 30,000,000 (configurable)
 
 ### EIP-1559 Fee Market

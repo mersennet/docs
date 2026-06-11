@@ -151,7 +151,7 @@ Mersennet uses a JSON configuration file. Create `config.json` with the sections
 | `initial_reward_per_block` | `string` | `"10000000000000000000"` | Block reward (10 MRSN) |
 | `halving_interval` | `u64` | `35000000` | Blocks between reward halvings |
 
-#### `prime_orders` — PrimeOrders Precompile
+#### `mersennet_orders` — MersennetOrders Precompile
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
@@ -420,7 +420,7 @@ Connect Grafana to your Prometheus instance and create dashboards for:
 - **Consensus Health** — Finalization rate, consensus rounds, active validators
 - **Mempool** — Pool size, rejection rate, gas price distribution
 - **Network** — Peer count, P2P message rates
-- **PrimeOrders** — Order submission rate, fill rate, active markets
+- **MersennetOrders** — Order submission rate, fill rate, active markets
 
 The public Grafana dashboard is available at [http://46.225.30.187:3000](http://46.225.30.187:3000).
 

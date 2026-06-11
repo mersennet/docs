@@ -9,12 +9,12 @@
 | Service | URL | Status |
 |---------|-----|--------|
 | 4-Validator Network | 4 Hetzner VPS nodes | Running |
-| PrimeScan Explorer | http://46.225.30.187/ | Live |
+| Mersennet Explorer Explorer | http://46.225.30.187/ | Live |
 | JSON-RPC | http://46.225.30.187:8545 | Live |
 | WebSocket RPC | ws://46.225.30.187:8546 | Live |
 | Faucet | http://46.225.30.187:8080 | Live |
-| PrimeSwap DEX | http://46.225.30.187:4000 | Live |
-| PrimeNodes Dashboard | http://46.225.30.187:4001 | Live |
+| Mersennet Swap DEX | http://46.225.30.187:4000 | Live |
+| MersennetNodes Dashboard | http://46.225.30.187:4001 | Live |
 | Grafana Monitoring | http://46.225.30.187:3000 | Live |
 | Documentation Portal | http://46.225.30.187:3001 | Live |
 
@@ -27,8 +27,8 @@
 | MockUSDC | `0xb22f77d89122e9e3784bfd3eee9616273f38238d` | Testnet USDC (6 decimals) |
 | MockUSDT | `0x877feca38919acd7aaf7cb81f100e0454aa95c17` | Testnet USDT (6 decimals) |
 | MockDAI | `0xb88d63a65691effbf4b6808325b1588912c15cf4` | Testnet DAI (18 decimals) |
-| PrimeSwapFactory | `0x63f7a64db6d2b965189b8b48b7435668021f6b17` | DEX pair factory |
-| PrimeSwapRouter | `0x9f337f433e71ce969b991511f1dcd3d0622116bb` | DEX swap router |
+| MersennetSwapFactory | `0x63f7a64db6d2b965189b8b48b7435668021f6b17` | DEX pair factory |
+| MersennetSwapRouter | `0x9f337f433e71ce969b991511f1dcd3d0622116bb` | DEX swap router |
 
 ### Liquidity Pools (Seeded)
 
@@ -42,19 +42,19 @@
 
 | App | Type | Repo | Stack | State |
 |-----|------|------|-------|-------|
-| PrimeXDC Wallet | Browser Extension | `primexdc-wallet/` | React, ethers, Chrome MV3 | Built |
-| PrimeXDC Mobile | Mobile Wallet | `primexdc-mobile/` | React Native | APK built |
-| PrimeFi Contracts | Lending/Borrowing | `primefi-contracts/` | Solidity, Hardhat, Aave-style | Contracts ready |
-| PrimeFi UI v2 | Lending Frontend | `primefi-ui-v2/` | React 19, Vite, wagmi | Built (dist/) |
-| PrimeFi Liquidator | Liquidation Bot | `primefi-liquidator/` | Node.js | Ready |
-| PrimeFi Omni | Cross-chain Lending | `primefi-omni/` | Hardhat, LayerZero v2 | Contracts ready |
-| Primeport UI | NFT Marketplace | `primeport-ui/` | Next.js 15, Seaport | Built (.next/) |
-| Primeport Server | NFT Backend | `primeport-project/` | NestJS, Prisma, GraphQL | Ready |
+| Mersennet Wallet | Browser Extension | `primexdc-wallet/` | React, ethers, Chrome MV3 | Built |
+| Mersennet Wallet Mobile | Mobile Wallet | `primexdc-mobile/` | React Native | APK built |
+| Mersennet Lend Contracts | Lending/Borrowing | `lend-contracts/` | Solidity, Hardhat, Aave-style | Contracts ready |
+| Mersennet Lend UI v2 | Lending Frontend | `lend-ui-v2/` | React 19, Vite, wagmi | Built (dist/) |
+| Mersennet Lend Liquidator | Liquidation Bot | `lend-liquidator/` | Node.js | Ready |
+| Mersennet Lend Omni | Cross-chain Lending | `lend-omni/` | Hardhat, LayerZero v2 | Contracts ready |
+| Mersennet NFTs UI | NFT Marketplace | `nfts-ui/` | Next.js 15, Seaport | Built (.next/) |
+| Mersennet NFTs Server | NFT Backend | `nfts-project/` | NestJS, Prisma, GraphQL | Ready |
 | xdc-markets | Prediction Markets | `xdc-markets/` | Express, Vite, Prisma | Docker-ready |
 | Liquid Staking | LST Contracts | `liquid-staking-contracts/` | Hardhat, Solidity | Contracts ready |
 | Staking UI v2 | Staking Frontend | `primestaking-ui-v2/` | Next.js 15, wagmi | Built |
 | Masternode Dashboard | Validator Mgmt | `xdc-masternode-dashboard/` | Express, Vite, React | Deployed elsewhere |
-| PrimeRoll Casino | AI Agent Casino | `primeroll-agent-casino/` | NestJS, multi-SDK | Ready |
+| MersennetRoll Casino | AI Agent Casino | `primeroll-agent-casino/` | NestJS, multi-SDK | Ready |
 | Vault Contracts | DeFi Vaults | `prime-xdc-vaults/` | Hardhat, Solidity | Ready |
 | PRFI NFT Contracts | Omnichain NFTs | `prfi-nft-contracts/` | Hardhat, LayerZero | Ready |
 | SDKs | Developer SDKs | `mersennet/sdk*` | JS, Go, Python | In repo |
@@ -78,7 +78,7 @@
 
 | # | Need | Status |
 |---|------|--------|
-| 7 | DEX / AMM (PrimeSwap) | **DONE** — Factory + Router deployed |
+| 7 | DEX / AMM (Mersennet Swap) | **DONE** — Factory + Router deployed |
 | 8 | Wrapped MRSN (WMRSN) | **DONE** — deployed |
 | 9 | Stablecoin Mocks | **DONE** — USDC, USDT, DAI deployed |
 | 10 | Multicall3 Contract | **DONE** — deployed |
@@ -87,8 +87,8 @@
 | 13 | Liquidity Pools | **DONE** — WMRSN/USDC, WMRSN/USDT, WMRSN/DAI seeded |
 | 14 | Whitepaper in Docs | **DONE** — /whitepaper route on docs portal |
 | 15 | GitHub Organization | **DONE** — README, CONTRIBUTING, templates, branch cleanup |
-| 16 | PrimeSwap DEX Frontend | **DONE** — http://46.225.30.187:4000 |
-| 17 | PrimeNodes Validator Dashboard | **DONE** — http://46.225.30.187:4001 |
+| 16 | Mersennet Swap DEX Frontend | **DONE** — http://46.225.30.187:4000 |
+| 17 | MersennetNodes Validator Dashboard | **DONE** — http://46.225.30.187:4001 |
 | 18 | Brand Rebrand (PNL Violet/Cyan) | **DONE** — Explorer, Faucet, Docs, DEX, Validators |
 | 19 | Comprehensive Node Architecture Docs | **DONE** — Node architecture, consensus deep-dive, config reference |
 | 20 | Full-text Search in Docs | **DONE** — Local search plugin |
@@ -101,10 +101,10 @@
 
 These require pointing existing apps to chain 131071:
 
-1. PrimeFi — deploy lending contracts, configure markets with WMRSN + mock stablecoins
-2. Primeport — deploy Seaport, point UI + NestJS backend to testnet RPC
+1. Mersennet Lend — deploy lending contracts, configure markets with WMRSN + mock stablecoins
+2. Mersennet NFTs — deploy Seaport, point UI + NestJS backend to testnet RPC
 3. xdc-markets — deploy prediction market contracts, point frontend to testnet
-4. PrimeXDC Wallet — update chain ID to 131071, add default RPC/explorer URLs
+4. Mersennet Wallet — update chain ID to 131071, add default RPC/explorer URLs
 5. Staking UI — point to validator set on testnet
 6. Liquid Staking — deploy LST contracts, connect staking UI
 
@@ -117,7 +117,7 @@ These require pointing existing apps to chain 131071:
 | 1 | Subgraph / Indexer | P1 | Q2 |
 | 2 | Bridge (testnet <-> Sepolia) | P2 | Q2 |
 | 3 | Multi-sig Wallet (Safe-style) | P2 | Q3 |
-| 4 | Name Service (.prime domains) | P2 | Post-mainnet |
+| 4 | Name Service (.mersennet domains) | P2 | Post-mainnet |
 | 5 | Account Abstraction (ERC-4337) | P2 | Post-mainnet |
 | 6 | Governance Portal | P2 | Q3 |
 | 7 | Bug Bounty / Grants program | P2 | Q3 |
@@ -134,10 +134,10 @@ These require pointing existing apps to chain 131071:
 | Section | Pages |
 |---------|-------|
 | **Getting Started** | Overview, Network Info, Wallet Setup, Faucet, First Transaction |
-| **Developers** | Hardhat Deploy, Foundry Deploy, ERC-20 Guide, NFT Guide, DeFi Integration, RPC Overview, RPC Methods (incl. PrimeOrders + Bridge), JS SDK, Python SDK |
+| **Developers** | Hardhat Deploy, Foundry Deploy, ERC-20 Guide, NFT Guide, DeFi Integration, RPC Overview, RPC Methods (incl. MersennetOrders + Bridge), JS SDK, Python SDK |
 | **Validators** | Overview, Run a Node, Staking, Monitoring |
-| **Architecture** | Consensus, Node Architecture, EVM Compatibility, PrimeOrders, Tokenomics |
-| **Ecosystem** | PrimeSwap, PrimeFi, Primeport, Wallet |
+| **Architecture** | Consensus, Node Architecture, EVM Compatibility, MersennetOrders, Tokenomics |
+| **Ecosystem** | Mersennet Swap, Mersennet Lend, Mersennet NFTs, Wallet |
 | **Resources** | Deployed Contracts, Brand Assets, FAQ |
 | **Whitepaper** | Full v7.0 technical whitepaper |
 
@@ -149,10 +149,10 @@ These require pointing existing apps to chain 131071:
 |---------|----------|---------|----------|------|----------------|
 | Explorer | Etherscan | Polygonscan | Arbiscan | Basescan | **Live** |
 | Faucet | Multiple | Multiple | Alchemy | Coinbase | **Live** |
-| Wallet | MetaMask+ | MetaMask+ | MetaMask+ | Coinbase | **Built (PrimeXDC)** |
-| DEX + UI | Uniswap | QuickSwap | Camelot | Aerodrome | **Live (PrimeSwap)** |
-| Lending | Aave/Compound | Aave | Aave | Moonwell | **Built (PrimeFi)** |
-| NFT Market | OpenSea | OpenSea | OpenSea | OpenSea | **Built (Primeport)** |
+| Wallet | MetaMask+ | MetaMask+ | MetaMask+ | Coinbase | **Built (Mersennet Wallet)** |
+| DEX + UI | Uniswap | QuickSwap | Camelot | Aerodrome | **Live (Mersennet Swap)** |
+| Lending | Aave/Compound | Aave | Aave | Moonwell | **Built (Mersennet Lend)** |
+| NFT Market | OpenSea | OpenSea | OpenSea | OpenSea | **Built (Mersennet NFTs)** |
 | Bridge | Multiple | PoS Bridge | Arbitrum Bridge | Base Bridge | Missing |
 | Docs Portal | ethereum.org | docs.polygon | docs.arbitrum | docs.base | **Live** |
 | Staking UI | Lido, etc. | Polygon Staking | N/A | N/A | **Built** |

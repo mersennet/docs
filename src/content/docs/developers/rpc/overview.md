@@ -67,14 +67,14 @@ See [RPC Methods Reference](/developers/rpc/methods) for full details.
 
 | Method | Description |
 |--------|-------------|
-| `prime_sendTransaction` | Send a transaction (alternative to `eth_sendTransaction`) |
-| `prime_validators` | Get list of validators |
-| `prime_getDomainEvents` | Get domain events for a block range |
-| `prime_getCodeAttestation` / `prime_getCodeHash` | On-chain contract code-publication registry lookups |
-| `primeorders_*` | PrimeOrders trading methods (addMarket, submitOrder, cancelOrder, getOrderBook, etc.) |
-| `primebridge_*` | PrimeBridge bridge methods (enqueueOrdersToEvm, enqueueEvmToOrders, dequeueOrdersToEvm, dequeueEvmToOrders) |
+| `mersennet_sendTransaction` | Send a transaction (alternative to `eth_sendTransaction`) |
+| `mersennet_validators` | Get list of validators |
+| `mersennet_getDomainEvents` | Get domain events for a block range |
+| `mersennet_getCodeAttestation` / `mersennet_getCodeHash` | On-chain contract code-publication registry lookups |
+| `mersennet_orders_*` | MersennetOrders trading methods (addMarket, submitOrder, cancelOrder, getOrderBook, etc.) |
+| `mersennet_bridge_*` | MersennetBridge bridge methods (enqueueOrdersToEvm, enqueueEvmToOrders, dequeueOrdersToEvm, dequeueEvmToOrders) |
 | **Shielded / ZK** | Shielded transfers & orders, SP1 state proofs, and selective-disclosure reads — see the [Shielded JSON-RPC reference](/developers/privacy/shielded-rpc) |
-| **WebSocket** | `eth_subscribe` and `prime_subscribe` push notifications (new heads, trades, shielded roots, state proofs) |
+| **WebSocket** | `eth_subscribe` and `mersennet_subscribe` push notifications (new heads, trades, shielded roots, state proofs) |
 
 ### Notes on specific methods
 
@@ -94,7 +94,7 @@ For deployment and sending transactions, you can use:
 
 - **Hardhat / Foundry / ethers.js** signing locally and submitting via `eth_sendRawTransaction`
 - **Remix** with MetaMask (injected provider)
-- **eth_sendTransaction / prime_sendTransaction** for server-side flows with unlocked accounts
+- **eth_sendTransaction / mersennet_sendTransaction** for server-side flows with unlocked accounts
 
 ## Error Handling
 

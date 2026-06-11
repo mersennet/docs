@@ -2,7 +2,7 @@
 ## Comprehensive Comparison: Uniswap vs PancakeSwap vs SushiSwap
 
 **Date**: March 9, 2026  
-**Purpose**: Catalog all features from leading DEX interfaces to identify gaps in PrimeSwap
+**Purpose**: Catalog all features from leading DEX interfaces to identify gaps in Mersennet Swap
 
 ---
 
@@ -387,7 +387,7 @@ Comprehensive footer with sections:
 
 ## FEATURE COMPARISON MATRIX
 
-| Feature Category | Uniswap | PancakeSwap | SushiSwap | PrimeSwap Status |
+| Feature Category | Uniswap | PancakeSwap | SushiSwap | Mersennet Swap Status |
 |-----------------|---------|-------------|-----------|------------------|
 | **Trading Modes** |
 | Basic Swap | ✅ | ✅ | ✅ | ✅ (assuming) |
@@ -468,9 +468,9 @@ Comprehensive footer with sections:
 
 ---
 
-## CRITICAL FEATURES MISSING FROM PRIMESWAP
+## CRITICAL FEATURES MISSING FROM MERSENNET SWAP
 
-Based on the competitive analysis, PrimeSwap should consider implementing:
+Based on the competitive analysis, Mersennet Swap should consider implementing:
 
 ### High Priority (Competitive Parity)
 1. **Limit Orders** - All three competitors have this
@@ -574,7 +574,7 @@ Based on the competitive analysis, PrimeSwap should consider implementing:
 
 ---
 
-## RECOMMENDATIONS FOR PRIMESWAP
+## RECOMMENDATIONS FOR MERSENNET SWAP
 
 ### Immediate Implementation (MVP++)
 1. **Add Limit Orders** - Essential competitive feature
@@ -640,7 +640,7 @@ Based on the competitive analysis, PrimeSwap should consider implementing:
 
 ## COMPETITIVE ADVANTAGES TO MAINTAIN
 
-PrimeSwap should double-down on its unique strengths:
+Mersennet Swap should double-down on its unique strengths:
 
 1. **Mersennet Integration**: Native L1 integration (assuming this is a strength)
 2. **Performance**: Fast execution, low latency
@@ -658,7 +658,7 @@ All three DEXes offer sophisticated trading experiences with distinct strengths:
 - **PancakeSwap** excels at ecosystem variety (AI, gaming, perps, TWAP), multi-chain support (EVM + Solana), and user engagement
 - **SushiSwap** focuses on clean UX, DCA trading, and streamlined cross-chain experiences
 
-**PrimeSwap must implement**:
+**Mersennet Swap must implement**:
 1. Core competitive parity features (limit orders, better token selection, settings)
 2. At least 2-3 differentiation features (TWAP, DCA, or portfolio analytics)
 3. Excellent UX/UI to compete with Uniswap's polish

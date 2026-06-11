@@ -1,12 +1,12 @@
 ---
-title: "PrimeXDC Wallet"
+title: "Mersennet Wallet"
 ---
 
-**PrimeXDC Wallet** is the native browser extension wallet for Mersennet. It provides send/receive, token management, dApp connectivity, and transaction signing—optimized for the Mersennet ecosystem.
+**Mersennet Wallet** is the native browser extension wallet for Mersennet. It provides send/receive, token management, dApp connectivity, and transaction signing—optimized for the Mersennet ecosystem.
 
 ## Overview
 
-| Feature | PrimeXDC Wallet |
+| Feature | Mersennet Wallet |
 |---------|-----------------|
 | **Platform** | Chrome/Chromium extension |
 | **Standard** | EIP-1193 (MetaMask-compatible) |
@@ -42,18 +42,18 @@ title: "PrimeXDC Wallet"
 
 ## Installation
 
-1. Install the PrimeXDC Wallet browser extension (Chrome/Chromium).
+1. Install the Mersennet Wallet browser extension (Chrome/Chromium).
 2. Create a new wallet or import via seed phrase.
 3. Mersennet testnet (Chain ID 131071) is preconfigured.
 4. Use the [Faucet](https://faucet.mersennet.com) to get testnet MRSN.
 
 :::tip
-PrimeXDC Wallet uses the same provider interface as MetaMask. dApps that support MetaMask can connect to PrimeXDC Wallet when it's installed.
+Mersennet Wallet uses the same provider interface as MetaMask. dApps that support MetaMask can connect to Mersennet Wallet when it's installed.
 :::
 
 ## Mobile Wallet
 
-**PrimeXDC Mobile** is a React Native wallet for iOS and Android:
+**Mersennet Wallet Mobile** is a React Native wallet for iOS and Android:
 
 - Same functionality as the browser extension.
 - APK available for Android.
@@ -61,16 +61,16 @@ PrimeXDC Wallet uses the same provider interface as MetaMask. dApps that support
 
 ## Supported dApps
 
-PrimeXDC Wallet works with all Mersennet dApps, including:
+Mersennet Wallet works with all Mersennet dApps, including:
 
-- [PrimeSwap](/ecosystem/primeswap) — Swap and add liquidity
-- [PrimeFi](/ecosystem/primefi) — Supply and borrow (when deployed)
-- [Primeport](/ecosystem/primeport) — NFT marketplace (when deployed)
+- [Mersennet Swap](/ecosystem/swap) — Swap and add liquidity
+- [Mersennet Lend](/ecosystem/lend) — Supply and borrow (when deployed)
+- [Mersennet NFTs](/ecosystem/nfts) — NFT marketplace (when deployed)
 - Block Explorer — View transactions and addresses
 
 ## Alternative: MetaMask
 
-If you prefer MetaMask, you can add Mersennet manually. See [Wallet Setup](/getting-started/wallet-setup) for instructions. PrimeXDC Wallet offers a tailored experience and may include Mersennet–specific features (e.g., PrimeOrders integration) in future updates.
+If you prefer MetaMask, you can add Mersennet manually. See [Wallet Setup](/getting-started/wallet-setup) for instructions. Mersennet Wallet offers a tailored experience and may include Mersennet–specific features (e.g., MersennetOrders integration) in future updates.
 
 ## Security
 
@@ -80,6 +80,6 @@ If you prefer MetaMask, you can add Mersennet manually. See [Wallet Setup](/gett
 
 ## Related Resources
 
-- [Wallet Setup](/getting-started/wallet-setup) — Add Mersennet to MetaMask or PrimeXDC
+- [Wallet Setup](/getting-started/wallet-setup) — Add Mersennet to MetaMask or Mersennet Wallet
 - [Faucet](/getting-started/faucet) — Get testnet MRSN
 - [First Transaction](/getting-started/first-transaction) — Send your first MRSN

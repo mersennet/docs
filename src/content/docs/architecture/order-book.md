@@ -1,8 +1,8 @@
 ---
-title: "PrimeOrders (On-chain CLOB)"
+title: "MersennetOrders (On-chain CLOB)"
 ---
 
-PrimeOrders is Mersennet's **native on-chain central limit order book (CLOB)** -- a key differentiator that enables atomic DeFi strategies impossible on traditional chains. It is accessible to smart contracts via an EVM precompile at address `0x0000000000000000000000000000000000000100`.
+MersennetOrders is Mersennet's **native on-chain central limit order book (CLOB)** -- a key differentiator that enables atomic DeFi strategies impossible on traditional chains. It is accessible to smart contracts via an EVM precompile at address `0x0000000000000000000000000000000000000100`.
 
 ## Overview
 
@@ -13,7 +13,7 @@ PrimeOrders is Mersennet's **native on-chain central limit order book (CLOB)** -
 | **Access** | EVM contracts (Solidity) via `CALL` / `STATICCALL` |
 | **Matching** | Price-time priority |
 
-Unlike CLOBs implemented purely in Solidity (gas-intensive, slow) or on separate chains (no atomic composability), PrimeOrders is:
+Unlike CLOBs implemented purely in Solidity (gas-intensive, slow) or on separate chains (no atomic composability), MersennetOrders is:
 
 - **Native** -- Built into the chain execution layer
 - **Atomic** -- Same block, same state, same transaction as EVM calls
@@ -26,7 +26,7 @@ Unlike CLOBs implemented purely in Solidity (gas-intensive, slow) or on separate
 |                        Single Transaction                        |
 +------------------------------------------------------------------+
 |                                                                  |
-|   EVM Contract                    PrimeOrders Precompile         |
+|   EVM Contract                    MersennetOrders Precompile         |
 |   +---------------+              +---------------------------+   |
 |   | VaultStrategy  |--CALL(0x100)->| placeOrder / cancelOrder |   |
 |   | AtomicArbitrage|              | getPosition / deposit     |   |
@@ -38,14 +38,14 @@ Unlike CLOBs implemented purely in Solidity (gas-intensive, slow) or on separate
 +------------------------------------------------------------------+
 ```
 
-## IPrimeOrders Interface
+## IMersennetOrders Interface
 
-The canonical Solidity interface is defined in `contracts/src/interfaces/IPrimeOrders.sol`. Smart contracts interact with the precompile by casting the precompile address:
+The canonical Solidity interface is defined in `contracts/src/interfaces/IMersennetOrders.sol`. Smart contracts interact with the precompile by casting the precompile address:
 
 ```solidity
-import "../interfaces/IPrimeOrders.sol";
+import "../interfaces/IMersennetOrders.sol";
 
-IPrimeOrders orders = IPrimeOrders(0x0000000000000000000000000000000000000100);
+IMersennetOrders orders = IMersennetOrders(0x0000000000000000000000000000000000000100);
 ```
 
 ### Function Reference
@@ -166,23 +166,23 @@ function getBestBidAsk(uint64 marketId) external view returns (uint256 bestBid, 
 A vault strategy combines yield farming with order matching atomically:
 
 ```solidity
-import "../interfaces/IPrimeOrders.sol";
+import "../interfaces/IMersennetOrders.sol";
 
 contract VaultStrategy {
-    IPrimeOrders constant PRIME_ORDERS = IPrimeOrders(PRIME_ORDERS_ADDRESS);
+    IMersennetOrders constant MERSENNET_ORDERS = IMersennetOrders(MERSENNET_ORDERS_ADDRESS);
 
     function updateQuotes(uint256 midPrice) external {
         // Cancel old orders
-        PRIME_ORDERS.cancelOrder(lastBidOrderId);
-        PRIME_ORDERS.cancelOrder(lastAskOrderId);
+        MERSENNET_ORDERS.cancelOrder(lastBidOrderId);
+        MERSENNET_ORDERS.cancelOrder(lastAskOrderId);
 
         // Place new quotes (atomic in single tx)
-        (uint256 bidId,,) = PRIME_ORDERS.placeOrder(marketId, true, midPrice - spread, 1 ether, 0);
-        (uint256 askId,,) = PRIME_ORDERS.placeOrder(marketId, false, midPrice + spread, 1 ether, 0);
+        (uint256 bidId,,) = MERSENNET_ORDERS.placeOrder(marketId, true, midPrice - spread, 1 ether, 0);
+        (uint256 askId,,) = MERSENNET_ORDERS.placeOrder(marketId, false, midPrice + spread, 1 ether, 0);
     }
 
     function deposit() external payable {
-        PRIME_ORDERS.depositCollateral(msg.value);
+        MERSENNET_ORDERS.depositCollateral(msg.value);
     }
 }
 ```
@@ -191,12 +191,12 @@ All of this happens in **one transaction** -- no cross-chain bridges, no multi-s
 
 ## Example: Atomic Arbitrage
 
-An arbitrage contract can exploit price differences between PrimeOrders and an AMM:
+An arbitrage contract can exploit price differences between MersennetOrders and an AMM:
 
 ```solidity
 function clobToAmm(uint64 marketId, uint256 buyPrice, uint256 size, address ammPool) external {
     // Buy on CLOB (fills atomically)
-    (, uint256 filled,) = PRIME_ORDERS.placeOrder(marketId, true, buyPrice, size, 1); // IOC
+    (, uint256 filled,) = MERSENNET_ORDERS.placeOrder(marketId, true, buyPrice, size, 1); // IOC
     require(filled > 0, "not filled");
 
     // Sell on AMM in same tx
@@ -204,7 +204,7 @@ function clobToAmm(uint64 marketId, uint256 buyPrice, uint256 size, address ammP
 }
 ```
 
-Because the EVM and PrimeOrders share the same state, the arbitrage either succeeds entirely or reverts.
+Because the EVM and MersennetOrders share the same state, the arbitrage either succeeds entirely or reverts.
 
 ## Matching Engine
 
@@ -216,7 +216,7 @@ Price-time priority:
 
 ## Collateral and Risk
 
-- PrimeOrders supports **margin trading** with configurable initial and maintenance margin
+- MersennetOrders supports **margin trading** with configurable initial and maintenance margin
 - **Liquidations** can be triggered when margin falls below maintenance via `isLiquidatable()`
 - Smart contracts can call liquidation logic atomically with other operations
 - Collateral is global (not per-market) and denominated in native MRSN

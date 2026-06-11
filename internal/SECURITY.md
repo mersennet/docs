@@ -2,11 +2,11 @@
 
 ## Responsible Disclosure Policy
 
-Mersennet and Prime Numbers Labs take security seriously. We encourage security researchers and the community to report vulnerabilities responsibly.
+Mersennet and Mersennet take security seriously. We encourage security researchers and the community to report vulnerabilities responsibly.
 
 ### What We Ask
 
-1. **Report privately first.** Send vulnerability details to security@primenumberslabs.com before public disclosure.
+1. **Report privately first.** Send vulnerability details to security@mersennet.com before public disclosure.
 2. **Give us time to respond.** We aim to acknowledge within 48 hours and provide an initial assessment within 7 days.
 3. **Do not exploit.** Do not use the vulnerability for malicious purposes, data exfiltration, or disruption of services.
 4. **Cooperate with us.** We may request additional information or clarifications to reproduce and fix the issue.
@@ -58,7 +58,7 @@ Mersennet is preparing a formal bug bounty program. The following is an outline 
 
 ## Contact Information
 
-- **Security issues:** security@primenumberslabs.com
+- **Security issues:** security@mersennet.com
 - **PGP key:** Available on request for encrypted communication
 
 ## Security Advisories

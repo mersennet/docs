@@ -8,7 +8,7 @@ Notable milestones and updates for the Mersennet ecosystem.
 
 ## March 2026
 
-### PrimeSwap V3 Deployed
+### Mersennet Swap V3 Deployed
 
 Concentrated liquidity DEX built on the Uniswap V3 protocol, deployed to Mersennet testnet.
 
@@ -29,7 +29,7 @@ Mersennet Explorer explorer upgraded with enhanced features:
 
 ## February 2026
 
-### PrimeSwap V2 Deployed
+### Mersennet Swap V2 Deployed
 
 Automated Market Maker DEX (Uniswap V2 fork) deployed with Factory and Router contracts.
 
@@ -58,5 +58,5 @@ Docusaurus-based documentation portal deployed.
 - Getting Started guides (network info, wallet setup, faucet, first transaction)
 - Developer documentation (Hardhat, Foundry, ERC-20, NFT, DeFi integration)
 - Validator guides (run a node, staking, monitoring)
-- Architecture deep-dives (consensus, node architecture, EVM compatibility, PrimeOrders)
+- Architecture deep-dives (consensus, node architecture, EVM compatibility, MersennetOrders)
 - Live at [https://docs.mersennet.com](https://docs.mersennet.com)

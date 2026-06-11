@@ -2,10 +2,10 @@
 title: "JavaScript SDK"
 ---
 
-The Mersennet JavaScript SDK (`@mersennet/sdk`) provides a typed interface for the JSON-RPC API, PrimeOrders (on-chain order book), and WebSocket subscriptions.
+The Mersennet JavaScript SDK (`@mersennet/sdk`) provides a typed interface for the JSON-RPC API, MersennetOrders (on-chain order book), and WebSocket subscriptions.
 
 :::tip[Privacy / shielded features]
-This page covers the **transparent** surface (`eth_*` / `prime_*` / `primeorders_*`). For shielded transfers and orders, client-side Noir proving, note scanning, balance/position reconstruction, selective-disclosure reads, and migration, see the dedicated **[Shielded SDK](/developers/privacy/shielded-sdk)**.
+This page covers the **transparent** surface (`eth_*` / `mersennet_*` / `mersennet_orders_*`). For shielded transfers and orders, client-side Noir proving, note scanning, balance/position reconstruction, selective-disclosure reads, and migration, see the dedicated **[Shielded SDK](/developers/privacy/shielded-sdk)**.
 :::
 
 ## Installation
@@ -29,10 +29,10 @@ npm install /path/to/mersennet/sdk
 ## Quick Start
 
 ```javascript
-import { PrimeProvider, PrimeOrders } from "@mersennet/sdk";
+import { MersennetProvider, MersennetOrders } from "@mersennet/sdk";
 
-const provider = new PrimeProvider("http://46.225.30.187:8545");
-const orders = new PrimeOrders(provider);
+const provider = new MersennetProvider("http://46.225.30.187:8545");
+const orders = new MersennetOrders(provider);
 
 // Query chain
 const blockNumber = await provider.getBlockNumber();
@@ -51,13 +51,13 @@ console.log("Bids:", book.bids, "Asks:", book.asks);
 ## Creating a Provider
 
 ```javascript
-import { PrimeProvider } from "@mersennet/sdk";
+import { MersennetProvider } from "@mersennet/sdk";
 
 // HTTP only
-const provider = new PrimeProvider("http://46.225.30.187:8545");
+const provider = new MersennetProvider("http://46.225.30.187:8545");
 
 // With WebSocket URL for subscriptions
-const providerWithWs = new PrimeProvider(
+const providerWithWs = new MersennetProvider(
   "http://46.225.30.187:8545",
   "ws://46.225.30.187:8546"
 );
@@ -91,9 +91,9 @@ console.log("Tx hash:", txHash);
 For transactions from a wallet (e.g., browser), use ethers.js or viem with the Mersennet RPC. The SDK's `sendTransaction` is for server-side flows with unlocked accounts.
 :::
 
-## Interacting with PrimeOrders
+## Interacting with MersennetOrders
 
-PrimeOrders is Mersennet's on-chain order book (CLOB). Use it for limit orders, positions, and collateral.
+MersennetOrders is Mersennet's on-chain order book (CLOB). Use it for limit orders, positions, and collateral.
 
 ### Get Order Book
 
@@ -164,7 +164,7 @@ For low-level control, use the precompile encoders:
 
 ```javascript
 import {
-  PrimePrecompile,
+  MersennetPrecompile,
   encodePlaceOrder,
   encodeGetPosition,
   encodeGetCollateral,
@@ -174,7 +174,7 @@ import {
 const getPositionData = encodeGetPosition(1);
 const result = await provider.call({
   from: "0x...",
-  to: PrimePrecompile.ADDRESS, // 0x0000000000000000000000000000000000000100
+  to: MersennetPrecompile.ADDRESS, // 0x0000000000000000000000000000000000000100
   data: getPositionData,
 });
 
@@ -191,13 +191,13 @@ const placeOrderData = encodePlaceOrder(
 ## WebSocket Subscriptions
 
 ```javascript
-import { PrimeProvider, PrimeSubscription } from "@mersennet/sdk";
+import { MersennetProvider, MersennetSubscription } from "@mersennet/sdk";
 
-const provider = new PrimeProvider(
+const provider = new MersennetProvider(
   "http://46.225.30.187:8545",
   "ws://46.225.30.187:8546"
 );
-const sub = new PrimeSubscription(provider);
+const sub = new MersennetSubscription(provider);
 
 await sub.connect();
 
@@ -206,7 +206,7 @@ const blockSubId = await sub.onNewBlock((block) => {
   console.log("New block:", block.number);
 });
 
-// PrimeOrders trades
+// MersennetOrders trades
 const tradeSubId = await sub.onTrade((trade) => {
   console.log("Trade:", trade);
 }, 1); // optional: market ID
@@ -228,7 +228,7 @@ WebSocket may not be enabled on all nodes. If subscriptions fail, use HTTP polli
 
 | Class | Method | Description |
 |-------|--------|-------------|
-| `PrimeProvider` | `getBlockNumber()` | Latest block number |
+| `MersennetProvider` | `getBlockNumber()` | Latest block number |
 | | `getBalance(address)` | Account balance (hex) |
 | | `getTransactionCount(address)` | Nonce |
 | | `getBlockByNumber(n, full)` | Block by number |
@@ -245,7 +245,7 @@ WebSocket may not be enabled on all nodes. If subscriptions fail, use HTTP polli
 | | `viewNotes(grantIdHex, opts?)` | Grant-gated encrypted notes (selective disclosure) |
 | | `viewBalances(grantIdHex, opts?)` | Grant-gated notes + spent nullifiers for reconstruction |
 | | `viewPositions(grantIdHex)` / `viewOrders(grantIdHex)` | Grant-gated trading reconstruction context |
-| `PrimeOrders` | `getOrderBook(marketId)` | Order book |
+| `MersennetOrders` | `getOrderBook(marketId)` | Order book |
 | | `getOpenOrders(owner)` | Open orders |
 | | `getPosition(owner, marketId)` | Position |
 | | `getCollateral(owner)` | Collateral |

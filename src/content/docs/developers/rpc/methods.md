@@ -4,7 +4,7 @@ title: "RPC Methods Reference"
 
 Complete reference for JSON-RPC methods supported by Mersennet. All examples use `http://46.225.30.187:8545` as the RPC URL.
 
-Mersennet implements the standard `eth_` namespace plus native extensions across `net_`, `web3_`, `txpool_`, `prime_`, `primeorders_`, and `primebridge_`. The privacy/ZK methods (shielded transfers, SP1 state proofs, selective-disclosure reads) also live in the `prime_` namespace and are documented separately in the [Shielded JSON-RPC reference](/developers/privacy/shielded-rpc).
+Mersennet implements the standard `eth_` namespace plus native extensions across `net_`, `web3_`, `txpool_`, `mersennet_`, `mersennet_orders_`, and `mersennet_bridge_`. The privacy/ZK methods (shielded transfers, SP1 state proofs, selective-disclosure reads) also live in the `mersennet_` namespace and are documented separately in the [Shielded JSON-RPC reference](/developers/privacy/shielded-rpc).
 
 ---
 
@@ -518,79 +518,79 @@ Same as `eth_chainId`.
 
 ---
 
-### prime_blockNumber
+### mersennet_blockNumber
 
 Same as `eth_blockNumber`.
 
 ---
 
-### prime_getBalance
+### mersennet_getBalance
 
 Same as `eth_getBalance`.
 
 ---
 
-### prime_gasPrice
+### mersennet_gasPrice
 
 Same as `eth_gasPrice`.
 
 ---
 
-### prime_getCode
+### mersennet_getCode
 
 Same as `eth_getCode`.
 
 ---
 
-### prime_getStorageAt
+### mersennet_getStorageAt
 
 Same as `eth_getStorageAt`.
 
 ---
 
-### prime_getTransactionCount
+### mersennet_getTransactionCount
 
 Same as `eth_getTransactionCount`.
 
 ---
 
-### prime_call
+### mersennet_call
 
 Same as `eth_call`.
 
 ---
 
-### prime_getBlockByNumber
+### mersennet_getBlockByNumber
 
 Same as `eth_getBlockByNumber`, using Mersennet block format.
 
 ---
 
-### prime_getTransactionReceipt
+### mersennet_getTransactionReceipt
 
 Same as `eth_getTransactionReceipt`.
 
 ---
 
-### prime_getTransactionByHash
+### mersennet_getTransactionByHash
 
 Same as `eth_getTransactionByHash`.
 
 ---
 
-### prime_sendTransaction
+### mersennet_sendTransaction
 
 Same as `eth_sendTransaction`.
 
 ---
 
-### prime_getLogs
+### mersennet_getLogs
 
 Same as `eth_getLogs`.
 
 ---
 
-### prime_validators
+### mersennet_validators
 
 Returns the list of active validators and their stake.
 
@@ -599,12 +599,12 @@ Returns the list of active validators and their stake.
 ```bash
 curl -X POST http://46.225.30.187:8545 \
   -H "Content-Type: application/json" \
-  -d '{"jsonrpc":"2.0","method":"prime_validators","params":[],"id":1}'
+  -d '{"jsonrpc":"2.0","method":"mersennet_validators","params":[],"id":1}'
 ```
 
 ---
 
-### prime_getDomainEvents
+### mersennet_getDomainEvents
 
 Returns domain events (CLOB fills, bridge operations, validator changes) for a block range.
 
@@ -615,12 +615,12 @@ Returns domain events (CLOB fills, bridge operations, validator changes) for a b
 ```bash
 curl -X POST http://46.225.30.187:8545 \
   -H "Content-Type: application/json" \
-  -d '{"jsonrpc":"2.0","method":"prime_getDomainEvents","params":[{"fromBlock":"0x0","toBlock":"latest"}],"id":1}'
+  -d '{"jsonrpc":"2.0","method":"mersennet_getDomainEvents","params":[{"fromBlock":"0x0","toBlock":"latest"}],"id":1}'
 ```
 
 ---
 
-### prime_getCodeAttestation
+### mersennet_getCodeAttestation
 
 Returns the on-chain code-publication attestation for a contract, or `null` if none was published.
 
@@ -633,7 +633,7 @@ Returns the on-chain code-publication attestation for a contract, or `null` if n
 
 ---
 
-### prime_getCodeHash
+### mersennet_getCodeHash
 
 Returns the keccak-256 code hash at an address (or `null` if there is no code).
 
@@ -644,11 +644,11 @@ Returns the keccak-256 code hash at an address (or `null` if there is no code).
 
 ---
 
-## PrimeOrders CLOB Methods
+## MersennetOrders CLOB Methods
 
 The native order book engine accessible via RPC. The CLOB precompile is at address `0x0000000000000000000000000000000000000100`.
 
-### primeorders_addMarket
+### mersennet_orders_addMarket
 
 Register a new trading market on the CLOB.
 
@@ -661,7 +661,7 @@ Register a new trading market on the CLOB.
 ```bash
 curl -X POST http://46.225.30.187:8545 \
   -H "Content-Type: application/json" \
-  -d '{"jsonrpc":"2.0","method":"primeorders_addMarket","params":["MRSN/USDC","0x01","0xde0b6b3a7640000"],"id":1}'
+  -d '{"jsonrpc":"2.0","method":"mersennet_orders_addMarket","params":["MRSN/USDC","0x01","0xde0b6b3a7640000"],"id":1}'
 ```
 
 **Response:**
@@ -674,7 +674,7 @@ The result is the assigned market ID.
 
 ---
 
-### primeorders_submitOrder
+### mersennet_orders_submitOrder
 
 Submit a limit order to the CLOB.
 
@@ -691,7 +691,7 @@ Submit a limit order to the CLOB.
 ```bash
 curl -X POST http://46.225.30.187:8545 \
   -H "Content-Type: application/json" \
-  -d '{"jsonrpc":"2.0","method":"primeorders_submitOrder","params":[{"owner":"0x7f5ce38fb2553e95dd8ef9182a80bc219c9a0d45","market_id":2,"side":"buy","price":"0xfde8","size":"0x64","tif":"gtc"}],"id":1}'
+  -d '{"jsonrpc":"2.0","method":"mersennet_orders_submitOrder","params":[{"owner":"0x7f5ce38fb2553e95dd8ef9182a80bc219c9a0d45","market_id":2,"side":"buy","price":"0xfde8","size":"0x64","tif":"gtc"}],"id":1}'
 ```
 
 **Response:**
@@ -713,7 +713,7 @@ If the order crosses existing resting orders, `trades` will contain fill details
 
 ---
 
-### primeorders_cancelOrder
+### mersennet_orders_cancelOrder
 
 Cancel an open order.
 
@@ -725,7 +725,7 @@ Cancel an open order.
 
 ---
 
-### primeorders_getOrderBook
+### mersennet_orders_getOrderBook
 
 Get the current order book for a market.
 
@@ -736,7 +736,7 @@ Get the current order book for a market.
 ```bash
 curl -X POST http://46.225.30.187:8545 \
   -H "Content-Type: application/json" \
-  -d '{"jsonrpc":"2.0","method":"primeorders_getOrderBook","params":["0x2"],"id":1}'
+  -d '{"jsonrpc":"2.0","method":"mersennet_orders_getOrderBook","params":["0x2"],"id":1}'
 ```
 
 **Response:**
@@ -760,7 +760,7 @@ Bids are sorted ascending (best bid last), asks are sorted ascending (best ask f
 
 ---
 
-### primeorders_getOpenOrders
+### mersennet_orders_getOpenOrders
 
 Get all open orders for a specific address.
 
@@ -770,7 +770,7 @@ Get all open orders for a specific address.
 
 ---
 
-### primeorders_depositCollateral
+### mersennet_orders_depositCollateral
 
 Deposit collateral for margin trading.
 
@@ -781,7 +781,7 @@ Deposit collateral for margin trading.
 
 ---
 
-### primeorders_setMarginParams
+### mersennet_orders_setMarginParams
 
 Set margin parameters for a market.
 
@@ -791,7 +791,7 @@ Set margin parameters for a market.
 
 ---
 
-### primeorders_isLiquidatable
+### mersennet_orders_isLiquidatable
 
 Check if an account's position can be liquidated.
 
@@ -801,7 +801,7 @@ Check if an account's position can be liquidated.
 
 ---
 
-### primeorders_liquidate
+### mersennet_orders_liquidate
 
 Liquidate an under-collateralized position.
 
@@ -811,37 +811,37 @@ Liquidate an under-collateralized position.
 
 ---
 
-## PrimeBridge Methods
+## MersennetBridge Methods
 
-Cross-domain bridge between the EVM execution environment and the PrimeOrders CLOB.
+Cross-domain bridge between the EVM execution environment and the MersennetOrders CLOB.
 
-### primebridge_enqueueOrdersToEvm
+### mersennet_bridge_enqueueOrdersToEvm
 
-Enqueue a cross-domain message from the PrimeOrders domain to the EVM domain.
-
-**Parameters:**
-
-1. `payload` — Hex-encoded message payload (`0x…`)
-
-**Returns:** The enqueued bridge message — `{ nonce, from, to, payload }` (`from: "primeorders"`, `to: "primeevm"`).
-
----
-
-### primebridge_enqueueEvmToOrders
-
-Enqueue a cross-domain message from the EVM domain to the PrimeOrders domain.
+Enqueue a cross-domain message from the MersennetOrders domain to the EVM domain.
 
 **Parameters:**
 
 1. `payload` — Hex-encoded message payload (`0x…`)
 
-**Returns:** The enqueued bridge message — `{ nonce, from, to, payload }` (`from: "primeevm"`, `to: "primeorders"`).
+**Returns:** The enqueued bridge message — `{ nonce, from, to, payload }` (`from: "mersennetorders"`, `to: "mersennetevm"`).
 
 ---
 
-### primebridge_dequeueOrdersToEvm
+### mersennet_bridge_enqueueEvmToOrders
 
-Dequeue the next pending PrimeOrders → EVM bridge message.
+Enqueue a cross-domain message from the EVM domain to the MersennetOrders domain.
+
+**Parameters:**
+
+1. `payload` — Hex-encoded message payload (`0x…`)
+
+**Returns:** The enqueued bridge message — `{ nonce, from, to, payload }` (`from: "mersennetevm"`, `to: "mersennetorders"`).
+
+---
+
+### mersennet_bridge_dequeueOrdersToEvm
+
+Dequeue the next pending MersennetOrders → EVM bridge message.
 
 **Parameters:** None
 
@@ -849,9 +849,9 @@ Dequeue the next pending PrimeOrders → EVM bridge message.
 
 ---
 
-### primebridge_dequeueEvmToOrders
+### mersennet_bridge_dequeueEvmToOrders
 
-Dequeue the next pending EVM → PrimeOrders bridge message.
+Dequeue the next pending EVM → MersennetOrders bridge message.
 
 **Parameters:** None
 
@@ -879,7 +879,7 @@ Mersennet exposes native functionality through EVM precompiles, callable from So
 
 | Address | Name | Purpose |
 |---------|------|---------|
-| `0x…0100` | PrimeOrders CLOB | On-chain order book: place/cancel orders, collateral, positions, best bid/ask |
+| `0x…0100` | MersennetOrders CLOB | On-chain order book: place/cancel orders, collateral, positions, best bid/ask |
 | `0x…0200` | Shielded Transfer | Private note-to-note transfer (`shieldedTransfer(bytes)`) |
 | `0x…0201` | Shield / Unshield | Transparent ⇄ shielded bridge (`shield`, `unshield`) |
 | `0x…0202` | Code Publication | Register/revoke a contract code attestation |
@@ -888,14 +888,14 @@ Mersennet exposes native functionality through EVM precompiles, callable from So
 (Addresses are the 20-byte form, e.g. `0x0000000000000000000000000000000000000100`.)
 
 :::note
-The shielded precompiles (`0x0200`, `0x0201`, `0x0300`) and shielded RPC methods activate with the privacy hard fork. The transparent PrimeOrders precompile is disabled after privacy activation in favor of the shielded order path.
+The shielded precompiles (`0x0200`, `0x0201`, `0x0300`) and shielded RPC methods activate with the privacy hard fork. The transparent MersennetOrders precompile is disabled after privacy activation in favor of the shielded order path.
 :::
 
 ---
 
 ## Privacy & shielded methods
 
-Shielded transfers and orders, SP1 state proofs, and selective-disclosure (viewing-grant) reads are exposed through the `prime_*` namespace and documented in full in the **[Shielded JSON-RPC reference](/developers/privacy/shielded-rpc)**. For typed client helpers, see the **[Shielded SDK](/developers/privacy/shielded-sdk)**.
+Shielded transfers and orders, SP1 state proofs, and selective-disclosure (viewing-grant) reads are exposed through the `mersennet_*` namespace and documented in full in the **[Shielded JSON-RPC reference](/developers/privacy/shielded-rpc)**. For typed client helpers, see the **[Shielded SDK](/developers/privacy/shielded-sdk)**.
 
 ---
 
@@ -907,6 +907,6 @@ Shielded transfers and orders, SP1 state proofs, and selective-disclosure (viewi
 | `net_` | 3 | Network status |
 | `web3_` | 1 | Client info |
 | `txpool_` | 1 | Mempool status |
-| `prime_` | transparent equivalents + code attestation + shielded/ZK | Native equivalents, code-publication lookups, and the shielded/state-proof/disclosure surface ([Privacy](/developers/privacy/shielded-rpc)) |
-| `primeorders_` | 9 | CLOB order book engine |
-| `primebridge_` | 4 | Cross-domain bridge |
+| `mersennet_` | transparent equivalents + code attestation + shielded/ZK | Native equivalents, code-publication lookups, and the shielded/state-proof/disclosure surface ([Privacy](/developers/privacy/shielded-rpc)) |
+| `mersennet_orders_` | 9 | CLOB order book engine |
+| `mersennet_bridge_` | 4 | Cross-domain bridge |

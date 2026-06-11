@@ -1,12 +1,12 @@
 ---
-title: "PrimeFi Lending"
+title: "Mersennet Lend Lending"
 ---
 
-**PrimeFi** is an Aave-style lending and borrowing protocol built for Mersennet. It enables users to supply assets to earn interest and borrow against collateral—powering the DeFi credit layer of the ecosystem.
+**Mersennet Lend** is an Aave-style lending and borrowing protocol built for Mersennet. It enables users to supply assets to earn interest and borrow against collateral—powering the DeFi credit layer of the ecosystem.
 
 ## Overview
 
-| Feature | PrimeFi |
+| Feature | Mersennet Lend |
 |---------|---------|
 | **Model** | Aave-style (pool-based) |
 | **Supply** | Deposit assets, earn variable APY |
@@ -15,14 +15,14 @@ title: "PrimeFi Lending"
 | **Status** | Contracts built, ready for deployment |
 
 :::note
-PrimeFi smart contracts are built and audited. They are ready for deployment to Mersennet testnet. The PrimeFi UI (v2) and liquidator bot are also built and will be deployed alongside the contracts.
+Mersennet Lend smart contracts are built and audited. They are ready for deployment to Mersennet testnet. The Mersennet Lend UI (v2) and liquidator bot are also built and will be deployed alongside the contracts.
 :::
 
 ## How It Works
 
 ### Supply (Deposit)
 
-1. Approve the PrimeFi pool contract to spend your tokens.
+1. Approve the Mersennet Lend pool contract to spend your tokens.
 2. Call `supply(asset, amount, onBehalfOf)` to deposit.
 3. Receive **aTokens** (interest-bearing receipt tokens) in return.
 4. Your balance grows as interest accrues—redeem aTokens anytime for underlying + interest.
@@ -50,7 +50,7 @@ When a borrower's **health factor** drops below 1 (e.g., collateral value falls 
 
 ## Supported Assets (Planned)
 
-PrimeFi will support the core Mersennet assets:
+Mersennet Lend will support the core Mersennet assets:
 
 | Asset | Use Case |
 |-------|----------|
@@ -65,7 +65,7 @@ Exact support depends on deployment configuration and oracle integration.
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│                    PrimeFi Protocol                      │
+│                    Mersennet Lend Protocol                      │
 ├─────────────────────────────────────────────────────────┤
 │  Pool (LendingPool)                                      │
 │  - supply() / withdraw()                                 │
@@ -76,19 +76,19 @@ Exact support depends on deployment configuration and oracle integration.
 └─────────────────────────────────────────────────────────┘
 ```
 
-## PrimeFi Components
+## Mersennet Lend Components
 
 | Component | Description |
 |-----------|-------------|
-| **PrimeFi Contracts** | Solidity, Hardhat, Aave-style logic |
-| **PrimeFi UI v2** | React 19, Vite, wagmi — lending frontend |
-| **PrimeFi Liquidator** | Node.js bot for monitoring and liquidating unhealthy positions |
-| **PrimeFi Omni** | Cross-chain lending via LayerZero v2 (contracts ready) |
+| **Mersennet Lend Contracts** | Solidity, Hardhat, Aave-style logic |
+| **Mersennet Lend UI v2** | React 19, Vite, wagmi — lending frontend |
+| **Mersennet Lend Liquidator** | Node.js bot for monitoring and liquidating unhealthy positions |
+| **Mersennet Lend Omni** | Cross-chain lending via LayerZero v2 (contracts ready) |
 
 ## Integration with Mersennet
 
-- **PrimeSwap** — Borrow stablecoins, swap on PrimeSwap, supply for yield.
-- **PrimeOrders** — Future: collateralize positions, use CLOB for hedging.
+- **Mersennet Swap** — Borrow stablecoins, swap on Mersennet Swap, supply for yield.
+- **MersennetOrders** — Future: collateralize positions, use CLOB for hedging.
 - **WMRSN** — Native token wrapper used as collateral and supply asset.
 
 ## Deployment Status
@@ -96,14 +96,14 @@ Exact support depends on deployment configuration and oracle integration.
 | Component | Status |
 |-----------|--------|
 | Lending contracts | Ready for deployment |
-| PrimeFi UI v2 | Built (dist/) |
+| Mersennet Lend UI v2 | Built (dist/) |
 | Liquidator bot | Ready |
-| PrimeFi Omni (cross-chain) | Contracts ready |
+| Mersennet Lend Omni (cross-chain) | Contracts ready |
 
 Once deployed, contract addresses will be published in [Deployed Contracts](/resources/contracts).
 
 ## Related Resources
 
-- [PrimeSwap DEX](/ecosystem/primeswap) — Swap and provide liquidity
+- [Mersennet Swap DEX](/ecosystem/swap) — Swap and provide liquidity
 - [Deployed Contracts](/resources/contracts) — Contract addresses when live
 - [Network Information](/getting-started/network-info) — RPC and configuration

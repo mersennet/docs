@@ -16,7 +16,7 @@
 4. [Parallel EVM Execution](#4-parallel-evm-execution)
 5. [HotStuff-2 Consensus](#5-hotstuff-2-consensus)
 6. [CometBFT-Style Consensus](#6-cometbft-style-consensus)
-7. [PrimeOrders — CLOB Matching Engine](#7-primeorders--clob-matching-engine)
+7. [MersennetOrders — CLOB Matching Engine](#7-mersennetorders--clob-matching-engine)
 8. [CLOB Precompile](#8-clob-precompile)
 9. [Frequent Batch Auctions (FBA)](#9-frequent-batch-auctions-fba)
 10. [Commit-Reveal MEV Protection](#10-commit-reveal-mev-protection)
@@ -45,7 +45,7 @@ Mersennet is a high-performance EVM-compatible blockchain with a native central 
 ┌─────────────────────────────────────────────────────────────────────┐
 │                         CLIENT LAYER                                │
 │   JSON-RPC 2.0 (tiny_http)  ·  eth_* compatibility  ·  CORS       │
-│   primeorders_*  ·  primebridge_*  ·  /health  ·  /metrics        │
+│   mersennet_orders_*  ·  mersennet_bridge_*  ·  /health  ·  /metrics        │
 └──────────────────────────┬──────────────────────────────────────────┘
                            │
 ┌──────────────────────────▼──────────────────────────────────────────┐
@@ -62,7 +62,7 @@ Mersennet is a high-performance EVM-compatible blockchain with a native central 
 │  │   MVCC validate → merge_fork_dbs                              │ │
 │  └───────────────────────────────────────────────────────────────┘ │
 │  ┌──────────────────────────┐  ┌────────────────────────────────┐ │
-│  │   PrimeOrders (CLOB)    │  │   FBA Engine                   │ │
+│  │   MersennetOrders (CLOB)    │  │   FBA Engine                   │ │
 │  │   BTreeMap order books   │  │   Batch auctions per market    │ │
 │  │   Price-time priority    │  │   Clearing price + pro-rata    │ │
 │  │   GTC / IOC / FOK        │  │                                │ │
@@ -89,7 +89,7 @@ Mersennet is a high-performance EVM-compatible blockchain with a native central 
 │                     STORAGE LAYER                                   │
 │  sled embedded DB  ·  Binary Merkle tree  ·  Incremental commits   │
 │  State pruning  ·  Merkle proofs  ·  Snapshot export/import        │
-│  Trees: accounts, storage, prime_orders, bridge_*, blocks, pruning │
+│  Trees: accounts, storage, mersennet_orders, bridge_*, blocks, pruning │
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -136,7 +136,7 @@ crates/core/src/
 ├── engine.rs            (3004)    # Block production, tx execution, subsystem orchestration
 ├── consensus.rs          (895)    # CometBFT-style prevote/precommit/commit
 ├── hotstuff2.rs          (765)    # HotStuff-2 protocol state machine
-├── prime_orders.rs       (863)    # CLOB matching engine
+├── mersennet_orders.rs       (863)    # CLOB matching engine
 ├── precompiles.rs        (684)    # EVM precompiles (CLOB 0x0100, shielded 0x0200/0x0201, state-proof 0x0300)
 ├── precompile_abi.rs     (253)    # ABI encoding/decoding, selectors, gas costs
 ├── parallel.rs           (584)    # Block-STM parallel EVM execution
@@ -213,7 +213,7 @@ pub struct Engine {
 ```
 ┌─────────────────────────────────────────────────────┐
 │ 1. Set CLOB precompile context                      │
-│    set_prime_orders_context(Arc<Mutex<PrimeOrders>>) │
+│    set_mersennet_orders_context(Arc<Mutex<MersennetOrders>>) │
 ├─────────────────────────────────────────────────────┤
 │ 2. Drain mempool by gas-price priority              │
 │    - Sort senders by highest ready gas price        │
@@ -223,7 +223,7 @@ pub struct Engine {
 │    - Loop until no more progress                    │
 ├─────────────────────────────────────────────────────┤
 │ 3. Clear CLOB precompile context                    │
-│    clear_prime_orders_context()                     │
+│    clear_mersennet_orders_context()                     │
 ├─────────────────────────────────────────────────────┤
 │ 4. Compute block hash                               │
 │    keccak256(number ‖ chain_id ‖ gas_limit ‖        │
@@ -241,7 +241,7 @@ pub struct Engine {
 │ 6. Apply rewards to validator accounts              │
 ├─────────────────────────────────────────────────────┤
 │ 7. Commit state                                     │
-│    commit_state(evm_db, prime_orders, bridge, h)    │
+│    commit_state(evm_db, mersennet_orders, bridge, h)    │
 │    → writes dirty accounts to sled                  │
 │    → serializes CLOB + bridge state                 │
 │    → computes Merkle state_root                     │
@@ -268,14 +268,14 @@ The `next_base_fee` function implements the standard EIP-1559 algorithm:
 
 ### Transaction Execution (`execute_tx`)
 
-Each transaction is executed through `revm` with the PrimeOrders precompile registered:
+Each transaction is executed through `revm` with the MersennetOrders precompile registered:
 
 ```rust
 let mut evm = Evm::builder()
     .with_db(self.evm.db.clone())
     .with_spec_id(self.spec_id)
     .with_env(Box::new(env))
-    .append_handler_register(precompiles::register_prime_orders_precompile)
+    .append_handler_register(precompiles::register_mersennet_orders_precompile)
     .build();
 
 let result = evm.transact_commit()?;
@@ -541,16 +541,16 @@ New validators receive a penalty: `-(total_voting_stake + total_voting_stake / 8
 
 ---
 
-## 7. PrimeOrders — CLOB Matching Engine
+## 7. MersennetOrders — CLOB Matching Engine
 
-**File:** `crates/core/src/prime_orders.rs` (~863 lines)
+**File:** `crates/core/src/mersennet_orders.rs` (~863 lines)
 
 A full central limit order book with price-time priority matching, margin validation, insurance fund, auto-deleveraging, and market circuit breakers.
 
 ### Data Model
 
 ```rust
-pub struct PrimeOrdersState {
+pub struct MersennetOrdersState {
     pub next_order_id: u64,
     pub markets: HashMap<MarketId, Market>,
     pub orders: HashMap<OrderId, Order>,
@@ -672,27 +672,27 @@ Standard Solidity ABI: 4-byte function selector followed by 32-byte words. All i
 ### Context Lifecycle
 
 ```rust
-static PRIME_ORDERS_CTX: Lazy<Mutex<Option<Arc<Mutex<PrimeOrdersState>>>>> = ...;
+static MERSENNET_ORDERS_CTX: Lazy<Mutex<Option<Arc<Mutex<MersennetOrdersState>>>>> = ...;
 
 // Before block execution:
-set_prime_orders_context(Arc::clone(&shared_orders));
+set_mersennet_orders_context(Arc::clone(&shared_orders));
 
 // After block execution:
-clear_prime_orders_context();
+clear_mersennet_orders_context();
 ```
 
-The precompile acquires the global mutex, gets the `Arc`, then locks the inner `PrimeOrdersState` for each call. This ensures EVM transactions can call the CLOB atomically during execution.
+The precompile acquires the global mutex, gets the `Arc`, then locks the inner `MersennetOrdersState` for each call. This ensures EVM transactions can call the CLOB atomically during execution.
 
 ### Registration
 
 ```rust
-pub fn register_prime_orders_precompile(handler: &mut EvmHandler<'_, (), InMemoryDB>) {
+pub fn register_mersennet_orders_precompile(handler: &mut EvmHandler<'_, (), InMemoryDB>) {
     let prev_load = handler.pre_execution.load_precompiles.clone();
     handler.pre_execution.load_precompiles = Arc::new(move || {
         let mut precompiles = prev_load();
         precompiles.extend([(
-            PRIME_ORDERS_PRECOMPILE,
-            ContextPrecompile::Ordinary(Precompile::Env(prime_orders_precompile)),
+            MERSENNET_ORDERS_PRECOMPILE,
+            ContextPrecompile::Ordinary(Precompile::Env(mersennet_orders_precompile)),
         )]);
         precompiles
     });
@@ -755,7 +755,7 @@ pub fn execute_batch_auctions(&mut self) -> Vec<AuctionResult> {
 }
 ```
 
-`apply_results` writes fills back to `PrimeOrdersState`, updating buyer/seller positions and market `last_price`.
+`apply_results` writes fills back to `MersennetOrdersState`, updating buyer/seller positions and market `last_price`.
 
 ---
 
@@ -887,7 +887,7 @@ Uses **sled** (embedded B-tree database) with the following trees:
 |------|-----|-------|
 | `accounts` | `Address` (20 bytes) | `AccountRecord` (bincode) |
 | `storage` | `Address ‖ Slot` (52 bytes) | `U256` (32 bytes BE) |
-| `prime_orders` | `"state"` | `PrimeOrdersSnapshot` (bincode) |
+| `mersennet_orders` | `"state"` | `MersennetOrdersSnapshot` (bincode) |
 | `bridge_orders_to_evm` | `"queue"` | `BridgeQueueRecord` (bincode) |
 | `bridge_evm_to_orders` | `"queue"` | `BridgeQueueRecord` (bincode) |
 | `blocks` | `height` (8 bytes BE) | `Block` (JSON) |
@@ -902,13 +902,13 @@ The `dirty_accounts: Mutex<HashSet<Address>>` set tracks which accounts were mod
 pub fn commit_state(
     &self,
     evm_db: &InMemoryDB,
-    prime_orders: &PrimeOrdersState,
+    mersennet_orders: &MersennetOrdersState,
     bridge_orders_to_evm: &BridgeQueue,
     bridge_evm_to_orders: &BridgeQueue,
     height: u64,
 ) -> Result<B256> {
     self.write_evm_state(evm_db)?;        // Only dirty accounts
-    self.commit_prime_orders(prime_orders)?;
+    self.commit_mersennet_orders(mersennet_orders)?;
     self.commit_bridge_queues(..)?;
     let root = self.compute_state_root();
     self.record_height(height, root)?;
@@ -921,7 +921,7 @@ pub fn commit_state(
 The state root is a binary Merkle tree computed over all key-value pairs from all trees:
 
 ```
-1. Collect all (key, value) pairs from: accounts, storage, prime_orders, bridge_*
+1. Collect all (key, value) pairs from: accounts, storage, mersennet_orders, bridge_*
 2. Sort by key
 3. Leaf = keccak256(key ‖ value)
 4. Internal = keccak256(left ‖ right)
@@ -1045,56 +1045,56 @@ JSON-RPC 2.0 server built on `tiny_http` with CORS support and Ethereum-compatib
 | Method | Eth Alias | Description |
 |--------|-----------|-------------|
 | `mersennetId` | `eth_chainId` | Returns chain ID |
-| `prime_blockNumber` | `eth_blockNumber` | Latest block height |
-| `prime_getBalance` | `eth_getBalance` | Account balance |
-| `prime_getCode` | `eth_getCode` | Account bytecode |
-| `prime_getStorageAt` | `eth_getStorageAt` | Storage slot value |
-| `prime_getTransactionCount` | `eth_getTransactionCount` | Account nonce |
-| `prime_gasPrice` | `eth_gasPrice` | Current base fee |
-| `prime_call` | `eth_call` | Simulate call (no state change) |
+| `mersennet_blockNumber` | `eth_blockNumber` | Latest block height |
+| `mersennet_getBalance` | `eth_getBalance` | Account balance |
+| `mersennet_getCode` | `eth_getCode` | Account bytecode |
+| `mersennet_getStorageAt` | `eth_getStorageAt` | Storage slot value |
+| `mersennet_getTransactionCount` | `eth_getTransactionCount` | Account nonce |
+| `mersennet_gasPrice` | `eth_gasPrice` | Current base fee |
+| `mersennet_call` | `eth_call` | Simulate call (no state change) |
 | — | `eth_estimateGas` | Gas estimation |
 | — | `eth_feeHistory` / `eth_maxPriorityFeePerGas` | Fee market queries |
 | — | `eth_syncing` / `eth_mining` / `eth_accounts` / `eth_protocolVersion` | Node status compatibility |
 | — | `net_version` / `net_listening` / `net_peerCount` | Network status |
 | — | `web3_clientVersion` | Client version (`Mersennet/0.1.0`) |
 | — | `txpool_status` | Mempool pool sizes |
-| `prime_validators` | — | Active validator set |
+| `mersennet_validators` | — | Active validator set |
 
 #### Blocks & Transactions
 
 | Method | Description |
 |--------|-------------|
-| `prime_getBlockByNumber` / `eth_getBlockByNumber` | Block by number (supports "latest") |
+| `mersennet_getBlockByNumber` / `eth_getBlockByNumber` | Block by number (supports "latest") |
 | `eth_getBlockByHash` | Block by hash |
-| `prime_sendTransaction` / `eth_sendTransaction` | Submit transaction |
+| `mersennet_sendTransaction` / `eth_sendTransaction` | Submit transaction |
 | `eth_sendRawTransaction` | Submit RLP-encoded signed transaction |
-| `prime_getTransactionReceipt` / `eth_getTransactionReceipt` | Transaction receipt |
-| `prime_getTransactionByHash` / `eth_getTransactionByHash` | Transaction by hash |
-| `prime_getLogs` / `eth_getLogs` | Log filtering with block range, addresses, topics |
-| `prime_getDomainEvents` | Domain events (CLOB + bridge) |
+| `mersennet_getTransactionReceipt` / `eth_getTransactionReceipt` | Transaction receipt |
+| `mersennet_getTransactionByHash` / `eth_getTransactionByHash` | Transaction by hash |
+| `mersennet_getLogs` / `eth_getLogs` | Log filtering with block range, addresses, topics |
+| `mersennet_getDomainEvents` | Domain events (CLOB + bridge) |
 
-#### PrimeOrders
+#### MersennetOrders
 
 | Method | Description |
 |--------|-------------|
-| `primeorders_addMarket` | Create new market |
-| `primeorders_submitOrder` | Submit order to CLOB |
-| `primeorders_cancelOrder` | Cancel order |
-| `primeorders_getOrderBook` | Get order book levels |
-| `primeorders_getOpenOrders` | Get open orders for account |
-| `primeorders_setMarginParams` | Set margin parameters |
-| `primeorders_depositCollateral` | Deposit collateral |
-| `primeorders_isLiquidatable` | Check liquidation eligibility |
-| `primeorders_liquidate` | Liquidate account |
+| `mersennet_orders_addMarket` | Create new market |
+| `mersennet_orders_submitOrder` | Submit order to CLOB |
+| `mersennet_orders_cancelOrder` | Cancel order |
+| `mersennet_orders_getOrderBook` | Get order book levels |
+| `mersennet_orders_getOpenOrders` | Get open orders for account |
+| `mersennet_orders_setMarginParams` | Set margin parameters |
+| `mersennet_orders_depositCollateral` | Deposit collateral |
+| `mersennet_orders_isLiquidatable` | Check liquidation eligibility |
+| `mersennet_orders_liquidate` | Liquidate account |
 
 #### Bridge
 
 | Method | Description |
 |--------|-------------|
-| `primebridge_enqueueOrdersToEvm` | Enqueue message: orders → EVM |
-| `primebridge_enqueueEvmToOrders` | Enqueue message: EVM → orders |
-| `primebridge_dequeueOrdersToEvm` | Dequeue message: orders → EVM |
-| `primebridge_dequeueEvmToOrders` | Dequeue message: EVM → orders |
+| `mersennet_bridge_enqueueOrdersToEvm` | Enqueue message: orders → EVM |
+| `mersennet_bridge_enqueueEvmToOrders` | Enqueue message: EVM → orders |
+| `mersennet_bridge_dequeueOrdersToEvm` | Dequeue message: orders → EVM |
+| `mersennet_bridge_dequeueEvmToOrders` | Dequeue message: EVM → orders |
 
 #### Filters & Subscriptions
 
@@ -1102,20 +1102,20 @@ JSON-RPC 2.0 server built on `tiny_http` with CORS support and Ethereum-compatib
 |--------|-------------|
 | `eth_newFilter` / `eth_newBlockFilter` / `eth_newPendingTransactionFilter` | Install filters |
 | `eth_getFilterChanges` / `eth_getFilterLogs` / `eth_uninstallFilter` | Poll / drain / remove filters |
-| `eth_subscribe` / `eth_unsubscribe` (also `prime_subscribe` / `prime_unsubscribe`) | WebSocket subscriptions (`crates/rpc/src/ws.rs`) |
+| `eth_subscribe` / `eth_unsubscribe` (also `mersennet_subscribe` / `mersennet_unsubscribe`) | WebSocket subscriptions (`crates/rpc/src/ws.rs`) |
 
 #### Shielded & State Proofs (`crates/rpc/src/rpc_shielded.rs`)
 
 | Method | Description |
 |--------|-------------|
-| `prime_submitShield` / `prime_submitUnshield` | Move funds into / out of the shielded pool |
-| `prime_submitShieldedTransfer` / `prime_submitShieldedOrder` | Shielded transfers and CLOB orders |
-| `prime_getShieldedRoot` / `prime_getShieldedNotes` / `prime_getShieldedBalance` / `prime_getShieldedMarketAggregates` | Shielded state queries |
-| `prime_viewGrantToken` / `prime_viewRevokeToken` / `prime_viewGrantStatus` | Selective-disclosure viewing keys |
-| `prime_viewBalances` / `prime_viewNotes` / `prime_viewOrders` / `prime_viewPositions` / `prime_viewPortfolioDigest` | Viewing-key scoped reads |
-| `prime_getStateProof` / `prime_getLatestStateProof` / `prime_verifyStateProof` | SP1 state proofs |
-| `prime_registerLiquidator` / `prime_submitLiquidationClaim` / `prime_submitLiquidationExecute` | Shielded liquidation auction flow |
-| `prime_getCodeHash` / `prime_getCodeAttestation` | Code publication queries |
+| `mersennet_submitShield` / `mersennet_submitUnshield` | Move funds into / out of the shielded pool |
+| `mersennet_submitShieldedTransfer` / `mersennet_submitShieldedOrder` | Shielded transfers and CLOB orders |
+| `mersennet_getShieldedRoot` / `mersennet_getShieldedNotes` / `mersennet_getShieldedBalance` / `mersennet_getShieldedMarketAggregates` | Shielded state queries |
+| `mersennet_viewGrantToken` / `mersennet_viewRevokeToken` / `mersennet_viewGrantStatus` | Selective-disclosure viewing keys |
+| `mersennet_viewBalances` / `mersennet_viewNotes` / `mersennet_viewOrders` / `mersennet_viewPositions` / `mersennet_viewPortfolioDigest` | Viewing-key scoped reads |
+| `mersennet_getStateProof` / `mersennet_getLatestStateProof` / `mersennet_verifyStateProof` | SP1 state proofs |
+| `mersennet_registerLiquidator` / `mersennet_submitLiquidationClaim` / `mersennet_submitLiquidationExecute` | Shielded liquidation auction flow |
+| `mersennet_getCodeHash` / `mersennet_getCodeAttestation` | Code publication queries |
 
 ### Error Codes
 
@@ -1176,14 +1176,14 @@ Standard Ethereum: `keccak256(uncompressed_public_key[1..])[12..]`
 
 **Files:** `crates/core/src/bridge.rs`, `crates/core/src/bridge_export.rs`
 
-Bidirectional message queue between the PrimeOrders domain and the EVM domain.
+Bidirectional message queue between the MersennetOrders domain and the EVM domain.
 
 ### Domains
 
 | Domain | Description |
 |--------|-------------|
-| `PrimeOrders` | CLOB / order book domain |
-| `PrimeEvm` | EVM execution domain |
+| `MersennetOrders` | CLOB / order book domain |
+| `MersennetEvm` | EVM execution domain |
 
 ### Queue Structure
 
@@ -1285,7 +1285,7 @@ JSON-based configuration loaded from a file path. All fields have defaults.
     "max_per_sender": 1000,
     "bump_bps": 1000
   },
-  "prime_orders": {
+  "mersennet_orders": {
     "initial_margin_bps": 0,
     "maintenance_margin_bps": 0
   },
@@ -1387,7 +1387,7 @@ JSON-based configuration loaded from a file path. All fields have defaults.
 {
   "jsonrpc": "2.0",
   "id": 1,
-  "method": "prime_blockNumber",
+  "method": "mersennet_blockNumber",
   "params": []
 }
 ```
@@ -1400,7 +1400,7 @@ curl -X POST http://localhost:8545 \
   -d '{
     "jsonrpc": "2.0",
     "id": 1,
-    "method": "prime_sendTransaction",
+    "method": "mersennet_sendTransaction",
     "params": [{
       "from": "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
       "to": "0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
@@ -1421,7 +1421,7 @@ curl -X POST http://localhost:8545 \
   -d '{
     "jsonrpc": "2.0",
     "id": 1,
-    "method": "prime_getBlockByNumber",
+    "method": "mersennet_getBlockByNumber",
     "params": ["latest", true]
   }'
 ```
@@ -1431,7 +1431,7 @@ curl -X POST http://localhost:8545 \
 From a Solidity contract:
 
 ```solidity
-interface IPrimeOrders {
+interface IMersennetOrders {
     function placeOrder(
         uint64 marketId,
         bool isBuy,
@@ -1442,7 +1442,7 @@ interface IPrimeOrders {
 }
 
 // Address: 0x0000000000000000000000000000000000000100
-IPrimeOrders clob = IPrimeOrders(0x0000000000000000000000000000000000000100);
+IMersennetOrders clob = IMersennetOrders(0x0000000000000000000000000000000000000100);
 
 // TimeInForce: 0=GTC, 1=IOC, 2=FOK
 (uint256 id, uint256 filled, uint256 remaining) = clob.placeOrder(1, true, 50000, 100, 0);
@@ -1456,7 +1456,7 @@ curl -X POST http://localhost:8545 \
   -d '{
     "jsonrpc": "2.0",
     "id": 1,
-    "method": "primeorders_addMarket",
+    "method": "mersennet_orders_addMarket",
     "params": ["ETH-USD", "0x1", "0x1"]
   }'
 ```
@@ -1630,7 +1630,7 @@ Periodic pruning of old blocks and height metadata via `prune_before(height)`. R
 | Component | Measured Performance | Notes |
 |-----------|----------------------|-------|
 | EVM (parallel, 8 cores) | 72,181 TPS | Independent transfers, release mode |
-| CLOB (PrimeOrders) | 2,484,170 ops/s | Native matching engine |
+| CLOB (MersennetOrders) | 2,484,170 ops/s | Native matching engine |
 | FBA (Frequent Batch Auctions) | 5,053,782 ops/s | Clearing price + pro-rata |
 | HotStuff-2 | 0.001 ms/round | Per-round latency |
 
@@ -1722,8 +1722,8 @@ The workspace test suite currently has **241 passing Rust tests** (unit + integr
 | `consensus_sim.rs` | ~35 | Consensus simulation |
 | `bridge_tests.rs` | ~140 | Bridge queue operations, persistence |
 | `crypto_tests.rs` | ~100 | ECDSA signing, recovery, determinism |
-| `prime_orders_advanced.rs` | ~440 | CLOB matching, margin, liquidation, ADL |
-| `prime_orders_integration.rs` | ~290 | CLOB end-to-end flows |
+| `mersennet_orders_advanced.rs` | ~440 | CLOB matching, margin, liquidation, ADL |
+| `mersennet_orders_integration.rs` | ~290 | CLOB end-to-end flows |
 | `integration_tests.rs` / `integration_block.rs` | ~540 | Engine + block production integration |
 | `privacy_migration_e2e.rs` | ~130 | Privacy fork migration end-to-end |
 | `fuzz_mempool.rs` / `fuzz_matching.rs` | ~370 | Fuzz testing for mempool and matching engine |
@@ -1831,12 +1831,12 @@ Events emitted by the engine for indexing and RPC subscription:
 
 | Domain | Event Kind | Fields |
 |--------|-----------|--------|
-| PrimeOrders | `MarketAdded` | market_id, symbol, tick_size, lot_size |
-| PrimeOrders | `OrderSubmitted` | order_id, owner, market_id, side, price, size, tif, filled, remaining |
-| PrimeOrders | `OrderCancelled` | order_id, owner, market_id |
-| PrimeOrders | `Trade` | taker, maker, market_id, side, price, size |
-| PrimeOrders | `MarginParamsUpdated` | initial_bps, maintenance_bps |
-| PrimeOrders | `CollateralDeposited` | owner, amount |
-| PrimeOrders | `Liquidation` | owner, liquidated |
+| MersennetOrders | `MarketAdded` | market_id, symbol, tick_size, lot_size |
+| MersennetOrders | `OrderSubmitted` | order_id, owner, market_id, side, price, size, tif, filled, remaining |
+| MersennetOrders | `OrderCancelled` | order_id, owner, market_id |
+| MersennetOrders | `Trade` | taker, maker, market_id, side, price, size |
+| MersennetOrders | `MarginParamsUpdated` | initial_bps, maintenance_bps |
+| MersennetOrders | `CollateralDeposited` | owner, amount |
+| MersennetOrders | `Liquidation` | owner, liquidated |
 | Bridge | `Enqueued` | queue, nonce, from, to, payload |
 | Bridge | `Dequeued` | queue, nonce, from, to, payload |

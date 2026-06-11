@@ -126,7 +126,7 @@ curl -s http://localhost:8545/health
 # {"status":"ok","privacy_mode_activated":false,"block":<n>,...}
 
 curl -s -X POST -H 'content-type: application/json' \
-  --data '{"jsonrpc":"2.0","id":1,"method":"prime_getChainConfig","params":[]}' \
+  --data '{"jsonrpc":"2.0","id":1,"method":"mersennet_getChainConfig","params":[]}' \
   http://localhost:8545
 # expect chain_id=7920, privacy.activation_height=100
 ```
@@ -153,7 +153,7 @@ Validate via RPC:
 
 ```bash
 curl -s -X POST -H 'content-type: application/json' \
-  --data '{"jsonrpc":"2.0","id":1,"method":"prime_getShieldedRoot","params":[]}' \
+  --data '{"jsonrpc":"2.0","id":1,"method":"mersennet_getShieldedRoot","params":[]}' \
   http://localhost:8545
 ```
 
@@ -173,7 +173,7 @@ root advances.
 4. Bring back up.
 
 For zero-downtime validator rotation (post-mainnet), use
-`prime_governance` workflow (see Workstream J runbook — not yet
+`mersennet_governance` workflow (see Workstream J runbook — not yet
 shipped).
 
 ---

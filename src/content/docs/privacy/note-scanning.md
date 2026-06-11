@@ -9,7 +9,7 @@ Because Mersennet never stores a plaintext balance for you, your wallet rebuilds
 
 ```mermaid
 flowchart TD
-  Fetch["Fetch encrypted notes (prime_viewNotes / prime_getShieldedNotes)"] --> Decrypt["Decrypt with viewing material"]
+  Fetch["Fetch encrypted notes (mersennet_viewNotes / mersennet_getShieldedNotes)"] --> Decrypt["Decrypt with viewing material"]
   Decrypt --> Derive["Derive each note's nullifier"]
   Derive --> Filter["Drop notes whose nullifier is in the spent set"]
   Filter --> Sum["Sum remaining notes per asset"]
@@ -37,9 +37,9 @@ The TypeScript SDK ships the full pipeline so a wallet does not implement crypto
 import { scanAndReconstructBalances } from '@mersennet/sdk';
 
 const result = await scanAndReconstructBalances(
-  provider,          // PrimeProvider
+  provider,          // MersennetProvider
   viewingMaterial,   // GrantedViewingMaterial (owner or grantee)
-  { limit: 100 },    // options: drives a paged prime_viewBalances scan
+  { limit: 100 },    // options: drives a paged mersennet_viewBalances scan
 );
 
 console.log(result.perAsset); // per-asset totals, spent notes excluded

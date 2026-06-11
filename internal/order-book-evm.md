@@ -1,21 +1,21 @@
-# PrimeOrders + PrimeEVM Architecture (Draft)
+# MersennetOrders + MersennetEVM Architecture (Draft)
 
 ## Goal
-Provide a dual-system chain: **PrimeOrders** (high‑throughput order book + risk engine) and **PrimeEVM** (smart contract execution). Both settle to a shared canonical state with deterministic transitions and finality.
+Provide a dual-system chain: **MersennetOrders** (high‑throughput order book + risk engine) and **MersennetEVM** (smart contract execution). Both settle to a shared canonical state with deterministic transitions and finality.
 
 ## High-Level Components
-- **PrimeOrders Core**
+- **MersennetOrders Core**
   - Matching engine (price/time priority).
   - Risk engine (margin, liquidation, position limits).
   - Market data pipeline (order book, trades, funding index).
-- **PrimeEVM Runtime**
+- **MersennetEVM Runtime**
   - Standard EVM execution (already in `engine.rs`).
   - Contract deployment, calls, logs, receipts.
 - **Settlement Layer**
   - Canonical balances/positions state shared across both systems.
   - State root commitment per block.
 - **Bridge & Queue**
-  - Deterministic queues for messages between PrimeOrders and PrimeEVM.
+  - Deterministic queues for messages between MersennetOrders and MersennetEVM.
   - Replay protection, nonce ordering, and finality semantics.
 
 ## Data Model (First Pass)
@@ -26,40 +26,40 @@ Provide a dual-system chain: **PrimeOrders** (high‑throughput order book + ris
 - **Funding**: funding index, rate, payment schedule.
 
 ## Protocol Flow (Per Block)
-1. **PrimeOrders ingest**: validate orders, match, emit trades.
+1. **MersennetOrders ingest**: validate orders, match, emit trades.
 2. **Risk checks**: update margin/positions, trigger liquidations.
 3. **Settlement write**: update balances/positions in shared state.
-4. **PrimeEVM exec**: execute mempool txs against updated state.
+4. **MersennetEVM exec**: execute mempool txs against updated state.
 5. **Finalize**: compute state root and commit block.
 
 ## RPC Surface (Additions)
-- **PrimeOrders RPC**
-  - `primeorders_submitOrder`
-  - `primeorders_cancelOrder`
-  - `primeorders_getOrderBook`
-  - `primeorders_getOpenOrders`
-  - `primeorders_getPositions` *(planned — not yet implemented)*
-  - `primeorders_getTrades` *(planned — not yet implemented)*
-- **PrimeEVM**
+- **MersennetOrders RPC**
+  - `mersennet_orders_submitOrder`
+  - `mersennet_orders_cancelOrder`
+  - `mersennet_orders_getOrderBook`
+  - `mersennet_orders_getOpenOrders`
+  - `mersennet_orders_getPositions` *(planned — not yet implemented)*
+  - `mersennet_orders_getTrades` *(planned — not yet implemented)*
+- **MersennetEVM**
   - Keep existing JSON‑RPC methods for EVM.
 
-## PrimeOrders RPC Usage (Draft)
+## MersennetOrders RPC Usage (Draft)
 All methods are JSON‑RPC 2.0 over HTTP POST.
 
 ### Add Market
-**Method**: `primeorders_addMarket`
+**Method**: `mersennet_orders_addMarket`
 
 **Params**: `[symbol, tickSize, lotSize]`
 
 **Example params**:
-- `"PRIME-PERP"`
+- `"MERSENNET-PERP"`
 - `"0x1"`
 - `"0x1"`
 
 **Returns**: hex-encoded market id.
 
 ### Submit Order
-**Method**: `primeorders_submitOrder`
+**Method**: `mersennet_orders_submitOrder`
 
 **Params**: `[order]`
 
@@ -74,28 +74,28 @@ All methods are JSON‑RPC 2.0 over HTTP POST.
 **Returns**: `order_id`, `filled`, `remaining`, `trades`.
 
 ### Cancel Order
-**Method**: `primeorders_cancelOrder`
+**Method**: `mersennet_orders_cancelOrder`
 
 **Params**: `[orderId]` (hex or number)
 
 **Returns**: `true` if cancelled.
 
 ### Order Book
-**Method**: `primeorders_getOrderBook`
+**Method**: `mersennet_orders_getOrderBook`
 
 **Params**: `[marketId]` (hex or number)
 
 **Returns**: bids/asks arrays of `{ price, size }`.
 
 ### Open Orders
-**Method**: `primeorders_getOpenOrders`
+**Method**: `mersennet_orders_getOpenOrders`
 
 **Params**: `[owner]` (0x address)
 
 **Returns**: open order list.
 
 ### Margin Parameters
-**Method**: `primeorders_setMarginParams`
+**Method**: `mersennet_orders_setMarginParams`
 
 **Params**: `[initial_bps, maintenance_bps]`
 
@@ -106,7 +106,7 @@ All methods are JSON‑RPC 2.0 over HTTP POST.
 **Returns**: `true`.
 
 ### Deposit Collateral
-**Method**: `primeorders_depositCollateral`
+**Method**: `mersennet_orders_depositCollateral`
 
 **Params**: `[owner, amount]`
 
@@ -117,30 +117,30 @@ All methods are JSON‑RPC 2.0 over HTTP POST.
 **Returns**: `true`.
 
 ### Liquidation Checks
-**Method**: `primeorders_isLiquidatable`
+**Method**: `mersennet_orders_isLiquidatable`
 
 **Params**: `[owner]`
 
 **Returns**: `true` or `false`.
 
 ### Liquidate
-**Method**: `primeorders_liquidate`
+**Method**: `mersennet_orders_liquidate`
 
 **Params**: `[owner]`
 
 **Returns**: `true` if liquidation executed.
 
 ## Domain Events
-Blocks now include deterministic domain events for PrimeOrders and the bridge. You can query the event index via RPC.
+Blocks now include deterministic domain events for MersennetOrders and the bridge. You can query the event index via RPC.
 
-**Method**: `prime_getDomainEvents`
+**Method**: `mersennet_getDomainEvents`
 
 **Params**: `[filter]`
 
 **Filter fields**:
 - `fromBlock` (optional): hex block number or `"latest"`. Defaults to `0`.
 - `toBlock` (optional): hex block number or `"latest"`. Defaults to `latest`.
-- `domain` (optional): `"primeorders"` or `"bridge"`.
+- `domain` (optional): `"mersennetorders"` or `"bridge"`.
 - `kind` (optional): event kind string (e.g., `"order_submitted"`, `"trade"`, `"bridge_enqueued"`).
 
 **Example params**:
@@ -148,21 +148,21 @@ Blocks now include deterministic domain events for PrimeOrders and the bridge. Y
 {
   "fromBlock": "0x1",
   "toBlock": "latest",
-  "domain": "primeorders",
+  "domain": "mersennetorders",
   "kind": "order_submitted"
 }
 ```
 
 ## Consensus Requirements
-- Validators must verify **both** PrimeOrders and PrimeEVM transitions.
-- Block must include deterministic PrimeOrders event set + EVM receipts.
+- Validators must verify **both** MersennetOrders and MersennetEVM transitions.
+- Block must include deterministic MersennetOrders event set + EVM receipts.
 
 ## Milestones
-1. **State schema**: implement PrimeOrders state tables (accounts, orders, positions).
+1. **State schema**: implement MersennetOrders state tables (accounts, orders, positions).
 2. **Matching engine**: deterministic order matching, basic order types (limit/market).
 3. **Risk engine**: initial/maintenance margin, liquidation, funding.
 4. **Bridge**: cross‑domain message queue with ordering + replay protection.
-5. **RPC**: expose PrimeOrders endpoints + data streaming.
+5. **RPC**: expose MersennetOrders endpoints + data streaming.
 6. **Tests**: matching determinism, liquidation correctness, state sync.
 
 ## Open Questions

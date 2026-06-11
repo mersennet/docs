@@ -207,7 +207,7 @@ For investors preferring milestone-based funding:
 ## 10. Contact & Execution
 
 **Issuer:** Mersennet Foundation
-**Contact:** [founders@primechain.network]
+**Contact:** [founders@mersennet.com]
 **Legal Counsel:** [To be appointed]
 
 ### Signatures

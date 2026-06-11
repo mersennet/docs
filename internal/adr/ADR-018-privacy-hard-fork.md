@@ -46,8 +46,8 @@ At block `H`:
 3. The `0x7E` tx type becomes accepted. The legacy `0x00` and `0x02`
    tx types continue to work, but only for transparent contract
    calls — they cannot move MRSN between EOAs.
-4. The shielded RPC methods (`prime_getShieldedBalance`,
-   `prime_submitShieldedOrder`, etc.) become live. Pre-`H` they
+4. The shielded RPC methods (`mersennet_getShieldedBalance`,
+   `mersennet_submitShieldedOrder`, etc.) become live. Pre-`H` they
    return `-32605` ("disabled in current chain mode").
 5. The legacy `is_liquidatable(addr)` and `liquidate(addr)`
    precompile selectors are deactivated. The bonded liquidator
@@ -80,7 +80,7 @@ mode and the next activation attempt is scheduled `>=1 week` later.
 **Negative.**
 - Wallets must upgrade before `H` to read their post-`H` balance.
   Mitigated by a multi-week pre-activation announcement and a
-  fallback `prime_getShieldedBalanceLegacy(addr)` RPC method
+  fallback `mersennet_getShieldedBalanceLegacy(addr)` RPC method
   retained for one quarter post-fork.
 - Block headers grow by 64 bytes. Acceptable.
 

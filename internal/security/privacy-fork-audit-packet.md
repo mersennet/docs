@@ -20,13 +20,13 @@ starting the real H6 bake clock.
       `cargo-prove prove build --docker --tag v6.2.2 --workspace-directory <repo>`.
 - Real SP1 verifying-key hash was captured from that ELF and pinned as
       `0013c6c783c5266f4b361816fb1d25c186582811b90a11edcd15d69ee286200d`.
-- Real local `PRIME_SP1_MODE=local` core prove/verify transcript captured
+- Real local `MERSENNET_SP1_MODE=local` core prove/verify transcript captured
       (`scripts/zk/sp1-prove-response.json`, `scripts/zk/sp1-verify-response.json`).
 - Real-SP1 host runner now passes `cargo check --manifest-path
       programs/state-transition-host/Cargo.toml --features real-sp1` in WSL.
 - Host-side real-SP1 path now has explicit mode handling:
-  `PRIME_SP1_MODE=local` uses blocking CPU proving and
-  `PRIME_SP1_MODE=network` fails with an explicit blocker message
+  `MERSENNET_SP1_MODE=local` uses blocking CPU proving and
+  `MERSENNET_SP1_MODE=network` fails with an explicit blocker message
   instead of silently falling back.
 - Dedicated SP1 validation lanes exist in CI for:
   - `cargo check -p mersennet-node --features prover,sp1`
@@ -71,7 +71,7 @@ cargo check --manifest-path programs/state-transition-host/Cargo.toml --features
 ### 1. Release-grade prove/verify transcript — CAPTURED (E3 closed)
 
 The release-grade local SP1 prove/verify transcript has now been captured
-end to end with `PRIME_SP1_MODE=local` against a reproducible ELF:
+end to end with `MERSENNET_SP1_MODE=local` against a reproducible ELF:
 
 - Guest ELF built reproducibly via
   `cargo-prove prove build --docker --tag v6.2.2 --workspace-directory <repo>`
@@ -139,25 +139,25 @@ Capture details:
       `processors=16`
       After `wsl.exe --shutdown`, WSL reported `Mem: 27Gi` and `Swap: 16Gi`.
 - Local real-SP1 prove command attempted in WSL:
-      `PROTOC=/home/rodaemonic/.local/bin/protoc PROTOC_INCLUDE=/home/rodaemonic/.local/share/protoc/extracted/include PRIME_SP1_MODE=local cargo run --release --manifest-path programs/state-transition-host/Cargo.toml --features real-sp1 -- --prove-request scripts/zk/sp1-prove-request.request.json --prove-response scripts/zk/sp1-prove-response.json`
+      `PROTOC=/home/rodaemonic/.local/bin/protoc PROTOC_INCLUDE=/home/rodaemonic/.local/share/protoc/extracted/include MERSENNET_SP1_MODE=local cargo run --release --manifest-path programs/state-transition-host/Cargo.toml --features real-sp1 -- --prove-request scripts/zk/sp1-prove-request.request.json --prove-response scripts/zk/sp1-prove-response.json`
 - Lower-concurrency retries attempted:
-      `RAYON_NUM_THREADS=4 PRIME_SP1_MODE=local programs/state-transition-host/target/debug/mersennet-state-transition-host --prove-request scripts/zk/sp1-prove-request.request.json --prove-response scripts/zk/sp1-prove-response.json`
+      `RAYON_NUM_THREADS=4 MERSENNET_SP1_MODE=local programs/state-transition-host/target/debug/mersennet-state-transition-host --prove-request scripts/zk/sp1-prove-request.request.json --prove-response scripts/zk/sp1-prove-response.json`
       and later
-      `RAYON_NUM_THREADS=2 PRIME_SP1_MODE=local programs/state-transition-host/target/debug/mersennet-state-transition-host --prove-request scripts/zk/sp1-prove-request.request.json --prove-response scripts/zk/sp1-prove-response.json`
+      `RAYON_NUM_THREADS=2 MERSENNET_SP1_MODE=local programs/state-transition-host/target/debug/mersennet-state-transition-host --prove-request scripts/zk/sp1-prove-request.request.json --prove-response scripts/zk/sp1-prove-response.json`
 - Debug-profile reproducer finding:
       the checked-in host path isolated the slow startup to local SP1 SDK client initialization before prover setup. Stage tracing in `programs/state-transition-host/src/main.rs` reached:
-      `[prime-sp1-stage] elf:read:start`
-      `[prime-sp1-stage] elf:read:done`
-      `[prime-sp1-stage] stdin:build:start`
-      `[prime-sp1-stage] stdin:write:start`
-      `[prime-sp1-stage] stdin:write:done`
-      `[prime-sp1-stage] client:build:start`
+      `[mersennet-sp1-stage] elf:read:start`
+      `[mersennet-sp1-stage] elf:read:done`
+      `[mersennet-sp1-stage] stdin:build:start`
+      `[mersennet-sp1-stage] stdin:write:start`
+      `[mersennet-sp1-stage] stdin:write:done`
+      `[mersennet-sp1-stage] client:build:start`
       and the debug run did not reach `client:build:done` within the earlier probe window.
 - Standalone reproducer:
       `programs/state-transition-host/examples/probe_prover_client.rs` reproduces the same startup cost without any Mersennet input handling. Running it in WSL with `cargo run --release --manifest-path programs/state-transition-host/Cargo.toml --example probe_prover_client --features real-sp1` now prints:
-      `[prime-sp1-probe] client:build:start`
+      `[mersennet-sp1-probe] client:build:start`
       followed by
-      `[prime-sp1-probe] client:build:done`.
+      `[mersennet-sp1-probe] client:build:done`.
 - Current local conclusion:
       the earlier "hang" was caused by running the real SP1 prover path through debug binaries. The checked-in adapters now normalize `cargo run ... --features real-sp1` commands to `--release` unless an explicit profile is already provided.
 - Transcript artifacts:
@@ -190,7 +190,7 @@ Capture details:
         verify request.
       The real local prove output's `public_values` equalled this pinned
       `publicValuesHex` exactly, confirming the ELF/input did not drift.
-- Transcript: CAPTURED. The real `PRIME_SP1_MODE=local` core prove
+- Transcript: CAPTURED. The real `MERSENNET_SP1_MODE=local` core prove
   completed on a 47 GB host (the `core` proof system is far lighter than
   the recursion/wrap paths that previously OOM-killed a 28-32 GB WSL box),
   and the rendered verify request verified cryptographically
@@ -247,10 +247,10 @@ Verification (this environment):
 
 Delegated-proof evidence still required to close E4:
 
-- one successful `PRIME_SP1_MODE=network` prove response captured from
+- one successful `MERSENNET_SP1_MODE=network` prove response captured from
       the network-enabled host
 - one rendered network verify request derived from that prove response
-- one successful `PRIME_SP1_MODE=network` verify response
+- one successful `MERSENNET_SP1_MODE=network` verify response
 - proof/vkey/public-values equality against the pinned E3 Docker ELF
       artifact set
 - operator notes identifying the prover-network account / environment
@@ -258,7 +258,7 @@ Delegated-proof evidence still required to close E4:
 
 The network path is gated behind a new `network` cargo feature
 (`network = ["real-sp1", "sp1-sdk/network"]`). With it enabled,
-`PRIME_SP1_MODE=network` drives `ProverClient::builder().network().build()`
+`MERSENNET_SP1_MODE=network` drives `ProverClient::builder().network().build()`
 on **both** the prove and verify paths; without it, the host still fails
 loudly telling the operator to rebuild with `--features network`. A staged
 delegated prove request is checked in at
@@ -273,7 +273,7 @@ The Ethereum-side bridge is implemented and tested in-repo:
   using the `ecAdd` (0x06), `ecMul` (0x07) and `ecPairing` (0x08)
   precompiles, with a settable + permanently lockable verifying key
   (`PUBLIC_INPUT_COUNT = 9`).
-- `contracts/src/zk/PrimeChainBridge.sol` — consumes Groth16-wrapped
+- `contracts/src/zk/MersennetBridge.sol` — consumes Groth16-wrapped
   state-transition proofs to advance the canonical shielded/nullifier
   roots (block monotonicity + prev→new root continuity), and runs a
   deposit/withdraw message bus with single-spend, sorted-pair keccak
@@ -284,7 +284,7 @@ The Ethereum-side bridge is implemented and tested in-repo:
   (`0x0300`); `crates/core/src/bridge_export.rs` converts a
   `BlockProgramOutput` + Groth16 proof blob into the bridge's
   `submitStateProof(uint256[8], uint256[])` calldata (public-input order
-  matches `PrimeChainBridge.PI_*` and `BlockProgramOutput::to_field_elements`),
+  matches `MersennetBridge.PI_*` and `BlockProgramOutput::to_field_elements`),
   with 4 unit tests (`cargo test -p mersennet --lib bridge_export`).
 
 Still required to fully close E5 (out-of-repo):
@@ -321,7 +321,7 @@ preconditions are cleared.
 - [x] Replace the simplified shared executor with the current
       `BlockProgramInput`-authoritative zkVM block execution path.
 - [x] Resolve the `sp1-sdk/network` vs `revm` `c-kzg` conflict before
-      enabling `PRIME_SP1_MODE=network` in production.
+      enabling `MERSENNET_SP1_MODE=network` in production.
 - [ ] Start the actual H6 bake window only after the items above are complete.
 
 ## Code References
@@ -334,4 +334,4 @@ preconditions are cleared.
 - [scripts/zk/README.md](../../scripts/zk/README.md)
 - [crates/core/src/bridge_export.rs](../../crates/core/src/bridge_export.rs)
 - [contracts/src/zk/Groth16Verifier.sol](../../contracts/src/zk/Groth16Verifier.sol)
-- [contracts/src/zk/PrimeChainBridge.sol](../../contracts/src/zk/PrimeChainBridge.sol)
+- [contracts/src/zk/MersennetBridge.sol](../../contracts/src/zk/MersennetBridge.sol)

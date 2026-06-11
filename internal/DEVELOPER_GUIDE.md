@@ -18,7 +18,7 @@ deep dive linked from here.
 
 ## 1. What is Mersennet?
 
-A Rust-built EVM-compatible L1 with a native CLOB (PrimeOrders) that
+A Rust-built EVM-compatible L1 with a native CLOB (MersennetOrders) that
 is being upgraded from a transparent chain (chain ID 131071) to a
 privacy-first chain (chain ID 7920) via a hard fork. The privacy fork:
 
@@ -201,21 +201,21 @@ longer exposed over public RPC.
 
 ### Transparent RPC (works on both 131071 and 7920)
 
-Standard Ethereum-style methods plus `prime_*` extensions:
+Standard Ethereum-style methods plus `mersennet_*` extensions:
 
 | Method | Purpose |
 |---|---|
 | `eth_blockNumber`, `eth_getBlockByNumber` (header-only post-fork), `eth_call`, `eth_sendRawTransaction`, … | Standard EVM |
-| `mersennetId`, `prime_blockNumber`, `prime_getBalance`, `prime_validators`, … | `prime_*` aliases + chain extensions |
-| `primeorders_addMarket`, `primeorders_getOrderBook`, `primeorders_submitOrder`, `primeorders_cancelOrder`, … | PrimeOrders CLOB |
-| `primebridge_enqueueOrdersToEvm` / `primebridge_dequeueEvmToOrders` (and the reverse pair) | Bridge queues |
+| `mersennetId`, `mersennet_blockNumber`, `mersennet_getBalance`, `mersennet_validators`, … | `mersennet_*` aliases + chain extensions |
+| `mersennet_orders_addMarket`, `mersennet_orders_getOrderBook`, `mersennet_orders_submitOrder`, `mersennet_orders_cancelOrder`, … | MersennetOrders CLOB |
+| `mersennet_bridge_enqueueOrdersToEvm` / `mersennet_bridge_dequeueEvmToOrders` (and the reverse pair) | Bridge queues |
 
 Post-fork retrieval rule:
 
 - `eth_getBlockByNumber` and `eth_getBlockByHash` stay public only when
   requesting header-only responses.
-- `eth_getTransactionByHash`, `prime_getTransactionByHash`,
-  `eth_getTransactionReceipt`, and `prime_getTransactionReceipt` are
+- `eth_getTransactionByHash`, `mersennet_getTransactionByHash`,
+  `eth_getTransactionReceipt`, and `mersennet_getTransactionReceipt` are
   disabled after privacy activation.
 - Expanded block responses with full transaction objects are disabled
   after privacy activation.
@@ -227,17 +227,17 @@ them locally with the SDK.
 
 | Method | Purpose |
 |---|---|
-| `prime_submitShieldedTransfer` | Shielded P2P transfer |
-| `prime_submitShield`, `prime_submitUnshield` | Transparent ⇄ shielded bridge |
-| `prime_submitShieldedOrder` | Shielded order book intent |
-| `prime_submitLiquidationClaim`, `prime_submitLiquidationExecute` | Sealed-bid auction flow |
-| `prime_registerLiquidator` | Bond a liquidator |
-| `prime_getShieldedRoot` | Current note tree root |
-| `prime_getShieldedBalance` | Wallet-side balance lookup (viewing-key auth) |
-| `prime_getShieldedMarketAggregates` | Market-level public stats |
-| `prime_getStateProof(blockNumber?)` | SP1 state proof for a specific block (or latest) |
-| `prime_getLatestStateProof` | Convenience alias for latest |
-| `prime_verifyStateProof` | Verify a serialized state proof |
+| `mersennet_submitShieldedTransfer` | Shielded P2P transfer |
+| `mersennet_submitShield`, `mersennet_submitUnshield` | Transparent ⇄ shielded bridge |
+| `mersennet_submitShieldedOrder` | Shielded order book intent |
+| `mersennet_submitLiquidationClaim`, `mersennet_submitLiquidationExecute` | Sealed-bid auction flow |
+| `mersennet_registerLiquidator` | Bond a liquidator |
+| `mersennet_getShieldedRoot` | Current note tree root |
+| `mersennet_getShieldedBalance` | Wallet-side balance lookup (viewing-key auth) |
+| `mersennet_getShieldedMarketAggregates` | Market-level public stats |
+| `mersennet_getStateProof(blockNumber?)` | SP1 state proof for a specific block (or latest) |
+| `mersennet_getLatestStateProof` | Convenience alias for latest |
+| `mersennet_verifyStateProof` | Verify a serialized state proof |
 
 Full reference: [`shielded-rpc.md`](shielded-rpc.md).
 
@@ -247,9 +247,9 @@ Standard `eth_subscribe`:
 
 - `newHeads`, `newPendingTransactions`, `logs`
 
-Prime-specific (`prime_subscribe`):
+Mersennet-specific (`mersennet_subscribe`):
 
-- `PrimeOrdersTrades(marketId?)`, `PrimeOrdersBook(marketId)`, `BatchAuctionResults(marketId?)`
+- `MersennetOrdersTrades(marketId?)`, `MersennetOrdersBook(marketId)`, `BatchAuctionResults(marketId?)`
 
 Privacy-mode subscriptions (added in C3):
 

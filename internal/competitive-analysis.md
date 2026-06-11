@@ -7,7 +7,7 @@
 
 ## Executive Summary
 
-This document analyzes the three most significant production blockchain projects that implement native order books — dYdX v4, Sei Network, and Hyperliquid — and extracts architectural patterns, lessons learned, and specific recommendations for Mersennet. Each represents a distinct design philosophy, and Mersennet's unified EVM+PrimeOrders architecture can learn from both their successes and their limitations.
+This document analyzes the three most significant production blockchain projects that implement native order books — dYdX v4, Sei Network, and Hyperliquid — and extracts architectural patterns, lessons learned, and specific recommendations for Mersennet. Each represents a distinct design philosophy, and Mersennet's unified EVM+MersennetOrders architecture can learn from both their successes and their limitations.
 
 **Key finding:** The industry is converging on a consensus that high-performance trading requires order books outside the traditional EVM execution path, but disagrees on how tightly coupled the order book should be with general-purpose smart contracts. Mersennet's approach of embedding both in a single state and block is architecturally novel and, if executed well, addresses the primary weakness of every competitor analyzed.
 
@@ -83,7 +83,7 @@ dYdX separates orders into two categories with fundamentally different state man
 - Designed for retail traders and long-lived limit orders
 - Lower throughput, consensus-speed placement
 
-**Mersennet implication:** Mersennet's PrimeOrders currently treats all orders uniformly. dYdX's dual-state approach is a pragmatic optimization — short-term orders never touch consensus, dramatically reducing state bloat and increasing throughput. Mersennet should consider a similar tiered model, but the advantage of Mersennet's unified state is that it can offer stronger guarantees than dYdX's "optimistic" matching for short-term orders.
+**Mersennet implication:** Mersennet's MersennetOrders currently treats all orders uniformly. dYdX's dual-state approach is a pragmatic optimization — short-term orders never touch consensus, dramatically reducing state bloat and increasing throughput. Mersennet should consider a similar tiered model, but the advantage of Mersennet's unified state is that it can offer stronger guarantees than dYdX's "optimistic" matching for short-term orders.
 
 ### 1.4 How Orders Interact with Consensus
 
@@ -111,7 +111,7 @@ The `PrepareCheckState` function is particularly noteworthy — it runs a 9-step
 
 ### 1.5 Matching Algorithm
 
-dYdX uses price-time priority matching identical in concept to Mersennet's PrimeOrders, but with several important implementation details:
+dYdX uses price-time priority matching identical in concept to Mersennet's MersennetOrders, but with several important implementation details:
 
 - **Branched context for matching:** Uses `ctx.CacheContext()` to create a branched state, only writing if matching succeeds. This ensures atomic matching — if any step fails (collateralization check, etc.), all state changes are discarded.
 - **Collateralization checks during matching:** Each fill is validated against the subaccount's collateral in real-time, not just at order placement.
@@ -215,7 +215,7 @@ For order processing specifically:
 - Orders within the same market must be serialized (price-time priority requires sequential processing)
 - Conflict detection catches any violations
 
-**Mersennet implication:** Mersennet should implement parallel processing for independent markets. The key insight is that orders in BTC-PERP and ETH-PERP are independent and can be matched concurrently. Only when cross-market operations occur (e.g., portfolio margin checks) do they need to synchronize. PrimeOrders should be designed with per-market parallelism from the start.
+**Mersennet implication:** Mersennet should implement parallel processing for independent markets. The key insight is that orders in BTC-PERP and ETH-PERP are independent and can be matched concurrently. Only when cross-market operations occur (e.g., portfolio margin checks) do they need to synchronize. MersennetOrders should be designed with per-market parallelism from the start.
 
 ### 2.4 Order Matching: Frequent Batch Auctions (FBA)
 
@@ -393,7 +393,7 @@ Hyperliquid uses a **dual-execution model** under HyperBFT consensus:
 - **HyperEVM:** Cancun-spec EVM for smart contracts.
 - **Execution order:** HyperCore and HyperEVM run **sequentially**, not in parallel. They are **NOT** the same execution environment — state is bridged between two distinct runtimes.
 
-This separation is fundamental. Unlike Mersennet's unified EVM+PrimeOrders architecture, Hyperliquid maintains two execution silos that communicate asynchronously.
+This separation is fundamental. Unlike Mersennet's unified EVM+MersennetOrders architecture, Hyperliquid maintains two execution silos that communicate asynchronously.
 
 #### Dual-Block Architecture
 
@@ -629,7 +629,7 @@ Based on this analysis, Mersennet's genuine differentiators are:
 
 1. **Atomic EVM ↔ Order Book Composability:** No competitor achieves this. dYdX has no EVM. Hyperliquid's writes are async. Sei deprecated its native DEX. Mersennet's bridge enabling synchronous cross-domain calls within a single block is architecturally unique.
 
-2. **Single State Root:** All three domains (EVM, PrimeOrders, Bridge) share one canonical state root. This means light clients can verify order book state with the same proofs they use for EVM state — a significant advantage for cross-chain interoperability.
+2. **Single State Root:** All three domains (EVM, MersennetOrders, Bridge) share one canonical state root. This means light clients can verify order book state with the same proofs they use for EVM state — a significant advantage for cross-chain interoperability.
 
 3. **Rust-Native Performance:** Like Hyperliquid, but with full EVM via revm. The Cosmos SDK overhead that limits dYdX and Sei doesn't apply.
 

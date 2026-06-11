@@ -191,7 +191,7 @@ Every finalized block contains the following fields:
 | `burned_reward` | `U256` | Portion of rewards burned (e.g. slashed stake) |
 | `slashes` | `Vec<Slashing>` | Slashing events applied in this block |
 | `unbonded` | `Vec<Unbonding>` | Completed unbonding operations |
-| `domain_events` | `Vec<DomainEvent>` | PrimeOrders and bridge events emitted during execution |
+| `domain_events` | `Vec<DomainEvent>` | MersennetOrders and bridge events emitted during execution |
 
 ### Receipt Format
 
@@ -217,7 +217,7 @@ A transaction moves through the following stages from submission to finalization
 
   1. SUBMISSION
      │  Client sends signed transaction via JSON-RPC
-     │  (eth_sendRawTransaction or prime_sendTransaction)
+     │  (eth_sendRawTransaction or mersennet_sendTransaction)
      │
   2. VALIDATION
      │  ├─ Verify ECDSA signature (recover signer from r, s, v)
@@ -240,7 +240,7 @@ A transaction moves through the following stages from submission to finalization
   5. EVM EXECUTION
      │  ├─ Execute each tx sequentially in revm
      │  ├─ Apply state transitions (balance changes, storage writes)
-     │  ├─ Process PrimeOrders precompile calls (if any)
+     │  ├─ Process MersennetOrders precompile calls (if any)
      │  ├─ Generate receipt with logs, gas_used, status
      │  └─ Compute post-execution state_root
      │
@@ -439,7 +439,7 @@ Complete reference of all configuration parameters with their default values.
 | `initial_reward_per_block` | `string` | `"10000000000000000000"` | Block reward (10 MRSN × 10¹⁸) |
 | `halving_interval` | `u64` | `35000000` | Blocks between reward halvings |
 
-### `prime_orders` — PrimeOrders Precompile
+### `mersennet_orders` — MersennetOrders Precompile
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
@@ -507,7 +507,7 @@ Complete reference of all configuration parameters with their default values.
     "initial_reward_per_block": "10000000000000000000",
     "halving_interval": 35000000
   },
-  "prime_orders": {
+  "mersennet_orders": {
     "initial_margin_bps": 0,
     "maintenance_margin_bps": 0
   },

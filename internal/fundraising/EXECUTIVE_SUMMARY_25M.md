@@ -46,7 +46,7 @@ Three forces are converging to create a window of 12–18 months:
 Mersennet unifies three execution domains in a single blockchain:
 
 ```
-State = (EVM + PrimeOrders + Bridge)
+State = (EVM + MersennetOrders + Bridge)
          │         │            │
    Smart Contracts  │       Cross-Chain
                     │
@@ -203,10 +203,10 @@ Mersennet at $25M Series A represents early-stage pricing for technology that co
 **Mersennet**
 The Institutional Trading Layer for Real-World Assets + On-Chain Credit Markets
 
-- **Docs:** docs.primechain.network
-- **GitHub:** PrimeNumbersLabs
+- **Docs:** docs.mersennet.com
+- **GitHub:** Mersennet
 - **Testnet Explorer:** Chain ID 131071
-- **Email:** [founders@primechain.network]
+- **Email:** [founders@mersennet.com]
 
 ---
 

@@ -2,7 +2,7 @@
 
 **Status:** Accepted (Phase 1 implemented, Phase 4 wired)
 **Date:** 2026-05-21
-**Supersedes:** Implicitly supersedes the transparent-account model used in `crates/core/src/prime_orders.rs::AccountState`.
+**Supersedes:** Implicitly supersedes the transparent-account model used in `crates/core/src/mersennet_orders.rs::AccountState`.
 
 ## Context
 

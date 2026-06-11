@@ -3,7 +3,7 @@
 **Status:** Active. Privacy perimeter hardening is largely landed on
 `feat/zk-privacy`; selective disclosure, real proving backends, wallet
 UX, and fork rehearsal remain in progress.
-**Owner:** PrimeNumbersLabs / ZK group.
+**Owner:** Mersennet / ZK group.
 **Last updated:** see `git log -1 -- docs/internal/zk-privacy-plan.md`.
 
 This is the internal source-of-truth for the privacy redesign. The
@@ -20,7 +20,7 @@ collateral, and proximity to liquidation are publicly readable, because
 those signals are routinely used to engineer cascading liquidations.
 
 Mersennet's existing CLOB
-([crates/core/src/prime_orders.rs](../../crates/core/src/prime_orders.rs))
+([crates/core/src/mersennet_orders.rs](../../crates/core/src/mersennet_orders.rs))
 leaks all of this: `Order.owner: Address`, `AccountState`,
 `HashMap<Address, AccountState>`, and `is_liquidatable(addr)`.
 
@@ -81,7 +81,7 @@ crates/zkp/                      Phase 1 — new workspace member
 
 crates/core/src/shielded_state.rs    Phase 1 — Poseidon Merkle tree + nullifier set + recent-roots ring
 crates/core/src/encrypted_mempool.rs Phase 1 — replace XOR mock with real BLS12-381 threshold ElGamal
-crates/core/src/prime_orders.rs      Phase 2 — refactor from address-keyed to commitment-keyed
+crates/core/src/mersennet_orders.rs      Phase 2 — refactor from address-keyed to commitment-keyed
 crates/core/src/liquidation_auction.rs Phase 3 — new
 crates/core/src/precompiles.rs       Phase 4 — new precompiles 0x0200, 0x0201 for shielded EVM
 crates/core/src/zk_sp1.rs            Phase 5 — swap mock for real sp1_sdk::ProverClient
@@ -111,13 +111,13 @@ table below is the architectural roll-up for this plan.
   mempool, and the shielded EVM bridge are wired into the core engine.
 - Shielded RPC and WebSocket methods are live behind the privacy
   activation switch.
-- Transparent PrimeOrders RPC, WebSocket subscriptions, and precompile
+- Transparent MersennetOrders RPC, WebSocket subscriptions, and precompile
   access are cut off after privacy activation.
 - Transparent account-state, contract-state, simulation, log/filter,
   pending-tx, transaction metadata, receipt metadata, and tx-expanded
   block retrieval are cut off after privacy activation.
 - Public contract publication now uses an opt-in code-attestation model
-  (`prime_getCodeHash`, `prime_getCodeAttestation`) instead of raw
+  (`mersennet_getCodeHash`, `mersennet_getCodeAttestation`) instead of raw
   post-fork bytecode access.
 - Post-fork public block retrieval is header-only; transaction-by-hash,
   receipt-by-hash, and tx-expanded block responses are disabled.
@@ -158,7 +158,7 @@ disclosable.
 Today the chain is best described as a **hybrid transparent + shielded
 system**:
 
-1. Transparent PrimeOrders has been cut off post-fork at the
+1. Transparent MersennetOrders has been cut off post-fork at the
   RPC / WS / precompile / event layer.
 2. Transparent account-state, contract-state, simulation, log/filter,
   pending-tx, transaction metadata, receipt metadata, and tx-expanded
@@ -172,8 +172,8 @@ system**:
   snapshots in
   [crates/core/src/engine.rs](../../crates/core/src/engine.rs).
 5. Viewing-key infrastructure is partially landed: grant issuance,
-  revocation, signature verification, `prime_viewGrantStatus`, and
-  `prime_viewPortfolioDigest` are live in
+  revocation, signature verification, `mersennet_viewGrantStatus`, and
+  `mersennet_viewPortfolioDigest` are live in
   [crates/rpc/src/rpc_shielded.rs](../../crates/rpc/src/rpc_shielded.rs),
   and shield / transfer / unshield-change note ciphertexts are now
   retained in core state for wallet reconstruction flows.
@@ -227,8 +227,8 @@ than B.
 | Block bodies / tx-expanded block RPC | Still exposes tx metadata | Keep header-only block access public; disable tx-expanded responses after privacy activation |
 | Transaction-by-hash / receipt RPC | Still exposes tx + receipt metadata | Disable after privacy activation |
 | Market aggregates, clearing price, aggregate OI | Public | Keep public |
-| Transparent PrimeOrders RPC / WS / precompile | Mostly gated post-fork | Remove fully after the fork |
-| Transparent PrimeOrders events | Gated / redacted post-fork | Remove fully after the fork |
+| Transparent MersennetOrders RPC / WS / precompile | Mostly gated post-fork | Remove fully after the fork |
+| Transparent MersennetOrders events | Gated / redacted post-fork | Remove fully after the fork |
 | Shielded order submission | Live behind privacy mode | Keep and harden |
 | Liquidation auctions | Shielded / bonded | Keep and harden |
 | `eth_getBalance` / `eth_getCode` / `eth_getStorageAt` | Still public | Cut off or scope to transparent-only domain |
@@ -246,23 +246,23 @@ whether the code already enforces that boundary on `feat/zk-privacy`.
 
 | Method | Leaks | Decision | Replacement / scope | Status |
 |---|---|---|---|---|
-| `prime_getBalance` | EOA balance | Disable after privacy activation | `prime_getShieldedBalance` or view-key flow | **landed** |
-| `eth_getBalance` | EOA balance | Disable after privacy activation | `prime_getShieldedBalance` or view-key flow | **landed** |
-| `prime_getTransactionCount` | EOA activity / nonce | Disable after privacy activation | shielded sequencer / relayer UX, not public RPC | **landed** |
+| `mersennet_getBalance` | EOA balance | Disable after privacy activation | `mersennet_getShieldedBalance` or view-key flow | **landed** |
+| `eth_getBalance` | EOA balance | Disable after privacy activation | `mersennet_getShieldedBalance` or view-key flow | **landed** |
+| `mersennet_getTransactionCount` | EOA activity / nonce | Disable after privacy activation | shielded sequencer / relayer UX, not public RPC | **landed** |
 | `eth_getTransactionCount` | EOA activity / nonce | Disable after privacy activation | shielded sequencer / relayer UX, not public RPC | **landed** |
-| `prime_getCodeHash` | bytecode fingerprint only | Keep public only for opt-in published contracts | compare against locally compiled bytecode hash | **landed** |
-| `prime_getCodeAttestation` | published attestation metadata | Keep public only for opt-in published contracts | expose deployer, code hash, metadata URI, publish block | **landed** |
-| `prime_getCode` | raw contract bytecode | Disable after privacy activation | `prime_getCodeHash` + off-chain source publication | **landed** |
-| `eth_getCode` | raw contract bytecode | Disable after privacy activation | `prime_getCodeHash` + off-chain source publication | **landed** |
-| `prime_getStorageAt` | contract storage | Disable after privacy activation | future view-key or private proof path if needed | **landed** |
+| `mersennet_getCodeHash` | bytecode fingerprint only | Keep public only for opt-in published contracts | compare against locally compiled bytecode hash | **landed** |
+| `mersennet_getCodeAttestation` | published attestation metadata | Keep public only for opt-in published contracts | expose deployer, code hash, metadata URI, publish block | **landed** |
+| `mersennet_getCode` | raw contract bytecode | Disable after privacy activation | `mersennet_getCodeHash` + off-chain source publication | **landed** |
+| `eth_getCode` | raw contract bytecode | Disable after privacy activation | `mersennet_getCodeHash` + off-chain source publication | **landed** |
+| `mersennet_getStorageAt` | contract storage | Disable after privacy activation | future view-key or private proof path if needed | **landed** |
 | `eth_getStorageAt` | contract storage | Disable after privacy activation | future view-key or private proof path if needed | **landed** |
-| `prime_call` | read simulation over state | Disable after privacy activation | future private simulation path or view-key flow | **landed** |
+| `mersennet_call` | read simulation over state | Disable after privacy activation | future private simulation path or view-key flow | **landed** |
 | `eth_call` | read simulation over state | Disable after privacy activation | future private simulation path or view-key flow | **landed** |
 | `eth_estimateGas` | simulation over state / tx intent | Disable after privacy activation | wallet-side shielded estimation or relayer quote path | **landed** |
-| `prime_getBlockByNumber(..., true)` / `eth_getBlockByNumber(..., true)` | full tx objects in block response | Disable tx-expanded form after privacy activation; keep header-only form | header-only lookup remains public for hashes, roots, fees, and timestamps | **landed** |
+| `mersennet_getBlockByNumber(..., true)` / `eth_getBlockByNumber(..., true)` | full tx objects in block response | Disable tx-expanded form after privacy activation; keep header-only form | header-only lookup remains public for hashes, roots, fees, and timestamps | **landed** |
 | `eth_getBlockByHash(..., true)` | full tx objects in block response | Disable tx-expanded form after privacy activation; keep header-only form | header-only lookup remains public for hashes, roots, fees, and timestamps | **landed** |
-| `prime_getTransactionByHash` / `eth_getTransactionByHash` | tx sender, recipient, calldata, value | Disable after privacy activation | block-level hash inclusion only; future view-key flow if needed | **landed** |
-| `prime_getTransactionReceipt` / `eth_getTransactionReceipt` | receipt logs, created address, gas + execution metadata | Disable after privacy activation | block-level inclusion only; future view-key flow if needed | **landed** |
+| `mersennet_getTransactionByHash` / `eth_getTransactionByHash` | tx sender, recipient, calldata, value | Disable after privacy activation | block-level hash inclusion only; future view-key flow if needed | **landed** |
+| `mersennet_getTransactionReceipt` / `eth_getTransactionReceipt` | receipt logs, created address, gas + execution metadata | Disable after privacy activation | block-level inclusion only; future view-key flow if needed | **landed** |
 
 Rules implied by this matrix:
 
@@ -280,7 +280,7 @@ Rules implied by this matrix:
 5. Post-fork block semantics are header-only for public RPC: hashes,
   roots, fees, timestamps, and transaction hashes remain public, while
   full transaction objects and receipts do not.
-6. If the project chooses Option B above, `prime_getCodeHash` can stay
+6. If the project chooses Option B above, `mersennet_getCodeHash` can stay
   as the public attestation endpoint even after all remaining
   transparent-contract compatibility surfaces are removed.
 
@@ -295,14 +295,14 @@ classify it as:
 
 The initial list is:
 
-- `eth_getBalance` / `prime_getBalance`
-- `eth_getTransactionCount` / `prime_getTransactionCount`
-- `eth_getCode` / `prime_getCode`
-- `eth_getStorageAt` / `prime_getStorageAt`
-- `eth_call` / `prime_call`
+- `eth_getBalance` / `mersennet_getBalance`
+- `eth_getTransactionCount` / `mersennet_getTransactionCount`
+- `eth_getCode` / `mersennet_getCode`
+- `eth_getStorageAt` / `mersennet_getStorageAt`
+- `eth_call` / `mersennet_call`
 - `eth_estimateGas`
-- `eth_getTransactionByHash` / `prime_getTransactionByHash`
-- `eth_getTransactionReceipt` / `prime_getTransactionReceipt`
+- `eth_getTransactionByHash` / `mersennet_getTransactionByHash`
+- `eth_getTransactionReceipt` / `mersennet_getTransactionReceipt`
 - `eth_getBlockByNumber(..., true)` / `eth_getBlockByHash(..., true)`
 
 #### 2. Transparent execution domain boundary
@@ -331,7 +331,7 @@ remaining work is implementation and acceptance coverage. At minimum:
 Specify what an indexer is allowed to know post-fork:
 
 - headers, roots, proofs, shielded aggregate events
-- no owner-linked PrimeOrders data
+- no owner-linked MersennetOrders data
 - no per-account balance endpoint without a viewing key
 
 #### 5. Migration end-state
@@ -397,8 +397,8 @@ Recommended order after Point 1:
 
 ### Next actions
 
-1. Extend ADR-019 beyond the now-landed `prime_viewNotes` scoped read:
-  implement balance / position / order grant-gated `prime_view*`
+1. Extend ADR-019 beyond the now-landed `mersennet_viewNotes` scoped read:
+  implement balance / position / order grant-gated `mersennet_view*`
   methods on top of the persisted encrypted EVM note payloads, and
   decide how shielded-order and liquidation-created notes should be
   indexed for the same flows.

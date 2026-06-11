@@ -33,7 +33,7 @@ Concretely:
   auto-activates privacy at a configured height, and runs the full
   shielded flow — orders/FBA, sealed-bid liquidations, transfers,
   shield/unshield — over RPC/WS, with Prometheus + Grafana metrics.
-- The real `PRIME_SP1_MODE=local` prove/verify transcript (previously the
+- The real `MERSENNET_SP1_MODE=local` prove/verify transcript (previously the
   single biggest hard engineering blocker) is now **captured**: a
   reproducible Docker ELF (verifying-key hash
   `0013c6c783c5266f4b361816fb1d25c186582811b90a11edcd15d69ee286200d`) was
@@ -66,7 +66,7 @@ dependency.
 - **B1–B5** — shielded subsystems (`ShieldedState`, `ShieldedOrdersEngine`
   + FBA, `LiquidationAuction`, `ThresholdMempool`, `ShieldedEvm` bridge).
 - **C1–C4** — shielded RPC router + privacy-gated mutations + WS
-  subscriptions + `prime_getStateProof(blockNumber)`.
+  subscriptions + `mersennet_getStateProof(blockNumber)`.
 - **D1–D7** — crypto: Poseidon-2 BN254 (pinned params), Pedersen, BLS12-381
   threshold ElGamal, Pedersen-DKG, Noir + Barretenberg adapters,
   cryptography spec. (See the caveat on D5/D6 in §6.)
@@ -89,9 +89,9 @@ dependency.
   replay and the runtime stop being two mirrored copies.
 - **E3** — vkey pin + transcript. Pin captured; **the prove/verify
   transcript itself is still missing.**
-- **F5** — selective disclosure (ADR-019). `prime_viewGrantToken`,
-  `prime_viewRevokeToken`, `prime_viewGrantStatus`, `prime_viewPortfolioDigest`
-  gating, and `prime_viewNotes` ciphertext export are implemented in
+- **F5** — selective disclosure (ADR-019). `mersennet_viewGrantToken`,
+  `mersennet_viewRevokeToken`, `mersennet_viewGrantStatus`, `mersennet_viewPortfolioDigest`
+  gating, and `mersennet_viewNotes` ciphertext export are implemented in
   [crates/rpc/src/rpc_shielded.rs](../../crates/rpc/src/rpc_shielded.rs).
   **Balance / position / order reconstruction reads are still pending.**
 - **H6** — 8-week bake. Checklist drafted; clock not started (cannot
@@ -102,7 +102,7 @@ dependency.
 - **E4** — `ProverClient::network()` cut-over. Blocked by a real
   dependency-graph conflict: `sp1-sdk/network` pulls a `c-kzg` version
   that conflicts with `revm`'s native `ckzg` link. The host runner
-  currently fails loudly when `PRIME_SP1_MODE=network` is requested.
+  currently fails loudly when `MERSENNET_SP1_MODE=network` is requested.
 - **E5** — Groth16 wrap for the Ethereum bridge verifier.
 - **I1–I6** — external crypto / protocol / Solidity audits, ImmuneFi,
   fix cycle, re-audit.
@@ -114,9 +114,9 @@ dependency.
 - **F1** — WASM Noir prover (client-side proving in the browser).
 - **F2** — wallet note scanner.
 - **F4** — migration UX.
-- **G1–G4** — Ethereum bridge: `PrimeChainVerifier.sol`,
-  `PrimeChainBridge.sol`, Foundry suite, audit-prep. Confirmed absent —
-  `contracts/src/` contains only DEX / foundation / primeorders
+- **G1–G4** — Ethereum bridge: `MersennetVerifier.sol`,
+  `MersennetBridge.sol`, Foundry suite, audit-prep. Confirmed absent —
+  `contracts/src/` contains only DEX / foundation / mersennetorders
   contracts, no verifier or bridge.
 - **K3** — `cargo llvm-cov` coverage artifacts in CI.
 - **K4** — `Dockerfile.dev` (Rust + Foundry + nargo + sp1up + Node 20).
@@ -125,9 +125,9 @@ dependency.
 
 ### Out of this repo
 
-- **F3** — PrimeTrade shielded order UI lives in
-  `PrimeNumbersLabs/prime-trade`. It is on the activation critical path
-  (the activation runbook's T-1 step expects "PrimeTrade UI ships the
+- **F3** — Mersennet Trade shielded order UI lives in
+  `mersennet/prime-trade`. It is on the activation critical path
+  (the activation runbook's T-1 step expects "Mersennet Trade UI ships the
   shielded mode behind a feature flag") but it is **not in this repo**.
 
 ---
@@ -157,7 +157,7 @@ flowchart LR
 
 The honest near-term path stated in the audit packet is: finish E3 with a
 local/WSL real-SP1 transcript against the pinned ELF, and keep
-`PRIME_SP1_MODE=network` as a loud failure until the dependency conflict
+`MERSENNET_SP1_MODE=network` as a loud failure until the dependency conflict
 is resolved.
 
 ---
@@ -175,7 +175,7 @@ already exists.
   dashboards.
 - The one real gap is a **minimal note scanner (F2)** so the partner
   wallet can read its shielded balance, leaning on the existing
-  `prime_viewNotes` ciphertext export.
+  `mersennet_viewNotes` ciphertext export.
 - **Defer:** real SP1 transcript (label proofs MOCK), G bridge, E4, E5,
   external audit, governance.
 - **Caveat to state plainly in the demo:** proofs are mock, so this is
@@ -211,7 +211,7 @@ or calendar-gated) · risk if skipped.
 | **E4** network prover | Scalable proving off local CPU | `crates/core/src/zk_sp1.rs`, host `main.rs` | Blocking mainnet / optional MVP | Resolve `sp1-sdk/network` vs `revm` `c-kzg` native-link conflict (unknown size) | Medium–Large | Stuck on local proving only |
 | **E5** Groth16 + **G1–G4** bridge | Ethereum-side verification / cross-chain | `contracts/`, `crates/core/src/precompiles.rs` | Optional unless cross-chain at launch | E4/E5 sequencing | Large | No L1 settlement story |
 | **F1** WASM Noir prover | Client-side proving in browser | `sdk/`, new wasm crate | Blocking usable wallet | Noir circuits (D6) | Medium | Users can't generate shielded proofs locally |
-| **F2** note scanner | Wallet must find its own notes | `sdk/`, `sdk-go/`, `sdk-python/` | Blocking any demo | `prime_viewNotes` (done) | Medium | Chain works but users can't see balances |
+| **F2** note scanner | Wallet must find its own notes | `sdk/`, `sdk-go/`, `sdk-python/` | Blocking any demo | `mersennet_viewNotes` (done) | Medium | Chain works but users can't see balances |
 | **F4** migration UX | Users move funds into shielded notes at fork | `sdk/`, prime-trade (UI) | Blocking launch | F2 | Small–Medium | Bad first-day experience |
 | **F5** reconstruction reads | Selective disclosure beyond ciphertext export | `crates/rpc/src/rpc_shielded.rs`, `sdk/` | Blocking compliance story | ADR-019 spec freeze | Medium | Delegated/regulator view incomplete |
 | **H6** bake | Real-world soak before mainnet | testnet configs, runbooks, Grafana | Blocking mainnet | E lands | Calendar (8 weeks) | Unknown production failure modes |
@@ -252,7 +252,7 @@ document (it is a separate analysis doc):
 
 ## 7. Prioritized top-10 next steps
 
-1. **E3** — capture one local `PRIME_SP1_MODE=local` prove/verify
+1. **E3** — capture one local `MERSENNET_SP1_MODE=local` prove/verify
    transcript against the pinned ELF.
 2. **E2** — final header / public-output hardening + extract one shared
    engine-parity transition core.
@@ -305,8 +305,8 @@ audit, and governance. **Label proofs as MOCK and keep real funds out.**
 4. **External audit lead time and cost** — funded + scheduled externally.
 5. **Groth16 on-chain verifier feasibility (E5/G)** — gas and proving cost
    unproven; not started.
-6. **F3 PrimeTrade UI** — on the activation critical path but in a separate
-   repo (`PrimeNumbersLabs/prime-trade`), outside this repo's control.
+6. **F3 Mersennet Trade UI** — on the activation critical path but in a separate
+   repo (`mersennet/prime-trade`), outside this repo's control.
 
 ---
 

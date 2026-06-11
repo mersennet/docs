@@ -24,7 +24,7 @@ optimizer_runs = 200
 evm_version = "shanghai"
 
 [rpc_endpoints]
-prime_testnet = "http://46.225.30.187:8545"
+mersennet_testnet = "http://46.225.30.187:8545"
 ```
 
 ## Build Your Contracts
@@ -48,7 +48,7 @@ The `--legacy` flag is recommended: Mersennet implements an EIP-1559 base fee bu
 **Other deployment methods:**
 
 - `eth_sendTransaction` — Requires the RPC node to have the deployer account unlocked
-- `prime_sendTransaction` — Mersennet–specific method for sending transactions
+- `mersennet_sendTransaction` — Mersennet–specific method for sending transactions
 
 ## Node.js Deployment Helper
 
@@ -159,7 +159,7 @@ cast send 0xRecipient --value 1ether --legacy \
 | Operation | Supported | Notes |
 |-----------|-----------|-------|
 | `forge build` | ✅ | |
-| `forge test` | ✅ | Against local Anvil or Prime RPC |
+| `forge test` | ✅ | Against local Anvil or Mersennet RPC |
 | `forge create` | ✅ | Use `--legacy` |
 | `cast call` | ✅ | Read-only |
 | `cast send` | ✅ | Use `--legacy` |

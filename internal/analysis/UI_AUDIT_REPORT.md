@@ -1,4 +1,4 @@
-# UI Audit Report: PrimeSwap V2 vs V3
+# UI Audit Report: Mersennet Swap V2 vs V3
 **Date:** March 9, 2026  
 **Audited URLs:**
 - V3: http://46.225.30.187:4002
@@ -8,7 +8,7 @@
 
 ## Executive Summary
 
-This audit compares PrimeSwap V3 (port 4002) against V2 (port 4000) to identify design inconsistencies, branding issues, and establish the target design language for V3.
+This audit compares Mersennet Swap V3 (port 4002) against V2 (port 4000) to identify design inconsistencies, branding issues, and establish the target design language for V3.
 
 **Critical Finding:** V3 has significant branding inconsistencies and appears to use a generic Uniswap V3 fork UI without proper Mersennet theming.
 
@@ -19,10 +19,10 @@ This audit compares PrimeSwap V3 (port 4002) against V2 (port 4000) to identify 
 ### V3 (Port 4002) - ISSUES IDENTIFIED ⚠️
 
 **Logo/Brand Identity:**
-- Uses "PrimeSwap" text branding in header (plain text)
+- Uses "Mersennet Swap" text branding in header (plain text)
 - Missing Mersennet logo/icon
-- Page title: "PrimeSwap V3 | Mersennet DEX"
-- No visual Prime branding elements
+- Page title: "Mersennet Swap V3 | Mersennet DEX"
+- No visual Mersennet branding elements
 
 **Color Scheme:**
 - Navigation tabs: Dark background with subtle hover states
@@ -31,16 +31,16 @@ This audit compares PrimeSwap V3 (port 4002) against V2 (port 4000) to identify 
 - Accent color: Cyan blue (`#00D4FF` style)
 
 **Issues:**
-- Logo says "PrimeSwap" but lacks Mersennet diamond logo
+- Logo says "Mersennet Swap" but lacks Mersennet diamond logo
 - Generic appearance, doesn't establish unique brand identity
 - Inconsistent with V2's established branding
 
 ### V2 (Port 4000) - REFERENCE DESIGN ✅
 
 **Logo/Brand Identity:**
-- **Diamond logo** (purple/pink gradient) + "Prime" text + "Swap" text
+- **Diamond logo** (purple/pink gradient) + "Mersennet" text + "Swap" text
 - Distinctive multi-color diamond icon (purple, pink, cyan gradient)
-- Page title: "PrimeSwap | Mersennet DEX"
+- Page title: "Mersennet Swap | Mersennet DEX"
 - Strong visual brand presence
 
 **Color Scheme:**
@@ -63,7 +63,7 @@ This audit compares PrimeSwap V3 (port 4002) against V2 (port 4000) to identify 
 ### V3 Navigation
 ```
 Header:
-- Logo (text: "PrimeSwap") [left]
+- Logo (text: "Mersennet Swap") [left]
 - Tabs: Swap | Pool [center]
 - Connect to a wallet [right]
 - Theme toggle (moon icon) [right]
@@ -77,7 +77,7 @@ Header:
 ### V2 Navigation
 ```
 Header:
-- Logo (diamond + "Prime Swap") [left]
+- Logo (diamond + "Mersennet Swap") [left]
 - Mersennet button [right]
 - Connect to a wallet [right]
 - V2/V1 switcher [right]
@@ -330,8 +330,8 @@ TypeError: Failed to fetch
 ### 🚨 Critical Issues (V3)
 
 1. **Missing Diamond Logo**
-   - V3 shows "PrimeSwap" text only
-   - Should use V2's diamond gradient logo + "Prime" + "Swap" text
+   - V3 shows "Mersennet Swap" text only
+   - Should use V2's diamond gradient logo + "Mersennet" + "Swap" text
    - **Action:** Import logo SVG/assets from V2
 
 2. **Color Scheme Mismatch**
@@ -399,7 +399,7 @@ TypeError: Failed to fetch
 
 ```
 Header:
-├─ Diamond Logo + "Prime" + "Swap" (gradient)
+├─ Diamond Logo + "Mersennet" + "Swap" (gradient)
 ├─ Navigation Tabs (Swap | Pool) - center
 └─ Right Side:
    ├─ Mersennet (network badge)
