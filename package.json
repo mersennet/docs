@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "astro dev",
-    "build": "astro build",
+    "build": "node scripts/build-llms-full.mjs && astro build",
     "preview": "astro preview"
   },
   "dependencies": {
@@ -16,5 +16,8 @@
     "remark-math": "^6.0.0",
     "sharp": "^0.33.0",
     "starlight-links-validator": "^0.17.1"
+  },
+  "devDependencies": {
+    "glob": "^11.0.0"
   }
 }

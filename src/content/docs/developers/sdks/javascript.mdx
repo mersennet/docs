@@ -2,11 +2,67 @@
 title: "JavaScript SDK"
 ---
 
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
 The Mersennet JavaScript SDK (`@mersennet/sdk`) provides a typed interface for the JSON-RPC API, MersennetOrders (on-chain order book), and WebSocket subscriptions.
 
 :::tip[Privacy / shielded features]
 This page covers the **transparent** surface (`eth_*` / `mersennet_*` / `mersennet_orders_*`). For shielded transfers and orders, client-side Noir proving, note scanning, balance/position reconstruction, selective-disclosure reads, and migration, see the dedicated **[Shielded SDK](/developers/privacy/shielded-sdk)**.
 :::
+
+## Quick reference
+
+Connect, place an order, and check a balance — with the SDK or the equivalent raw JSON-RPC calls:
+
+<Tabs syncKey="lang">
+  <TabItem label="TypeScript">
+
+```typescript title="quick-reference.ts"
+import { MersennetProvider, MersennetOrders } from '@mersennet/sdk';
+
+// Connect
+const provider = new MersennetProvider('http://46.225.30.187:8545');
+const orders = new MersennetOrders(provider);
+console.log('Chain ID:', await provider.getChainId()); // 131071
+
+// Place an order (node must have the owner account unlocked)
+const outcome = await orders.submitOrder(
+  '0xOwnerAddress',
+  2,          // marketId (MRSN/USDC)
+  'buy',      // side
+  '1000000',  // price
+  '10',       // size
+  'gtc'       // time-in-force
+);
+console.log('Order ID:', outcome.order_id);
+
+// Check balance
+const balance = await provider.getBalance('0xYourAddress');
+console.log('Balance (wei):', BigInt(balance).toString());
+```
+
+  </TabItem>
+  <TabItem label="curl">
+
+```bash title="quick-reference.sh"
+# Connect (chain ID check)
+curl -X POST http://46.225.30.187:8545 \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","method":"eth_chainId","params":[],"id":1}'
+
+# Place an order (node must have the owner account unlocked)
+curl -X POST http://46.225.30.187:8545 \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","method":"mersennet_orders_submitOrder","params":[{"owner":"0xOwnerAddress","market_id":2,"side":"buy","price":"0xf4240","size":"0xa","tif":"gtc"}],"id":2}'
+
+# Check balance
+curl -X POST http://46.225.30.187:8545 \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","method":"eth_getBalance","params":["0xYourAddress","latest"],"id":3}'
+```
+
+  </TabItem>
+</Tabs>
 
 ## Installation
 

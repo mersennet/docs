@@ -34,6 +34,7 @@ export default defineConfig({
       social: [
         { icon: 'github', label: 'GitHub', href: 'https://github.com/mersennet/mersennet' },
       ],
+      lastUpdated: true,
       editLink: {
         baseUrl: 'https://github.com/mersennet/docs/edit/main/',
       },
@@ -60,6 +61,12 @@ export default defineConfig({
               ],
             },
             {
+              label: 'Tutorials',
+              items: [
+                { slug: 'developers/tutorials/first-private-trade', badge: { text: 'New', variant: 'success' } },
+              ],
+            },
+            {
               label: 'Smart Contracts',
               items: [
                 { slug: 'developers/contracts/erc20-guide' },
@@ -72,6 +79,7 @@ export default defineConfig({
               items: [
                 { slug: 'developers/rpc/overview' },
                 { slug: 'developers/rpc/methods' },
+                { slug: 'developers/rpc/errors' },
               ],
             },
             {
@@ -138,6 +146,7 @@ export default defineConfig({
           items: [
             { slug: 'whitepaper' },
             { slug: 'resources/faq' },
+            { slug: 'resources/glossary' },
             { slug: 'resources/contracts' },
             { slug: 'resources/brand-assets' },
             { slug: 'resources/changelog' },

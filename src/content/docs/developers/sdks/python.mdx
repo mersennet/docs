@@ -2,7 +2,63 @@
 title: "Python SDK"
 ---
 
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
 The Mersennet Python SDK (`mersennet-sdk`) provides a client for the JSON-RPC API, MersennetOrders (on-chain order book), and WebSocket subscriptions.
+
+## Quick reference
+
+Connect, place an order, and check a balance — with the SDK or the equivalent raw JSON-RPC calls:
+
+<Tabs syncKey="lang">
+  <TabItem label="Python">
+
+```python title="quick_reference.py"
+from mersennet import MersennetProvider, MersennetOrders
+
+# Connect
+provider = MersennetProvider("http://46.225.30.187:8545")
+orders = MersennetOrders(provider)
+print("Chain ID:", provider.chain_id())  # 131071
+
+# Place an order (node must have the owner account unlocked)
+result = orders.place_order(
+    market=2,          # market ID (MRSN/USDC)
+    side="buy",
+    price="1000000",
+    amount="10",
+    tif="gtc",
+    owner="0xOwnerAddress",
+)
+print("Order outcome:", result)
+
+# Check balance
+balance = provider.get_balance("0xYourAddress")
+print("Balance (wei):", int(balance, 16))
+```
+
+  </TabItem>
+  <TabItem label="curl">
+
+```bash title="quick_reference.sh"
+# Connect (chain ID check)
+curl -X POST http://46.225.30.187:8545 \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","method":"eth_chainId","params":[],"id":1}'
+
+# Place an order (node must have the owner account unlocked)
+curl -X POST http://46.225.30.187:8545 \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","method":"mersennet_orders_submitOrder","params":[{"owner":"0xOwnerAddress","market_id":2,"side":"buy","price":"0xf4240","size":"0xa","tif":"gtc"}],"id":2}'
+
+# Check balance
+curl -X POST http://46.225.30.187:8545 \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","method":"eth_getBalance","params":["0xYourAddress","latest"],"id":3}'
+```
+
+  </TabItem>
+</Tabs>
 
 ## Installation
 

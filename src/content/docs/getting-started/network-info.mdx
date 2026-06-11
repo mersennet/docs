@@ -2,6 +2,8 @@
 title: "Network Information"
 ---
 
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
 Use the following configuration to connect to Mersennet testnet.
 
 ## Testnet Configuration
@@ -49,6 +51,91 @@ await window.ethereum.request({
 :::note
 Chain ID `131071` in decimal equals `0x1FFFF` in hexadecimal. Both Mersennet chain IDs are Mersenne primes: testnet is `131071` (2¹⁷−1) and mainnet will be `8191` (2¹³−1).
 :::
+
+## Configure your tooling
+
+Point your wallet, framework, or client library at the Mersennet testnet:
+
+<Tabs syncKey="tooling">
+  <TabItem label="MetaMask">
+
+Use the one-click **Add to MetaMask** button in the [Add Mersennet to MetaMask](#add-mersennet-to-metamask) section above, or add the network manually with these values:
+
+```text title="MetaMask network settings"
+Network Name:    Mersennet Testnet
+RPC URL:         http://46.225.30.187:8545
+Chain ID:        131071 (0x1FFFF)
+Currency Symbol: MRSN (18 decimals)
+Block Explorer:  http://46.225.30.187
+```
+
+  </TabItem>
+  <TabItem label="Hardhat">
+
+```javascript title="hardhat.config.js"
+module.exports = {
+  solidity: '0.8.24',
+  networks: {
+    mersennet: {
+      url: 'http://46.225.30.187:8545',
+      chainId: 131071,
+      accounts: [process.env.PRIVATE_KEY],
+    },
+  },
+};
+```
+
+```bash title="Deploy to Mersennet"
+npx hardhat run scripts/deploy.js --network mersennet
+```
+
+  </TabItem>
+  <TabItem label="Foundry">
+
+```toml title="foundry.toml"
+[profile.default]
+src = "src"
+out = "out"
+
+[rpc_endpoints]
+mersennet = "http://46.225.30.187:8545"
+```
+
+```bash title="Use the --rpc-url flag"
+# Named endpoint from foundry.toml
+cast chain-id --rpc-url mersennet   # 131071
+
+# Or pass the URL directly
+forge create src/Counter.sol:Counter \
+  --rpc-url http://46.225.30.187:8545 \
+  --private-key $PRIVATE_KEY
+```
+
+  </TabItem>
+  <TabItem label="viem">
+
+```typescript title="mersennet.ts"
+import { defineChain } from 'viem';
+
+export const mersennetTestnet = defineChain({
+  id: 131071, // 0x1FFFF
+  name: 'Mersennet Testnet',
+  nativeCurrency: { name: 'MRSN', symbol: 'MRSN', decimals: 18 },
+  rpcUrls: {
+    default: {
+      http: ['http://46.225.30.187:8545'],
+      webSocket: ['ws://46.225.30.187:8546'],
+    },
+  },
+  blockExplorers: {
+    default: { name: 'Mersennet Explorer', url: 'http://46.225.30.187' },
+  },
+  testnet: true,
+});
+```
+
+  </TabItem>
+</Tabs>
 
 ## Deployed Contract Addresses
 

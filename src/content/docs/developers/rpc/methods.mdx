@@ -2,6 +2,8 @@
 title: "RPC Methods Reference"
 ---
 
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
 Complete reference for JSON-RPC methods supported by Mersennet. All examples use `http://46.225.30.187:8545` as the RPC URL.
 
 Mersennet implements the standard `eth_` namespace plus native extensions across `net_`, `web3_`, `txpool_`, `mersennet_`, `mersennet_orders_`, and `mersennet_bridge_`. The privacy/ZK methods (shielded transfers, SP1 state proofs, selective-disclosure reads) also live in the `mersennet_` namespace and are documented separately in the [Shielded JSON-RPC reference](/developers/privacy/shielded-rpc).
@@ -36,11 +38,39 @@ Returns the chain ID (`0x1ffff` = 131071).
 
 **Parameters:** None
 
-```bash
+<Tabs syncKey="lang">
+  <TabItem label="curl">
+
+```bash title="eth_chainId.sh"
 curl -X POST http://46.225.30.187:8545 \
   -H "Content-Type: application/json" \
   -d '{"jsonrpc":"2.0","method":"eth_chainId","params":[],"id":1}'
 ```
+
+  </TabItem>
+  <TabItem label="TypeScript">
+
+```typescript title="eth_chainId.ts"
+import { MersennetProvider } from '@mersennet/sdk';
+
+const provider = new MersennetProvider('http://46.225.30.187:8545');
+const chainId = await provider.getChainId();
+console.log(chainId); // 131071
+```
+
+  </TabItem>
+  <TabItem label="Python">
+
+```python title="eth_chain_id.py"
+from mersennet import MersennetProvider
+
+provider = MersennetProvider("http://46.225.30.187:8545")
+chain_id = provider.chain_id()
+print(chain_id)  # 131071
+```
+
+  </TabItem>
+</Tabs>
 
 ---
 
@@ -119,11 +149,39 @@ Returns account balance in wei.
 1. `address` — 20-byte address (hex)
 2. `blockNumber` (optional) — Block number or `"latest"`
 
-```bash
+<Tabs syncKey="lang">
+  <TabItem label="curl">
+
+```bash title="eth_getBalance.sh"
 curl -X POST http://46.225.30.187:8545 \
   -H "Content-Type: application/json" \
   -d '{"jsonrpc":"2.0","method":"eth_getBalance","params":["0x7f5ce38fb2553e95dd8ef9182a80bc219c9a0d45","latest"],"id":1}'
 ```
+
+  </TabItem>
+  <TabItem label="TypeScript">
+
+```typescript title="eth_getBalance.ts"
+import { MersennetProvider } from '@mersennet/sdk';
+
+const provider = new MersennetProvider('http://46.225.30.187:8545');
+const balance = await provider.getBalance('0x7f5ce38fb2553e95dd8ef9182a80bc219c9a0d45');
+console.log('Balance (wei):', BigInt(balance).toString());
+```
+
+  </TabItem>
+  <TabItem label="Python">
+
+```python title="eth_get_balance.py"
+from mersennet import MersennetProvider
+
+provider = MersennetProvider("http://46.225.30.187:8545")
+balance = provider.get_balance("0x7f5ce38fb2553e95dd8ef9182a80bc219c9a0d45")
+print("Balance (wei):", int(balance, 16))
+```
+
+  </TabItem>
+</Tabs>
 
 ---
 
@@ -347,6 +405,43 @@ Mersennet accepts **both** standard Ethereum RLP-encoded transactions (EIP-155) 
 **Parameters:**
 
 1. `signedTransactionData` — Hex-encoded signed transaction
+
+<Tabs syncKey="lang">
+  <TabItem label="curl">
+
+```bash title="eth_sendRawTransaction.sh"
+curl -X POST http://46.225.30.187:8545 \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","method":"eth_sendRawTransaction","params":["0xSignedTxHex"],"id":1}'
+```
+
+  </TabItem>
+  <TabItem label="TypeScript">
+
+```typescript title="eth_sendRawTransaction.ts"
+import { MersennetProvider } from '@mersennet/sdk';
+
+const provider = new MersennetProvider('http://46.225.30.187:8545');
+// Generic JSON-RPC passthrough; sign the transaction locally first
+// (e.g. with ethers.js or viem).
+const txHash = await provider.request('eth_sendRawTransaction', ['0xSignedTxHex']);
+console.log('Tx hash:', txHash);
+```
+
+  </TabItem>
+  <TabItem label="Python">
+
+```python title="eth_send_raw_transaction.py"
+from mersennet import MersennetProvider
+
+provider = MersennetProvider("http://46.225.30.187:8545")
+# Sign the transaction locally first (e.g. with eth-account / web3.py).
+tx_hash = provider.send_raw_transaction("0xSignedTxHex")
+print("Tx hash:", tx_hash)
+```
+
+  </TabItem>
+</Tabs>
 
 ---
 
@@ -733,11 +828,45 @@ Get the current order book for a market.
 
 1. `marketId` — Market ID (hex string)
 
-```bash
+<Tabs syncKey="lang">
+  <TabItem label="curl">
+
+```bash title="mersennet_orders_getOrderBook.sh"
 curl -X POST http://46.225.30.187:8545 \
   -H "Content-Type: application/json" \
   -d '{"jsonrpc":"2.0","method":"mersennet_orders_getOrderBook","params":["0x2"],"id":1}'
 ```
+
+  </TabItem>
+  <TabItem label="TypeScript">
+
+```typescript title="getOrderBook.ts"
+import { MersennetProvider, MersennetOrders } from '@mersennet/sdk';
+
+const provider = new MersennetProvider('http://46.225.30.187:8545');
+const orders = new MersennetOrders(provider);
+
+const book = await orders.getOrderBook(2); // MRSN/USDC
+console.log('Best bid:', book.bids[book.bids.length - 1]);
+console.log('Best ask:', book.asks[0]);
+```
+
+  </TabItem>
+  <TabItem label="Python">
+
+```python title="get_order_book.py"
+from mersennet import MersennetProvider, MersennetOrders
+
+provider = MersennetProvider("http://46.225.30.187:8545")
+orders = MersennetOrders(provider)
+
+book = orders.get_order_book(2)  # MRSN/USDC
+print("Bids:", book.bids)
+print("Asks:", book.asks)
+```
+
+  </TabItem>
+</Tabs>
 
 **Response:**
 
@@ -896,6 +1025,56 @@ The shielded precompiles (`0x0200`, `0x0201`, `0x0300`) and shielded RPC methods
 ## Privacy & shielded methods
 
 Shielded transfers and orders, SP1 state proofs, and selective-disclosure (viewing-grant) reads are exposed through the `mersennet_*` namespace and documented in full in the **[Shielded JSON-RPC reference](/developers/privacy/shielded-rpc)**. For typed client helpers, see the **[Shielded SDK](/developers/privacy/shielded-sdk)**.
+
+### mersennet_getShieldedBalance
+
+Returns **aggregate** shielded-pool counters — `{ totalNoteCount, totalNullifierCount, transparentEoaCount }`. The node never decrypts balances; per-account balances are reconstructed client-side via viewing grants (see the [Shielded JSON-RPC reference](/developers/privacy/shielded-rpc)).
+
+**Parameters:** None
+
+<Tabs syncKey="lang">
+  <TabItem label="curl">
+
+```bash title="mersennet_getShieldedBalance.sh"
+curl -X POST http://46.225.30.187:8545 \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","method":"mersennet_getShieldedBalance","params":[],"id":1}'
+```
+
+  </TabItem>
+  <TabItem label="TypeScript">
+
+```typescript title="getShieldedBalance.ts"
+import { MersennetProvider } from '@mersennet/sdk';
+
+const provider = new MersennetProvider('http://46.225.30.187:8545');
+// Generic JSON-RPC passthrough on the provider.
+const counters = await provider.request('mersennet_getShieldedBalance', []);
+console.log(counters); // { totalNoteCount, totalNullifierCount, transparentEoaCount }
+```
+
+  </TabItem>
+  <TabItem label="Python">
+
+```python title="get_shielded_balance.py"
+import requests
+
+# The Python SDK does not yet expose a typed helper for this method;
+# call it as a plain JSON-RPC request.
+resp = requests.post(
+    "http://46.225.30.187:8545",
+    json={
+        "jsonrpc": "2.0",
+        "method": "mersennet_getShieldedBalance",
+        "params": [],
+        "id": 1,
+    },
+)
+print(resp.json()["result"])
+```
+
+  </TabItem>
+</Tabs>
 
 ---
 

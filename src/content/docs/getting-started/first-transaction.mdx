@@ -2,6 +2,8 @@
 title: "Your First Transaction"
 ---
 
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
 This guide walks you through sending MRSN, deploying a simple contract, and viewing it on the explorer.
 
 ## Prerequisites
@@ -40,6 +42,93 @@ console.log('Confirmed!');
 ```
 
 > **Security Warning:** Never use real private keys in code. Use environment variables or a key management solution. Never commit private keys to version control.
+
+### Using the Mersennet SDKs
+
+Prefer the official SDKs or raw JSON-RPC? The same transfer in TypeScript (`@mersennet/sdk`), Python (`mersennet-sdk`), Go, and curl:
+
+<Tabs syncKey="lang">
+  <TabItem label="TypeScript">
+
+```typescript title="send-mrsn.ts"
+import { MersennetProvider } from '@mersennet/sdk';
+
+const provider = new MersennetProvider('http://46.225.30.187:8545');
+
+// eth_sendTransaction — requires the node to have the `from` account unlocked.
+// For browser/wallet signing, use ethers.js or viem as shown above.
+const txHash = await provider.sendTransaction({
+  from: '0xYourAddress',
+  to: '0xRecipientAddress',
+  value: '0x16345785d8a0000', // 0.1 MRSN in wei (hex)
+  gas: '0x5208',             // 21000
+});
+
+console.log('Tx hash:', txHash);
+const receipt = await provider.getTransactionReceipt(txHash);
+console.log('Status:', receipt?.status);
+```
+
+  </TabItem>
+  <TabItem label="Python">
+
+```python title="send_mrsn.py"
+from mersennet import MersennetProvider
+
+provider = MersennetProvider("http://46.225.30.187:8545")
+
+# Sign the transaction locally (e.g. with eth-account / web3.py), then
+# broadcast the raw bytes via eth_sendRawTransaction.
+tx_hash = provider.send_raw_transaction("0xSignedTxHex")
+print("Tx hash:", tx_hash)
+
+receipt = provider.get_transaction_receipt(tx_hash)
+print("Receipt:", receipt)
+```
+
+  </TabItem>
+  <TabItem label="Go">
+
+```go title="send_mrsn.go"
+package main
+
+import (
+	"fmt"
+	"log"
+
+	mersennet "github.com/mersennet/sdk-go"
+)
+
+func main() {
+	provider := mersennet.NewProvider("http://46.225.30.187:8545")
+
+	// Sign the transaction locally, then broadcast the raw bytes
+	// via eth_sendRawTransaction.
+	txHash, err := provider.SendRawTransaction("0xSignedTxHex")
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println("Tx hash:", txHash)
+}
+```
+
+  </TabItem>
+  <TabItem label="curl">
+
+```bash title="Send MRSN via JSON-RPC"
+# eth_sendTransaction — requires the node to have the `from` account unlocked.
+curl -X POST http://46.225.30.187:8545 \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","method":"eth_sendTransaction","params":[{"from":"0xYourAddress","to":"0xRecipientAddress","value":"0x16345785d8a0000","gas":"0x5208"}],"id":1}'
+
+# Or broadcast a locally signed transaction:
+curl -X POST http://46.225.30.187:8545 \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","method":"eth_sendRawTransaction","params":["0xSignedTxHex"],"id":1}'
+```
+
+  </TabItem>
+</Tabs>
 
 ---
 
