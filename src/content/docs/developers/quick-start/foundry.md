@@ -24,7 +24,7 @@ optimizer_runs = 200
 evm_version = "shanghai"
 
 [rpc_endpoints]
-mersennet_testnet = "http://46.225.30.187:8545"
+mersennet_testnet = "https://rpc.mersennet.com"
 ```
 
 ## Build Your Contracts
@@ -37,7 +37,7 @@ forge build
 
 ```bash
 forge create src/MyToken.sol:MyToken \
-  --rpc-url http://46.225.30.187:8545 \
+  --rpc-url https://rpc.mersennet.com \
   --private-key $PRIVATE_KEY \
   --legacy \
   --constructor-args 1000000
@@ -61,7 +61,7 @@ Create `scripts/deploy.js`:
 ```javascript
 const { ethers } = require("ethers");
 
-const RPC_URL = "http://46.225.30.187:8545";
+const RPC_URL = "https://rpc.mersennet.com";
 const CHAIN_ID = 131071;
 
 async function main() {
@@ -99,7 +99,7 @@ const { ethers } = require("ethers");
 const fs = require("fs");
 const path = require("path");
 
-const RPC_URL = "http://46.225.30.187:8545";
+const RPC_URL = "https://rpc.mersennet.com";
 const CHAIN_ID = 131071;
 
 async function main() {
@@ -141,17 +141,17 @@ ethers.js v6 signs the transaction locally and submits it with `eth_sendRawTrans
 
 ```bash
 # Get balance
-cast balance 0xYourAddress --rpc-url http://46.225.30.187:8545
+cast balance 0xYourAddress --rpc-url https://rpc.mersennet.com
 
 # Call a view function
-cast call 0xContractAddress "totalSupply()(uint256)" --rpc-url http://46.225.30.187:8545
+cast call 0xContractAddress "totalSupply()(uint256)" --rpc-url https://rpc.mersennet.com
 
 # Get chain ID
-cast chain-id --rpc-url http://46.225.30.187:8545
+cast chain-id --rpc-url https://rpc.mersennet.com
 
 # Send a transaction (signed locally)
 cast send 0xRecipient --value 1ether --legacy \
-  --rpc-url http://46.225.30.187:8545 --private-key $PRIVATE_KEY
+  --rpc-url https://rpc.mersennet.com --private-key $PRIVATE_KEY
 ```
 
 ## Summary

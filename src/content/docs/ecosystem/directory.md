@@ -15,8 +15,8 @@ Complete directory of live services, endpoints, and deployed contracts on Mersen
 | **Validator Dashboard** | [http://46.225.30.187:4001](http://46.225.30.187:4001) | Monitor validators |
 | **Mersennet Trade** | [https://trade.mersennet.com](https://trade.mersennet.com) | Order book trading terminal |
 | **Documentation** | [https://docs.mersennet.com](https://docs.mersennet.com) | This documentation site |
-| **JSON-RPC** | `http://46.225.30.187:8545` | Ethereum-compatible RPC endpoint |
-| **WebSocket** | `ws://46.225.30.187:8546` | WebSocket RPC endpoint |
+| **JSON-RPC** | `https://rpc.mersennet.com` | Ethereum-compatible RPC endpoint |
+| **WebSocket** | `wss://rpc.mersennet.com` | WebSocket RPC endpoint |
 
 ## Deployed Contracts
 
@@ -63,8 +63,8 @@ Mersennet Swap V3 contracts are recently deployed. Verified addresses will be ad
 
 ```
 Chain ID:             131071 (0x1FFFF)
-RPC:                  http://46.225.30.187:8545
-WebSocket:            ws://46.225.30.187:8546
+RPC:                  https://rpc.mersennet.com
+WebSocket:            wss://rpc.mersennet.com
 Explorer:             https://explorer.mersennet.com
 Faucet:               https://faucet.mersennet.com
 Mersennet Swap V2:         http://46.225.30.187:4000

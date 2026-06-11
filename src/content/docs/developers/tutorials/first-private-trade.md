@@ -33,7 +33,7 @@ Point a `MersennetProvider` at the public testnet RPC and confirm you're on the 
 ```ts title="connect.ts"
 import { MersennetProvider } from '@mersennet/sdk';
 
-const provider = new MersennetProvider('http://46.225.30.187:8545');
+const provider = new MersennetProvider('https://rpc.mersennet.com');
 
 const chainId = await provider.getChainId();
 if (chainId !== 131071) {
@@ -47,7 +47,7 @@ console.log(`Connected to Mersennet testnet at block ${block}`);
 The same check, raw:
 
 ```bash title="verify-chain-id.sh"
-curl -X POST http://46.225.30.187:8545 \
+curl -X POST https://rpc.mersennet.com \
   -H "Content-Type: application/json" \
   -d '{"jsonrpc":"2.0","method":"eth_chainId","params":[],"id":1}'
 # → { "jsonrpc": "2.0", "id": 1, "result": "0x1ffff" }
@@ -91,7 +91,7 @@ import {
 } from '@mersennet/sdk';
 import type { Note } from '@mersennet/sdk';
 
-const provider = new MersennetProvider('http://46.225.30.187:8545');
+const provider = new MersennetProvider('https://rpc.mersennet.com');
 const vk = ViewingKeyHelpers.fromSeed(process.env.WALLET_SEED!);
 
 // The note you are about to mint: 10 MRSN, owned by your spending key.
@@ -127,7 +127,7 @@ This is the moment. One call places a shielded limit order on the on-chain order
 ```ts title="place-order.ts"
 import { MersennetProvider, ShieldedClient, ViewingKeyHelpers } from '@mersennet/sdk';
 
-const provider = new MersennetProvider('http://46.225.30.187:8545');
+const provider = new MersennetProvider('https://rpc.mersennet.com');
 const vk = ViewingKeyHelpers.fromSeed(process.env.WALLET_SEED!);
 const client = new ShieldedClient({ provider, viewingKey: vk });
 
@@ -208,14 +208,14 @@ const portfolio = client.reconstructBalances({ spentNullifiers });
 console.log('Spendable:', portfolio.perAsset, 'unspent notes:', portfolio.unspentNoteCount);
 ```
 
-When your order fills, a new note appears in the scan and your reconstructed balance moves — that's settlement, observed entirely client-side. For the public side of the same event, subscribe to `newClearingPrice` or `BatchAuctionResults` over WebSocket (`ws://46.225.30.187:8546`). The full workflow, including nullifier tracking, is covered in [Note scanning & wallet reconstruction](/privacy/note-scanning/).
+When your order fills, a new note appears in the scan and your reconstructed balance moves — that's settlement, observed entirely client-side. For the public side of the same event, subscribe to `newClearingPrice` or `BatchAuctionResults` over WebSocket (`wss://rpc.mersennet.com`). The full workflow, including nullifier tracking, is covered in [Note scanning & wallet reconstruction](/privacy/note-scanning/).
 
 ## Step 6: Verify the chain
 
 You've trusted the RPC node for six steps. Now stop. Every Mersennet block carries a zero-knowledge proof that the whole state transition — your shield, your order, the auction that matched it — was executed correctly:
 
 ```bash title="fetch-state-proof.sh"
-curl -X POST http://46.225.30.187:8545 \
+curl -X POST https://rpc.mersennet.com \
   -H "Content-Type: application/json" \
   -d '{"jsonrpc":"2.0","method":"mersennet_getLatestStateProof","params":[],"id":1}'
 ```

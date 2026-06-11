@@ -34,7 +34,7 @@ const config: HardhatUserConfig = {
   solidity: "0.8.20",
   networks: {
     mersennet: {
-      url: "http://46.225.30.187:8545",
+      url: "https://rpc.mersennet.com",
       chainId: 131071,
       accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
     },
@@ -146,5 +146,5 @@ Or use the [block explorer](https://explorer.mersennet.com) to view the transact
 |-------|----------|
 | Fee estimation looks off | `eth_feeHistory` is supported, but priority-fee rewards are always 0 (no tip on Mersennet). Legacy gas-price transactions are the simplest fit. |
 | Gas estimation fails | Try increasing `gasLimit` in the deployment script or use a fixed value (e.g., `3000000`). |
-| Connection refused | Ensure the RPC URL `http://46.225.30.187:8545` is reachable from your network. |
+| Connection refused | Ensure the RPC URL `https://rpc.mersennet.com` is reachable from your network. |
 | Insufficient funds | Get testnet MRSN from the [faucet](https://faucet.mersennet.com). |

@@ -9,7 +9,7 @@ This guide walks you through deploying and interacting with an NFT collection on
 | Parameter | Value |
 |-----------|-------|
 | Chain ID | 131071 |
-| RPC URL | `http://46.225.30.187:8545` |
+| RPC URL | `https://rpc.mersennet.com` |
 | Block Explorer | https://explorer.mersennet.com |
 
 ## Full Solidity Contract
@@ -179,7 +179,7 @@ console.log("NFT deployed to:", await nft.getAddress());
 ```javascript
 const { ethers } = require("ethers");
 
-const provider = new ethers.JsonRpcProvider("http://46.225.30.187:8545", 131071);
+const provider = new ethers.JsonRpcProvider("https://rpc.mersennet.com", 131071);
 const wallet = new ethers.Wallet(process.env.PRIVATE_KEY, provider);
 
 const NFT_ABI = [

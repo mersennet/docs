@@ -42,7 +42,7 @@ Yes. Mersennet is fully EVM compatible. You can deploy Solidity contracts withou
 
 ### How do I deploy a contract to Mersennet?
 
-Use Hardhat or Foundry with Mersennet as a network. Add the RPC URL `http://46.225.30.187:8545` and Chain ID `131071`. See [Deploy with Hardhat](/developers/quick-start/hardhat) and [Deploy with Foundry](/developers/quick-start/foundry).
+Use Hardhat or Foundry with Mersennet as a network. Add the RPC URL `https://rpc.mersennet.com` and Chain ID `131071`. See [Deploy with Hardhat](/developers/quick-start/hardhat) and [Deploy with Foundry](/developers/quick-start/foundry).
 
 ### What wallets are supported?
 
@@ -64,8 +64,8 @@ A cross-chain bridge is planned (Tier 3 in the roadmap). For now, testnet assets
 
 ### Where is the RPC endpoint?
 
-- **HTTP:** `http://46.225.30.187:8545`
-- **WebSocket:** `ws://46.225.30.187:8546` (may not be enabled on all nodes)
+- **HTTP:** `https://rpc.mersennet.com`
+- **WebSocket:** `wss://rpc.mersennet.com` (may not be enabled on all nodes)
 
 ### What is the block time?
 

@@ -12,8 +12,8 @@ Use the following configuration to connect to Mersennet testnet.
 |-----------|-------|
 | **Chain ID** | 131071 (Mersenne prime 2¹⁷−1) |
 | **Network Name** | Mersennet Testnet |
-| **RPC URL** | `http://46.225.30.187:8545` |
-| **WebSocket URL** | `ws://46.225.30.187:8546` |
+| **RPC URL** | `https://rpc.mersennet.com` |
+| **WebSocket URL** | `wss://rpc.mersennet.com` |
 | **Block Explorer** | https://explorer.mersennet.com |
 | **Faucet** | https://faucet.mersennet.com |
 | **Currency Symbol** | MRSN |
@@ -42,7 +42,7 @@ await window.ethereum.request({
       symbol: 'MRSN',
       decimals: 18
     },
-    rpcUrls: ['http://46.225.30.187:8545'],
+    rpcUrls: ['https://rpc.mersennet.com'],
     blockExplorerUrls: ['https://explorer.mersennet.com']
   }]
 });
@@ -63,10 +63,10 @@ Use the one-click **Add to MetaMask** button in the [Add Mersennet to MetaMask](
 
 ```text title="MetaMask network settings"
 Network Name:    Mersennet Testnet
-RPC URL:         http://46.225.30.187:8545
+RPC URL:         https://rpc.mersennet.com
 Chain ID:        131071 (0x1FFFF)
 Currency Symbol: MRSN (18 decimals)
-Block Explorer:  http://46.225.30.187
+Block Explorer:  https://explorer.mersennet.com
 ```
 
   </TabItem>
@@ -77,7 +77,7 @@ module.exports = {
   solidity: '0.8.24',
   networks: {
     mersennet: {
-      url: 'http://46.225.30.187:8545',
+      url: 'https://rpc.mersennet.com',
       chainId: 131071,
       accounts: [process.env.PRIVATE_KEY],
     },
@@ -98,7 +98,7 @@ src = "src"
 out = "out"
 
 [rpc_endpoints]
-mersennet = "http://46.225.30.187:8545"
+mersennet = "https://rpc.mersennet.com"
 ```
 
 ```bash title="Use the --rpc-url flag"
@@ -107,7 +107,7 @@ cast chain-id --rpc-url mersennet   # 131071
 
 # Or pass the URL directly
 forge create src/Counter.sol:Counter \
-  --rpc-url http://46.225.30.187:8545 \
+  --rpc-url https://rpc.mersennet.com \
   --private-key $PRIVATE_KEY
 ```
 
@@ -123,12 +123,12 @@ export const mersennetTestnet = defineChain({
   nativeCurrency: { name: 'MRSN', symbol: 'MRSN', decimals: 18 },
   rpcUrls: {
     default: {
-      http: ['http://46.225.30.187:8545'],
-      webSocket: ['ws://46.225.30.187:8546'],
+      http: ['https://rpc.mersennet.com'],
+      webSocket: ['wss://rpc.mersennet.com'],
     },
   },
   blockExplorers: {
-    default: { name: 'Mersennet Explorer', url: 'http://46.225.30.187' },
+    default: { name: 'Mersennet Explorer', url: 'https://explorer.mersennet.com' },
   },
   testnet: true,
 });

@@ -17,7 +17,7 @@ Connect, place an order, and check a balance — with the SDK or the equivalent 
 from mersennet import MersennetProvider, MersennetOrders
 
 # Connect
-provider = MersennetProvider("http://46.225.30.187:8545")
+provider = MersennetProvider("https://rpc.mersennet.com")
 orders = MersennetOrders(provider)
 print("Chain ID:", provider.chain_id())  # 131071
 
@@ -42,17 +42,17 @@ print("Balance (wei):", int(balance, 16))
 
 ```bash title="quick_reference.sh"
 # Connect (chain ID check)
-curl -X POST http://46.225.30.187:8545 \
+curl -X POST https://rpc.mersennet.com \
   -H "Content-Type: application/json" \
   -d '{"jsonrpc":"2.0","method":"eth_chainId","params":[],"id":1}'
 
 # Place an order (node must have the owner account unlocked)
-curl -X POST http://46.225.30.187:8545 \
+curl -X POST https://rpc.mersennet.com \
   -H "Content-Type: application/json" \
   -d '{"jsonrpc":"2.0","method":"mersennet_orders_submitOrder","params":[{"owner":"0xOwnerAddress","market_id":2,"side":"buy","price":"0xf4240","size":"0xa","tif":"gtc"}],"id":2}'
 
 # Check balance
-curl -X POST http://46.225.30.187:8545 \
+curl -X POST https://rpc.mersennet.com \
   -H "Content-Type: application/json" \
   -d '{"jsonrpc":"2.0","method":"eth_getBalance","params":["0xYourAddress","latest"],"id":3}'
 ```
@@ -86,7 +86,7 @@ pip install requests websocket-client
 ```python
 from mersennet import MersennetProvider, MersennetOrders
 
-provider = MersennetProvider("http://46.225.30.187:8545")
+provider = MersennetProvider("https://rpc.mersennet.com")
 orders = MersennetOrders(provider)
 
 # Query chain
@@ -108,7 +108,7 @@ print(f"Bids: {book.bids}, Asks: {book.asks}")
 ```python
 from mersennet import MersennetProvider
 
-provider = MersennetProvider("http://46.225.30.187:8545")
+provider = MersennetProvider("https://rpc.mersennet.com")
 ```
 
 ## Basic Usage
@@ -236,7 +236,7 @@ market_id = orders.add_market(
 from mersennet import MersennetSubscriber
 
 # MersennetSubscriber takes the WebSocket URL directly
-subscriber = MersennetSubscriber("ws://46.225.30.187:8546")
+subscriber = MersennetSubscriber("wss://rpc.mersennet.com")
 
 # Connect
 subscriber.connect()
@@ -274,7 +274,7 @@ WebSocket support may vary by node configuration. If subscriptions fail, use HTT
 from mersennet import MersennetProvider
 from mersennet.provider import MersennetError
 
-provider = MersennetProvider("http://46.225.30.187:8545")
+provider = MersennetProvider("https://rpc.mersennet.com")
 
 try:
     balance = provider.get_balance("0x...")

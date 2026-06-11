@@ -9,7 +9,7 @@ This guide walks you through deploying and interacting with an ERC-20 token on M
 | Parameter | Value |
 |-----------|-------|
 | Chain ID | 131071 |
-| RPC URL | `http://46.225.30.187:8545` |
+| RPC URL | `https://rpc.mersennet.com` |
 | Native Token | MRSN (18 decimals) |
 
 ## Full Solidity Contract
@@ -97,7 +97,7 @@ console.log("Deployed:", await token.getAddress());
 1. Go to [Remix](https://remix.ethereum.org).
 2. Create a new file, paste the contract, and compile.
 3. In the Deploy tab, select **Injected Provider - MetaMask**.
-4. Add Mersennet to MetaMask (Chain ID 131071, RPC `http://46.225.30.187:8545`).
+4. Add Mersennet to MetaMask (Chain ID 131071, RPC `https://rpc.mersennet.com`).
 5. Get testnet MRSN from the [faucet](https://faucet.mersennet.com).
 6. Deploy and enter constructor args: `"My Token"`, `"MTK"`, `1000000`.
 
@@ -108,7 +108,7 @@ console.log("Deployed:", await token.getAddress());
 ```javascript
 const { ethers } = require("ethers");
 
-const provider = new ethers.JsonRpcProvider("http://46.225.30.187:8545", 131071);
+const provider = new ethers.JsonRpcProvider("https://rpc.mersennet.com", 131071);
 const wallet = new ethers.Wallet(process.env.PRIVATE_KEY, provider);
 
 const TOKEN_ADDRESS = "0x..."; // Your deployed token address
@@ -140,7 +140,7 @@ await token.approve("0xSpenderAddress", ethers.MaxUint256);
 ```bash
 # Get balance
 cast call 0xTokenAddress "balanceOf(address)(uint256)" 0xYourAddress \
-  --rpc-url http://46.225.30.187:8545
+  --rpc-url https://rpc.mersennet.com
 
 # Encode transfer (for use with eth_sendTransaction)
 cast calldata "transfer(address,uint256)" 0xRecipient 1000000000000000000

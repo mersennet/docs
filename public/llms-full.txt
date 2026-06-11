@@ -1482,7 +1482,7 @@ Get the expected output amount for a swap (without executing):
 ```javascript
 const { ethers } = require("ethers");
 
-const RPC_URL = "http://46.225.30.187:8545";
+const RPC_URL = "https://rpc.mersennet.com";
 const CHAIN_ID = 131071;
 const ROUTER = "0x9f337f433e71ce969b991511f1dcd3d0622116bb";
 const WMRSN = "0x079bf1207b51acda83e2e8178344f62a883f8479";
@@ -1692,7 +1692,7 @@ This guide walks you through deploying and interacting with an ERC-20 token on M
 | Parameter | Value |
 |-----------|-------|
 | Chain ID | 131071 |
-| RPC URL | `http://46.225.30.187:8545` |
+| RPC URL | `https://rpc.mersennet.com` |
 | Native Token | MRSN (18 decimals) |
 
 ## Full Solidity Contract
@@ -1780,7 +1780,7 @@ console.log("Deployed:", await token.getAddress());
 1. Go to [Remix](https://remix.ethereum.org).
 2. Create a new file, paste the contract, and compile.
 3. In the Deploy tab, select **Injected Provider - MetaMask**.
-4. Add Mersennet to MetaMask (Chain ID 131071, RPC `http://46.225.30.187:8545`).
+4. Add Mersennet to MetaMask (Chain ID 131071, RPC `https://rpc.mersennet.com`).
 5. Get testnet MRSN from the [faucet](https://faucet.mersennet.com).
 6. Deploy and enter constructor args: `"My Token"`, `"MTK"`, `1000000`.
 
@@ -1791,7 +1791,7 @@ console.log("Deployed:", await token.getAddress());
 ```javascript
 const { ethers } = require("ethers");
 
-const provider = new ethers.JsonRpcProvider("http://46.225.30.187:8545", 131071);
+const provider = new ethers.JsonRpcProvider("https://rpc.mersennet.com", 131071);
 const wallet = new ethers.Wallet(process.env.PRIVATE_KEY, provider);
 
 const TOKEN_ADDRESS = "0x..."; // Your deployed token address
@@ -1823,7 +1823,7 @@ await token.approve("0xSpenderAddress", ethers.MaxUint256);
 ```bash
 # Get balance
 cast call 0xTokenAddress "balanceOf(address)(uint256)" 0xYourAddress \
-  --rpc-url http://46.225.30.187:8545
+  --rpc-url https://rpc.mersennet.com
 
 # Encode transfer (for use with eth_sendTransaction)
 cast calldata "transfer(address,uint256)" 0xRecipient 1000000000000000000
@@ -1868,7 +1868,7 @@ This guide walks you through deploying and interacting with an NFT collection on
 | Parameter | Value |
 |-----------|-------|
 | Chain ID | 131071 |
-| RPC URL | `http://46.225.30.187:8545` |
+| RPC URL | `https://rpc.mersennet.com` |
 | Block Explorer | https://explorer.mersennet.com |
 
 ## Full Solidity Contract
@@ -2038,7 +2038,7 @@ console.log("NFT deployed to:", await nft.getAddress());
 ```javascript
 const { ethers } = require("ethers");
 
-const provider = new ethers.JsonRpcProvider("http://46.225.30.187:8545", 131071);
+const provider = new ethers.JsonRpcProvider("https://rpc.mersennet.com", 131071);
 const wallet = new ethers.Wallet(process.env.PRIVATE_KEY, provider);
 
 const NFT_ABI = [
@@ -2196,7 +2196,7 @@ Subscribe via `eth_subscribe` (Ethereum-style) or `mersennet_subscribe` (Mersenn
 Privacy-mode payloads are **address-free by construction** — CI enforces that no address fields leak into shielded events.
 
 ```bash
-wscat -c ws://46.225.30.187:8546
+wscat -c wss://rpc.mersennet.com
 > {"jsonrpc":"2.0","id":1,"method":"mersennet_subscribe","params":["newShieldedRoot"]}
 < {"jsonrpc":"2.0","id":1,"result":"0x1"}
 ```
@@ -2343,7 +2343,7 @@ optimizer_runs = 200
 evm_version = "shanghai"
 
 [rpc_endpoints]
-mersennet_testnet = "http://46.225.30.187:8545"
+mersennet_testnet = "https://rpc.mersennet.com"
 ```
 
 ## Build Your Contracts
@@ -2356,7 +2356,7 @@ forge build
 
 ```bash
 forge create src/MyToken.sol:MyToken \
-  --rpc-url http://46.225.30.187:8545 \
+  --rpc-url https://rpc.mersennet.com \
   --private-key $PRIVATE_KEY \
   --legacy \
   --constructor-args 1000000
@@ -2380,7 +2380,7 @@ Create `scripts/deploy.js`:
 ```javascript
 const { ethers } = require("ethers");
 
-const RPC_URL = "http://46.225.30.187:8545";
+const RPC_URL = "https://rpc.mersennet.com";
 const CHAIN_ID = 131071;
 
 async function main() {
@@ -2418,7 +2418,7 @@ const { ethers } = require("ethers");
 const fs = require("fs");
 const path = require("path");
 
-const RPC_URL = "http://46.225.30.187:8545";
+const RPC_URL = "https://rpc.mersennet.com";
 const CHAIN_ID = 131071;
 
 async function main() {
@@ -2460,17 +2460,17 @@ ethers.js v6 signs the transaction locally and submits it with `eth_sendRawTrans
 
 ```bash
 # Get balance
-cast balance 0xYourAddress --rpc-url http://46.225.30.187:8545
+cast balance 0xYourAddress --rpc-url https://rpc.mersennet.com
 
 # Call a view function
-cast call 0xContractAddress "totalSupply()(uint256)" --rpc-url http://46.225.30.187:8545
+cast call 0xContractAddress "totalSupply()(uint256)" --rpc-url https://rpc.mersennet.com
 
 # Get chain ID
-cast chain-id --rpc-url http://46.225.30.187:8545
+cast chain-id --rpc-url https://rpc.mersennet.com
 
 # Send a transaction (signed locally)
 cast send 0xRecipient --value 1ether --legacy \
-  --rpc-url http://46.225.30.187:8545 --private-key $PRIVATE_KEY
+  --rpc-url https://rpc.mersennet.com --private-key $PRIVATE_KEY
 ```
 
 ## Summary
@@ -2523,7 +2523,7 @@ const config: HardhatUserConfig = {
   solidity: "0.8.20",
   networks: {
     mersennet: {
-      url: "http://46.225.30.187:8545",
+      url: "https://rpc.mersennet.com",
       chainId: 131071,
       accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
     },
@@ -2635,7 +2635,7 @@ Or use the [block explorer](https://explorer.mersennet.com) to view the transact
 |-------|----------|
 | Fee estimation looks off | `eth_feeHistory` is supported, but priority-fee rewards are always 0 (no tip on Mersennet). Legacy gas-price transactions are the simplest fit. |
 | Gas estimation fails | Try increasing `gasLimit` in the deployment script or use a fixed value (e.g., `3000000`). |
-| Connection refused | Ensure the RPC URL `http://46.225.30.187:8545` is reachable from your network. |
+| Connection refused | Ensure the RPC URL `https://rpc.mersennet.com` is reachable from your network. |
 | Insufficient funds | Get testnet MRSN from the [faucet](https://faucet.mersennet.com). |
 
 
@@ -2699,7 +2699,7 @@ source: https://docs.mersennet.com/developers/rpc/methods/
 
 import { Tabs, TabItem } from '@astrojs/starlight/components';
 
-Complete reference for JSON-RPC methods supported by Mersennet. All examples use `http://46.225.30.187:8545` as the RPC URL.
+Complete reference for JSON-RPC methods supported by Mersennet. All examples use `https://rpc.mersennet.com` as the RPC URL.
 
 Mersennet implements the standard `eth_` namespace plus native extensions across `net_`, `web3_`, `txpool_`, `mersennet_`, `mersennet_orders_`, and `mersennet_bridge_`. The privacy/ZK methods (shielded transfers, SP1 state proofs, selective-disclosure reads) also live in the `mersennet_` namespace and are documented separately in the [Shielded JSON-RPC reference](/developers/privacy/shielded-rpc).
 
@@ -2714,7 +2714,7 @@ Returns the current block number.
 **Parameters:** None
 
 ```bash
-curl -X POST http://46.225.30.187:8545 \
+curl -X POST https://rpc.mersennet.com \
   -H "Content-Type: application/json" \
   -d '{"jsonrpc":"2.0","method":"eth_blockNumber","params":[],"id":1}'
 ```
@@ -2737,7 +2737,7 @@ Returns the chain ID (`0x1ffff` = 131071).
   <TabItem label="curl">
 
 ```bash title="eth_chainId.sh"
-curl -X POST http://46.225.30.187:8545 \
+curl -X POST https://rpc.mersennet.com \
   -H "Content-Type: application/json" \
   -d '{"jsonrpc":"2.0","method":"eth_chainId","params":[],"id":1}'
 ```
@@ -2748,7 +2748,7 @@ curl -X POST http://46.225.30.187:8545 \
 ```typescript title="eth_chainId.ts"
 import { MersennetProvider } from '@mersennet/sdk';
 
-const provider = new MersennetProvider('http://46.225.30.187:8545');
+const provider = new MersennetProvider('https://rpc.mersennet.com');
 const chainId = await provider.getChainId();
 console.log(chainId); // 131071
 ```
@@ -2759,7 +2759,7 @@ console.log(chainId); // 131071
 ```python title="eth_chain_id.py"
 from mersennet import MersennetProvider
 
-provider = MersennetProvider("http://46.225.30.187:8545")
+provider = MersennetProvider("https://rpc.mersennet.com")
 chain_id = provider.chain_id()
 print(chain_id)  # 131071
 ```
@@ -2796,7 +2796,7 @@ Returns base fee and reward percentiles for a range of recent blocks.
 3. `rewardPercentiles` — Array of percentile values (e.g. `[25, 50, 75]`)
 
 ```bash
-curl -X POST http://46.225.30.187:8545 \
+curl -X POST https://rpc.mersennet.com \
   -H "Content-Type: application/json" \
   -d '{"jsonrpc":"2.0","method":"eth_feeHistory","params":["0x4","latest",[25,50,75]],"id":1}'
 ```
@@ -2848,7 +2848,7 @@ Returns account balance in wei.
   <TabItem label="curl">
 
 ```bash title="eth_getBalance.sh"
-curl -X POST http://46.225.30.187:8545 \
+curl -X POST https://rpc.mersennet.com \
   -H "Content-Type: application/json" \
   -d '{"jsonrpc":"2.0","method":"eth_getBalance","params":["0x7f5ce38fb2553e95dd8ef9182a80bc219c9a0d45","latest"],"id":1}'
 ```
@@ -2859,7 +2859,7 @@ curl -X POST http://46.225.30.187:8545 \
 ```typescript title="eth_getBalance.ts"
 import { MersennetProvider } from '@mersennet/sdk';
 
-const provider = new MersennetProvider('http://46.225.30.187:8545');
+const provider = new MersennetProvider('https://rpc.mersennet.com');
 const balance = await provider.getBalance('0x7f5ce38fb2553e95dd8ef9182a80bc219c9a0d45');
 console.log('Balance (wei):', BigInt(balance).toString());
 ```
@@ -2870,7 +2870,7 @@ console.log('Balance (wei):', BigInt(balance).toString());
 ```python title="eth_get_balance.py"
 from mersennet import MersennetProvider
 
-provider = MersennetProvider("http://46.225.30.187:8545")
+provider = MersennetProvider("https://rpc.mersennet.com")
 balance = provider.get_balance("0x7f5ce38fb2553e95dd8ef9182a80bc219c9a0d45")
 print("Balance (wei):", int(balance, 16))
 ```
@@ -2924,7 +2924,7 @@ Executes a call without creating a transaction (read-only).
 2. `blockNumber` (optional) — `"latest"` or block number
 
 ```bash
-curl -X POST http://46.225.30.187:8545 \
+curl -X POST https://rpc.mersennet.com \
   -H "Content-Type: application/json" \
   -d '{"jsonrpc":"2.0","method":"eth_call","params":[{"to":"0x079bf1207b51acda83e2e8178344f62a883f8479","data":"0x70a082310000000000000000000000007f5ce38fb2553e95dd8ef9182a80bc219c9a0d45"},"latest"],"id":1}'
 ```
@@ -2955,7 +2955,7 @@ full transaction metadata is not part of the post-fork public surface.
 2. `fullTransactions` — `true` for full tx objects, `false` for hashes only
 
 ```bash
-curl -X POST http://46.225.30.187:8545 \
+curl -X POST https://rpc.mersennet.com \
   -H "Content-Type: application/json" \
   -d '{"jsonrpc":"2.0","method":"eth_getBlockByNumber","params":["latest",false],"id":1}'
 ```
@@ -3072,7 +3072,7 @@ Returns logs matching a filter.
 1. `filterObject` — `{ fromBlock?, toBlock?, address?, topics? }`
 
 ```bash
-curl -X POST http://46.225.30.187:8545 \
+curl -X POST https://rpc.mersennet.com \
   -H "Content-Type: application/json" \
   -d '{"jsonrpc":"2.0","method":"eth_getLogs","params":[{"fromBlock":"0x0","toBlock":"latest","address":"0x63f7a64db6d2b965189b8b48b7435668021f6b17"}],"id":1}'
 ```
@@ -3105,7 +3105,7 @@ Mersennet accepts **both** standard Ethereum RLP-encoded transactions (EIP-155) 
   <TabItem label="curl">
 
 ```bash title="eth_sendRawTransaction.sh"
-curl -X POST http://46.225.30.187:8545 \
+curl -X POST https://rpc.mersennet.com \
   -H "Content-Type: application/json" \
   -d '{"jsonrpc":"2.0","method":"eth_sendRawTransaction","params":["0xSignedTxHex"],"id":1}'
 ```
@@ -3116,7 +3116,7 @@ curl -X POST http://46.225.30.187:8545 \
 ```typescript title="eth_sendRawTransaction.ts"
 import { MersennetProvider } from '@mersennet/sdk';
 
-const provider = new MersennetProvider('http://46.225.30.187:8545');
+const provider = new MersennetProvider('https://rpc.mersennet.com');
 // Generic JSON-RPC passthrough; sign the transaction locally first
 // (e.g. with ethers.js or viem).
 const txHash = await provider.request('eth_sendRawTransaction', ['0xSignedTxHex']);
@@ -3129,7 +3129,7 @@ console.log('Tx hash:', txHash);
 ```python title="eth_send_raw_transaction.py"
 from mersennet import MersennetProvider
 
-provider = MersennetProvider("http://46.225.30.187:8545")
+provider = MersennetProvider("https://rpc.mersennet.com")
 # Sign the transaction locally first (e.g. with eth-account / web3.py).
 tx_hash = provider.send_raw_transaction("0xSignedTxHex")
 print("Tx hash:", tx_hash)
@@ -3243,7 +3243,7 @@ Returns the number of connected peers.
 **Parameters:** None
 
 ```bash
-curl -X POST http://46.225.30.187:8545 \
+curl -X POST https://rpc.mersennet.com \
   -H "Content-Type: application/json" \
   -d '{"jsonrpc":"2.0","method":"net_peerCount","params":[],"id":1}'
 ```
@@ -3281,7 +3281,7 @@ Returns the number of pending and queued transactions in the mempool.
 **Parameters:** None
 
 ```bash
-curl -X POST http://46.225.30.187:8545 \
+curl -X POST https://rpc.mersennet.com \
   -H "Content-Type: application/json" \
   -d '{"jsonrpc":"2.0","method":"txpool_status","params":[],"id":1}'
 ```
@@ -3387,7 +3387,7 @@ Returns the list of active validators and their stake.
 **Parameters:** None
 
 ```bash
-curl -X POST http://46.225.30.187:8545 \
+curl -X POST https://rpc.mersennet.com \
   -H "Content-Type: application/json" \
   -d '{"jsonrpc":"2.0","method":"mersennet_validators","params":[],"id":1}'
 ```
@@ -3403,7 +3403,7 @@ Returns domain events (CLOB fills, bridge operations, validator changes) for a b
 1. `filterObject` — `{ fromBlock, toBlock, domain?, kind? }`
 
 ```bash
-curl -X POST http://46.225.30.187:8545 \
+curl -X POST https://rpc.mersennet.com \
   -H "Content-Type: application/json" \
   -d '{"jsonrpc":"2.0","method":"mersennet_getDomainEvents","params":[{"fromBlock":"0x0","toBlock":"latest"}],"id":1}'
 ```
@@ -3449,7 +3449,7 @@ Register a new trading market on the CLOB.
 3. `lotSize` — Minimum order size (hex)
 
 ```bash
-curl -X POST http://46.225.30.187:8545 \
+curl -X POST https://rpc.mersennet.com \
   -H "Content-Type: application/json" \
   -d '{"jsonrpc":"2.0","method":"mersennet_orders_addMarket","params":["MRSN/USDC","0x01","0xde0b6b3a7640000"],"id":1}'
 ```
@@ -3479,7 +3479,7 @@ Submit a limit order to the CLOB.
    - `tif` — Time-in-force: `"gtc"` (Good-Til-Cancel), `"ioc"` (Immediate-or-Cancel), `"fok"` (Fill-or-Kill)
 
 ```bash
-curl -X POST http://46.225.30.187:8545 \
+curl -X POST https://rpc.mersennet.com \
   -H "Content-Type: application/json" \
   -d '{"jsonrpc":"2.0","method":"mersennet_orders_submitOrder","params":[{"owner":"0x7f5ce38fb2553e95dd8ef9182a80bc219c9a0d45","market_id":2,"side":"buy","price":"0xfde8","size":"0x64","tif":"gtc"}],"id":1}'
 ```
@@ -3527,7 +3527,7 @@ Get the current order book for a market.
   <TabItem label="curl">
 
 ```bash title="mersennet_orders_getOrderBook.sh"
-curl -X POST http://46.225.30.187:8545 \
+curl -X POST https://rpc.mersennet.com \
   -H "Content-Type: application/json" \
   -d '{"jsonrpc":"2.0","method":"mersennet_orders_getOrderBook","params":["0x2"],"id":1}'
 ```
@@ -3538,7 +3538,7 @@ curl -X POST http://46.225.30.187:8545 \
 ```typescript title="getOrderBook.ts"
 import { MersennetProvider, MersennetOrders } from '@mersennet/sdk';
 
-const provider = new MersennetProvider('http://46.225.30.187:8545');
+const provider = new MersennetProvider('https://rpc.mersennet.com');
 const orders = new MersennetOrders(provider);
 
 const book = await orders.getOrderBook(2); // MRSN/USDC
@@ -3552,7 +3552,7 @@ console.log('Best ask:', book.asks[0]);
 ```python title="get_order_book.py"
 from mersennet import MersennetProvider, MersennetOrders
 
-provider = MersennetProvider("http://46.225.30.187:8545")
+provider = MersennetProvider("https://rpc.mersennet.com")
 orders = MersennetOrders(provider)
 
 book = orders.get_order_book(2)  # MRSN/USDC
@@ -3731,7 +3731,7 @@ Returns **aggregate** shielded-pool counters — `{ totalNoteCount, totalNullifi
   <TabItem label="curl">
 
 ```bash title="mersennet_getShieldedBalance.sh"
-curl -X POST http://46.225.30.187:8545 \
+curl -X POST https://rpc.mersennet.com \
   -H "Content-Type: application/json" \
   -d '{"jsonrpc":"2.0","method":"mersennet_getShieldedBalance","params":[],"id":1}'
 ```
@@ -3742,7 +3742,7 @@ curl -X POST http://46.225.30.187:8545 \
 ```typescript title="getShieldedBalance.ts"
 import { MersennetProvider } from '@mersennet/sdk';
 
-const provider = new MersennetProvider('http://46.225.30.187:8545');
+const provider = new MersennetProvider('https://rpc.mersennet.com');
 // Generic JSON-RPC passthrough on the provider.
 const counters = await provider.request('mersennet_getShieldedBalance', []);
 console.log(counters); // { totalNoteCount, totalNullifierCount, transparentEoaCount }
@@ -3757,7 +3757,7 @@ import requests
 # The Python SDK does not yet expose a typed helper for this method;
 # call it as a plain JSON-RPC request.
 resp = requests.post(
-    "http://46.225.30.187:8545",
+    "https://rpc.mersennet.com",
     json={
         "jsonrpc": "2.0",
         "method": "mersennet_getShieldedBalance",
@@ -3797,7 +3797,7 @@ Mersennet exposes a JSON-RPC API compatible with the Ethereum JSON-RPC specifica
 
 | Environment | HTTP RPC | WebSocket |
 |-------------|----------|-----------|
-| Testnet | `http://46.225.30.187:8545` | `ws://46.225.30.187:8546` |
+| Testnet | `https://rpc.mersennet.com` | `wss://rpc.mersennet.com` |
 
 :::tip
 The WebSocket endpoint may not be enabled on all nodes. If subscriptions fail, use HTTP RPC for polling.
@@ -3822,7 +3822,7 @@ The testnet RPC does not enforce strict rate limits for normal development use. 
 All requests use JSON-RPC 2.0 over HTTP POST:
 
 ```bash
-curl -X POST http://46.225.30.187:8545 \
+curl -X POST https://rpc.mersennet.com \
   -H "Content-Type: application/json" \
   -d '{"jsonrpc":"2.0","method":"eth_chainId","params":[],"id":1}'
 ```
@@ -3935,7 +3935,7 @@ Connect, place an order, and check a balance — with the SDK or the equivalent 
 import { MersennetProvider, MersennetOrders } from '@mersennet/sdk';
 
 // Connect
-const provider = new MersennetProvider('http://46.225.30.187:8545');
+const provider = new MersennetProvider('https://rpc.mersennet.com');
 const orders = new MersennetOrders(provider);
 console.log('Chain ID:', await provider.getChainId()); // 131071
 
@@ -3960,17 +3960,17 @@ console.log('Balance (wei):', BigInt(balance).toString());
 
 ```bash title="quick-reference.sh"
 # Connect (chain ID check)
-curl -X POST http://46.225.30.187:8545 \
+curl -X POST https://rpc.mersennet.com \
   -H "Content-Type: application/json" \
   -d '{"jsonrpc":"2.0","method":"eth_chainId","params":[],"id":1}'
 
 # Place an order (node must have the owner account unlocked)
-curl -X POST http://46.225.30.187:8545 \
+curl -X POST https://rpc.mersennet.com \
   -H "Content-Type: application/json" \
   -d '{"jsonrpc":"2.0","method":"mersennet_orders_submitOrder","params":[{"owner":"0xOwnerAddress","market_id":2,"side":"buy","price":"0xf4240","size":"0xa","tif":"gtc"}],"id":2}'
 
 # Check balance
-curl -X POST http://46.225.30.187:8545 \
+curl -X POST https://rpc.mersennet.com \
   -H "Content-Type: application/json" \
   -d '{"jsonrpc":"2.0","method":"eth_getBalance","params":["0xYourAddress","latest"],"id":3}'
 ```
@@ -4001,7 +4001,7 @@ npm install /path/to/mersennet/sdk
 ```javascript
 import { MersennetProvider, MersennetOrders } from "@mersennet/sdk";
 
-const provider = new MersennetProvider("http://46.225.30.187:8545");
+const provider = new MersennetProvider("https://rpc.mersennet.com");
 const orders = new MersennetOrders(provider);
 
 // Query chain
@@ -4024,12 +4024,12 @@ console.log("Bids:", book.bids, "Asks:", book.asks);
 import { MersennetProvider } from "@mersennet/sdk";
 
 // HTTP only
-const provider = new MersennetProvider("http://46.225.30.187:8545");
+const provider = new MersennetProvider("https://rpc.mersennet.com");
 
 // With WebSocket URL for subscriptions
 const providerWithWs = new MersennetProvider(
-  "http://46.225.30.187:8545",
-  "ws://46.225.30.187:8546"
+  "https://rpc.mersennet.com",
+  "wss://rpc.mersennet.com"
 );
 ```
 
@@ -4164,8 +4164,8 @@ const placeOrderData = encodePlaceOrder(
 import { MersennetProvider, MersennetSubscription } from "@mersennet/sdk";
 
 const provider = new MersennetProvider(
-  "http://46.225.30.187:8545",
-  "ws://46.225.30.187:8546"
+  "https://rpc.mersennet.com",
+  "wss://rpc.mersennet.com"
 );
 const sub = new MersennetSubscription(provider);
 
@@ -4246,7 +4246,7 @@ Connect, place an order, and check a balance — with the SDK or the equivalent 
 from mersennet import MersennetProvider, MersennetOrders
 
 # Connect
-provider = MersennetProvider("http://46.225.30.187:8545")
+provider = MersennetProvider("https://rpc.mersennet.com")
 orders = MersennetOrders(provider)
 print("Chain ID:", provider.chain_id())  # 131071
 
@@ -4271,17 +4271,17 @@ print("Balance (wei):", int(balance, 16))
 
 ```bash title="quick_reference.sh"
 # Connect (chain ID check)
-curl -X POST http://46.225.30.187:8545 \
+curl -X POST https://rpc.mersennet.com \
   -H "Content-Type: application/json" \
   -d '{"jsonrpc":"2.0","method":"eth_chainId","params":[],"id":1}'
 
 # Place an order (node must have the owner account unlocked)
-curl -X POST http://46.225.30.187:8545 \
+curl -X POST https://rpc.mersennet.com \
   -H "Content-Type: application/json" \
   -d '{"jsonrpc":"2.0","method":"mersennet_orders_submitOrder","params":[{"owner":"0xOwnerAddress","market_id":2,"side":"buy","price":"0xf4240","size":"0xa","tif":"gtc"}],"id":2}'
 
 # Check balance
-curl -X POST http://46.225.30.187:8545 \
+curl -X POST https://rpc.mersennet.com \
   -H "Content-Type: application/json" \
   -d '{"jsonrpc":"2.0","method":"eth_getBalance","params":["0xYourAddress","latest"],"id":3}'
 ```
@@ -4315,7 +4315,7 @@ pip install requests websocket-client
 ```python
 from mersennet import MersennetProvider, MersennetOrders
 
-provider = MersennetProvider("http://46.225.30.187:8545")
+provider = MersennetProvider("https://rpc.mersennet.com")
 orders = MersennetOrders(provider)
 
 # Query chain
@@ -4337,7 +4337,7 @@ print(f"Bids: {book.bids}, Asks: {book.asks}")
 ```python
 from mersennet import MersennetProvider
 
-provider = MersennetProvider("http://46.225.30.187:8545")
+provider = MersennetProvider("https://rpc.mersennet.com")
 ```
 
 ## Basic Usage
@@ -4465,7 +4465,7 @@ market_id = orders.add_market(
 from mersennet import MersennetSubscriber
 
 # MersennetSubscriber takes the WebSocket URL directly
-subscriber = MersennetSubscriber("ws://46.225.30.187:8546")
+subscriber = MersennetSubscriber("wss://rpc.mersennet.com")
 
 # Connect
 subscriber.connect()
@@ -4503,7 +4503,7 @@ WebSocket support may vary by node configuration. If subscriptions fail, use HTT
 from mersennet import MersennetProvider
 from mersennet.provider import MersennetError
 
-provider = MersennetProvider("http://46.225.30.187:8545")
+provider = MersennetProvider("https://rpc.mersennet.com")
 
 try:
     balance = provider.get_balance("0x...")
@@ -4555,7 +4555,7 @@ Point a `MersennetProvider` at the public testnet RPC and confirm you're on the 
 ```ts title="connect.ts"
 import { MersennetProvider } from '@mersennet/sdk';
 
-const provider = new MersennetProvider('http://46.225.30.187:8545');
+const provider = new MersennetProvider('https://rpc.mersennet.com');
 
 const chainId = await provider.getChainId();
 if (chainId !== 131071) {
@@ -4569,7 +4569,7 @@ console.log(`Connected to Mersennet testnet at block ${block}`);
 The same check, raw:
 
 ```bash title="verify-chain-id.sh"
-curl -X POST http://46.225.30.187:8545 \
+curl -X POST https://rpc.mersennet.com \
   -H "Content-Type: application/json" \
   -d '{"jsonrpc":"2.0","method":"eth_chainId","params":[],"id":1}'
 # → { "jsonrpc": "2.0", "id": 1, "result": "0x1ffff" }
@@ -4613,7 +4613,7 @@ import {
 } from '@mersennet/sdk';
 import type { Note } from '@mersennet/sdk';
 
-const provider = new MersennetProvider('http://46.225.30.187:8545');
+const provider = new MersennetProvider('https://rpc.mersennet.com');
 const vk = ViewingKeyHelpers.fromSeed(process.env.WALLET_SEED!);
 
 // The note you are about to mint: 10 MRSN, owned by your spending key.
@@ -4649,7 +4649,7 @@ This is the moment. One call places a shielded limit order on the on-chain order
 ```ts title="place-order.ts"
 import { MersennetProvider, ShieldedClient, ViewingKeyHelpers } from '@mersennet/sdk';
 
-const provider = new MersennetProvider('http://46.225.30.187:8545');
+const provider = new MersennetProvider('https://rpc.mersennet.com');
 const vk = ViewingKeyHelpers.fromSeed(process.env.WALLET_SEED!);
 const client = new ShieldedClient({ provider, viewingKey: vk });
 
@@ -4730,14 +4730,14 @@ const portfolio = client.reconstructBalances({ spentNullifiers });
 console.log('Spendable:', portfolio.perAsset, 'unspent notes:', portfolio.unspentNoteCount);
 ```
 
-When your order fills, a new note appears in the scan and your reconstructed balance moves — that's settlement, observed entirely client-side. For the public side of the same event, subscribe to `newClearingPrice` or `BatchAuctionResults` over WebSocket (`ws://46.225.30.187:8546`). The full workflow, including nullifier tracking, is covered in [Note scanning & wallet reconstruction](/privacy/note-scanning/).
+When your order fills, a new note appears in the scan and your reconstructed balance moves — that's settlement, observed entirely client-side. For the public side of the same event, subscribe to `newClearingPrice` or `BatchAuctionResults` over WebSocket (`wss://rpc.mersennet.com`). The full workflow, including nullifier tracking, is covered in [Note scanning & wallet reconstruction](/privacy/note-scanning/).
 
 ## Step 6: Verify the chain
 
 You've trusted the RPC node for six steps. Now stop. Every Mersennet block carries a zero-knowledge proof that the whole state transition — your shield, your order, the auction that matched it — was executed correctly:
 
 ```bash title="fetch-state-proof.sh"
-curl -X POST http://46.225.30.187:8545 \
+curl -X POST https://rpc.mersennet.com \
   -H "Content-Type: application/json" \
   -d '{"jsonrpc":"2.0","method":"mersennet_getLatestStateProof","params":[],"id":1}'
 ```
@@ -4771,8 +4771,8 @@ Complete directory of live services, endpoints, and deployed contracts on Mersen
 | **Validator Dashboard** | [http://46.225.30.187:4001](http://46.225.30.187:4001) | Monitor validators |
 | **Mersennet Trade** | [https://trade.mersennet.com](https://trade.mersennet.com) | Order book trading terminal |
 | **Documentation** | [https://docs.mersennet.com](https://docs.mersennet.com) | This documentation site |
-| **JSON-RPC** | `http://46.225.30.187:8545` | Ethereum-compatible RPC endpoint |
-| **WebSocket** | `ws://46.225.30.187:8546` | WebSocket RPC endpoint |
+| **JSON-RPC** | `https://rpc.mersennet.com` | Ethereum-compatible RPC endpoint |
+| **WebSocket** | `wss://rpc.mersennet.com` | WebSocket RPC endpoint |
 
 ## Deployed Contracts
 
@@ -4819,8 +4819,8 @@ Mersennet Swap V3 contracts are recently deployed. Verified addresses will be ad
 
 ```
 Chain ID:             131071 (0x1FFFF)
-RPC:                  http://46.225.30.187:8545
-WebSocket:            ws://46.225.30.187:8546
+RPC:                  https://rpc.mersennet.com
+WebSocket:            wss://rpc.mersennet.com
 Explorer:             https://explorer.mersennet.com
 Faucet:               https://faucet.mersennet.com
 Mersennet Swap V2:         http://46.225.30.187:4000
@@ -5612,7 +5612,7 @@ This guide walks you through sending MRSN, deploying a simple contract, and view
 ```javascript
 import { ethers } from 'ethers';
 
-const provider = new ethers.JsonRpcProvider('http://46.225.30.187:8545');
+const provider = new ethers.JsonRpcProvider('https://rpc.mersennet.com');
 const wallet = new ethers.Wallet('YOUR_PRIVATE_KEY', provider);
 
 const tx = await wallet.sendTransaction({
@@ -5638,7 +5638,7 @@ Prefer the official SDKs or raw JSON-RPC? The same transfer in TypeScript (`@mer
 ```typescript title="send-mrsn.ts"
 import { MersennetProvider } from '@mersennet/sdk';
 
-const provider = new MersennetProvider('http://46.225.30.187:8545');
+const provider = new MersennetProvider('https://rpc.mersennet.com');
 
 // eth_sendTransaction — requires the node to have the `from` account unlocked.
 // For browser/wallet signing, use ethers.js or viem as shown above.
@@ -5660,7 +5660,7 @@ console.log('Status:', receipt?.status);
 ```python title="send_mrsn.py"
 from mersennet import MersennetProvider
 
-provider = MersennetProvider("http://46.225.30.187:8545")
+provider = MersennetProvider("https://rpc.mersennet.com")
 
 # Sign the transaction locally (e.g. with eth-account / web3.py), then
 # broadcast the raw bytes via eth_sendRawTransaction.
@@ -5685,7 +5685,7 @@ import (
 )
 
 func main() {
-	provider := mersennet.NewProvider("http://46.225.30.187:8545")
+	provider := mersennet.NewProvider("https://rpc.mersennet.com")
 
 	// Sign the transaction locally, then broadcast the raw bytes
 	// via eth_sendRawTransaction.
@@ -5702,12 +5702,12 @@ func main() {
 
 ```bash title="Send MRSN via JSON-RPC"
 # eth_sendTransaction — requires the node to have the `from` account unlocked.
-curl -X POST http://46.225.30.187:8545 \
+curl -X POST https://rpc.mersennet.com \
   -H "Content-Type: application/json" \
   -d '{"jsonrpc":"2.0","method":"eth_sendTransaction","params":[{"from":"0xYourAddress","to":"0xRecipientAddress","value":"0x16345785d8a0000","gas":"0x5208"}],"id":1}'
 
 # Or broadcast a locally signed transaction:
-curl -X POST http://46.225.30.187:8545 \
+curl -X POST https://rpc.mersennet.com \
   -H "Content-Type: application/json" \
   -d '{"jsonrpc":"2.0","method":"eth_sendRawTransaction","params":["0xSignedTxHex"],"id":1}'
 ```
@@ -5724,7 +5724,7 @@ Deploy a minimal Solidity contract using ethers.js. First, compile your contract
 ```javascript
 import { ethers } from 'ethers';
 
-const provider = new ethers.JsonRpcProvider('http://46.225.30.187:8545');
+const provider = new ethers.JsonRpcProvider('https://rpc.mersennet.com');
 const wallet = new ethers.Wallet('YOUR_PRIVATE_KEY', provider);
 
 // Load compiled artifact (from Hardhat: artifacts/contracts/Counter.sol/Counter.json)
@@ -5797,8 +5797,8 @@ Use the following configuration to connect to Mersennet testnet.
 |-----------|-------|
 | **Chain ID** | 131071 (Mersenne prime 2¹⁷−1) |
 | **Network Name** | Mersennet Testnet |
-| **RPC URL** | `http://46.225.30.187:8545` |
-| **WebSocket URL** | `ws://46.225.30.187:8546` |
+| **RPC URL** | `https://rpc.mersennet.com` |
+| **WebSocket URL** | `wss://rpc.mersennet.com` |
 | **Block Explorer** | https://explorer.mersennet.com |
 | **Faucet** | https://faucet.mersennet.com |
 | **Currency Symbol** | MRSN |
@@ -5827,7 +5827,7 @@ await window.ethereum.request({
       symbol: 'MRSN',
       decimals: 18
     },
-    rpcUrls: ['http://46.225.30.187:8545'],
+    rpcUrls: ['https://rpc.mersennet.com'],
     blockExplorerUrls: ['https://explorer.mersennet.com']
   }]
 });
@@ -5848,10 +5848,10 @@ Use the one-click **Add to MetaMask** button in the [Add Mersennet to MetaMask](
 
 ```text title="MetaMask network settings"
 Network Name:    Mersennet Testnet
-RPC URL:         http://46.225.30.187:8545
+RPC URL:         https://rpc.mersennet.com
 Chain ID:        131071 (0x1FFFF)
 Currency Symbol: MRSN (18 decimals)
-Block Explorer:  http://46.225.30.187
+Block Explorer:  https://explorer.mersennet.com
 ```
 
   </TabItem>
@@ -5862,7 +5862,7 @@ module.exports = {
   solidity: '0.8.24',
   networks: {
     mersennet: {
-      url: 'http://46.225.30.187:8545',
+      url: 'https://rpc.mersennet.com',
       chainId: 131071,
       accounts: [process.env.PRIVATE_KEY],
     },
@@ -5883,7 +5883,7 @@ src = "src"
 out = "out"
 
 [rpc_endpoints]
-mersennet = "http://46.225.30.187:8545"
+mersennet = "https://rpc.mersennet.com"
 ```
 
 ```bash title="Use the --rpc-url flag"
@@ -5892,7 +5892,7 @@ cast chain-id --rpc-url mersennet   # 131071
 
 # Or pass the URL directly
 forge create src/Counter.sol:Counter \
-  --rpc-url http://46.225.30.187:8545 \
+  --rpc-url https://rpc.mersennet.com \
   --private-key $PRIVATE_KEY
 ```
 
@@ -5908,12 +5908,12 @@ export const mersennetTestnet = defineChain({
   nativeCurrency: { name: 'MRSN', symbol: 'MRSN', decimals: 18 },
   rpcUrls: {
     default: {
-      http: ['http://46.225.30.187:8545'],
-      webSocket: ['ws://46.225.30.187:8546'],
+      http: ['https://rpc.mersennet.com'],
+      webSocket: ['wss://rpc.mersennet.com'],
     },
   },
   blockExplorers: {
-    default: { name: 'Mersennet Explorer', url: 'http://46.225.30.187' },
+    default: { name: 'Mersennet Explorer', url: 'https://explorer.mersennet.com' },
   },
   testnet: true,
 });
@@ -6030,7 +6030,7 @@ Connect to Mersennet testnet using MetaMask or the native Mersennet Wallet.
 | Field | Value |
 |-------|-------|
 | **Network name** | Mersennet Testnet |
-| **RPC URL** | `http://46.225.30.187:8545` |
+| **RPC URL** | `https://rpc.mersennet.com` |
 | **Chain ID** | `131071` |
 | **Currency symbol** | MRSN |
 | **Block explorer URL** | `https://explorer.mersennet.com` |
@@ -6058,7 +6058,7 @@ await window.ethereum.request({
     chainId: '0x1FFFF',
     chainName: 'Mersennet Testnet',
     nativeCurrency: { name: 'MRSN', symbol: 'MRSN', decimals: 18 },
-    rpcUrls: ['http://46.225.30.187:8545'],
+    rpcUrls: ['https://rpc.mersennet.com'],
     blockExplorerUrls: ['https://explorer.mersennet.com']
   }]
 });
@@ -6442,7 +6442,7 @@ The proof and its public outputs are retrievable over JSON-RPC:
 
 ```bash
 # Fetch the latest state-transition proof
-curl -s http://46.225.30.187:8545 \
+curl -s https://rpc.mersennet.com \
   -H 'content-type: application/json' \
   -d '{"jsonrpc":"2.0","id":1,"method":"mersennet_getLatestStateProof","params":[]}'
 ```
@@ -6917,7 +6917,7 @@ Yes. Mersennet is fully EVM compatible. You can deploy Solidity contracts withou
 
 ### How do I deploy a contract to Mersennet?
 
-Use Hardhat or Foundry with Mersennet as a network. Add the RPC URL `http://46.225.30.187:8545` and Chain ID `131071`. See [Deploy with Hardhat](/developers/quick-start/hardhat) and [Deploy with Foundry](/developers/quick-start/foundry).
+Use Hardhat or Foundry with Mersennet as a network. Add the RPC URL `https://rpc.mersennet.com` and Chain ID `131071`. See [Deploy with Hardhat](/developers/quick-start/hardhat) and [Deploy with Foundry](/developers/quick-start/foundry).
 
 ### What wallets are supported?
 
@@ -6939,8 +6939,8 @@ A cross-chain bridge is planned (Tier 3 in the roadmap). For now, testnet assets
 
 ### Where is the RPC endpoint?
 
-- **HTTP:** `http://46.225.30.187:8545`
-- **WebSocket:** `ws://46.225.30.187:8546` (may not be enabled on all nodes)
+- **HTTP:** `https://rpc.mersennet.com`
+- **WebSocket:** `wss://rpc.mersennet.com` (may not be enabled on all nodes)
 
 ### What is the block time?
 

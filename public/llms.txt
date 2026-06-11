@@ -74,8 +74,8 @@
 - Consensus: Proof-of-Stake, HotStuff-2 BFT (2-phase, ~2/3 stake finality)
 - EVM Level: Shanghai (standard RLP legacy/EIP-2930/EIP-1559 transactions accepted)
 - Privacy: shielded accounts (note/nullifier model), threshold-encrypted orders, SP1-proven state
-- RPC: http://46.225.30.187:8545
-- WebSocket: ws://46.225.30.187:8546
+- RPC: https://rpc.mersennet.com
+- WebSocket: wss://rpc.mersennet.com
 - Block Explorer: https://explorer.mersennet.com
 - Faucet: https://faucet.mersennet.com
 - GitHub: https://github.com/mersennet/mersennet

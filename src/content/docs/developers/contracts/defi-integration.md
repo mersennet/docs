@@ -40,7 +40,7 @@ Get the expected output amount for a swap (without executing):
 ```javascript
 const { ethers } = require("ethers");
 
-const RPC_URL = "http://46.225.30.187:8545";
+const RPC_URL = "https://rpc.mersennet.com";
 const CHAIN_ID = 131071;
 const ROUTER = "0x9f337f433e71ce969b991511f1dcd3d0622116bb";
 const WMRSN = "0x079bf1207b51acda83e2e8178344f62a883f8479";

@@ -8,7 +8,7 @@ Mersennet exposes a JSON-RPC API compatible with the Ethereum JSON-RPC specifica
 
 | Environment | HTTP RPC | WebSocket |
 |-------------|----------|-----------|
-| Testnet | `http://46.225.30.187:8545` | `ws://46.225.30.187:8546` |
+| Testnet | `https://rpc.mersennet.com` | `wss://rpc.mersennet.com` |
 
 :::tip
 The WebSocket endpoint may not be enabled on all nodes. If subscriptions fail, use HTTP RPC for polling.
@@ -33,7 +33,7 @@ The testnet RPC does not enforce strict rate limits for normal development use. 
 All requests use JSON-RPC 2.0 over HTTP POST:
 
 ```bash
-curl -X POST http://46.225.30.187:8545 \
+curl -X POST https://rpc.mersennet.com \
   -H "Content-Type: application/json" \
   -d '{"jsonrpc":"2.0","method":"eth_chainId","params":[],"id":1}'
 ```

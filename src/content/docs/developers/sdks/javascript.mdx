@@ -21,7 +21,7 @@ Connect, place an order, and check a balance — with the SDK or the equivalent 
 import { MersennetProvider, MersennetOrders } from '@mersennet/sdk';
 
 // Connect
-const provider = new MersennetProvider('http://46.225.30.187:8545');
+const provider = new MersennetProvider('https://rpc.mersennet.com');
 const orders = new MersennetOrders(provider);
 console.log('Chain ID:', await provider.getChainId()); // 131071
 
@@ -46,17 +46,17 @@ console.log('Balance (wei):', BigInt(balance).toString());
 
 ```bash title="quick-reference.sh"
 # Connect (chain ID check)
-curl -X POST http://46.225.30.187:8545 \
+curl -X POST https://rpc.mersennet.com \
   -H "Content-Type: application/json" \
   -d '{"jsonrpc":"2.0","method":"eth_chainId","params":[],"id":1}'
 
 # Place an order (node must have the owner account unlocked)
-curl -X POST http://46.225.30.187:8545 \
+curl -X POST https://rpc.mersennet.com \
   -H "Content-Type: application/json" \
   -d '{"jsonrpc":"2.0","method":"mersennet_orders_submitOrder","params":[{"owner":"0xOwnerAddress","market_id":2,"side":"buy","price":"0xf4240","size":"0xa","tif":"gtc"}],"id":2}'
 
 # Check balance
-curl -X POST http://46.225.30.187:8545 \
+curl -X POST https://rpc.mersennet.com \
   -H "Content-Type: application/json" \
   -d '{"jsonrpc":"2.0","method":"eth_getBalance","params":["0xYourAddress","latest"],"id":3}'
 ```
@@ -87,7 +87,7 @@ npm install /path/to/mersennet/sdk
 ```javascript
 import { MersennetProvider, MersennetOrders } from "@mersennet/sdk";
 
-const provider = new MersennetProvider("http://46.225.30.187:8545");
+const provider = new MersennetProvider("https://rpc.mersennet.com");
 const orders = new MersennetOrders(provider);
 
 // Query chain
@@ -110,12 +110,12 @@ console.log("Bids:", book.bids, "Asks:", book.asks);
 import { MersennetProvider } from "@mersennet/sdk";
 
 // HTTP only
-const provider = new MersennetProvider("http://46.225.30.187:8545");
+const provider = new MersennetProvider("https://rpc.mersennet.com");
 
 // With WebSocket URL for subscriptions
 const providerWithWs = new MersennetProvider(
-  "http://46.225.30.187:8545",
-  "ws://46.225.30.187:8546"
+  "https://rpc.mersennet.com",
+  "wss://rpc.mersennet.com"
 );
 ```
 
@@ -250,8 +250,8 @@ const placeOrderData = encodePlaceOrder(
 import { MersennetProvider, MersennetSubscription } from "@mersennet/sdk";
 
 const provider = new MersennetProvider(
-  "http://46.225.30.187:8545",
-  "ws://46.225.30.187:8546"
+  "https://rpc.mersennet.com",
+  "wss://rpc.mersennet.com"
 );
 const sub = new MersennetSubscription(provider);
 

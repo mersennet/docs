@@ -109,7 +109,7 @@ Subscribe via `eth_subscribe` (Ethereum-style) or `mersennet_subscribe` (Mersenn
 Privacy-mode payloads are **address-free by construction** — CI enforces that no address fields leak into shielded events.
 
 ```bash
-wscat -c ws://46.225.30.187:8546
+wscat -c wss://rpc.mersennet.com
 > {"jsonrpc":"2.0","id":1,"method":"mersennet_subscribe","params":["newShieldedRoot"]}
 < {"jsonrpc":"2.0","id":1,"result":"0x1"}
 ```

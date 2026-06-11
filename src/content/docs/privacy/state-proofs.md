@@ -17,7 +17,7 @@ The proof and its public outputs are retrievable over JSON-RPC:
 
 ```bash
 # Fetch the latest state-transition proof
-curl -s http://46.225.30.187:8545 \
+curl -s https://rpc.mersennet.com \
   -H 'content-type: application/json' \
   -d '{"jsonrpc":"2.0","id":1,"method":"mersennet_getLatestStateProof","params":[]}'
 ```

@@ -27,7 +27,7 @@ This guide walks you through sending MRSN, deploying a simple contract, and view
 ```javascript
 import { ethers } from 'ethers';
 
-const provider = new ethers.JsonRpcProvider('http://46.225.30.187:8545');
+const provider = new ethers.JsonRpcProvider('https://rpc.mersennet.com');
 const wallet = new ethers.Wallet('YOUR_PRIVATE_KEY', provider);
 
 const tx = await wallet.sendTransaction({
@@ -53,7 +53,7 @@ Prefer the official SDKs or raw JSON-RPC? The same transfer in TypeScript (`@mer
 ```typescript title="send-mrsn.ts"
 import { MersennetProvider } from '@mersennet/sdk';
 
-const provider = new MersennetProvider('http://46.225.30.187:8545');
+const provider = new MersennetProvider('https://rpc.mersennet.com');
 
 // eth_sendTransaction — requires the node to have the `from` account unlocked.
 // For browser/wallet signing, use ethers.js or viem as shown above.
@@ -75,7 +75,7 @@ console.log('Status:', receipt?.status);
 ```python title="send_mrsn.py"
 from mersennet import MersennetProvider
 
-provider = MersennetProvider("http://46.225.30.187:8545")
+provider = MersennetProvider("https://rpc.mersennet.com")
 
 # Sign the transaction locally (e.g. with eth-account / web3.py), then
 # broadcast the raw bytes via eth_sendRawTransaction.
@@ -100,7 +100,7 @@ import (
 )
 
 func main() {
-	provider := mersennet.NewProvider("http://46.225.30.187:8545")
+	provider := mersennet.NewProvider("https://rpc.mersennet.com")
 
 	// Sign the transaction locally, then broadcast the raw bytes
 	// via eth_sendRawTransaction.
@@ -117,12 +117,12 @@ func main() {
 
 ```bash title="Send MRSN via JSON-RPC"
 # eth_sendTransaction — requires the node to have the `from` account unlocked.
-curl -X POST http://46.225.30.187:8545 \
+curl -X POST https://rpc.mersennet.com \
   -H "Content-Type: application/json" \
   -d '{"jsonrpc":"2.0","method":"eth_sendTransaction","params":[{"from":"0xYourAddress","to":"0xRecipientAddress","value":"0x16345785d8a0000","gas":"0x5208"}],"id":1}'
 
 # Or broadcast a locally signed transaction:
-curl -X POST http://46.225.30.187:8545 \
+curl -X POST https://rpc.mersennet.com \
   -H "Content-Type: application/json" \
   -d '{"jsonrpc":"2.0","method":"eth_sendRawTransaction","params":["0xSignedTxHex"],"id":1}'
 ```
@@ -139,7 +139,7 @@ Deploy a minimal Solidity contract using ethers.js. First, compile your contract
 ```javascript
 import { ethers } from 'ethers';
 
-const provider = new ethers.JsonRpcProvider('http://46.225.30.187:8545');
+const provider = new ethers.JsonRpcProvider('https://rpc.mersennet.com');
 const wallet = new ethers.Wallet('YOUR_PRIVATE_KEY', provider);
 
 // Load compiled artifact (from Hardhat: artifacts/contracts/Counter.sol/Counter.json)
