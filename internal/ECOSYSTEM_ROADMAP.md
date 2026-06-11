@@ -42,8 +42,8 @@
 
 | App | Type | Repo | Stack | State |
 |-----|------|------|-------|-------|
-| Mersennet Wallet | Browser Extension | `primexdc-wallet/` | React, ethers, Chrome MV3 | Built |
-| Mersennet Wallet Mobile | Mobile Wallet | `primexdc-mobile/` | React Native | APK built |
+| Mersennet Wallet | Browser Extension | `mersennet-wallet/` | React, ethers, Chrome MV3 | Built |
+| Mersennet Wallet Mobile | Mobile Wallet | `mersennet-mobile/` | React Native | APK built |
 | Mersennet Lend Contracts | Lending/Borrowing | `lend-contracts/` | Solidity, Hardhat, Aave-style | Contracts ready |
 | Mersennet Lend UI v2 | Lending Frontend | `lend-ui-v2/` | React 19, Vite, wagmi | Built (dist/) |
 | Mersennet Lend Liquidator | Liquidation Bot | `lend-liquidator/` | Node.js | Ready |
@@ -52,10 +52,10 @@
 | Mersennet NFTs Server | NFT Backend | `nfts-project/` | NestJS, Prisma, GraphQL | Ready |
 | xdc-markets | Prediction Markets | `xdc-markets/` | Express, Vite, Prisma | Docker-ready |
 | Liquid Staking | LST Contracts | `liquid-staking-contracts/` | Hardhat, Solidity | Contracts ready |
-| Staking UI v2 | Staking Frontend | `primestaking-ui-v2/` | Next.js 15, wagmi | Built |
+| Staking UI v2 | Staking Frontend | `mersennet-staking-ui-v2/` | Next.js 15, wagmi | Built |
 | Masternode Dashboard | Validator Mgmt | `xdc-masternode-dashboard/` | Express, Vite, React | Deployed elsewhere |
 | MersennetRoll Casino | AI Agent Casino | `primeroll-agent-casino/` | NestJS, multi-SDK | Ready |
-| Vault Contracts | DeFi Vaults | `prime-xdc-vaults/` | Hardhat, Solidity | Ready |
+| Vault Contracts | DeFi Vaults | `mersennet-vaults/` | Hardhat, Solidity | Ready |
 | PRFI NFT Contracts | Omnichain NFTs | `prfi-nft-contracts/` | Hardhat, LayerZero | Ready |
 | SDKs | Developer SDKs | `mersennet/sdk*` | JS, Go, Python | In repo |
 

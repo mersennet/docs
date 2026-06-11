@@ -82,11 +82,11 @@ router.addLiquidity(
 For pairs involving native MRSN, use `addLiquidity` and send MRSN as `msg.value`:
 
 ```solidity
-router.addLiquidity{value: amountPRIM}(
+router.addLiquidity{value: amountMRSN}(
     token,              // address
     amountTokenDesired, // uint256
     amountTokenMin,     // uint256
-    amountPRIMMin,      // uint256
+    amountMRSNMin,      // uint256
     to,                 // address
     deadline            // uint256
 );
@@ -119,10 +119,10 @@ uint256[] memory amounts = router.swapTokensForExactTokens(
 );
 ```
 
-### Swapping MRSN for Tokens (swapExactPRIMForTokens)
+### Swapping MRSN for Tokens (swapExactMRSNForTokens)
 
 ```solidity
-router.swapExactPRIMForTokens{value: amountPRIM}(
+router.swapExactMRSNForTokens{value: amountMRSN}(
     amountOutMin,
     path,    // path[0] must be WMRSN
     to,
@@ -130,10 +130,10 @@ router.swapExactPRIMForTokens{value: amountPRIM}(
 );
 ```
 
-### Swapping Tokens for MRSN (swapExactTokensForPRIM)
+### Swapping Tokens for MRSN (swapExactTokensForMRSN)
 
 ```solidity
-router.swapExactTokensForPRIM(
+router.swapExactTokensForMRSN(
     amountIn,
     amountOutMin,
     path,    // path[path.length - 1] must be WMRSN
@@ -148,7 +148,7 @@ When you add liquidity, you receive **LP (liquidity provider) tokens**—ERC-20 
 
 - **Mint** — LP tokens are minted when you add liquidity via `pair.mint(to)`.
 - **Burn** — LP tokens are burned when you remove liquidity via `pair.burn(to)`.
-- **Redemption** — Call `router.removeLiquidity` or `removeLiquidityPRIM` to burn LP tokens and receive both tokens (or MRSN) back.
+- **Redemption** — Call `router.removeLiquidity` or `removeLiquidityMRSN` to burn LP tokens and receive both tokens (or MRSN) back.
 
 ## Example: Swap USDC for MRSN
 
@@ -160,7 +160,7 @@ const WMRSN = '0x079bf1207b51acda83e2e8178344f62a883f8479';
 const USDC = '0xb22f77d89122e9e3784bfd3eee9616273f38238d';
 
 const routerAbi = [
-  'function swapExactTokensForPRIM(uint amountIn, uint amountOutMin, address[] path, address to, uint deadline) external returns (uint[] amounts)',
+  'function swapExactTokensForMRSN(uint amountIn, uint amountOutMin, address[] path, address to, uint deadline) external returns (uint[] amounts)',
   'function getAmountsOut(uint amountIn, address[] path) view returns (uint[] amounts)'
 ];
 
@@ -181,7 +181,7 @@ const expectedOut = amounts[1];
 // Swap with 1% slippage
 const amountOutMin = expectedOut * 99n / 100n;
 const deadline = Math.floor(Date.now() / 1000) + 60 * 20; // 20 minutes
-await router.swapExactTokensForPRIM(amountIn, amountOutMin, path, await signer.getAddress(), deadline);
+await router.swapExactTokensForMRSN(amountIn, amountOutMin, path, await signer.getAddress(), deadline);
 ```
 
 ## Fee Structure

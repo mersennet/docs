@@ -58,10 +58,10 @@ This data room contains all materials required for due diligence on Mersennet's 
 │   ├── 📄 Built Products (ready to deploy)
 │   │   ├── Mersennet Lend (Lending/Borrowing)              ← lend-contracts/
 │   │   ├── Mersennet NFTs (NFT Marketplace)              ← nfts-ui/
-│   │   ├── Mersennet Wallet (Browser + Mobile)       ← primexdc-wallet/
+│   │   ├── Mersennet Wallet (Browser + Mobile)       ← mersennet-wallet/
 │   │   ├── Prediction Markets                       ← xdc-markets/
 │   │   ├── Liquid Staking                           ← liquid-staking-contracts/
-│   │   └── DeFi Vaults                              ← prime-xdc-vaults/
+│   │   └── DeFi Vaults                              ← mersennet-vaults/
 │   │
 │   └── 📄 SDKs
 │       ├── Python SDK                               ← sdk-python/

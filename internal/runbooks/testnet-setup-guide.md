@@ -47,7 +47,7 @@ There are three ways to run it — pick one:
 | Parameter | Value |
 |---|---|
 | Chain ID | `131071` (hex `0x1FFFF`) |
-| Currency | MRSN / PRIM, 18 decimals |
+| Currency | MRSN, 18 decimals |
 | Block time | 2000 ms default (`BLOCK_TIME_MS`) |
 | P2P port | 30303 tcp+udp |
 | RPC / WS | 8545 / 8546 |

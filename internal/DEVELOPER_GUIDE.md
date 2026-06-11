@@ -302,7 +302,7 @@ full rule set.
 | Add a new WS subscription | `crates/rpc/src/ws.rs` + node binary dispatch | C |
 | Extend or maintain the Noir proving path | `crates/zkp/src/noir.rs` + `crates/zkp/circuits/` + `scripts/zk/` | D5, D6 |
 | Plug in `sp1up` for real proofs | `crates/core/src/state_proof.rs` + `programs/state-transition/` | E |
-| Build the wallet UI | `sdk/` (TS bindings) + external prime-trade repo | F |
+| Build the wallet UI | `sdk/` (TS bindings) + external trade repo | F |
 | Write the Solidity bridge | `contracts/src/bridge/` (placeholder dir) | G |
 | Improve testnet ops | `testnet/scripts/`, `deploy/monitoring/` | H |
 | Tighten CI | `.github/workflows/ci.yml`, `scripts/ci/` | K |

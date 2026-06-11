@@ -126,7 +126,7 @@ dependency.
 ### Out of this repo
 
 - **F3** — Mersennet Trade shielded order UI lives in
-  `mersennet/prime-trade`. It is on the activation critical path
+  `mersennet/trade`. It is on the activation critical path
   (the activation runbook's T-1 step expects "Mersennet Trade UI ships the
   shielded mode behind a feature flag") but it is **not in this repo**.
 
@@ -194,7 +194,7 @@ already exists.
   G1–G4 bridge + Foundry + audit-prep (only if cross-chain at launch),
   the full 8-week H6 bake completed incident-free, I0–I6 external audits +
   fix cycle + re-audit, J1–J6 governance vote + the activation runbook
-  executed, F1–F5 complete, and F3 shipped from prime-trade.
+  executed, F1–F5 complete, and F3 shipped from trade.
 
 ---
 
@@ -212,7 +212,7 @@ or calendar-gated) · risk if skipped.
 | **E5** Groth16 + **G1–G4** bridge | Ethereum-side verification / cross-chain | `contracts/`, `crates/core/src/precompiles.rs` | Optional unless cross-chain at launch | E4/E5 sequencing | Large | No L1 settlement story |
 | **F1** WASM Noir prover | Client-side proving in browser | `sdk/`, new wasm crate | Blocking usable wallet | Noir circuits (D6) | Medium | Users can't generate shielded proofs locally |
 | **F2** note scanner | Wallet must find its own notes | `sdk/`, `sdk-go/`, `sdk-python/` | Blocking any demo | `mersennet_viewNotes` (done) | Medium | Chain works but users can't see balances |
-| **F4** migration UX | Users move funds into shielded notes at fork | `sdk/`, prime-trade (UI) | Blocking launch | F2 | Small–Medium | Bad first-day experience |
+| **F4** migration UX | Users move funds into shielded notes at fork | `sdk/`, trade (UI) | Blocking launch | F2 | Small–Medium | Bad first-day experience |
 | **F5** reconstruction reads | Selective disclosure beyond ciphertext export | `crates/rpc/src/rpc_shielded.rs`, `sdk/` | Blocking compliance story | ADR-019 spec freeze | Medium | Delegated/regulator view incomplete |
 | **H6** bake | Real-world soak before mainnet | testnet configs, runbooks, Grafana | Blocking mainnet | E lands | Calendar (8 weeks) | Unknown production failure modes |
 | **I0–I6** audits | Third-party safety on novel crypto | `crates/zkp/`, `crates/core/`, `contracts/`, audit packet | Blocking mainnet | E complete + I0 packet | Calendar (external, funded) | Unsafe mainnet |
@@ -306,7 +306,7 @@ audit, and governance. **Label proofs as MOCK and keep real funds out.**
 5. **Groth16 on-chain verifier feasibility (E5/G)** — gas and proving cost
    unproven; not started.
 6. **F3 Mersennet Trade UI** — on the activation critical path but in a separate
-   repo (`mersennet/prime-trade`), outside this repo's control.
+   repo (`mersennet/trade`), outside this repo's control.
 
 ---
 

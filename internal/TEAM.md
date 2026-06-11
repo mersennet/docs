@@ -135,24 +135,24 @@ mersennet/
 | Repo | Purpose | Status |
 |------|---------|--------|
 | [`mersennet`](https://github.com/mersennet/mersennet) | Core blockchain + all testnet apps (monorepo) | **Active** — main development |
-| [`primescan-explorer`](https://github.com/mersennet/primescan-explorer) | Block explorer (standalone) | Synced from monorepo `explorer/` |
-| [`primeswap-dex`](https://github.com/mersennet/primeswap-dex) | DEX frontend (standalone) | Synced from monorepo `dex/` |
-| [`primenodes-dashboard`](https://github.com/mersennet/primenodes-dashboard) | Validator dashboard (standalone) | Synced from monorepo `validator-explorer/` |
-| [`mersennet-explorer`](https://github.com/mersennet/prime-chain-explorer) | Block explorer (legacy standalone) | Synced from monorepo |
-| [`mersennet-sdk`](https://github.com/mersennet/prime-chain-sdk) | TypeScript SDK | Synced from monorepo `sdk/` |
+| [`mersennet-explorer`](https://github.com/mersennet/mersennet-explorer) | Block explorer (standalone) | Synced from monorepo `explorer/` |
+| [`mersennet-dex`](https://github.com/mersennet/mersennet-dex) | DEX frontend (standalone) | Synced from monorepo `dex/` |
+| [`mersennet-dashboard`](https://github.com/mersennet/mersennet-dashboard) | Validator dashboard (standalone) | Synced from monorepo `validator-explorer/` |
+| [`mersennet-explorer`](https://github.com/mersennet/mersennet-explorer) | Block explorer (legacy standalone) | Synced from monorepo |
+| [`mersennet-sdk`](https://github.com/mersennet/mersennet-sdk) | TypeScript SDK | Synced from monorepo `sdk/` |
 | `lend-omni` | Cross-chain lending (LayerZero v2) | Built, not on Mersennet yet |
 | `lend-contracts-v3` | Aave v3–style lending contracts | Built, not deployed |
 | `lend-ui-v3` | Lending frontend | Built |
-| `primexdc-wallet` | Browser extension wallet | Built, needs chain ID update |
-| `primexdc-mobile` | React Native mobile wallet | Built |
+| `mersennet-wallet` | Browser extension wallet | Built, needs chain ID update |
+| `mersennet-mobile` | React Native mobile wallet | Built |
 | `Mersennet NFTs-v2` | NFT marketplace v2 | Built |
 | `nfts-ui` | NFT marketplace frontend | Built |
 | `nfts-server` | NFT backend (NestJS) | Built |
 | `xdc-markets` | Prediction markets | Built |
 | `xdc-masternode-app` | Validator management app | Built |
 | `liquid-staking-contracts` | LST contracts | Built |
-| `primestaking-ui-v2` | Staking frontend | Built |
-| `prime-numbers-labs-logos` | Brand logos and assets | **Public** |
+| `mersennet-staking-ui-v2` | Staking frontend | Built |
+| `mersennet-logos` | Brand logos and assets | **Public** |
 
 ---
 
@@ -417,7 +417,7 @@ docker-compose up -d
 | **Code Font** | JetBrains Mono (Google Fonts) |
 | **Gradients** | Always Violet → Pink → Cyan (3-stop) |
 | **Logo** | Violet swirl SVG in `docs-site/static/img/logo.svg` |
-| **Logo repo** | `Mersennet/prime-numbers-labs-logos` |
+| **Logo repo** | `Mersennet/mersennet-logos` |
 
 ---
 

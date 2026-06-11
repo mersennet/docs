@@ -22,12 +22,12 @@ const ROUTER_ABI = [
   "function getAmountsOut(uint256 amountIn, address[] path) view returns (uint256[] amounts)",
   "function getAmountsIn(uint256 amountOut, address[] path) view returns (uint256[] amounts)",
   "function swapExactTokensForTokens(uint256 amountIn, uint256 amountOutMin, address[] path, address to, uint256 deadline) returns (uint256[] amounts)",
-  "function swapExactPRIMForTokens(uint256 amountOutMin, address[] path, address to, uint256 deadline) payable returns (uint256[] amounts)",
-  "function swapExactTokensForPRIM(uint256 amountIn, uint256 amountOutMin, address[] path, address to, uint256 deadline) returns (uint256[] amounts)",
+  "function swapExactMRSNForTokens(uint256 amountOutMin, address[] path, address to, uint256 deadline) payable returns (uint256[] amounts)",
+  "function swapExactTokensForMRSN(uint256 amountIn, uint256 amountOutMin, address[] path, address to, uint256 deadline) returns (uint256[] amounts)",
   "function addLiquidity(address tokenA, address tokenB, uint256 amountADesired, uint256 amountBDesired, uint256 amountAMin, uint256 amountBMin, address to, uint256 deadline) returns (uint256 amountA, uint256 amountB, uint256 liquidity)",
-  "function addLiquidityPRIM(address token, uint256 amountTokenDesired, uint256 amountTokenMin, uint256 amountPRIMMin, address to, uint256 deadline) payable returns (uint256 amountToken, uint256 amountPRIM, uint256 liquidity)",
+  "function addLiquidityMRSN(address token, uint256 amountTokenDesired, uint256 amountTokenMin, uint256 amountMRSNMin, address to, uint256 deadline) payable returns (uint256 amountToken, uint256 amountMRSN, uint256 liquidity)",
   "function removeLiquidity(address tokenA, address tokenB, uint256 liquidity, uint256 amountAMin, uint256 amountBMin, address to, uint256 deadline) returns (uint256 amountA, uint256 amountB)",
-  "function removeLiquidityPRIM(address token, uint256 liquidity, uint256 amountTokenMin, uint256 amountPRIMMin, address to, uint256 deadline) returns (uint256 amountToken, uint256 amountPRIM)",
+  "function removeLiquidityMRSN(address token, uint256 liquidity, uint256 amountTokenMin, uint256 amountMRSNMin, address to, uint256 deadline) returns (uint256 amountToken, uint256 amountMRSN)",
   "function factory() view returns (address)",
   "function WMRSN() view returns (address)",
 ];
@@ -106,7 +106,7 @@ const path = [WMRSN, MOCK_USDC];
 const value = ethers.parseEther("0.5"); // 0.5 MRSN
 const deadline = Math.floor(Date.now() / 1000) + 60 * 20;
 
-const tx = await router.swapExactPRIMForTokens(
+const tx = await router.swapExactMRSNForTokens(
   amountOutMin,
   path,
   wallet.address,
@@ -126,7 +126,7 @@ const amountOutMin = amounts[1] * 95n / 100n;
 
 await erc20.approve(ROUTER, amountIn);
 
-const tx = await router.swapExactTokensForPRIM(
+const tx = await router.swapExactTokensForMRSN(
   amountIn,
   amountOutMin,
   path,
@@ -168,16 +168,16 @@ await tx.wait();
 ```javascript
 const amountTokenDesired = ethers.parseUnits("100", 6);
 const amountTokenMin = amountTokenDesired * 95n / 100n;
-const amountPRIMMin = ethers.parseEther("0.5");
+const amountMRSNMin = ethers.parseEther("0.5");
 const deadline = Math.floor(Date.now() / 1000) + 60 * 20;
 
 await erc20.approve(ROUTER, amountTokenDesired);
 
-const tx = await router.addLiquidityPRIM(
+const tx = await router.addLiquidityMRSN(
   MOCK_USDC,
   amountTokenDesired,
   amountTokenMin,
-  amountPRIMMin,
+  amountMRSNMin,
   wallet.address,
   deadline,
   { value: ethers.parseEther("1") } // MRSN sent as msg.value

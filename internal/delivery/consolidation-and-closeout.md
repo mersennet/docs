@@ -3,7 +3,7 @@
 **Audience:** Rodolfo Cova (merge owner) and the workstream owners in `.github/CODEOWNERS`.
 **Purpose:** one authoritative handoff for finishing the zk privacy fork. It tells you how to consolidate the five feature branches, how to prove the consolidated tree is green, the true status of every workstream after the merge, and exactly what is left (and why none of it is buildable inside the dev sandbox).
 
-> TL;DR — almost everything is **done in code** but lives on five **unmerged** branches stacked on `feat/zk-privacy` (still at base `407106d`). The branches are **disjoint at the file level**, so the merge is conflict-free. The genuine remainder is **resource-gated** (prover hardware, a Succinct account, the separate `prime-trade` repo, audit funding, the 8-week bake, a governance vote), not code-gated.
+> TL;DR — almost everything is **done in code** but lives on five **unmerged** branches stacked on `feat/zk-privacy` (still at base `407106d`). The branches are **disjoint at the file level**, so the merge is conflict-free. The genuine remainder is **resource-gated** (prover hardware, a Succinct account, the separate `trade` repo, audit funding, the 8-week bake, a governance vote), not code-gated.
 
 ---
 
@@ -111,7 +111,7 @@ Row reconciliation (status after consolidation, and the branch that satisfies it
 | E5 | ✅ | `feat/zk-bridge` — Groth16 verifier wired to bridge |
 | F1 | ✅ | `feat/zk-sdk-client` — WASM Noir prover |
 | F2 | ✅ | `feat/zk-sdk-client` — owner-side note scanner |
-| F3 | ⬜ (separate repo) | `mersennet/prime-trade` — out of this repo |
+| F3 | ⬜ (separate repo) | `mersennet/trade` — out of this repo |
 | F4 | ✅ | `feat/zk-sdk-client` — migration UX |
 | F5 | 🟡 | `feat/zk-sdk-client` — selective-disclosure grants + **client-side** `reconstructOpenOrders`/`reconstructPositions` shipped; chain-level note-minting + `mersennet_viewPositions`/`mersennet_viewOrders` RPC intentionally deferred (decision: skip until post-audit) |
 | G1 | ✅ | `feat/zk-bridge` — `MersennetVerifier` (Groth16) |
@@ -167,8 +167,8 @@ None of these are buildable in the dev sandbox (no prover-class hardware, no ext
 - **Exit:** `MERSENNET_SP1_MODE=network` produces a verifiable proof against the real host path; documented in the audit packet. Until then the host fails loudly rather than silently falling back.
 
 ### F3 — Mersennet Trade shielded order UI
-- **State:** lives in `mersennet/prime-trade`; nothing to build in this repo.
-- **Owner:** front-end team on `prime-trade`.
+- **State:** lives in `mersennet/trade`; nothing to build in this repo.
+- **Owner:** front-end team on `trade`.
 - **Integration contract to hand over** (all shipped on `feat/zk-sdk-client`): the SDK note scanner (F2), the WASM Noir prover (F1), the migration UX helpers (F4), and `reconstructOpenOrders` / `reconstructPositions` from `sdk/src/positions.ts`, plus the grant-token lifecycle (`mersennet_viewGrantToken` / `mersennet_viewRevokeToken` / `mersennet_viewGrantStatus` / `mersennet_viewNotes`).
 - **Exit:** Mersennet Trade can submit a `0x7E` shielded order, scan for owned notes, and render reconstructed positions/orders against a privacy testnet node.
 
