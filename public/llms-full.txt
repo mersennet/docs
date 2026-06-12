@@ -1333,11 +1333,13 @@ MRSN enters circulation two ways: **minted** block rewards (over time) and **gen
 | **Team & Core Contributors** | Genesis allocation, 1-year cliff + 3-year linear | Set at genesis |
 | **Sales (Private + Public)** | Genesis allocation, 6-month cliff + 18-month linear | Set at genesis |
 
+:::note
 Absolute genesis allocation amounts (and their split across the pre-mine categories) are finalized by the Foundation at genesis. They are bounded by — but no longer derived from — the supply cap, since the cap is a ceiling rather than the target circulating supply. The protocol-enforced facts (cap, block reward, halving) are fixed and stated precisely throughout this page.
+:::
 
 ### Block Rewards
 
-Validator rewards are **minted on every block** according to the halving schedule — none are pre-minted. Distribution is proportional to validator stake.
+Validator rewards are **minted on every block** according to the halving schedule — none are pre-minted. Distribution is proportional to validator stake (see [Reward Distribution](#reward-distribution)).
 
 ### Genesis allocations
 
