@@ -2,7 +2,7 @@
 title: "Mersennet Swap V2 DEX"
 ---
 
-**Mersennet Swap V2** is the native automated market maker (AMM) and decentralized exchange (DEX) on Mersennet. Built as a Uniswap V2 fork, it provides permissionless token swaps, liquidity provision, and LP token mechanics—enabling the core DeFi primitives that power the Mersennet ecosystem.
+**Mersennet Swap V2** is the native automated market maker (AMM) and decentralized exchange (DEX) on Mersennet. Built as a Uniswap V2 fork, it provides permissionless token swaps, liquidity provision, and LP token mechanics, enabling the core DeFi primitives that power the Mersennet ecosystem.
 
 :::tip[Mersennet Swap V3 is live]
 **[Mersennet Swap V3](/ecosystem/swap-v3)** adds concentrated liquidity with the Uniswap V3 protocol. Choose V2 for simple swaps and full-range liquidity, or V3 for capital-efficient concentrated positions.
@@ -22,8 +22,8 @@ title: "Mersennet Swap V2 DEX"
 
 Mersennet Swap uses a two-contract design:
 
-- **MersennetSwapFactory** — Creates and tracks liquidity pairs. Each pair is a separate contract.
-- **MersennetSwapRouter** — User-facing contract for adding liquidity, removing liquidity, and executing swaps. Handles approvals, slippage, and deadline checks.
+- **MersennetSwapFactory**: Creates and tracks liquidity pairs. Each pair is a separate contract.
+- **MersennetSwapRouter**: User-facing contract for adding liquidity, removing liquidity, and executing swaps. Handles approvals, slippage, and deadline checks.
 
 ```
 ┌─────────────────┐     createPair()      ┌──────────────────┐
@@ -58,7 +58,7 @@ Use the Factory to create a new trading pair:
 address pair = IMersennetSwapFactory(factory).createPair(tokenA, tokenB);
 ```
 
-Token order does not matter—the Factory sorts addresses to ensure deterministic pair addresses.
+Token order does not matter: the Factory sorts addresses to ensure deterministic pair addresses.
 
 ## Adding Liquidity
 
@@ -144,11 +144,11 @@ router.swapExactTokensForMRSN(
 
 ## LP Tokens
 
-When you add liquidity, you receive **LP (liquidity provider) tokens**—ERC-20 tokens representing your share of the pool. Your share is proportional to your deposited amount relative to total liquidity.
+When you add liquidity, you receive **LP (liquidity provider) tokens**, ERC-20 tokens representing your share of the pool. Your share is proportional to your deposited amount relative to total liquidity.
 
-- **Mint** — LP tokens are minted when you add liquidity via `pair.mint(to)`.
-- **Burn** — LP tokens are burned when you remove liquidity via `pair.burn(to)`.
-- **Redemption** — Call `router.removeLiquidity` or `removeLiquidityMRSN` to burn LP tokens and receive both tokens (or MRSN) back.
+- **Mint**: LP tokens are minted when you add liquidity via `pair.mint(to)`.
+- **Burn**: LP tokens are burned when you remove liquidity via `pair.burn(to)`.
+- **Redemption**: Call `router.removeLiquidity` or `removeLiquidityMRSN` to burn LP tokens and receive both tokens (or MRSN) back.
 
 ## Example: Swap USDC for MRSN
 
@@ -191,7 +191,7 @@ await router.swapExactTokensForMRSN(amountIn, amountOutMin, path, await signer.g
 
 ## Related Resources
 
-- [Mersennet Swap V3](/ecosystem/swap-v3) — Concentrated liquidity DEX
-- [Deployed Contracts](/resources/contracts) — Full contract reference
-- [ERC-20 Guide](/developers/contracts/erc20-guide) — Deploy tokens to list on Mersennet Swap
-- [Network Information](/getting-started/network-info) — RPC, Chain ID, and configuration
+- [Mersennet Swap V3](/ecosystem/swap-v3): Concentrated liquidity DEX
+- [Deployed Contracts](/resources/contracts): Full contract reference
+- [ERC-20 Guide](/developers/contracts/erc20-guide): Deploy tokens to list on Mersennet Swap
+- [Network Information](/getting-started/network-info): RPC, Chain ID, and configuration

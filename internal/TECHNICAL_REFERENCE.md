@@ -1,4 +1,4 @@
-# Mersennet — Technical Reference
+# Mersennet: Technical Reference
 
 **Version:** 0.1.0  
 **Authors:** Rodolfo Cova (@rodaemonic)  
@@ -12,11 +12,11 @@
 
 1. [Architecture Overview](#1-architecture-overview)
 2. [Module Map](#2-module-map)
-3. [Engine — Block Production Pipeline](#3-engine--block-production-pipeline)
+3. [Engine: Block Production Pipeline](#3-engine-block-production-pipeline)
 4. [Parallel EVM Execution](#4-parallel-evm-execution)
 5. [HotStuff-2 Consensus](#5-hotstuff-2-consensus)
 6. [CometBFT-Style Consensus](#6-cometbft-style-consensus)
-7. [MersennetOrders — CLOB Matching Engine](#7-mersennet_orders--clob-matching-engine)
+7. [MersennetOrders: CLOB Matching Engine](#7-mersennet_orders-clob-matching-engine)
 8. [CLOB Precompile](#8-clob-precompile)
 9. [Frequent Batch Auctions (FBA)](#9-frequent-batch-auctions-fba)
 10. [Commit-Reveal MEV Protection](#10-commit-reveal-mev-protection)
@@ -181,7 +181,7 @@ crates/node/src/bin/
 
 ---
 
-## 3. Engine — Block Production Pipeline
+## 3. Engine: Block Production Pipeline
 
 **File:** `crates/core/src/engine.rs` (~3,000 lines)
 
@@ -376,7 +376,7 @@ let par_result = executor.execute(&collected_txs, &self.evm.db, ...);
 
 **File:** `crates/core/src/hotstuff2.rs` (~765 lines)
 
-Implements the HotStuff-2 protocol — a linear-communication BFT consensus with a **2-chain commit rule**, reducing the original HotStuff's 3-chain requirement to 2 consecutive certified rounds.
+Implements the HotStuff-2 protocol, a linear-communication BFT consensus with a **2-chain commit rule**, reducing the original HotStuff's 3-chain requirement to 2 consecutive certified rounds.
 
 ### Data Structures
 
@@ -541,7 +541,7 @@ New validators receive a penalty: `-(total_voting_stake + total_voting_stake / 8
 
 ---
 
-## 7. MersennetOrders — CLOB Matching Engine
+## 7. MersennetOrders: CLOB Matching Engine
 
 **File:** `crates/core/src/mersennet_orders.rs` (~863 lines)
 
@@ -632,9 +632,9 @@ When the insurance fund cannot cover a liquidation deficit:
 
 ### Market Controls
 
-- `halt_market(id)` — Sets status to `Halted`, blocks new orders
-- `resume_market(id)` — Sets status to `Active`
-- `MarketStatus::SettleOnly` — Settle-only mode
+- `halt_market(id)`: Sets status to `Halted`, blocks new orders
+- `resume_market(id)`: Sets status to `Active`
+- `MarketStatus::SettleOnly`: Settle-only mode
 
 ---
 
@@ -845,7 +845,7 @@ A three-pool transaction management system inspired by Geth's design.
 
 ### Per-Pool Structure
 
-Each pool is a `HashMap<Address, BTreeMap<u64, Transaction>>` — sender → nonce-sorted queue.
+Each pool is a `HashMap<Address, BTreeMap<u64, Transaction>>`: sender → nonce-sorted queue.
 
 ### Transaction Lifecycle
 
@@ -896,7 +896,7 @@ Uses **sled** (embedded B-tree database) with the following trees:
 
 ### Incremental Commits
 
-The `dirty_accounts: Mutex<HashSet<Address>>` set tracks which accounts were modified during block execution. On commit, only dirty accounts are re-serialized to sled — avoiding a full DB rewrite.
+The `dirty_accounts: Mutex<HashSet<Address>>` set tracks which accounts were modified during block execution. On commit, only dirty accounts are re-serialized to sled, avoiding a full DB rewrite.
 
 ```rust
 pub fn commit_state(
@@ -1017,9 +1017,9 @@ pub struct NetworkNode {
 ```
 
 Spawns three background threads:
-1. **gossip-listener** — Receives and processes incoming packets
-2. **tcp-snapshot** — Serves sync requests
-3. **peer-discovery** — Periodic peer discovery and pruning
+1. **gossip-listener**: Receives and processes incoming packets
+2. **tcp-snapshot**: Serves sync requests
+3. **peer-discovery**: Periodic peer discovery and pruning
 
 ---
 
@@ -1490,9 +1490,9 @@ docker build -t mersennet:latest .
 The multi-stage Dockerfile uses `rust:1.82-slim` for building and `debian:bookworm-slim` for the runtime image.
 
 **Exposed ports:**
-- `8545` — JSON-RPC
-- `9090` — Prometheus (application-level, served via `/metrics` on 8545)
-- `9100` — Reserved
+- `8545`: JSON-RPC
+- `9090`: Prometheus (application-level, served via `/metrics` on 8545)
+- `9100`: Reserved
 
 ### Docker Compose (3-Validator Testnet)
 
@@ -1602,9 +1602,9 @@ curl http://localhost:8545/metrics
 
 ### CLOB Performance
 
-- Order book uses `BTreeMap<U256, VecDeque<OrderId>>` — O(log n) insert/lookup per price level
-- FIFO queues within price levels — O(1) front/back operations
-- FOK orders check `available_liquidity` before matching — avoids partial execution overhead
+- Order book uses `BTreeMap<U256, VecDeque<OrderId>>`, giving O(log n) insert/lookup per price level
+- FIFO queues within price levels give O(1) front/back operations
+- FOK orders check `available_liquidity` before matching, which avoids partial execution overhead
 
 ### FBA Tuning
 
@@ -1644,8 +1644,8 @@ Hyperliquid operates a dual-execution architecture:
 
 - **HyperEVM** is a Cancun-spec EVM running alongside **HyperCore** (native CLOB) under HyperBFT consensus.
 - The two are **separate execution environments** that run sequentially.
-- EVM reads HyperCore state from the **previous block** — 1 block stale.
-- **CoreWriter** at `0x333...333` queues orders for the **next block** — seconds delay.
+- EVM reads HyperCore state from the **previous block**, so it is 1 block stale.
+- **CoreWriter** at `0x333...333` queues orders for the **next block**, introducing seconds of delay.
 - **Dual blocks**: big blocks (~1 min, 30M gas) and small blocks (~1 sec, 2M gas).
 - HyperEVM remains in **alpha** as of 2026.
 
@@ -1658,7 +1658,7 @@ Hyperliquid operates a dual-execution architecture:
 | **Write latency** | Immediate (same tx) | CoreWriter queues for next block (seconds) |
 | **Use case** | Vault: deposit → place order → react to fill in one tx | Requires multi-tx, multi-block flow |
 
-Mersennet's CLOB precompile achieves **atomic same-tx composability** — a Solidity contract can deposit collateral, place an order, and react to the fill in a single transaction. HyperEVM's CoreWriter pattern is intentionally async, trading composability for maximum CLOB throughput.
+Mersennet's CLOB precompile achieves **atomic same-tx composability**: a Solidity contract can deposit collateral, place an order, and react to the fill in a single transaction. HyperEVM's CoreWriter pattern is intentionally async, trading composability for maximum CLOB throughput.
 
 ---
 
@@ -1667,7 +1667,7 @@ Mersennet's CLOB precompile achieves **atomic same-tx composability** — a Soli
 ### Consensus Safety
 
 - **BFT tolerance:** System is safe with up to `f < n/3` Byzantine validators (stake-weighted)
-- **2-chain commit rule:** HotStuff-2 requires two consecutive QCs for commit — prevents spurious commits
+- **2-chain commit rule:** HotStuff-2 requires two consecutive QCs for commit, which prevents spurious commits
 - **Locked QC safety:** Validators only vote if the proposal's justify QC is at least as high as their locked QC
 - **No equivocation:** `last_voted_round` prevents double-voting within a round
 - **Tombstoning:** Double-sign evidence results in permanent validator exclusion
@@ -1684,7 +1684,7 @@ Repeat offenders face escalating penalties: `base_bps + escalation_step × offen
 ### Precompile Security
 
 - **Gas metering:** Every precompile function checks `gas_limit ≥ required_gas` before execution
-- **Context isolation:** CLOB state is set before block execution and cleared after — no cross-block state leakage
+- **Context isolation:** CLOB state is set before block execution and cleared after, so there is no cross-block state leakage
 - **Caller identification:** `env.tx.caller` is used for all auth-sensitive operations (deposit, withdraw, position queries)
 
 ### Transaction Validation
@@ -1702,9 +1702,9 @@ Repeat offenders face escalating penalties: `base_bps + escalation_step × offen
 
 ### Known Limitations
 
-- Unsigned transactions are accepted with a warning (backward compatibility) — production deployments should enforce signatures
-- CLOB margin system uses `initial_margin_bps = 0` by default — must be configured for production
-- UDP gossip is unencrypted by default — Noise protocol encryption (`crates/network/src/noise.rs`) is available via `p2p.noise_enabled`
+- Unsigned transactions are accepted with a warning (backward compatibility); production deployments should enforce signatures
+- CLOB margin system uses `initial_margin_bps = 0` by default: must be configured for production
+- UDP gossip is unencrypted by default; Noise protocol encryption (`crates/network/src/noise.rs`) is available via `p2p.noise_enabled`
 - The `InMemoryDB` clone during parallel execution has memory overhead proportional to state size
 
 ---

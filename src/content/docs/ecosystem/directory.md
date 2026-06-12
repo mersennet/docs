@@ -36,7 +36,7 @@ Complete directory of live services, endpoints, and deployed contracts on Mersen
 | **MockDAI** | `0xb88d63a65691effbf4b6808325b1588912c15cf4` | 18 |
 
 :::tip
-All mock tokens have a public `faucet()` function — call it to receive test tokens.
+All mock tokens have a public `faucet()` function; call it to receive test tokens.
 :::
 
 ### Mersennet Swap V2
@@ -50,10 +50,10 @@ All mock tokens have a public `faucet()` function — call it to receive test to
 
 | Contract | Address |
 |----------|---------|
-| **UniswapV3Factory** | *Deployed — see [Block Explorer](https://explorer.mersennet.com)* |
-| **SwapRouter** | *Deployed — see [Block Explorer](https://explorer.mersennet.com)* |
-| **NonfungiblePositionManager** | *Deployed — see [Block Explorer](https://explorer.mersennet.com)* |
-| **Quoter** | *Deployed — see [Block Explorer](https://explorer.mersennet.com)* |
+| **UniswapV3Factory** | *Deployed; see [Block Explorer](https://explorer.mersennet.com)* |
+| **SwapRouter** | *Deployed; see [Block Explorer](https://explorer.mersennet.com)* |
+| **NonfungiblePositionManager** | *Deployed; see [Block Explorer](https://explorer.mersennet.com)* |
+| **Quoter** | *Deployed; see [Block Explorer](https://explorer.mersennet.com)* |
 
 :::note
 Mersennet Swap V3 contracts are recently deployed. Verified addresses will be added to this page and the [Deployed Contracts](/resources/contracts) page as they are confirmed on-chain.
@@ -76,7 +76,7 @@ Documentation:        https://docs.mersennet.com
 
 ## Related Resources
 
-- [Mersennet Swap V2](/ecosystem/swap) — AMM DEX documentation
-- [Mersennet Swap V3](/ecosystem/swap-v3) — Concentrated liquidity DEX documentation
-- [Deployed Contracts](/resources/contracts) — Detailed contract reference with ABIs
-- [Network Information](/getting-started/network-info) — Full network configuration
+- [Mersennet Swap V2](/ecosystem/swap): AMM DEX documentation
+- [Mersennet Swap V3](/ecosystem/swap-v3): Concentrated liquidity DEX documentation
+- [Deployed Contracts](/resources/contracts): Detailed contract reference with ABIs
+- [Network Information](/getting-started/network-info): Full network configuration

@@ -1,4 +1,4 @@
-# Mersennet — ZK Privacy Architecture Plan (Internal)
+# Mersennet: ZK Privacy Architecture Plan (Internal)
 
 **Status:** Active. Privacy perimeter hardening is largely landed on
 `feat/zk-privacy`; selective disclosure, real proving backends, wallet
@@ -32,11 +32,11 @@ We move from address-keyed transparent state to commitment-keyed
 shielded state for everything trader-specific, while keeping market-level
 aggregates public. ZK is used in two distinct ways:
 
-1. **Privacy proofs (client-side, per transaction)** — the trader's wallet
+1. **Privacy proofs (client-side, per transaction)**: the trader's wallet
    proves "I own a note in the tree and my new state is solvent" without
    revealing identity, balance, or exact position. Stack: Noir →
    UltraPlonk → BN254.
-2. **State-transition proofs (chain-side, per block)** — SP1 produces a
+2. **State-transition proofs (chain-side, per block)**: SP1 produces a
    succinct proof attesting that the whole block was re-executed
    correctly, for light-client and bridge consumption. Stack:
    sp1_sdk → SP1 STARK → optional Groth16 wrap.
@@ -144,7 +144,7 @@ table below is the architectural roll-up for this plan.
 
 ---
 
-## Phase 0.5 — Privacy perimeter / cutoff plan
+## Phase 0.5: Privacy perimeter / cutoff plan
 
 Before Phase 2, 3, or 4 can be called "zk-first", the protocol needs
 one explicit privacy perimeter. The current branch already contains
@@ -185,7 +185,7 @@ system**:
 
 We must choose one of two targets before doing major additional work.
 
-#### Option A — privacy-first hybrid chain
+#### Option A: privacy-first hybrid chain
 
 Transparent smart contracts remain supported.
 Shielded balances and shielded order books become the privacy-critical
@@ -200,7 +200,7 @@ Implications:
 - This is **not** a private-contract zkEVM; it is a hybrid chain with a
   zk-protected trading stack.
 
-#### Option B — private-contract zkEVM
+#### Option B: private-contract zkEVM
 
 Trader-specific execution must migrate out of transparent revm-visible
 state into a private execution model.
@@ -370,7 +370,7 @@ As of the current branch state:
   proving that private trader state cannot be reconstructed from the
   public APIs that remain.
 
-### Point 2 preview — protocol transition design
+### Point 2 preview: protocol transition design
 
 Once the privacy perimeter is fixed, the protocol design work should
 cover:
@@ -381,7 +381,7 @@ cover:
 - viewing-key cryptography and wallet flows
 - post-fork block / receipt / log semantics
 
-### Point 3 preview — implementation sequencing
+### Point 3 preview: implementation sequencing
 
 Recommended order after Point 1:
 

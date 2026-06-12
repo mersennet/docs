@@ -73,15 +73,15 @@ See [RPC Methods Reference](/developers/rpc/methods) for full details.
 | `mersennet_getCodeAttestation` / `mersennet_getCodeHash` | On-chain contract code-publication registry lookups |
 | `mersennet_orders_*` | MersennetOrders trading methods (addMarket, submitOrder, cancelOrder, getOrderBook, etc.) |
 | `mersennet_bridge_*` | MersennetBridge bridge methods (enqueueOrdersToEvm, enqueueEvmToOrders, dequeueOrdersToEvm, dequeueEvmToOrders) |
-| **Shielded / ZK** | Shielded transfers & orders, SP1 state proofs, and selective-disclosure reads — see the [Shielded JSON-RPC reference](/developers/privacy/shielded-rpc) |
+| **Shielded / ZK** | Shielded transfers & orders, SP1 state proofs, and selective-disclosure reads; see the [Shielded JSON-RPC reference](/developers/privacy/shielded-rpc) |
 | **WebSocket** | `eth_subscribe` and `mersennet_subscribe` push notifications (new heads, trades, shielded roots, state proofs) |
 
 ### Notes on specific methods
 
 | Method | Notes |
 |--------|-------|
-| `eth_subscribe` / `eth_unsubscribe` | Available over **WebSocket connections only** (not HTTP). May be disabled on some public nodes — fall back to filters/polling. |
-| `eth_maxPriorityFeePerGas` | Returns `0x0` — Mersennet uses an EIP-1559 base fee with no separate priority tip. |
+| `eth_subscribe` / `eth_unsubscribe` | Available over **WebSocket connections only** (not HTTP). May be disabled on some public nodes; fall back to filters/polling. |
+| `eth_maxPriorityFeePerGas` | Returns `0x0`: Mersennet uses an EIP-1559 base fee with no separate priority tip. |
 | `debug_*` / `trace_*` / `personal_*` | Not implemented. |
 
 ## Transaction Format

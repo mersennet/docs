@@ -96,9 +96,9 @@ Returns base fee and reward percentiles for a range of recent blocks.
 
 **Parameters:**
 
-1. `blockCount` — Number of blocks in the range (hex)
-2. `newestBlock` — Highest block number or `"latest"`
-3. `rewardPercentiles` — Array of percentile values (e.g. `[25, 50, 75]`)
+1. `blockCount`: Number of blocks in the range (hex)
+2. `newestBlock`: Highest block number or `"latest"`
+3. `rewardPercentiles`: Array of percentile values (e.g. `[25, 50, 75]`)
 
 ```bash
 curl -X POST https://rpc.mersennet.com \
@@ -146,8 +146,8 @@ Returns account balance in wei.
 
 **Parameters:**
 
-1. `address` — 20-byte address (hex)
-2. `blockNumber` (optional) — Block number or `"latest"`
+1. `address`: 20-byte address (hex)
+2. `blockNumber` (optional): Block number or `"latest"`
 
 <Tabs syncKey="lang">
   <TabItem label="curl">
@@ -191,8 +191,8 @@ Returns nonce (transaction count) for an address.
 
 **Parameters:**
 
-1. `address` — 20-byte address (hex)
-2. `blockNumber` (optional) — `"latest"` or block number
+1. `address`: 20-byte address (hex)
+2. `blockNumber` (optional): `"latest"` or block number
 
 ---
 
@@ -202,8 +202,8 @@ Returns the bytecode at an address.
 
 **Parameters:**
 
-1. `address` — 20-byte address (hex)
-2. `blockNumber` (optional) — Block number or `"latest"`
+1. `address`: 20-byte address (hex)
+2. `blockNumber` (optional): Block number or `"latest"`
 
 ---
 
@@ -213,9 +213,9 @@ Returns the value at a storage slot.
 
 **Parameters:**
 
-1. `address` — 20-byte address (hex)
-2. `slot` — Storage slot (hex)
-3. `blockNumber` (optional) — Block number or `"latest"`
+1. `address`: 20-byte address (hex)
+2. `slot`: Storage slot (hex)
+3. `blockNumber` (optional): Block number or `"latest"`
 
 ---
 
@@ -225,8 +225,8 @@ Executes a call without creating a transaction (read-only).
 
 **Parameters:**
 
-1. `callObject` — `{ from?, to, gas?, gasPrice?, value?, data? }`
-2. `blockNumber` (optional) — `"latest"` or block number
+1. `callObject`: `{ from?, to, gas?, gasPrice?, value?, data? }`
+2. `blockNumber` (optional): `"latest"` or block number
 
 ```bash
 curl -X POST https://rpc.mersennet.com \
@@ -242,7 +242,7 @@ Estimates gas for a transaction.
 
 **Parameters:**
 
-1. `transactionObject` — Same shape as `eth_call`
+1. `transactionObject`: Same shape as `eth_call`
 
 ---
 
@@ -256,8 +256,8 @@ full transaction metadata is not part of the post-fork public surface.
 
 **Parameters:**
 
-1. `blockNumber` — Block number (hex) or `"latest"`, `"pending"`
-2. `fullTransactions` — `true` for full tx objects, `false` for hashes only
+1. `blockNumber`: Block number (hex) or `"latest"`, `"pending"`
+2. `fullTransactions`: `true` for full tx objects, `false` for hashes only
 
 ```bash
 curl -X POST https://rpc.mersennet.com \
@@ -297,8 +297,8 @@ full transaction metadata is not part of the post-fork public surface.
 
 **Parameters:**
 
-1. `blockHash` — 32-byte block hash (hex)
-2. `fullTransactions` — `true` or `false`
+1. `blockHash`: 32-byte block hash (hex)
+2. `fullTransactions`: `true` or `false`
 
 ---
 
@@ -311,7 +311,7 @@ surface because transaction metadata remains private.
 
 **Parameters:**
 
-1. `transactionHash` — 32-byte tx hash (hex)
+1. `transactionHash`: 32-byte tx hash (hex)
 
 **Response:**
 
@@ -344,7 +344,7 @@ surface because receipt metadata and logs remain private.
 
 **Parameters:**
 
-1. `transactionHash` — 32-byte tx hash (hex)
+1. `transactionHash`: 32-byte tx hash (hex)
 
 **Response:**
 
@@ -374,7 +374,7 @@ Returns logs matching a filter.
 
 **Parameters:**
 
-1. `filterObject` — `{ fromBlock?, toBlock?, address?, topics? }`
+1. `filterObject`: `{ fromBlock?, toBlock?, address?, topics? }`
 
 ```bash
 curl -X POST https://rpc.mersennet.com \
@@ -390,7 +390,7 @@ Sends a transaction signed by the node.
 
 **Parameters:**
 
-1. `transactionObject` — `{ from, to?, value?, gas?, gasPrice?, data? }`
+1. `transactionObject`: `{ from, to?, value?, gas?, gasPrice?, data? }`
 
 ---
 
@@ -404,7 +404,7 @@ Mersennet accepts **both** standard Ethereum RLP-encoded transactions (EIP-155) 
 
 **Parameters:**
 
-1. `signedTransactionData` — Hex-encoded signed transaction
+1. `signedTransactionData`: Hex-encoded signed transaction
 
 <Tabs syncKey="lang">
   <TabItem label="curl">
@@ -451,7 +451,7 @@ Returns `"0x0"` (Mersennet uses BFT consensus with no uncles).
 
 **Parameters:**
 
-1. `blockNumber` — Block number (hex) or `"latest"`
+1. `blockNumber`: Block number (hex) or `"latest"`
 
 ---
 
@@ -461,7 +461,7 @@ Returns `"0x0"` (no uncles in BFT consensus).
 
 **Parameters:**
 
-1. `blockHash` — Block hash (hex)
+1. `blockHash`: Block hash (hex)
 
 ---
 
@@ -475,7 +475,7 @@ Creates a new log filter.
 
 **Parameters:**
 
-1. `filterObject` — `{ fromBlock?, toBlock?, address?, topics? }`
+1. `filterObject`: `{ fromBlock?, toBlock?, address?, topics? }`
 
 **Returns:** Filter ID (hex string)
 
@@ -507,7 +507,7 @@ Polling method for a filter. Returns changes since last poll.
 
 **Parameters:**
 
-1. `filterId` — Filter ID from `eth_newFilter`, `eth_newBlockFilter`, or `eth_newPendingTransactionFilter`
+1. `filterId`: Filter ID from `eth_newFilter`, `eth_newBlockFilter`, or `eth_newPendingTransactionFilter`
 
 ---
 
@@ -517,7 +517,7 @@ Returns all logs for a log filter (equivalent to `eth_getLogs` with the filter's
 
 **Parameters:**
 
-1. `filterId` — Filter ID from `eth_newFilter`
+1. `filterId`: Filter ID from `eth_newFilter`
 
 ---
 
@@ -527,7 +527,7 @@ Destroys a filter. Returns `true` if the filter existed.
 
 **Parameters:**
 
-1. `filterId` — Filter ID (hex string)
+1. `filterId`: Filter ID (hex string)
 
 ---
 
@@ -705,7 +705,7 @@ Returns domain events (CLOB fills, bridge operations, validator changes) for a b
 
 **Parameters:**
 
-1. `filterObject` — `{ fromBlock, toBlock, domain?, kind? }`
+1. `filterObject`: `{ fromBlock, toBlock, domain?, kind? }`
 
 ```bash
 curl -X POST https://rpc.mersennet.com \
@@ -721,8 +721,8 @@ Returns the on-chain code-publication attestation for a contract, or `null` if n
 
 **Parameters:**
 
-1. `address` — Contract address (hex)
-2. `blockNumber` (optional) — Block number or `"latest"`
+1. `address`: Contract address (hex)
+2. `blockNumber` (optional): Block number or `"latest"`
 
 **Returns:** `{ contract, deployer, codeHash, metadataUri, publishedAtBlock }` or `null`.
 
@@ -734,8 +734,8 @@ Returns the keccak-256 code hash at an address (or `null` if there is no code).
 
 **Parameters:**
 
-1. `address` — Contract address (hex)
-2. `blockNumber` (optional) — Block number or `"latest"`
+1. `address`: Contract address (hex)
+2. `blockNumber` (optional): Block number or `"latest"`
 
 ---
 
@@ -749,9 +749,9 @@ Register a new trading market on the CLOB.
 
 **Parameters:**
 
-1. `symbol` — Market symbol string (e.g. `"MRSN/USDC"`)
-2. `tickSize` — Minimum price increment (hex)
-3. `lotSize` — Minimum order size (hex)
+1. `symbol`: Market symbol string (e.g. `"MRSN/USDC"`)
+2. `tickSize`: Minimum price increment (hex)
+3. `lotSize`: Minimum order size (hex)
 
 ```bash
 curl -X POST https://rpc.mersennet.com \
@@ -776,12 +776,12 @@ Submit a limit order to the CLOB.
 **Parameters:**
 
 1. `orderObject`:
-   - `owner` — Trader address
-   - `market_id` — Market ID (integer)
-   - `side` — `"buy"` or `"sell"`
-   - `price` — Limit price (hex)
-   - `size` — Order size (hex)
-   - `tif` — Time-in-force: `"gtc"` (Good-Til-Cancel), `"ioc"` (Immediate-or-Cancel), `"fok"` (Fill-or-Kill)
+   - `owner`: Trader address
+   - `market_id`: Market ID (integer)
+   - `side`: `"buy"` or `"sell"`
+   - `price`: Limit price (hex)
+   - `size`: Order size (hex)
+   - `tif`: Time-in-force: `"gtc"` (Good-Til-Cancel), `"ioc"` (Immediate-or-Cancel), `"fok"` (Fill-or-Kill)
 
 ```bash
 curl -X POST https://rpc.mersennet.com \
@@ -814,7 +814,7 @@ Cancel an open order.
 
 **Parameters:**
 
-1. `orderId` — Order ID (hex string)
+1. `orderId`: Order ID (hex string)
 
 **Returns:** `true` on success.
 
@@ -826,7 +826,7 @@ Get the current order book for a market.
 
 **Parameters:**
 
-1. `marketId` — Market ID (hex string)
+1. `marketId`: Market ID (hex string)
 
 <Tabs syncKey="lang">
   <TabItem label="curl">
@@ -895,7 +895,7 @@ Get all open orders for a specific address.
 
 **Parameters:**
 
-1. `address` — Trader address (hex)
+1. `address`: Trader address (hex)
 
 ---
 
@@ -905,8 +905,8 @@ Deposit collateral for margin trading.
 
 **Parameters:**
 
-1. `address` — Account address
-2. `amount` — Amount in wei (hex)
+1. `address`: Account address
+2. `amount`: Amount in wei (hex)
 
 ---
 
@@ -916,7 +916,7 @@ Set margin parameters for a market.
 
 **Parameters:**
 
-1. `paramsObject` — `{ initialMarginBps, maintenanceMarginBps }`
+1. `paramsObject`: `{ initialMarginBps, maintenanceMarginBps }`
 
 ---
 
@@ -926,7 +926,7 @@ Check if an account's position can be liquidated.
 
 **Parameters:**
 
-1. `address` — Account address
+1. `address`: Account address
 
 ---
 
@@ -936,7 +936,7 @@ Liquidate an under-collateralized position.
 
 **Parameters:**
 
-1. `address` — Account to liquidate
+1. `address`: Account to liquidate
 
 ---
 
@@ -950,9 +950,9 @@ Enqueue a cross-domain message from the MersennetOrders domain to the EVM domain
 
 **Parameters:**
 
-1. `payload` — Hex-encoded message payload (`0x…`)
+1. `payload`: Hex-encoded message payload (`0x…`)
 
-**Returns:** The enqueued bridge message — `{ nonce, from, to, payload }` (`from: "mersennet_orders"`, `to: "mersennet_evm"`).
+**Returns:** The enqueued bridge message as `{ nonce, from, to, payload }` (`from: "mersennet_orders"`, `to: "mersennet_evm"`).
 
 ---
 
@@ -962,9 +962,9 @@ Enqueue a cross-domain message from the EVM domain to the MersennetOrders domain
 
 **Parameters:**
 
-1. `payload` — Hex-encoded message payload (`0x…`)
+1. `payload`: Hex-encoded message payload (`0x…`)
 
-**Returns:** The enqueued bridge message — `{ nonce, from, to, payload }` (`from: "mersennet_evm"`, `to: "mersennet_orders"`).
+**Returns:** The enqueued bridge message as `{ nonce, from, to, payload }` (`from: "mersennet_evm"`, `to: "mersennet_orders"`).
 
 ---
 
@@ -1028,7 +1028,7 @@ Shielded transfers and orders, SP1 state proofs, and selective-disclosure (viewi
 
 ### mersennet_getShieldedBalance
 
-Returns **aggregate** shielded-pool counters — `{ totalNoteCount, totalNullifierCount, transparentEoaCount }`. The node never decrypts balances; per-account balances are reconstructed client-side via viewing grants (see the [Shielded JSON-RPC reference](/developers/privacy/shielded-rpc)).
+Returns **aggregate** shielded-pool counters: `{ totalNoteCount, totalNullifierCount, transparentEoaCount }`. The node never decrypts balances; per-account balances are reconstructed client-side via viewing grants (see the [Shielded JSON-RPC reference](/developers/privacy/shielded-rpc)).
 
 **Parameters:** None
 

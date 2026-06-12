@@ -2,12 +2,12 @@
 title: "Brand Assets"
 ---
 
-Brand guidelines for Mersennet — colors, typography, logo usage, and downloadable assets for developers, partners, and community members.
+Brand guidelines for Mersennet: colors, typography, logo usage, and downloadable assets for developers, partners, and community members.
 
 ## Logo
 
 The Mersennet mark is the letter **M drawn as five vertical bars**, anchored to a
-common top line. Five binary ones — `11111₂` = 31 = 2⁵−1 — form a Mersenne
+common top line. Five binary ones (`11111₂` = 31 = 2⁵−1) form a Mersenne
 prime: the name is written into the mark in binary. The mark is set in
 phosphor green (`#7dff9b`) on black.
 
@@ -15,13 +15,14 @@ phosphor green (`#7dff9b`) on black.
 
 Download: [logo.svg](/logo.svg) · [favicon.svg](/favicon.svg) · [social card](/mersennet-social.svg)
 
-A complete kit — avatars, banners for every platform (X, LinkedIn, YouTube,
-Discord, Facebook, GitHub), post templates, and transparent renders — lives in
-[`brand/` in the monorepo](https://github.com/mersennet/mersennet/tree/main/brand).
+A complete kit lives in
+[`brand/` in the monorepo](https://github.com/mersennet/mersennet/tree/main/brand):
+avatars, banners for every platform (X, LinkedIn, YouTube,
+Discord, Facebook, GitHub), post templates, and transparent renders.
 
 ### Guidelines
 
-- The five bars are always **top-anchored and symmetric** (heights 5·2·3·2·5). Never bottom-anchor them — that reads as an audio equalizer, not the M.
+- The five bars are always **top-anchored and symmetric** (heights 5·2·3·2·5). Never bottom-anchor them: that reads as an audio equalizer, not the M.
 - Use phosphor green `#7dff9b` on dark backgrounds and deep green `#0c8f43` on light backgrounds.
 - Maintain clear space around the mark equal to one bar width.
 - Do not stretch, rotate, re-space, or re-proportion the bars.
@@ -29,7 +30,7 @@ Discord, Facebook, GitHub), post templates, and transparent renders — lives in
 
 ### Don'ts
 
-- Do not change the number of bars — five is the point (11111₂ = 31).
+- Do not change the number of bars: five is the point (11111₂ = 31).
 - Do not apply gradients, shadows, or outlines.
 - Do not place the mark on busy or low-contrast backgrounds.
 - Do not round the bars into circles or taper them.

@@ -47,8 +47,8 @@ The `--legacy` flag is recommended: Mersennet implements an EIP-1559 base fee bu
 
 **Other deployment methods:**
 
-- `eth_sendTransaction` — Requires the RPC node to have the deployer account unlocked
-- `mersennet_sendTransaction` — Mersennet–specific method for sending transactions
+- `eth_sendTransaction`: Requires the RPC node to have the deployer account unlocked
+- `mersennet_sendTransaction`: Mersennet–specific method for sending transactions
 
 ## Node.js Deployment Helper
 

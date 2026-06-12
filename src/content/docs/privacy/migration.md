@@ -3,7 +3,7 @@ title: "Migrating to shielded accounts"
 description: "The recommended UX flow for moving funds from transparent EOAs into shielded notes, with SDK migration helpers."
 ---
 
-Existing transparent balances do not become private automatically. A user moves value into the shielded pool by **shielding** it — spending a transparent balance to create a shielded note. Mersennet ships migration helpers so wallets can drive this safely, with a plan-then-confirm flow.
+Existing transparent balances do not become private automatically. A user moves value into the shielded pool by **shielding** it, spending a transparent balance to create a shielded note. Mersennet ships migration helpers so wallets can drive this safely, with a plan-then-confirm flow.
 
 ## The migration flow
 
@@ -16,9 +16,9 @@ flowchart TD
   Verify --> Done["Funds now shielded"]
 ```
 
-1. **Plan** — `planMigration` computes the migration note the wallet will create, including its derived randomness and the expected note commitment, so the UI can show the user exactly what will happen before signing.
-2. **Submit** — the wallet shields the funds via `mersennet_submitShield`, creating the new note commitment on-chain.
-3. **Confirm** — `confirmMigration` checks that the on-chain commitment matches the planned note, giving the wallet a deterministic success/failure signal.
+1. **Plan**: `planMigration` computes the migration note the wallet will create, including its derived randomness and the expected note commitment, so the UI can show the user exactly what will happen before signing.
+2. **Submit**: the wallet shields the funds via `mersennet_submitShield`, creating the new note commitment on-chain.
+3. **Confirm**: `confirmMigration` checks that the on-chain commitment matches the planned note, giving the wallet a deterministic success/failure signal.
 
 ## SDK helpers
 

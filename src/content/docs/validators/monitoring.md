@@ -28,7 +28,7 @@ Mersennet exposes metrics that you should monitor:
 | `mersennet_slashing_events` | Slashing evidence events by kind (slashing risk) |
 
 :::tip
-The full metric list is exposed at the node's `/metrics` endpoint (served on the RPC port). See [Run a Node — Monitoring Setup](/validators/run-a-node#monitoring-setup) for the complete table.
+The full metric list is exposed at the node's `/metrics` endpoint (served on the RPC port). See [Run a Node: Monitoring Setup](/validators/run-a-node#monitoring-setup) for the complete table.
 :::
 
 ## Prometheus Setup
@@ -98,12 +98,12 @@ sudo systemctl start grafana-server
 
 Create panels for:
 
-- **Block height** — Graph of `mersennet_height` over time
-- **Total stake** — Gauge or stat for `mersennet_total_stake`
-- **Blocks produced** — Rate of `mersennet_blocks_produced_total`
-- **Pending transactions** — `mersennet_mempool_size`
-- **Active validators** — `mersennet_validators_active`
-- **Slashing events** — `mersennet_slashing_events` (critical for validators)
+- **Block height**: Graph of `mersennet_height` over time
+- **Total stake**: Gauge or stat for `mersennet_total_stake`
+- **Blocks produced**: Rate of `mersennet_blocks_produced_total`
+- **Pending transactions**: `mersennet_mempool_size`
+- **Active validators**: `mersennet_validators_active`
+- **Slashing events**: `mersennet_slashing_events` (critical for validators)
 
 ## Alert Rules
 
@@ -185,5 +185,5 @@ To send alerts to email, Slack, or PagerDuty:
 
 ## Next Steps
 
-- [Validator Overview](/validators/overview) — Understand validator roles and risks
-- [Staking Guide](/validators/staking) — Manage stake and delegations
+- [Validator Overview](/validators/overview): Understand validator roles and risks
+- [Staking Guide](/validators/staking): Manage stake and delegations

@@ -3,7 +3,7 @@ title: "Risk checks in zero knowledge"
 description: "Private leverage trading: solvency and margin proven with ZK proofs instead of public liquidation auctions."
 ---
 
-Leverage trading normally requires the chain — and the whole market — to *see* every position so that under-collateralized accounts can be liquidated. Mersennet keeps positions private and instead proves the risk properties that matter in **zero knowledge**.
+Leverage trading normally requires the chain (and the whole market) to *see* every position so that under-collateralized accounts can be liquidated. Mersennet keeps positions private and instead proves the risk properties that matter in **zero knowledge**.
 
 ## The problem with open liquidations
 
@@ -17,7 +17,7 @@ This leaks strategy and creates predatory dynamics. Mersennet removes the public
 
 ## Solvency as a proof, not a disclosure
 
-When a trader opens or modifies a leveraged position in the shielded CLOB, the wallet submits a proof that the position satisfies the margin rules at the current oracle price — **without revealing the position itself**. The chain learns only "this position is adequately margined," not its size or direction.
+When a trader opens or modifies a leveraged position in the shielded CLOB, the wallet submits a proof that the position satisfies the margin rules at the current oracle price, **without revealing the position itself**. The chain learns only "this position is adequately margined," not its size or direction.
 
 ```mermaid
 flowchart TD
@@ -39,8 +39,8 @@ Because claims and bids are threshold-encrypted, the target position is never br
 
 ## Why this is safe
 
-- **Solvency is enforced** — the margin proof is checked by the chain; an invalid position cannot be admitted.
-- **No double-spend** — liquidation settles the position's nullifier, the same primitive that protects [shielded accounts](/privacy/shielded-accounts/).
-- **Verifiable end to end** — the resulting state transition is captured in the block's [SP1 state proof](/privacy/state-proofs/).
+- **Solvency is enforced**: the margin proof is checked by the chain; an invalid position cannot be admitted.
+- **No double-spend**: liquidation settles the position's nullifier, the same primitive that protects [shielded accounts](/privacy/shielded-accounts/).
+- **Verifiable end to end**: the resulting state transition is captured in the block's [SP1 state proof](/privacy/state-proofs/).
 
 See the [Shielded JSON-RPC reference](/developers/privacy/shielded-rpc/) for the exact liquidation and order payloads.

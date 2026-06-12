@@ -2,7 +2,7 @@
 title: "Node Architecture"
 ---
 
-This page describes the internal architecture of a Mersennet node — the Rust binary that produces blocks, executes transactions, participates in consensus, and serves the JSON-RPC API.
+This page describes the internal architecture of a Mersennet node, the Rust binary that produces blocks, executes transactions, participates in consensus, and serves the JSON-RPC API.
 
 ## Overview
 
@@ -63,7 +63,7 @@ A running Mersennet node is composed of five cooperating subsystems:
 
 The codebase is organized into six Rust crates: `core`, `network`, `rpc`, `node`, `zkp`, and `state-proof`. The four below make up the node runtime; `crates/zkp/` (`mersennet-zkp`) provides the zero-knowledge primitives (Poseidon hash, Pedersen commitments, threshold ElGamal, Noir circuit harness) and `crates/state-proof/` (`mersennet-state-proof`) provides the SP1 state-transition proof envelopes.
 
-### `crates/core/` — Core Domain Logic
+### `crates/core/`: Core Domain Logic
 
 The heart of the node. Contains all types, execution logic, and consensus:
 
@@ -75,7 +75,7 @@ The heart of the node. Contains all types, execution logic, and consensus:
 | `crypto` | secp256k1 signing/verification, `tx_signing_hash`, `sign_transaction`, `recover_signer` |
 | `state` | `PersistentState` with sled backend, Merkle tree computation, snapshots |
 | `state_redb` | Alternative `RedbState` backend using the redb embedded database |
-| `flat_state` | `FlatState` — flat key-value representation for fast reads |
+| `flat_state` | `FlatState`, a flat key-value representation for fast reads |
 | `state_trait` | `StateBackend` trait abstracting storage (sled, redb, in-memory) |
 | `mempool` | Transaction pool with nonce ordering, gas price priority, per-sender limits, replacement logic |
 | `precompiles` | MersennetOrders EVM precompile registration at address `0x0100` |
@@ -97,7 +97,7 @@ The heart of the node. Contains all types, execution logic, and consensus:
 | `zk_proofs` | Zero-knowledge proof generation |
 | `zk_sp1` | SP1 zkVM integration |
 
-### `crates/node/` — Node Binary
+### `crates/node/`: Node Binary
 
 The executable entry point that wires all components together:
 
@@ -110,7 +110,7 @@ The executable entry point that wires all components together:
 | `bin/loadtest.rs` | Network load testing tool |
 | `bin/migrate_genesis.rs` | Genesis migration utility |
 
-### `crates/rpc/` — JSON-RPC Server
+### `crates/rpc/`: JSON-RPC Server
 
 HTTP and WebSocket RPC servers:
 
@@ -120,13 +120,13 @@ HTTP and WebSocket RPC servers:
 | `ws.rs` | WebSocket server for `eth_subscribe` (new blocks, pending transactions, logs) |
 | `rpc_router.rs` | Method dispatch router mapping RPC method names to handler functions |
 
-### `crates/network/` — P2P Networking
+### `crates/network/`: P2P Networking
 
 Peer-to-peer communication layer:
 
 | File | Purpose |
 |------|---------|
-| `p2p.rs` | `P2pNetwork` and `NetworkNode` — peer management, message routing, block/tx/vote handling |
+| `p2p.rs` | `P2pNetwork` and `NetworkNode`: peer management, message routing, block/tx/vote handling |
 | `net_transport.rs` | `TcpSync` (reliable block sync) and `UdpGossip` (low-latency tx/vote propagation) |
 | `noise.rs` | Noise Protocol Framework encryption for P2P channels |
 
@@ -254,9 +254,9 @@ state/
 
 The state backend supports snapshots for:
 
-- **Crash recovery** — Restore to last consistent state on unexpected shutdown
-- **State sync** — Share state snapshots with new nodes joining the network
-- **Archive queries** — Historical state lookups at specific block heights
+- **Crash recovery**: Restore to last consistent state on unexpected shutdown
+- **State sync**: Share state snapshots with new nodes joining the network
+- **Archive queries**: Historical state lookups at specific block heights
 
 ## EVM Integration
 

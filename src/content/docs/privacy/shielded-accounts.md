@@ -3,7 +3,7 @@ title: "Shielded accounts"
 description: "Notes, commitments, and nullifiers: how Mersennet conceals balances, transfers, positions, and order flow."
 ---
 
-A shielded account is not an address with a public balance. It is a set of **notes** — encrypted records of value — that only the owner (and anyone they explicitly authorize) can read. The chain tracks notes through cryptographic commitments and spends them through nullifiers, so it can guarantee correctness without learning ownership.
+A shielded account is not an address with a public balance. It is a set of **notes**, encrypted records of value, that only the owner (and anyone they explicitly authorize) can read. The chain tracks notes through cryptographic commitments and spends them through nullifiers, so it can guarantee correctness without learning ownership.
 
 ## Notes, commitments, nullifiers
 
@@ -11,7 +11,7 @@ A shielded account is not an address with a public balance. It is a set of **not
 |---|---|
 | **Note** | An encrypted record holding an asset, amount, owner public key, and randomness (`rho`, `psi`/salt). |
 | **Commitment** | A hiding, binding hash of a note, appended to the on-chain **note commitment tree**. Reveals nothing about contents. |
-| **Nullifier** | A deterministic, unlinkable tag derived from a note's secret. Publishing it marks the note spent and prevents double-spends — without revealing *which* commitment it corresponds to. |
+| **Nullifier** | A deterministic, unlinkable tag derived from a note's secret. Publishing it marks the note spent and prevents double-spends, without revealing *which* commitment it corresponds to. |
 
 When you spend value, your wallet:
 
@@ -34,14 +34,14 @@ flowchart LR
 
 **Private:** balances per asset, transfer amounts, sender/recipient linkage, position size and direction, individual order prices and sizes.
 
-**Public (by design):** the note commitment tree root, the nullifier set, aggregate market statistics (e.g. last clearing price and matched size for a batch auction tick), and the existence of state transitions. These public values are *address-free by construction* — Mersennet's CI enforces that no address fields leak into shielded events.
+**Public (by design):** the note commitment tree root, the nullifier set, aggregate market statistics (e.g. last clearing price and matched size for a batch auction tick), and the existence of state transitions. These public values are *address-free by construction*: Mersennet's CI enforces that no address fields leak into shielded events.
 
 ## The transparent ↔ shielded bridge
 
 Value enters and leaves the shielded pool through two operations:
 
-- **Shield** (`mersennet_submitShield`) — move funds from a transparent EOA into a new shielded note commitment.
-- **Unshield** (`mersennet_submitUnshield`) — spend a shielded note (publishing its nullifier) and credit a transparent EOA.
+- **Shield** (`mersennet_submitShield`): move funds from a transparent EOA into a new shielded note commitment.
+- **Unshield** (`mersennet_submitUnshield`): spend a shielded note (publishing its nullifier) and credit a transparent EOA.
 
 Inside the shielded pool, **shielded transfers** (`mersennet_submitShieldedTransfer`) move value between notes with full privacy.
 

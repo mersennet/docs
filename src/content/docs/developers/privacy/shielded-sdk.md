@@ -91,5 +91,5 @@ Types: `MigrationNote`, `MigrationNoteParams`, `MigrationPlan`, `MigrationConfir
 
 ## See also
 
-- [Shielded JSON-RPC reference](/developers/privacy/shielded-rpc/) — the methods these helpers call.
-- [JavaScript SDK](/developers/sdks/javascript/) — the transparent (eth_* / mersennet_* / mersennet_orders_*) surface.
+- [Shielded JSON-RPC reference](/developers/privacy/shielded-rpc/): the methods these helpers call.
+- [JavaScript SDK](/developers/sdks/javascript/): the transparent (eth_* / mersennet_* / mersennet_orders_*) surface.

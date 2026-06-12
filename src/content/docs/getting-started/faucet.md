@@ -41,8 +41,8 @@ Replace `0xYourWalletAddress` with your Ethereum-style address (e.g., `0x742d35C
 
 The faucet enforces rate limits to prevent abuse:
 
-- **Per address** — Limited requests per address per time window.
-- **Per IP** — Additional limits may apply for high-volume requests.
+- **Per address**: Limited requests per address per time window.
+- **Per IP**: Additional limits may apply for high-volume requests.
 
 If your request is rate-limited, wait a few minutes before trying again. For automated testing, consider using multiple test addresses or caching faucet responses.
 

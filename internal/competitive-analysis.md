@@ -7,7 +7,7 @@
 
 ## Executive Summary
 
-This document analyzes the three most significant production blockchain projects that implement native order books — dYdX v4, Sei Network, and Hyperliquid — and extracts architectural patterns, lessons learned, and specific recommendations for Mersennet. Each represents a distinct design philosophy, and Mersennet's unified EVM+MersennetOrders architecture can learn from both their successes and their limitations.
+This document analyzes the three most significant production blockchain projects that implement native order books (dYdX v4, Sei Network, and Hyperliquid) and extracts architectural patterns, lessons learned, and specific recommendations for Mersennet. Each represents a distinct design philosophy, and Mersennet's unified EVM+MersennetOrders architecture can learn from both their successes and their limitations.
 
 **Key finding:** The industry is converging on a consensus that high-performance trading requires order books outside the traditional EVM execution path, but disagrees on how tightly coupled the order book should be with general-purpose smart contracts. Mersennet's approach of embedding both in a single state and block is architecturally novel and, if executed well, addresses the primary weakness of every competitor analyzed.
 
@@ -83,7 +83,7 @@ dYdX separates orders into two categories with fundamentally different state man
 - Designed for retail traders and long-lived limit orders
 - Lower throughput, consensus-speed placement
 
-**Mersennet implication:** Mersennet's MersennetOrders currently treats all orders uniformly. dYdX's dual-state approach is a pragmatic optimization — short-term orders never touch consensus, dramatically reducing state bloat and increasing throughput. Mersennet should consider a similar tiered model, but the advantage of Mersennet's unified state is that it can offer stronger guarantees than dYdX's "optimistic" matching for short-term orders.
+**Mersennet implication:** Mersennet's MersennetOrders currently treats all orders uniformly. dYdX's dual-state approach is a pragmatic optimization: short-term orders never touch consensus, dramatically reducing state bloat and increasing throughput. Mersennet should consider a similar tiered model, but the advantage of Mersennet's unified state is that it can offer stronger guarantees than dYdX's "optimistic" matching for short-term orders.
 
 ### 1.4 How Orders Interact with Consensus
 
@@ -94,9 +94,9 @@ The ABCI lifecycle in dYdX v4 is highly customized:
 3. **`PrepareProposal`** (implicit): Block proposer extracts matched operations from their local `MemClob` and includes them in the proposed block
 4. **`ProcessProposal`**: Validators verify the proposed matches against their local state
 5. **`EndBlocker`**: Prunes expired orders, triggers conditional orders, generates TWAP suborders, triggers liquidation checks
-6. **`PrepareCheckState`** (post-commit): The most complex phase — replays local operations, purges invalid state, places stateful orders from last block, runs liquidations and deleveraging
+6. **`PrepareCheckState`** (post-commit): The most complex phase, which replays local operations, purges invalid state, places stateful orders from last block, runs liquidations and deleveraging
 
-The `PrepareCheckState` function is particularly noteworthy — it runs a 9-step pipeline:
+The `PrepareCheckState` function is particularly noteworthy, running a 9-step pipeline:
 1. Remove local operations queue from memclob
 2. Purge invalid memclob state (filled orders, expired orders, cancelled orders)
 3. First pass: place post-only orders from last block
@@ -113,11 +113,11 @@ The `PrepareCheckState` function is particularly noteworthy — it runs a 9-step
 
 dYdX uses price-time priority matching identical in concept to Mersennet's MersennetOrders, but with several important implementation details:
 
-- **Branched context for matching:** Uses `ctx.CacheContext()` to create a branched state, only writing if matching succeeds. This ensures atomic matching — if any step fails (collateralization check, etc.), all state changes are discarded.
+- **Branched context for matching:** Uses `ctx.CacheContext()` to create a branched state, only writing if matching succeeds. This ensures atomic matching: if any step fails (collateralization check, etc.), all state changes are discarded.
 - **Collateralization checks during matching:** Each fill is validated against the subaccount's collateral in real-time, not just at order placement.
 - **Reduce-only order handling:** After matching, the engine checks if position sign has flipped and cancels reduce-only orders accordingly.
 - **Replacement orders:** Instead of cancel+place (which can cause double-fills), dYdX supports atomic order replacement via same OrderId with higher GTB.
-- **Self-trade prevention:** Built into the matching loop — orders from the same subaccount cannot match against each other.
+- **Self-trade prevention:** Built into the matching loop, so orders from the same subaccount cannot match against each other.
 
 ### 1.6 MEV Protection
 
@@ -148,15 +148,15 @@ dYdX's risk system operates through:
 - **Maintenance margin checks:** Continuous monitoring via daemon processes
 - **Insurance fund:** Absorbs losses from underwater liquidations (cross-insurance fund balance tracked as a metric)
 - **Deleveraging:** When insurance fund is insufficient, opposing positions are force-closed at bankruptcy price
-- **Withdrawal gating:** If any subaccount has negative Total Net Collateral (TNC), withdrawals for ALL users are temporarily disabled — a drastic but effective safety mechanism
+- **Withdrawal gating:** If any subaccount has negative Total Net Collateral (TNC), withdrawals for ALL users are temporarily disabled, a drastic but effective safety mechanism
 - **Liquidation fillable price:** Protocol-generated liquidation orders match at a calculated price, with up to 1.5% maximum penalty
 
 ### 1.8 Performance Optimizations
 
 Recent optimizations (2025) include:
-- **Memory pooling** for CLOB module objects (Order, ClobOrder, LevelOrder, MakerFill, MakerFillWithOrder) — achieved **30-40% latency reduction** with zero allocations in critical matching paths
-- **Hash maps instead of sorted trees** for price levels (with cached best bid/ask) — O(1) lookup vs O(log n) for BTreeMap
-- **Separate data structures for different concerns** — order-to-level mapping, block expiry tracking, cancel tracking all use dedicated maps
+- **Memory pooling** for CLOB module objects (Order, ClobOrder, LevelOrder, MakerFill, MakerFillWithOrder), which achieved **30-40% latency reduction** with zero allocations in critical matching paths
+- **Hash maps instead of sorted trees** for price levels (with cached best bid/ask), giving O(1) lookup vs O(log n) for BTreeMap
+- **Separate data structures for different concerns**: order-to-level mapping, block expiry tracking, cancel tracking all use dedicated maps
 - **Telemetry and metrics** throughout the pipeline for monitoring
 
 ---
@@ -199,16 +199,16 @@ Sei's primary innovation is its consensus optimization suite, not a novel algori
 - Deterministic finality within 1-2 blocks (~400-800ms)
 - Multi-step DeFi operations (approve + swap + deposit) complete in ~1.2 seconds
 
-**Mersennet implication:** Sei's consensus optimizations are directly applicable to Mersennet's BFT consensus. The key techniques — pipelining execution with voting, pre-consensus transaction preparation, and aggressive timeout tuning — should all be implemented. Mersennet's whitepaper targets "sub-second finality" but doesn't describe the specific optimizations to achieve it. Sei proves that aggressive Tendermint tuning can achieve 400ms blocks.
+**Mersennet implication:** Sei's consensus optimizations are directly applicable to Mersennet's BFT consensus. The key techniques (pipelining execution with voting, pre-consensus transaction preparation, and aggressive timeout tuning) should all be implemented. Mersennet's whitepaper targets "sub-second finality" but doesn't describe the specific optimizations to achieve it. Sei proves that aggressive Tendermint tuning can achieve 400ms blocks.
 
 ### 2.3 Parallel Order Processing (Optimistic Parallelization)
 
 Sei's parallelization engine uses optimistic concurrency control (OCC):
 
 1. **Multiple worker goroutines** process transactions concurrently
-2. **`CacheMultiStore`** provides state buffering — each goroutine reads/writes to an isolated cache
-3. **Conflict detection** at commit time — if two transactions touch the same state, one is re-executed
-4. **Deterministic ordering** maintained despite parallel execution — results are the same as sequential execution
+2. **`CacheMultiStore`** provides state buffering: each goroutine reads/writes to an isolated cache
+3. **Conflict detection** at commit time, where if two transactions touch the same state, one is re-executed
+4. **Deterministic ordering** maintained despite parallel execution; results are the same as sequential execution
 
 For order processing specifically:
 - Orders that touch different markets can be processed in parallel
@@ -252,7 +252,7 @@ Sei v1's approach to composability:
 
 **Why Sei deprecated x/dex:** Sei's pivot to v2 (parallelized EVM) suggests the team concluded that a built-in DEX module was too limiting. By making the EVM fast enough, they could let DEXs be built as smart contracts, gaining more flexibility at the cost of some performance. This is the opposite of Mersennet's approach.
 
-**Mersennet implication:** Sei's pivot is a cautionary tale but not necessarily applicable to Mersennet. Sei deprecated x/dex because they wanted to be a general-purpose chain — DEX was just one use case. Mersennet's thesis is that order matching is a first-class citizen alongside EVM, not an add-on. The key lesson is that the DEX module must be genuinely better than what smart contracts can do (in performance, features, or guarantees) to justify its existence as a native module.
+**Mersennet implication:** Sei's pivot is a cautionary tale but not necessarily applicable to Mersennet. Sei deprecated x/dex because they wanted to be a general-purpose chain: DEX was just one use case. Mersennet's thesis is that order matching is a first-class citizen alongside EVM, not an add-on. The key lesson is that the DEX module must be genuinely better than what smart contracts can do (in performance, features, or guarantees) to justify its existence as a native module.
 
 ### 2.6 SeiDB
 
@@ -269,13 +269,13 @@ Sei built a custom storage layer optimized for high-throughput state access:
 
 **Stack:** Custom L1, HyperBFT consensus, state transition logic in pure Rust
 **Status:** Production mainnet, highest-volume on-chain perp DEX
-**Open Source:** Limited — core trading engine is closed source
+**Open Source:** Limited, since the core trading engine is closed source
 
 ### 3.1 Architecture Overview
 
 Hyperliquid is a purpose-built L1 for derivatives trading, later expanded with HyperEVM for smart contracts. Two environments under one consensus:
 
-- **HyperCore:** Native trading engine — order books, matching, margin, liquidations
+- **HyperCore:** Native trading engine, covering order books, matching, margin, liquidations
 - **HyperEVM:** EVM-compatible smart contract environment (Cancun spec)
 - **HyperBFT:** Custom delegated PoS consensus (Tendermint-derived), tolerates 1/3 Byzantine
 
@@ -352,7 +352,7 @@ HyperEVM uses a two-tier block system:
 #### Asset Transfers
 - HyperEVM → HyperCore: Immediate (same L1 block)
 - HyperCore → HyperEVM: Queued for next EVM block
-- No wrapped tokens — same asset exists in both environments
+- No wrapped tokens: the same asset exists in both environments
 
 **Critical limitation:** The async write path means smart contracts CANNOT atomically compose with order book operations. A smart contract can't place an order and react to the fill result in the same transaction. This is the primary weakness Hyperliquid acknowledges, and it's exactly what Mersennet's cross-domain bridge is designed to solve.
 
@@ -389,9 +389,9 @@ This section provides a detailed technical analysis of Hyperliquid's HyperEVM, t
 
 Hyperliquid uses a **dual-execution model** under HyperBFT consensus:
 
-- **HyperCore:** Native CLOB execution environment — order books, matching, margin, liquidations. Achieves ~200K ops/s.
+- **HyperCore:** Native CLOB execution environment, covering order books, matching, margin, liquidations. Achieves ~200K ops/s.
 - **HyperEVM:** Cancun-spec EVM for smart contracts.
-- **Execution order:** HyperCore and HyperEVM run **sequentially**, not in parallel. They are **NOT** the same execution environment — state is bridged between two distinct runtimes.
+- **Execution order:** HyperCore and HyperEVM run **sequentially**, not in parallel. They are **NOT** the same execution environment: state is bridged between two distinct runtimes.
 
 This separation is fundamental. Unlike Mersennet's unified EVM+MersennetOrders architecture, Hyperliquid maintains two execution silos that communicate asynchronously.
 
@@ -415,7 +415,7 @@ Smart contracts can read HyperCore state via precompiled contracts at `0x1111...
 - Perpetual positions
 - Order book depth
 
-**Critical limitation:** Read data is from the **PREVIOUS block only**. Data is **1 block stale**. A contract cannot read the current block's order book state — it sees the state as of the prior HyperCore block. This prevents real-time composability.
+**Critical limitation:** Read data is from the **PREVIOUS block only**. Data is **1 block stale**. A contract cannot read the current block's order book state: it sees the state as of the prior HyperCore block. This prevents real-time composability.
 
 #### CoreWriter (0x333...333)
 
@@ -436,7 +436,7 @@ The CoreWriter system contract at `0x3333...3333` allows smart contracts to **wr
 |------------|--------|
 | **No fill result in same tx** | Contract cannot know if order filled; must poll or use events in a later block |
 | **No atomic vault rebalance** | Cannot do vault rebalance + place order + get fill + callback in one atomic flow |
-| **Account init timing** | Account must exist on HyperCore before EVM block — initialization ordering issues |
+| **Account init timing** | Account must exist on HyperCore before EVM block, creating initialization ordering issues |
 | **Alpha status** | Write precompiles still evolving; API may change |
 | **47K gas per call** | Non-trivial cost for high-frequency strategies |
 
@@ -460,7 +460,7 @@ Mersennet's precompile at `0x0100` executes in the **SAME transaction**:
 3. React to fill (e.g., adjust position, trigger callback)
 4. All in one atomic call
 
-This is **atomic composability**. Hyperliquid's model is **asynchronous composability** — next-block execution with seconds of delay. This is a **structural architectural difference** that Hyperliquid cannot fix without rebuilding their dual-execution model. Their design choice (sequential execution, intentional write delay) is baked into the consensus and block structure.
+This is **atomic composability**. Hyperliquid's model is **asynchronous composability**, with next-block execution and seconds of delay. This is a **structural architectural difference** that Hyperliquid cannot fix without rebuilding their dual-execution model. Their design choice (sequential execution, intentional write delay) is baked into the consensus and block structure.
 
 #### Updated Mersennet Benchmarks (March 2026)
 
@@ -514,7 +514,7 @@ All three projects solve this differently:
 
 **Recommendation:** Mersennet's whitepaper describes a basic margin system (collateral, positions, PnL) but lacks several production-critical features:
 1. **Insurance fund:** Must exist to absorb losses from liquidations where the position is underwater
-2. **Deleveraging mechanism:** Needed when insurance fund is depleted — force-close opposing positions at bankruptcy price
+2. **Deleveraging mechanism:** Needed when insurance fund is depleted, to force-close opposing positions at bankruptcy price
 3. **Withdrawal gating:** When any account has negative equity, restrict all withdrawals to prevent bank runs
 4. **Subaccount support:** Allow users to isolate risk across multiple trading accounts
 5. **Match-time margin checks:** Verify collateral at BOTH order placement and fill execution
@@ -608,7 +608,7 @@ Many recommendations from this analysis have **already been implemented**. Below
 1. **Fully Off-Chain Order Books** (dYdX's short-term orders)
    - While performant, they sacrifice determinism and auditability
    - Each validator's book diverges, requiring complex reconciliation
-   - Mersennet's value proposition is deterministic on-chain matching — don't compromise this
+   - Mersennet's value proposition is deterministic on-chain matching; don't compromise this
 
 2. **Async EVM-to-Orderbook Writes** (Hyperliquid's CoreWriter)
    - Breaking atomicity between smart contracts and order book operations negates the primary advantage of having both on the same chain
@@ -616,7 +616,7 @@ Many recommendations from this analysis have **already been implemented**. Below
 
 3. **Deprecating the Native Module** (Sei's pivot away from x/dex)
    - Sei abandoned its native DEX because they wanted to be general-purpose
-   - Mersennet is purpose-built for trading+EVM — the native module IS the product
+   - Mersennet is purpose-built for trading+EVM: the native module IS the product
    - But the lesson stands: the native module must be significantly better than smart-contract alternatives
 
 4. **Excessive Centralization** (Hyperliquid's 23 validators + foundation control)
@@ -629,7 +629,7 @@ Based on this analysis, Mersennet's genuine differentiators are:
 
 1. **Atomic EVM ↔ Order Book Composability:** No competitor achieves this. dYdX has no EVM. Hyperliquid's writes are async. Sei deprecated its native DEX. Mersennet's bridge enabling synchronous cross-domain calls within a single block is architecturally unique.
 
-2. **Single State Root:** All three domains (EVM, MersennetOrders, Bridge) share one canonical state root. This means light clients can verify order book state with the same proofs they use for EVM state — a significant advantage for cross-chain interoperability.
+2. **Single State Root:** All three domains (EVM, MersennetOrders, Bridge) share one canonical state root. This means light clients can verify order book state with the same proofs they use for EVM state, a significant advantage for cross-chain interoperability.
 
 3. **Rust-Native Performance:** Like Hyperliquid, but with full EVM via revm. The Cosmos SDK overhead that limits dYdX and Sei doesn't apply.
 
@@ -671,4 +671,4 @@ Mersennet occupies a unique architectural position: a Rust-native L1 that combin
 2. **MEV vulnerability:** Without protection, the system will be exploited
 3. **Missing safety infrastructure:** Insurance fund, deleveraging, and withdrawal gating are table stakes for production deployment
 
-If these gaps are addressed, Mersennet's unified architecture represents the most compelling solution in the space — not just a trading chain or an EVM chain, but both in one.
+If these gaps are addressed, Mersennet's unified architecture represents the most compelling solution in the space: not just a trading chain or an EVM chain, but both in one.

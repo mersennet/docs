@@ -1,4 +1,4 @@
-# Mersennet Privacy Fork — Remaining Work Assessment
+# Mersennet Privacy Fork: Remaining Work Assessment
 
 **Branch under assessment:** `feat/zk-privacy`
 **This document lives at:** `docs/delivery/privacy-fork-remaining-work.md` (originally authored on branch `docs/remaining-work-assessment`)
@@ -31,8 +31,8 @@ Concretely:
 - Chain ID **7920 boots today** from
   [testnet/scripts/bootstrap-privacy-genesis.sh](../../testnet/scripts/bootstrap-privacy-genesis.sh),
   auto-activates privacy at a configured height, and runs the full
-  shielded flow — orders/FBA, sealed-bid liquidations, transfers,
-  shield/unshield — over RPC/WS, with Prometheus + Grafana metrics.
+  shielded flow (orders/FBA, sealed-bid liquidations, transfers,
+  shield/unshield) over RPC/WS, with Prometheus + Grafana metrics.
 - The real `MERSENNET_SP1_MODE=local` prove/verify transcript (previously the
   single biggest hard engineering blocker) is now **captured**: a
   reproducible Docker ELF (verifying-key hash
@@ -60,72 +60,72 @@ dependency.
 
 ### Done and verified
 
-- **A1–A8** — state + snapshot (`Block` schema, shielded subsystems,
+- **A1–A8**: state + snapshot (`Block` schema, shielded subsystems,
   `apply_shielded_tx`, `run_shielded_tick`, `0x7E` envelope,
   `MigrationPlan::apply`, `ShieldedPersistence`, `PZS1` snapshot envelope).
-- **B1–B5** — shielded subsystems (`ShieldedState`, `ShieldedOrdersEngine`
+- **B1–B5**: shielded subsystems (`ShieldedState`, `ShieldedOrdersEngine`
   + FBA, `LiquidationAuction`, `ThresholdMempool`, `ShieldedEvm` bridge).
-- **C1–C4** — shielded RPC router + privacy-gated mutations + WS
+- **C1–C4**: shielded RPC router + privacy-gated mutations + WS
   subscriptions + `mersennet_getStateProof(blockNumber)`.
-- **D1–D7** — crypto: Poseidon-2 BN254 (pinned params), Pedersen, BLS12-381
+- **D1–D7**: crypto: Poseidon-2 BN254 (pinned params), Pedersen, BLS12-381
   threshold ElGamal, Pedersen-DKG, Noir + Barretenberg adapters,
   cryptography spec. (See the caveat on D5/D6 in §6.)
-- **E1** — SP1 RISC-V toolchain.
-- **H2–H5, H7** — privacy validator configs (5-of-7, chain 7920),
+- **E1**: SP1 RISC-V toolchain.
+- **H2–H5, H7**: privacy validator configs (5-of-7, chain 7920),
   docker-compose + bootstrap + runbook, synthetic load script, chaos
   kill-validator script, privacy metrics + Grafana dashboard.
-- **K1–K2** — expanded CI (prover feature, SP1 lanes, tsc, forge, audit)
+- **K1–K2**: expanded CI (prover feature, SP1 lanes, tsc, forge, audit)
   + privacy-invariant grep guard.
-- **F6** — Go / Python SDK shielded extensions (`sdk-go/`, `sdk-python/`).
+- **F6**: Go / Python SDK shielded extensions (`sdk-go/`, `sdk-python/`).
 
 ### In progress (🟡)
 
-- **E2** — SP1 prove path. The zkVM program now consumes canonical
+- **E2**: SP1 prove path. The zkVM program now consumes canonical
   witness-bearing `BlockProgramInput` and replays the shielded tx + tick
   path (shield/transfer/unshield/liquidation-execute, order admission,
   FBA clearing, liquidation claim/settle, `shielded_event_root`). The
   remaining gap is **final header / public-output derivation hardening
   plus extracting one shared engine-parity transition core** so the zkVM
   replay and the runtime stop being two mirrored copies.
-- **E3** — vkey pin + transcript. Pin captured; **the prove/verify
+- **E3**: vkey pin + transcript. Pin captured; **the prove/verify
   transcript itself is still missing.**
-- **F5** — selective disclosure (ADR-019). `mersennet_viewGrantToken`,
+- **F5**: selective disclosure (ADR-019). `mersennet_viewGrantToken`,
   `mersennet_viewRevokeToken`, `mersennet_viewGrantStatus`, `mersennet_viewPortfolioDigest`
   gating, and `mersennet_viewNotes` ciphertext export are implemented in
   [crates/rpc/src/rpc_shielded.rs](../../crates/rpc/src/rpc_shielded.rs).
   **Balance / position / order reconstruction reads are still pending.**
-- **H6** — 8-week bake. Checklist drafted; clock not started (cannot
+- **H6**: 8-week bake. Checklist drafted; clock not started (cannot
   start until the E blockers clear).
 
 ### Blocked / external (🔒)
 
-- **E4** — `ProverClient::network()` cut-over. Blocked by a real
+- **E4**: `ProverClient::network()` cut-over. Blocked by a real
   dependency-graph conflict: `sp1-sdk/network` pulls a `c-kzg` version
   that conflicts with `revm`'s native `ckzg` link. The host runner
   currently fails loudly when `MERSENNET_SP1_MODE=network` is requested.
-- **E5** — Groth16 wrap for the Ethereum bridge verifier.
-- **I1–I6** — external crypto / protocol / Solidity audits, ImmuneFi,
+- **E5**: Groth16 wrap for the Ethereum bridge verifier.
+- **I1–I6**: external crypto / protocol / Solidity audits, ImmuneFi,
   fix cycle, re-audit.
-- **J1–J6** — activation vote, validator upgrade schedule, comms,
+- **J1–J6**: activation vote, validator upgrade schedule, comms,
   runbook execution, deprecation window, post-mortem template.
 
 ### Not started (⬜)
 
-- **F1** — WASM Noir prover (client-side proving in the browser).
-- **F2** — wallet note scanner.
-- **F4** — migration UX.
-- **G1–G4** — Ethereum bridge: `MersennetVerifier.sol`,
-  `MersennetBridge.sol`, Foundry suite, audit-prep. Confirmed absent —
+- **F1**: WASM Noir prover (client-side proving in the browser).
+- **F2**: wallet note scanner.
+- **F4**: migration UX.
+- **G1–G4**: Ethereum bridge: `MersennetVerifier.sol`,
+  `MersennetBridge.sol`, Foundry suite, audit-prep. Confirmed absent:
   `contracts/src/` contains only DEX / foundation / mersennet_orders
   contracts, no verifier or bridge.
-- **K3** — `cargo llvm-cov` coverage artifacts in CI.
-- **K4** — `Dockerfile.dev` (Rust + Foundry + nargo + sp1up + Node 20).
+- **K3**: `cargo llvm-cov` coverage artifacts in CI.
+- **K4**: `Dockerfile.dev` (Rust + Foundry + nargo + sp1up + Node 20).
   Confirmed absent.
-- **K5** — `cargo doc` publish.
+- **K5**: `cargo doc` publish.
 
 ### Out of this repo
 
-- **F3** — Mersennet Trade shielded order UI lives in
+- **F3**: Mersennet Trade shielded order UI lives in
   `mersennet/trade`. It is on the activation critical path
   (the activation runbook's T-1 step expects "Mersennet Trade UI ships the
   shielded mode behind a feature flag") but it is **not in this repo**.
@@ -164,7 +164,7 @@ is resolved.
 
 ## 4. Work by delivery target
 
-### Target A — Technical MVP / private partner demo
+### Target A: Technical MVP / private partner demo
 
 **Smallest shippable that shows real privacy to a partner.** Most of this
 already exists.
@@ -181,14 +181,14 @@ already exists.
 - **Caveat to state plainly in the demo:** proofs are mock, so this is
   **not trust-minimized and not for real funds.**
 
-### Target B — Public testnet beta
+### Target B: Public testnet beta
 
 - E3 real local transcript, E2 hardening, F1 WASM prover + F2 note scanner
   + F4 migration UX, F5 reconstruction reads, K3 / K4 / K5 tooling, then
   authorize and start the H6 bake.
 - ~4–6 weeks of engineering, overlapping the first weeks of the bake.
 
-### Target C — Mainnet-ready privacy launch
+### Target C: Mainnet-ready privacy launch
 
 - E2 + E3 + E4 + E5 closed (real network proving + Groth16 wrap),
   G1–G4 bridge + Foundry + audit-prep (only if cross-chain at launch),
@@ -252,23 +252,23 @@ document (it is a separate analysis doc):
 
 ## 7. Prioritized top-10 next steps
 
-1. **E3** — capture one local `MERSENNET_SP1_MODE=local` prove/verify
+1. **E3**: capture one local `MERSENNET_SP1_MODE=local` prove/verify
    transcript against the pinned ELF.
-2. **E2** — final header / public-output hardening + extract one shared
+2. **E2**: final header / public-output hardening + extract one shared
    engine-parity transition core.
 3. **Reconcile STATUS / audit-packet inconsistencies** (sync header, E2
    status). Small but prevents confusion.
-4. **F2 + F1** — note scanner + WASM Noir prover so a partner wallet can
+4. **F2 + F1**: note scanner + WASM Noir prover so a partner wallet can
    see and spend shielded balances.
-5. **F5** — finish balance / position / order reconstruction reads behind
+5. **F5**: finish balance / position / order reconstruction reads behind
    grant tokens.
-6. **E4** — resolve the `c-kzg` conflict and enable network proving.
-7. **K4** — `Dockerfile.dev` for reproducible Rust + Foundry + nargo +
+6. **E4**: resolve the `c-kzg` conflict and enable network proving.
+7. **K4**: `Dockerfile.dev` for reproducible Rust + Foundry + nargo +
    sp1up + Node builds (de-risks onboarding and CI).
-8. **E5 + G1–G4** — Groth16 wrap + bridge contracts + Foundry tests (only
+8. **E5 + G1–G4**: Groth16 wrap + bridge contracts + Foundry tests (only
    if cross-chain is in launch scope).
-9. **H6** — authorize and start the 8-week bake the day E lands.
-10. **I0 + I1–I3** — assemble the audit packet and start audit procurement
+9. **H6**: authorize and start the 8-week bake the day E lands.
+10. **I0 + I1–I3**: assemble the audit packet and start audit procurement
     in parallel now (long lead time).
 
 ---
@@ -294,18 +294,18 @@ audit, and governance. **Label proofs as MOCK and keep real funds out.**
 
 ### Biggest unknowns / blockers
 
-1. **`sp1-sdk/network` vs `revm` `c-kzg` native-link conflict (E4)** — a
+1. **`sp1-sdk/network` vs `revm` `c-kzg` native-link conflict (E4)**: a
    real dependency-graph problem; resolution path (vendor patch, feature
    isolation, or workspace split) and effort are unknown.
-2. **SP1 local prove feasibility (E3)** — proving was OOM-killed at ~15 GB
+2. **SP1 local prove feasibility (E3)**: proving was OOM-killed at ~15 GB
    RSS; WSL has been raised to 28 GB, but no full prove/verify run has
    completed end to end yet.
-3. **Engine-parity extraction (E2)** — collapsing the mirrored zkVM/runtime
+3. **Engine-parity extraction (E2)**: collapsing the mirrored zkVM/runtime
    replay into one shared transition core is the deepest correctness risk.
-4. **External audit lead time and cost** — funded + scheduled externally.
-5. **Groth16 on-chain verifier feasibility (E5/G)** — gas and proving cost
+4. **External audit lead time and cost**: funded + scheduled externally.
+5. **Groth16 on-chain verifier feasibility (E5/G)**: gas and proving cost
    unproven; not started.
-6. **F3 Mersennet Trade UI** — on the activation critical path but in a separate
+6. **F3 Mersennet Trade UI**: on the activation critical path but in a separate
    repo (`mersennet/trade`), outside this repo's control.
 
 ---

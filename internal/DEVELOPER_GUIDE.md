@@ -1,4 +1,4 @@
-# Mersennet — Developer Guide
+# Mersennet: Developer Guide
 
 **Audience:** Engineers landing on the Mersennet repo for the first
 time, or returning after a break.
@@ -6,7 +6,7 @@ time, or returning after a break.
 This guide is the single entry point. It tells you:
 
 1. What's in the repo and how it's laid out.
-2. Where the active work is (`feat/zk-privacy` branch — privacy testnet).
+2. Where the active work is (`feat/zk-privacy` branch, the privacy testnet).
 3. How to build, test, lint, and run.
 4. Which workstream owns which file.
 5. Where to file PRs and what CI gates them.
@@ -65,8 +65,8 @@ programs/       — SP1 program (state-transition proof body)
 | `mersennet` (`crates/core`) | Engine, state, consensus, shielded subsystems | [`engine.rs`](../crates/core/src/engine.rs) |
 | `mersennet-network` (`crates/network`) | P2P transport | `p2p.rs` |
 | `mersennet-rpc` (`crates/rpc`) | JSON-RPC + WebSocket | [`rpc.rs`](../crates/rpc/src/rpc.rs), [`rpc_shielded.rs`](../crates/rpc/src/rpc_shielded.rs), [`ws.rs`](../crates/rpc/src/ws.rs) |
-| `mersennet-node` (`crates/node`) | Binaries — `mersennet`, `genesis`, `migrate-genesis`, `faucet`, `loadtest`, `stresstest` | `src/bin/*.rs` |
-| `mersennet-zkp` (`crates/zkp`) | ZK primitives — Poseidon, Pedersen, BLS threshold, merkle, nullifier, noir/sp1 stubs | `src/lib.rs` |
+| `mersennet-node` (`crates/node`) | Binaries: `mersennet`, `genesis`, `migrate-genesis`, `faucet`, `loadtest`, `stresstest` | `src/bin/*.rs` |
+| `mersennet-zkp` (`crates/zkp`) | ZK primitives: Poseidon, Pedersen, BLS threshold, merkle, nullifier, noir/sp1 stubs | `src/lib.rs` |
 | `mersennet-state-proof` (`crates/state-proof`) | revm-free state-transition proof envelopes + SP1 prover/verifier glue | `src/lib.rs` |
 
 ### Shielded subsystem map (where the privacy work lives)
@@ -136,7 +136,7 @@ A, B, C, D1–D6, D7, H, K1–K2) is merged. See
 
 - Rust 1.79+ (stable). Install with [rustup](https://rustup.rs/).
 - Docker 24+ + Docker Compose v2 (for the testnet).
-- Foundry (for Solidity bridge work — workstream G).
+- Foundry (for Solidity bridge work, workstream G).
 - Optional, for the real ZK pipeline at runtime (workstreams D5/D6/E):
   - `nargo` (Noir 0.30+)
   - `sp1up` + the SP1 toolchain
@@ -192,7 +192,7 @@ Tear down with `docker compose -f docker-compose.privacy.yml down -v`.
 
 ---
 
-## 5. RPC + WebSocket — what's available
+## 5. RPC + WebSocket: what's available
 
 After privacy activation, public block retrieval is header-only: block
 headers, roots, fees, timestamps, and transaction hashes remain
@@ -220,7 +220,7 @@ Post-fork retrieval rule:
 - Expanded block responses with full transaction objects are disabled
   after privacy activation.
 
-### Shielded RPC (gated on privacy activation — chain 131071)
+### Shielded RPC (gated on privacy activation, chain 131071)
 
 All payloads are opaque `bincode-then-0x-hex` blobs. Wallets build
 them locally with the SDK.
@@ -253,10 +253,10 @@ Mersennet-specific (`mersennet_subscribe`):
 
 Privacy-mode subscriptions (added in C3):
 
-- `newShieldedRoot` — fires every time the note tree advances
-- `newClearingPrice(marketId?)` — fires after each FBA tick
-- `newAuctionSettled(marketId?)` — fires when a sealed-bid auction settles
-- `newStateProof` — fires when a fresh SP1 proof is attached
+- `newShieldedRoot`: fires every time the note tree advances
+- `newClearingPrice(marketId?)`: fires after each FBA tick
+- `newAuctionSettled(marketId?)`: fires when a sealed-bid auction settles
+- `newStateProof`: fires when a fresh SP1 proof is attached
 
 All shielded WS payloads are address-free by construction; CI K2
 enforces this at the source.
@@ -314,22 +314,22 @@ what's left is [`STATUS.md`](STATUS.md).
 
 ## 8. Useful references
 
-- **Architecture overview** — [`ARCHITECTURE.md`](ARCHITECTURE.md)
-- **Whitepaper** — [`whitepaper.md`](whitepaper.md)
-- **ADR index** — [`adr/`](adr/)
+- **Architecture overview**: [`ARCHITECTURE.md`](ARCHITECTURE.md)
+- **Whitepaper**: [`whitepaper.md`](whitepaper.md)
+- **ADR index**: [`adr/`](adr/)
   - ADR-014: Shielded notes
   - ADR-015: Threshold-encrypted mempool
   - ADR-016: Liquidation auctions
   - ADR-017: SP1 state proofs
   - ADR-018: Privacy hard fork
   - ADR-019: Selective-disclosure viewing keys
-- **Cryptography spec** (for the auditor) — [`security/cryptography-spec.md`](security/cryptography-spec.md)
-- **Privacy invariants** — [`security/privacy-invariants.md`](security/privacy-invariants.md)
-- **Privacy testnet runbook** — [`runbooks/privacy-testnet-bootstrap.md`](runbooks/privacy-testnet-bootstrap.md)
-- **Mainnet activation runbook** — [`runbooks/zk-fork-activation.md`](runbooks/zk-fork-activation.md)
-- **Workstream status tracker** — [`STATUS.md`](STATUS.md)
-- **Contributing guide** — [`../CONTRIBUTING.md`](../CONTRIBUTING.md)
-- **Security policy** — [`SECURITY.md`](SECURITY.md)
+- **Cryptography spec** (for the auditor): [`security/cryptography-spec.md`](security/cryptography-spec.md)
+- **Privacy invariants**: [`security/privacy-invariants.md`](security/privacy-invariants.md)
+- **Privacy testnet runbook**: [`runbooks/privacy-testnet-bootstrap.md`](runbooks/privacy-testnet-bootstrap.md)
+- **Mainnet activation runbook**: [`runbooks/zk-fork-activation.md`](runbooks/zk-fork-activation.md)
+- **Workstream status tracker**: [`STATUS.md`](STATUS.md)
+- **Contributing guide**: [`../CONTRIBUTING.md`](../CONTRIBUTING.md)
+- **Security policy**: [`SECURITY.md`](SECURITY.md)
 
 ---
 
@@ -337,5 +337,5 @@ what's left is [`STATUS.md`](STATUS.md).
 
 - File a discussion on GitHub for design questions.
 - File an issue with a minimal reproduction for bugs.
-- Do **not** file public issues for security vulnerabilities — see
+- Do **not** file public issues for security vulnerabilities; see
   [`SECURITY.md`](SECURITY.md) for the private disclosure channel.

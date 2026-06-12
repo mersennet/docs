@@ -1,10 +1,10 @@
 ---
 title: Mersennet Documentation
-description: Build private DeFi on a zero-knowledge EVM Layer 1 — shielded accounts, a native on-chain order book, and SP1-proven state.
+description: Build private DeFi on a zero-knowledge EVM Layer 1 with shielded accounts, a native on-chain order book, and SP1-proven state.
 template: splash
 hero:
   title: Build on the private, verifiable network.
-  tagline: Mersennet is a zero-knowledge EVM Layer 1 — account-level privacy, a native on-chain order book at precompile 0x0100, and every block proven with SP1. Your Solidity stack works unchanged.
+  tagline: Mersennet is a zero-knowledge EVM Layer 1 with account-level privacy, a native on-chain order book at precompile 0x0100, and every block proven with SP1. Your Solidity stack works unchanged.
   actions:
     - text: Start building
       link: /developers/quick-start/hardhat/
@@ -19,19 +19,19 @@ import { Card, CardGrid, LinkCard } from '@astrojs/starlight/components';
 
 <CardGrid stagger>
   <Card title="Deploy in minutes" icon="rocket">
-    Hardhat, Foundry, ethers — unchanged. Chain ID `131071`, ~1s blocks, EVM Shanghai.
+    Hardhat, Foundry, ethers: all unchanged. Chain ID `131071`, ~1s blocks, EVM Shanghai.
 
     [Deploy with Hardhat](/developers/quick-start/hardhat/) ·
     [Deploy with Foundry](/developers/quick-start/foundry/)
   </Card>
   <Card title="Go private" icon="seti:lock">
-    Shielded accounts, note scanning, and ZK risk checks — proofs built in the browser, keys never leave the device.
+    Shielded accounts, note scanning, and ZK risk checks, with proofs built in the browser and keys that never leave the device.
 
     [Privacy overview](/privacy/overview/) ·
     [Shielded SDK](/developers/privacy/shielded-sdk/)
   </Card>
   <Card title="Trade on-chain" icon="random">
-    A native order book exposed to Solidity through precompile `0x0100` — atomic placement and fills in one transaction.
+    A native order book exposed to Solidity through precompile `0x0100`: atomic placement and fills in one transaction.
 
     [MersennetOrders architecture](/architecture/order-book/) ·
     [DeFi integration](/developers/contracts/defi-integration/)

@@ -88,18 +88,18 @@ Mersennet uses a JSON configuration file. Create `config.json` with the sections
 
 ### Full Configuration Reference
 
-#### `engine` — Core Engine
+#### `engine`: Core Engine
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
-| `chain_id` | `u64` | `131071` | Chain identifier — must match genesis and network |
+| `chain_id` | `u64` | `131071` | Chain identifier, must match genesis and network |
 | `state_path` | `string` | `"state"` | Directory for state database and metadata |
 | `gas_limit_per_block` | `u64` | `30000000` | Maximum gas per block (30M) |
 | `fee_elasticity_multiplier` | `u64` | `2` | EIP-1559 elasticity (target = limit / multiplier) |
 | `fee_max_change_denominator` | `u64` | `8` | Max base fee change per block (1/8 = 12.5%) |
 | `storage_backend` | `string` | `"sled"` | `"sled"`, `"redb"`, or `"memory"` |
 
-#### `mempool` — Transaction Pool
+#### `mempool`: Transaction Pool
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
@@ -107,7 +107,7 @@ Mersennet uses a JSON configuration file. Create `config.json` with the sections
 | `max_per_sender` | `usize` | `1000` | Max pending txs per sender address |
 | `bump_bps` | `u64` | `1000` | Min gas price bump for replacement (10%) |
 
-#### `p2p` — Peer-to-Peer Networking
+#### `p2p`: Peer-to-Peer Networking
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
@@ -118,21 +118,21 @@ Mersennet uses a JSON configuration file. Create `config.json` with the sections
 | `block_time_ms` | `u64` | `1000` | Block production interval (ms) |
 | `noise_enabled` | `bool` | `false` | Encrypt P2P with Noise Protocol |
 
-#### `rpc` — JSON-RPC Server
+#### `rpc`: JSON-RPC Server
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
 | `enabled` | `bool` | `false` | Enable the HTTP JSON-RPC server |
 | `addr` | `string` | `"127.0.0.1:8545"` | RPC listen address |
 
-#### `ws` — WebSocket Server
+#### `ws`: WebSocket Server
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
 | `enabled` | `bool` | `false` | Enable the WebSocket server |
 | `addr` | `string` | `"127.0.0.1:9945"` | WebSocket listen address |
 
-#### `slashing` — Slashing Parameters
+#### `slashing`: Slashing Parameters
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
@@ -143,7 +143,7 @@ Mersennet uses a JSON configuration file. Create `config.json` with the sections
 | `round_timeout_ms` | `u64` | `500` | Consensus round timeout (ms) |
 | `unbonding_period` | `u64` | `2` | Epochs before unbonded stake withdrawable |
 
-#### `token_economics` — Rewards & Supply
+#### `token_economics`: Rewards & Supply
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
@@ -151,20 +151,20 @@ Mersennet uses a JSON configuration file. Create `config.json` with the sections
 | `initial_reward_per_block` | `string` | `"2305843009213693951"` | Block reward, 2⁶¹ − 1 wei ≈ 2.3 MRSN (Mersenne prime) |
 | `halving_interval` | `u64` | `33550336` | Blocks between reward halvings (5th perfect number, 2¹² × (2¹³ − 1)) |
 
-#### `mersennet_orders` — MersennetOrders Precompile
+#### `mersennet_orders`: MersennetOrders Precompile
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
 | `initial_margin_bps` | `u64` | `0` | Initial margin requirement (bps) |
 | `maintenance_margin_bps` | `u64` | `0` | Maintenance margin (bps) |
 
-#### `bridge` — Cross-Domain Bridge
+#### `bridge`: Cross-Domain Bridge
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
 | `max_queue_len` | `usize` | `10000` | Max pending bridge messages |
 
-#### `zk` — Zero-Knowledge Proofs
+#### `zk`: Zero-Knowledge Proofs
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
@@ -177,7 +177,7 @@ Check the [Network Information](/getting-started/network-info) page for current 
 
 ## Genesis Setup
 
-For **mainnet** or **testnet**, you need the correct genesis allocations. Genesis is not a separate file — it is the `genesis` section of your `config.json`, defining initial accounts and validators. The chain ID is the numeric `engine.chain_id` (131071 for testnet, 8191 for mainnet; see `mainnet/genesis.json` in the repository for the canonical mainnet parameters).
+For **mainnet** or **testnet**, you need the correct genesis allocations. Genesis is not a separate file: it is the `genesis` section of your `config.json`, defining initial accounts and validators. The chain ID is the numeric `engine.chain_id` (131071 for testnet, 8191 for mainnet; see `mainnet/genesis.json` in the repository for the canonical mainnet parameters).
 
 Example `genesis` section:
 
@@ -214,7 +214,7 @@ Run the node with your config in validator mode:
   --mode validator
 ```
 
-The `--mode` flag accepts `validator`, `full`, or `devnet` (the default if omitted, which runs a local demo — always pass `--mode` for real deployments).
+The `--mode` flag accepts `validator`, `full`, or `devnet` (the default if omitted, which runs a local demo; always pass `--mode` for real deployments).
 
 For a **non-validator** (sentinel/full node), start with `--mode full`. The node will sync and serve RPC but will not propose blocks.
 
@@ -222,13 +222,13 @@ For a **non-validator** (sentinel/full node), start with `--mode full`. The node
 
 To join the validator set:
 
-1. **Stake MRSN** — Send a staking transaction to register your validator address with your desired stake amount. See [Staking Guide](/validators/staking).
+1. **Stake MRSN**: Send a staking transaction to register your validator address with your desired stake amount. See [Staking Guide](/validators/staking).
 
-2. **Ensure your node is synced** — Wait until your node has caught up to the latest block height.
+2. **Ensure your node is synced**: Wait until your node has caught up to the latest block height.
 
-3. **Node key** — Your `p2p.node_key_path` must point to a key file that corresponds to the address you staked from. The node will automatically begin participating in consensus once registered and synced.
+3. **Node key**: Your `p2p.node_key_path` must point to a key file that corresponds to the address you staked from. The node will automatically begin participating in consensus once registered and synced.
 
-Validator registration happens through the genesis configuration (for initial validators) or via staking transactions. There is no separate RPC method for registration—once you stake MRSN and your node is synced with the correct validator key, you join the active set.
+Validator registration happens through the genesis configuration (for initial validators) or via staking transactions. There is no separate RPC method for registration: once you stake MRSN and your node is synced with the correct validator key, you join the active set.
 
 ## Systemd Service (Production)
 
@@ -416,11 +416,11 @@ scrape_configs:
 
 Connect Grafana to your Prometheus instance and create dashboards for:
 
-- **Block Production** — Height over time, block execution duration, gas usage trends
-- **Consensus Health** — Finalization rate, consensus rounds, active validators
-- **Mempool** — Pool size, rejection rate, gas price distribution
-- **Network** — Peer count, P2P message rates
-- **MersennetOrders** — Order submission rate, fill rate, active markets
+- **Block Production**: Height over time, block execution duration, gas usage trends
+- **Consensus Health**: Finalization rate, consensus rounds, active validators
+- **Mempool**: Pool size, rejection rate, gas price distribution
+- **Network**: Peer count, P2P message rates
+- **MersennetOrders**: Order submission rate, fill rate, active markets
 
 The public Grafana dashboard is available at [http://46.225.30.187:3000](http://46.225.30.187:3000).
 
@@ -478,10 +478,10 @@ groups:
 
 | Path | Contents | Critical? |
 |------|----------|-----------|
-| `state/node_key.json` | Node identity keypair (validator signing key) | **Yes** — loss means new identity |
-| `state/peers.json` | Known peer addresses | No — peers rediscovered on restart |
-| `state/sled_db/` | Full chain state (accounts, storage, blocks) | Yes — loss requires full resync |
-| `config.json` | Node configuration | Yes — keep in version control |
+| `state/node_key.json` | Node identity keypair (validator signing key) | **Yes**, loss means new identity |
+| `state/peers.json` | Known peer addresses | No, peers rediscovered on restart |
+| `state/sled_db/` | Full chain state (accounts, storage, blocks) | Yes, loss requires full resync |
+| `config.json` | Node configuration | Yes, keep in version control |
 
 ### Backup Procedure
 
@@ -516,7 +516,7 @@ sudo systemctl start mersennet
 ```
 
 :::caution
-Never run two nodes with the same `node_key.json` simultaneously — this may trigger double-sign slashing.
+Never run two nodes with the same `node_key.json` simultaneously: this may trigger double-sign slashing.
 :::
 
 ## Troubleshooting
@@ -589,7 +589,7 @@ du -sh /var/lib/mersennet/state/
 
 ## Next Steps
 
-- [Staking Guide](/validators/staking) — Stake MRSN and manage delegations
-- [Monitoring & Alerts](/validators/monitoring) — Set up Prometheus and Grafana
-- [Node Architecture](/architecture/node-architecture) — Understand the node internals
-- [Consensus Mechanism](/architecture/consensus) — Deep dive into PoS and HotStuff-2 BFT
+- [Staking Guide](/validators/staking): Stake MRSN and manage delegations
+- [Monitoring & Alerts](/validators/monitoring): Set up Prometheus and Grafana
+- [Node Architecture](/architecture/node-architecture): Understand the node internals
+- [Consensus Mechanism](/architecture/consensus): Deep dive into PoS and HotStuff-2 BFT

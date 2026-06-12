@@ -2,7 +2,7 @@
 title: "DeFi Integration"
 ---
 
-Mersennet has an on-chain DEX called **Mersennet Swap** — a Uniswap V2–style AMM. This guide shows how to swap tokens, add liquidity, and query prices using the deployed Router contract.
+Mersennet has an on-chain DEX called **Mersennet Swap**, a Uniswap V2–style AMM. This guide shows how to swap tokens, add liquidity, and query prices using the deployed Router contract.
 
 ## Deployed Contract Addresses
 

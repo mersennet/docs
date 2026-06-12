@@ -16,16 +16,16 @@ This document provides complete tokenomics documentation for Mersennet (MRSN), i
 
 Mersennet's constants are chosen from the number theory the network is named for:
 
-- **Supply cap = 2⁸⁹ − 1** (`618970019642690137449562111` wei) — a **Mersenne prime**.
-- **Initial block reward = 2⁶¹ − 1** (`2305843009213693951` wei ≈ 2.3 MRSN) — a **Mersenne prime**.
-- **Halving interval = 33,550,336 blocks** — the **5th perfect number**, `2¹² × (2¹³ − 1)`, whose Mersenne factor `2¹³ − 1 = 8191` is the mainnet chain ID.
+- **Supply cap = 2⁸⁹ − 1** (`618970019642690137449562111` wei), a **Mersenne prime**.
+- **Initial block reward = 2⁶¹ − 1** (`2305843009213693951` wei ≈ 2.3 MRSN), a **Mersenne prime**.
+- **Halving interval = 33,550,336 blocks**, the **5th perfect number**, `2¹² × (2¹³ − 1)`, whose Mersenne factor `2¹³ − 1 = 8191` is the mainnet chain ID.
 
-### Cap vs. emission — two distinct numbers
+### Cap vs. emission: two distinct numbers
 
 The **supply cap** and the **amount actually emitted** are deliberately different:
 
 - The **cap (2⁸⁹ − 1 ≈ 618.97M MRSN)** is a hard protocol ceiling enforced on every block. `total_minted` can never exceed it. It is an *upper bound*, not a target circulating supply.
-- **Block-reward emission** follows the halving schedule below and converges to **≈ 154.72M MRSN** — well under the cap. The headroom between emission and the cap absorbs genesis allocations and leaves a permanent safety margin, so the cap is never reached in practice.
+- **Block-reward emission** follows the halving schedule below and converges to **≈ 154.72M MRSN**, well under the cap. The headroom between emission and the cap absorbs genesis allocations and leaves a permanent safety margin, so the cap is never reached in practice.
 
 ## Allocation
 
@@ -40,19 +40,19 @@ MRSN enters circulation two ways: **minted** block rewards (over time) and **gen
 | **Sales (Private + Public)** | Genesis allocation, 6-month cliff + 18-month linear | Set at genesis |
 
 :::note
-Absolute genesis allocation amounts (and their split across the pre-mine categories) are finalized by the Foundation at genesis. They are bounded by — but no longer derived from — the supply cap, since the cap is a ceiling rather than the target circulating supply. The protocol-enforced facts (cap, block reward, halving) are fixed and stated precisely throughout this page.
+Absolute genesis allocation amounts (and their split across the pre-mine categories) are finalized by the Foundation at genesis. They are bounded by (but no longer derived from) the supply cap, since the cap is a ceiling rather than the target circulating supply. The protocol-enforced facts (cap, block reward, halving) are fixed and stated precisely throughout this page.
 :::
 
 ### Block Rewards
 
-Validator rewards are **minted on every block** according to the halving schedule — none are pre-minted. Distribution is proportional to validator stake (see [Reward Distribution](#reward-distribution)).
+Validator rewards are **minted on every block** according to the halving schedule; none are pre-minted. Distribution is proportional to validator stake (see [Reward Distribution](#reward-distribution)).
 
 ### Genesis allocations
 
-- **Ecosystem & Grants** — developer grants, DApp incentives, hackathons, bridge integrations, and strategic partnerships. Governance-controlled, 5-year linear vesting.
-- **Foundation Reserve** — protocol development, security audits, infrastructure, legal, and operations. 1-year cliff + 4-year linear vesting.
-- **Team & Core Contributors** — 1-year cliff, then monthly linear unlock over 3 years.
-- **Sales** — private and public sale allocation. 6-month cliff + 18-month linear vesting.
+- **Ecosystem & Grants**: developer grants, DApp incentives, hackathons, bridge integrations, and strategic partnerships. Governance-controlled, 5-year linear vesting.
+- **Foundation Reserve**: protocol development, security audits, infrastructure, legal, and operations. 1-year cliff + 4-year linear vesting.
+- **Team & Core Contributors**: 1-year cliff, then monthly linear unlock over 3 years.
+- **Sales**: private and public sale allocation. 6-month cliff + 18-month linear vesting.
 
 ## Emission Schedule
 
@@ -88,7 +88,7 @@ total_emission = initial_reward × halving_interval × 2
                ≈ 154,723,615 MRSN
 ```
 
-This total sits far below the **2⁸⁹ − 1 ≈ 618.97M MRSN** cap — emission never approaches the ceiling.
+This total sits far below the **2⁸⁹ − 1 ≈ 618.97M MRSN** cap: emission never approaches the ceiling.
 
 ### Emission Timeline
 
@@ -146,7 +146,7 @@ Individual validator rewards are calculated from `effective_reward`. This guaran
 
 ### Rounding and Burns
 
-Due to integer division with 18-decimal precision, the sum of individual rewards may be slightly less than the effective reward. The difference is **implicitly burned** — typically negligible (0–2 wei per block) but it keeps `total_minted` strictly within the cap.
+Due to integer division with 18-decimal precision, the sum of individual rewards may be slightly less than the effective reward. The difference is **implicitly burned**, typically negligible (0–2 wei per block) but it keeps `total_minted` strictly within the cap.
 
 ## Summary
 
@@ -158,4 +158,4 @@ Due to integer division with 18-decimal precision, the sum of individual rewards
 | **Total emission** | ≈ 154.72M MRSN (converges well below the cap) |
 | **99% emission** | ~year 7–8 |
 | **Distribution** | Proportional to validator stake |
-| **Genesis allocations** | Ecosystem, Foundation, Team, Sales — amounts finalized at genesis |
+| **Genesis allocations** | Ecosystem, Foundation, Team, Sales (amounts finalized at genesis) |

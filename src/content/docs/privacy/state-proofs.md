@@ -41,7 +41,7 @@ A stateless verifier is available as `mersennet_verifyStateProof`, and `mersenne
 
 ## The Ethereum bridge (Groth16)
 
-To anchor Mersennet on Ethereum, the SP1 proof is **wrapped into a Groth16 proof** and submitted to an on-chain verifier. This lets an Ethereum contract — and therefore any Ethereum-based light client — accept Mersennet state roots as soon as a valid proof is verified.
+To anchor Mersennet on Ethereum, the SP1 proof is **wrapped into a Groth16 proof** and submitted to an on-chain verifier. This lets an Ethereum contract (and therefore any Ethereum-based light client) accept Mersennet state roots as soon as a valid proof is verified.
 
 ```mermaid
 flowchart LR

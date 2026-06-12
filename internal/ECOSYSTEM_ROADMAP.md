@@ -63,35 +63,35 @@
 
 ## Completed Items
 
-### P0 — Critical
+### P0: Critical
 
 | # | Need | Status |
 |---|------|--------|
-| 1 | Developer Documentation Portal (Docusaurus) | **DONE** — http://46.225.30.187:3001 |
-| 2 | Network Configuration Page | **DONE** — in explorer + docs |
-| 3 | Wallet Compatibility (MetaMask + one-click add) | **DONE** — documented in docs |
-| 4 | Smart Contract Deployment Guide (Hardhat/Foundry) | **DONE** — in developer docs |
-| 5 | ERC-20 Token Deployer (MockERC20 with faucet) | **DONE** — USDC, USDT, DAI deployed |
-| 6 | WebSocket RPC | **DONE** — events wired into block producer |
+| 1 | Developer Documentation Portal (Docusaurus) | **DONE**, http://46.225.30.187:3001 |
+| 2 | Network Configuration Page | **DONE**, in explorer + docs |
+| 3 | Wallet Compatibility (MetaMask + one-click add) | **DONE**, documented in docs |
+| 4 | Smart Contract Deployment Guide (Hardhat/Foundry) | **DONE**, in developer docs |
+| 5 | ERC-20 Token Deployer (MockERC20 with faucet) | **DONE**, USDC, USDT, DAI deployed |
+| 6 | WebSocket RPC | **DONE**, events wired into block producer |
 
-### P1 — Important
+### P1: Important
 
 | # | Need | Status |
 |---|------|--------|
-| 7 | DEX / AMM (Mersennet Swap) | **DONE** — Factory + Router deployed |
-| 8 | Wrapped MRSN (WMRSN) | **DONE** — deployed |
-| 9 | Stablecoin Mocks | **DONE** — USDC, USDT, DAI deployed |
-| 10 | Multicall3 Contract | **DONE** — deployed |
-| 11 | Contract Verification | **DONE** — verified contracts shown in explorer |
-| 12 | Ecosystem Landing Page | **DONE** — in docs portal |
-| 13 | Liquidity Pools | **DONE** — WMRSN/USDC, WMRSN/USDT, WMRSN/DAI seeded |
-| 14 | Whitepaper in Docs | **DONE** — /whitepaper route on docs portal |
-| 15 | GitHub Organization | **DONE** — README, CONTRIBUTING, templates, branch cleanup |
-| 16 | Mersennet Swap DEX Frontend | **DONE** — http://46.225.30.187:4000 |
-| 17 | MersennetNodes Validator Dashboard | **DONE** — http://46.225.30.187:4001 |
-| 18 | Brand Rebrand (PNL Violet/Cyan) | **DONE** — Explorer, Faucet, Docs, DEX, Validators |
-| 19 | Comprehensive Node Architecture Docs | **DONE** — Node architecture, consensus deep-dive, config reference |
-| 20 | Full-text Search in Docs | **DONE** — Local search plugin |
+| 7 | DEX / AMM (Mersennet Swap) | **DONE**, Factory + Router deployed |
+| 8 | Wrapped MRSN (WMRSN) | **DONE**, deployed |
+| 9 | Stablecoin Mocks | **DONE**, USDC, USDT, DAI deployed |
+| 10 | Multicall3 Contract | **DONE**, deployed |
+| 11 | Contract Verification | **DONE**, verified contracts shown in explorer |
+| 12 | Ecosystem Landing Page | **DONE**, in docs portal |
+| 13 | Liquidity Pools | **DONE**, WMRSN/USDC, WMRSN/USDT, WMRSN/DAI seeded |
+| 14 | Whitepaper in Docs | **DONE**, /whitepaper route on docs portal |
+| 15 | GitHub Organization | **DONE**, README, CONTRIBUTING, templates, branch cleanup |
+| 16 | Mersennet Swap DEX Frontend | **DONE**, http://46.225.30.187:4000 |
+| 17 | MersennetNodes Validator Dashboard | **DONE**, http://46.225.30.187:4001 |
+| 18 | Brand Rebrand (PNL Violet/Cyan) | **DONE**, Explorer, Faucet, Docs, DEX, Validators |
+| 19 | Comprehensive Node Architecture Docs | **DONE**, Node architecture, consensus deep-dive, config reference |
+| 20 | Full-text Search in Docs | **DONE**, Local search plugin |
 
 ---
 
@@ -101,12 +101,12 @@
 
 These require pointing existing apps to chain 131071:
 
-1. Mersennet Lend — deploy lending contracts, configure markets with WMRSN + mock stablecoins
-2. Mersennet NFTs — deploy Seaport, point UI + NestJS backend to testnet RPC
-3. xdc-markets — deploy prediction market contracts, point frontend to testnet
-4. Mersennet Wallet — update chain ID to 131071, add default RPC/explorer URLs
-5. Staking UI — point to validator set on testnet
-6. Liquid Staking — deploy LST contracts, connect staking UI
+1. Mersennet Lend: deploy lending contracts, configure markets with WMRSN + mock stablecoins
+2. Mersennet NFTs: deploy Seaport, point UI + NestJS backend to testnet RPC
+3. xdc-markets: deploy prediction market contracts, point frontend to testnet
+4. Mersennet Wallet: update chain ID to 131071, add default RPC/explorer URLs
+5. Staking UI: point to validator set on testnet
+6. Liquid Staking: deploy LST contracts, connect staking UI
 
 ### Phase 3: Advanced Infrastructure
 

@@ -14,7 +14,7 @@ In Mersennet's Proof-of-Stake model (HotStuff-2 BFT):
 
 :::note
 Delegation (staking with a validator without running a node) is **not yet
-implemented** — today all stake is bonded directly by validators. A
+implemented**: today all stake is bonded directly by validators. A
 delegation module is on the roadmap and will be activated by governance.
 :::
 
@@ -32,7 +32,7 @@ validator_reward = (block_reward × validator_stake) / total_stake
 
 - **Initial block reward**: ≈2.3 MRSN per block (2⁶¹ − 1 wei)
 - **Halving**: Every 33,550,336 blocks (~1.06 years at ~1 s blocks)
-- **Crediting**: Rewards are applied directly to validator/delegator balances—no claiming step required
+- **Crediting**: Rewards are applied directly to validator/delegator balances, with no claiming step required
 
 Example with 4 validators each staking 1M MRSN (era 0, reward ≈2.3058 MRSN):
 - Total stake = 4M MRSN
@@ -66,7 +66,7 @@ Validators (and their delegators) can lose stake through slashing:
 |--------|--------|
 | **What** | Signing two different blocks at the same height |
 | **Base penalty** | 5% of stake |
-| **Consequence** | **Tombstoned** — permanently banned from the validator set |
+| **Consequence** | **Tombstoned**, permanently banned from the validator set |
 | **Cause** | Running the same validator key on multiple nodes |
 
 :::danger
@@ -79,7 +79,7 @@ Double-signing is permanent. A tombstoned validator cannot rejoin. Never duplica
 |--------|--------|
 | **What** | Failing to send a precommit vote in a consensus round |
 | **Base penalty** | 1% of stake |
-| **Consequence** | **Jailed** — temporarily excluded; can unjail after jail period |
+| **Consequence** | **Jailed**, temporarily excluded; can unjail after jail period |
 | **Cause** | Node offline, network issues, slow hardware |
 
 Penalties **escalate** with repeated offenses (e.g. +0.25% per offense, capped at 10%). Maintain high uptime and monitoring to avoid downtime slashing.

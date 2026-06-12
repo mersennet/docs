@@ -1,6 +1,6 @@
-# Mersennet — Investor FAQ
+# Mersennet: Investor FAQ
 
-> **Confidential** | Series A — $25M | March 2026
+> **Confidential** | Series A, $25M | March 2026
 
 ---
 
@@ -8,7 +8,7 @@
 
 ### Q: What is Mersennet in one sentence?
 
-**A:** Mersennet is the only Layer 1 blockchain where Solidity smart contracts can trade on a native central limit order book (CLOB) in the same transaction — enabling institutional-grade, compliant trading of tokenized real-world assets and credit instruments.
+**A:** Mersennet is the only Layer 1 blockchain where Solidity smart contracts can trade on a native central limit order book (CLOB) in the same transaction, enabling institutional-grade, compliant trading of tokenized real-world assets and credit instruments.
 
 ---
 
@@ -23,7 +23,7 @@
 
 This happens in ~200ms, in one transaction, with deterministic execution. No other blockchain can do this.
 
-**Hyperliquid** has a CLOB and HyperEVM, but they are **async** — the CoreWriter is delayed by seconds, and EVM reads of order book state are stale by at least one block. Smart contracts cannot atomically trade on the order book.
+**Hyperliquid** has a CLOB and HyperEVM, but they are **async**: the CoreWriter is delayed by seconds, and EVM reads of order book state are stale by at least one block. Smart contracts cannot atomically trade on the order book.
 
 **Why it matters:** Atomic composability means DeFi protocols can be built directly on top of institutional order books. This is how you bridge TradFi and DeFi in a single atomic operation.
 
@@ -46,7 +46,7 @@ This happens in ~200ms, in one transaction, with deterministic execution. No oth
 - **EVM:** 72,181 TPS via Block-STM parallel execution (4.8x Monad, 18x Solana)
 - **CLOB:** 2,484,170 ops/s (12.4x Hyperliquid, 24.8x dYdX)
 - **FBA:** 5,053,782 ops/s (MEV-resistant matching)
-- **Finality:** ~200ms (HotStuff-2 BFT) — comparable to Hyperliquid, 60x faster than Ethereum
+- **Finality:** ~200ms (HotStuff-2 BFT), comparable to Hyperliquid and 60x faster than Ethereum
 
 These are measured benchmarks, not theoretical maximums.
 
@@ -102,7 +102,7 @@ These are measured benchmarks, not theoretical maximums.
 | Citi | $5T by 2030 | Asset tokenization |
 | World Economic Forum | 10% of global GDP tokenized by 2027 | Broad tokenization |
 
-Our assumption: Mersennet captures **0.14% of TAM** in Year 3 ($25B TVA out of $18.5T). That's conservative — it requires only 30 institutional partners with ~$833M TVA each.
+Our assumption: Mersennet captures **0.14% of TAM** in Year 3 ($25B TVA out of $18.5T). That's conservative: it requires only 30 institutional partners with ~$833M TVA each.
 
 ---
 
@@ -126,11 +126,11 @@ Ethereum is the "internet computer." Mersennet is the "institutional exchange." 
 
 **A:** This is the most important competitive question. Three critical differences:
 
-1. **Atomic vs. Async:** Mersennet's EVM ↔ CLOB is atomic (same transaction). Hyperliquid's is async — CoreWriter is delayed by seconds, reads are stale by 1 block. This means DeFi protocols on Hyperliquid cannot atomically interact with the order book.
+1. **Atomic vs. Async:** Mersennet's EVM ↔ CLOB is atomic (same transaction). Hyperliquid's is async: CoreWriter is delayed by seconds, reads are stale by 1 block. This means DeFi protocols on Hyperliquid cannot atomically interact with the order book.
 
 2. **12x Faster CLOB:** 2.4M ops/s vs. 200K ops/s. More throughput = more concurrent markets, more institutional users.
 
-3. **Institutional Focus vs. Crypto Perps:** Hyperliquid focuses on crypto perpetual futures. Mersennet targets $18.5T in tokenized RWA and credit — a fundamentally larger market.
+3. **Institutional Focus vs. Crypto Perps:** Hyperliquid focuses on crypto perpetual futures. Mersennet targets $18.5T in tokenized RWA and credit, a fundamentally larger market.
 
 **Analogy:** Hyperliquid is Binance Futures on-chain. Mersennet is the NYSE/NASDAQ for tokenized real-world assets.
 
@@ -140,7 +140,7 @@ Ethereum is the "internet computer." Mersennet is the "institutional exchange." 
 
 **A:** Extremely unlikely for three reasons:
 
-1. **Consensus-level change:** Adding a CLOB to Ethereum would require modifying the consensus layer — the most conservative part of any blockchain. Ethereum's roadmap is focused on scaling (sharding, rollups), not adding new execution domains.
+1. **Consensus-level change:** Adding a CLOB to Ethereum would require modifying the consensus layer, the most conservative part of any blockchain. Ethereum's roadmap is focused on scaling (sharding, rollups), not adding new execution domains.
 
 2. **Community governance:** Ethereum's governance process takes years for even minor changes. Adding a fundamentally new execution domain would face enormous resistance.
 
@@ -188,7 +188,7 @@ These are not cold outreach targets. These are active relationships with specifi
 
 1. **Runway:** 24+ months at full burn, reaching breakeven by month 14–16
 2. **Milestones:** Sufficient to achieve mainnet launch, security audit, 10+ institutional partners, and $5B+ TVA pipeline
-3. **Dilution:** At suggested FDV of $150M–$250M, this represents 10–17% dilution — reasonable for Series A
+3. **Dilution:** At suggested FDV of $150M–$250M, this represents 10–17% dilution, which is reasonable for Series A
 
 Raising less would risk under-funding business development (the partnerships are the moat). Raising more at this stage would be unnecessarily dilutive before proving mainnet revenue.
 
@@ -302,7 +302,7 @@ The native CLOB + EVM combination has value even if RWA tokenization takes longe
 
 **A:** Five-layer regulatory strategy:
 
-1. **Compliance by design:** Deterministic execution means every trade is auditable — regulators can independently verify execution fairness
+1. **Compliance by design:** Deterministic execution means every trade is auditable: regulators can independently verify execution fairness
 2. **Institutional partners:** Standard Chartered provides FCA, MAS, and HKMA introductions
 3. **Early engagement:** Proactive regulatory dialogue, not reactive compliance
 4. **Flexible governance:** Protocol parameters can be updated without hard forks
@@ -366,12 +366,12 @@ The native CLOB + EVM combination has value even if RWA tokenization takes longe
 
 ### For Interested Investors
 
-1. **Sign NDA** — Access full data room
-2. **Technical deep-dive** — Live demo of testnet + architecture walkthrough
-3. **Financial review** — Detailed model walkthrough with management
-4. **Legal review** — SAFT agreement, regulatory analysis
-5. **Term sheet negotiation** — Finalize terms
-6. **Closing** — Fund and execute
+1. **Sign NDA**: Access full data room
+2. **Technical deep-dive**: Live demo of testnet + architecture walkthrough
+3. **Financial review**: Detailed model walkthrough with management
+4. **Legal review**: SAFT agreement, regulatory analysis
+5. **Term sheet negotiation**: Finalize terms
+6. **Closing**: Fund and execute
 
 ### Contact
 

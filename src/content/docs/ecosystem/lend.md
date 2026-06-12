@@ -2,7 +2,7 @@
 title: "Mersennet Lend Lending"
 ---
 
-**Mersennet Lend** is an Aave-style lending and borrowing protocol built for Mersennet. It enables users to supply assets to earn interest and borrow against collateral—powering the DeFi credit layer of the ecosystem.
+**Mersennet Lend** is an Aave-style lending and borrowing protocol built for Mersennet. It enables users to supply assets to earn interest and borrow against collateral, powering the DeFi credit layer of the ecosystem.
 
 ## Overview
 
@@ -25,7 +25,7 @@ Mersennet Lend smart contracts are built and audited. They are ready for deploym
 1. Approve the Mersennet Lend pool contract to spend your tokens.
 2. Call `supply(asset, amount, onBehalfOf)` to deposit.
 3. Receive **aTokens** (interest-bearing receipt tokens) in return.
-4. Your balance grows as interest accrues—redeem aTokens anytime for underlying + interest.
+4. Your balance grows as interest accrues; redeem aTokens anytime for underlying + interest.
 
 ### Borrow
 
@@ -36,8 +36,8 @@ Mersennet Lend smart contracts are built and audited. They are ready for deploym
 
 ### Interest Rates
 
-- **Variable rate** — Fluctuates based on utilization (how much of the pool is borrowed).
-- **Stable rate** (if supported) — More predictable, may have different parameters.
+- **Variable rate**: Fluctuates based on utilization (how much of the pool is borrowed).
+- **Stable rate** (if supported): More predictable, may have different parameters.
 - Higher utilization → higher borrow APY, higher supply APY for lenders.
 
 ### Liquidations
@@ -81,15 +81,15 @@ Exact support depends on deployment configuration and oracle integration.
 | Component | Description |
 |-----------|-------------|
 | **Mersennet Lend Contracts** | Solidity, Hardhat, Aave-style logic |
-| **Mersennet Lend UI v2** | React 19, Vite, wagmi — lending frontend |
+| **Mersennet Lend UI v2** | React 19, Vite, wagmi (lending frontend) |
 | **Mersennet Lend Liquidator** | Node.js bot for monitoring and liquidating unhealthy positions |
 | **Mersennet Lend Omni** | Cross-chain lending via LayerZero v2 (contracts ready) |
 
 ## Integration with Mersennet
 
-- **Mersennet Swap** — Borrow stablecoins, swap on Mersennet Swap, supply for yield.
-- **MersennetOrders** — Future: collateralize positions, use CLOB for hedging.
-- **WMRSN** — Native token wrapper used as collateral and supply asset.
+- **Mersennet Swap**: Borrow stablecoins, swap on Mersennet Swap, supply for yield.
+- **MersennetOrders** (future): collateralize positions, use CLOB for hedging.
+- **WMRSN**: Native token wrapper used as collateral and supply asset.
 
 ## Deployment Status
 
@@ -104,6 +104,6 @@ Once deployed, contract addresses will be published in [Deployed Contracts](/res
 
 ## Related Resources
 
-- [Mersennet Swap DEX](/ecosystem/swap) — Swap and provide liquidity
-- [Deployed Contracts](/resources/contracts) — Contract addresses when live
-- [Network Information](/getting-started/network-info) — RPC and configuration
+- [Mersennet Swap DEX](/ecosystem/swap): Swap and provide liquidity
+- [Deployed Contracts](/resources/contracts): Contract addresses when live
+- [Network Information](/getting-started/network-info): RPC and configuration

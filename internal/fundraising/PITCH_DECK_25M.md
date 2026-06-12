@@ -1,4 +1,4 @@
-# MERSENNET — $25M Series A Pitch Deck
+# MERSENNET: $25M Series A Pitch Deck
 
 > **Confidential** | March 2026 | For Qualified Investors Only
 
@@ -24,11 +24,11 @@
 
 **Speaker Notes:**
 - Open with the category-defining line: "We are the only Layer 1 blockchain where a Solidity smart contract can trade on a native order book in the same transaction."
-- Pause. Let that sink in. No one else can say this — not Ethereum, not Solana, not even Hyperliquid.
+- Pause. Let that sink in. No one else can say this: not Ethereum, not Solana, not even Hyperliquid.
 
 ---
 
-## Slide 2: The Problem — The $18.5 Trillion Infrastructure Gap
+## Slide 2: The Problem, the $18.5 Trillion Infrastructure Gap
 
 ```
 ┌─────────────────────────────────────┐
@@ -61,11 +61,11 @@
 | **Compliance** | Probabilistic execution = unauditable | Regulators cannot approve |
 | **Infrastructure** | No native margin, liquidation, positions | Every institution must build from scratch |
 
-**Key Stat:** BlackRock, Fidelity, and Standard Chartered are tokenizing billions — but have nowhere to trade them with institutional-grade infrastructure.
+**Key Stat:** BlackRock, Fidelity, and Standard Chartered are tokenizing billions, but have nowhere to trade them with institutional-grade infrastructure.
 
 ---
 
-## Slide 3: The Solution — Mersennet
+## Slide 3: The Solution Is Mersennet
 
 ```
 ╔══════════════════════════════════════════════════════════════════╗
@@ -102,7 +102,7 @@
 
 ---
 
-## Slide 4: Why Now — The Perfect Storm
+## Slide 4: Why Now, the Perfect Storm
 
 ```
     2020        2022        2024        2026        2028        2030
@@ -127,13 +127,13 @@
 |-------|----------|----------|
 | **Regulatory Clarity** | MiCA (EU), SEC tokenized securities guidance, Basel III credit rules | 2024–2026 |
 | **Institutional Entry** | BlackRock BUIDL fund ($500M+), Fidelity tokenized funds, Standard Chartered RWA division | Active now |
-| **Infrastructure Demand** | Every major bank building tokenization — none have trading infra | Gap widening |
+| **Infrastructure Demand** | Every major bank building tokenization, yet none have trading infra | Gap widening |
 
 **The Window:** First blockchain to provide compliant institutional trading infrastructure captures the category. That window is 12–18 months.
 
 ---
 
-## Slide 5: Market Opportunity — $18.5T+ TAM by 2030
+## Slide 5: Market Opportunity, $18.5T+ TAM by 2030
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
@@ -185,7 +185,7 @@
 
 ---
 
-## Slide 6: Technology — Why We Win
+## Slide 6: Technology, and Why We Win
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
@@ -225,11 +225,11 @@ function tradeOnOrderBook(uint256 marketId, int256 qty, uint256 price) external 
 }
 ```
 
-**Translation for Non-Technical Investors:** Imagine if Uniswap could trade on the NYSE order book in the same transaction — that's what we built, but it's native to the chain.
+**Translation for Non-Technical Investors:** Imagine if Uniswap could trade on the NYSE order book in the same transaction: that's what we built, but it's native to the chain.
 
 ---
 
-## Slide 7: Competitive Landscape — The Only Complete Solution
+## Slide 7: Competitive Landscape, the Only Complete Solution
 
 ```
                         NATIVE         ATOMIC
@@ -260,7 +260,7 @@ function tradeOnOrderBook(uint256 marketId, int256 qty, uint256 price) external 
 
 ### Why Replication Is Hard
 
-Native order matching requires **consensus-level integration** — you can't bolt it on top. Ethereum would need a hard fork. Solana would need a new VM. This is a 2+ year engineering moat.
+Native order matching requires **consensus-level integration**: you can't bolt it on top. Ethereum would need a hard fork. Solana would need a new VM. This is a 2+ year engineering moat.
 
 ---
 
@@ -310,7 +310,7 @@ Native order matching requires **consensus-level integration** — you can't bol
 
 ---
 
-## Slide 9: Use Cases — Real Applications, Real Revenue
+## Slide 9: Use Cases, Real Applications, Real Revenue
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
@@ -351,7 +351,7 @@ Native order matching requires **consensus-level integration** — you can't bol
 
 ---
 
-## Slide 10: Business Model — Multiple Revenue Streams
+## Slide 10: Business Model, Multiple Revenue Streams
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
@@ -399,7 +399,7 @@ Native order matching requires **consensus-level integration** — you can't bol
 
 ---
 
-## Slide 11: Tokenomics — Sound Economic Design
+## Slide 11: Tokenomics, Sound Economic Design
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
@@ -448,7 +448,7 @@ Native order matching requires **consensus-level integration** — you can't bol
 
 ---
 
-## Slide 12: Roadmap — Path to $1B+ TVA
+## Slide 12: Roadmap, Path to $1B+ TVA
 
 ```
      Q1 2026              Q2 2026              Q3 2026              Q4 2026
@@ -524,7 +524,7 @@ Native order matching requires **consensus-level integration** — you can't bol
 
 ---
 
-## Slide 14: The Ask — $25M Series A
+## Slide 14: The Ask, a $25M Series A
 
 ```
 ╔══════════════════════════════════════════════════════════════════╗
@@ -598,7 +598,7 @@ Native order matching requires **consensus-level integration** — you can't bol
 
 ---
 
-## Slide 15: Why Mersennet — The Investment Thesis
+## Slide 15: Why Mersennet, the Investment Thesis
 
 ```
 ╔══════════════════════════════════════════════════════════════════╗

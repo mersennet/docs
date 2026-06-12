@@ -85,12 +85,12 @@ Multi-token NFTs (multiple token IDs in one contract, with fungible and non-fung
 
 ## Integration
 
-- **Mersennet Wallet** — Connect and sign transactions.
-- **Mersennet** — All NFT and marketplace activity on-chain.
-- **Mersennet Swap** — Optional: trade NFT-related tokens or royalties.
+- **Mersennet Wallet**: Connect and sign transactions.
+- **Mersennet**: All NFT and marketplace activity on-chain.
+- **Mersennet Swap** (optional): trade NFT-related tokens or royalties.
 
 ## Related Resources
 
-- [Mersennet Wallet](/ecosystem/wallet) — Recommended wallet for Mersennet NFTs
-- [Deployed Contracts](/resources/contracts) — Seaport addresses when live
-- [Network Information](/getting-started/network-info) — RPC and configuration
+- [Mersennet Wallet](/ecosystem/wallet): Recommended wallet for Mersennet NFTs
+- [Deployed Contracts](/resources/contracts): Seaport addresses when live
+- [Network Information](/getting-started/network-info): RPC and configuration

@@ -12,7 +12,7 @@ title: "Whitepaper"
 
 ## Preface
 
-This document is a technical whitepaper describing the Mersennet protocol—a Layer 1 blockchain that unifies EVM execution with native order matching. It is intended as a specification of the system's design, architecture, and rationale. It is not a formal specification in the sense of the Ethereum Yellow Paper; parameters and mechanisms may evolve based on implementation experience and community feedback. Non-core aspects such as API bindings, client libraries, and operator tooling are documented elsewhere. This whitepaper draws structural inspiration from foundational works including the [Bitcoin whitepaper](https://bitcoin.org/bitcoin.pdf) [1], [Ethereum whitepaper](https://ethereum.org/whitepaper/) [2], [Solana](https://solana.com/solana-whitepaper.pdf) [3], and [Polkadot](https://polkadot.network/PolkaDotPaper.pdf) [4].
+This document is a technical whitepaper describing the Mersennet protocol, a Layer 1 blockchain that unifies EVM execution with native order matching. It is intended as a specification of the system's design, architecture, and rationale. It is not a formal specification in the sense of the Ethereum Yellow Paper; parameters and mechanisms may evolve based on implementation experience and community feedback. Non-core aspects such as API bindings, client libraries, and operator tooling are documented elsewhere. This whitepaper draws structural inspiration from foundational works including the [Bitcoin whitepaper](https://bitcoin.org/bitcoin.pdf) [1], [Ethereum whitepaper](https://ethereum.org/whitepaper/) [2], [Solana](https://solana.com/solana-whitepaper.pdf) [3], and [Polkadot](https://polkadot.network/PolkaDotPaper.pdf) [4].
 
 **Version History:** v1.0 (initial draft), v2.0 (comprehensive technical), v3.0 (Ethereum-style expansion), v4.0 (incorporates patterns from top blockchain whitepapers), v5.0 (formula fixes, technical depth), v6.0 (parallel EVM execution, HotStuff-2 consensus, CLOB precompile, Frequent Batch Auctions, MEV protection, comprehensive benchmarks), v7.0 (production storage engine, WebSocket subscriptions, block pipeline, Noise P2P encryption, ZK state proofs, Account Abstraction, cross-chain bridges, TypeScript SDK, block explorer).
 
@@ -20,14 +20,14 @@ This document is a technical whitepaper describing the Mersennet protocol—a La
 
 ## Abstract
 
-We propose Mersennet, a novel Layer 1 blockchain that **decouples the consensus layer from a multi-domain execution model**. Unlike single-domain chains (Bitcoin, Ethereum) or multi-chain frameworks (Polkadot, Cosmos), Mersennet embeds a deterministic order matching engine (MersennetOrders) alongside the EVM within a **single canonical state**—enabling atomic cross-domain workflows that are infeasible on separate chains. The system finalizes blocks via **BFT proof-of-stake** consensus (two-round prevote/precommit with stake-weighted proposer election) and escalating slashing, implements EIP-1559 fee markets, and provides a cross-domain bridge for ordered message passing. A two-phase **HotStuff-2** pipeline is implemented in the node as the optimized upgrade path (benchmarked at sub-200ms finality).
+We propose Mersennet, a novel Layer 1 blockchain that **decouples the consensus layer from a multi-domain execution model**. Unlike single-domain chains (Bitcoin, Ethereum) or multi-chain frameworks (Polkadot, Cosmos), Mersennet embeds a deterministic order matching engine (MersennetOrders) alongside the EVM within a **single canonical state**, enabling atomic cross-domain workflows that are infeasible on separate chains. The system finalizes blocks via **BFT proof-of-stake** consensus (two-round prevote/precommit with stake-weighted proposer election) and escalating slashing, implements EIP-1559 fee markets, and provides a cross-domain bridge for ordered message passing. A two-phase **HotStuff-2** pipeline is implemented in the node as the optimized upgrade path (benchmarked at sub-200ms finality).
 
 **v7.0 builds on v6.0's five breakthrough capabilities with production-grade infrastructure:**
 
-1. **Parallel EVM Execution**: Optimistic concurrency control (Block-STM / Grevm pattern) with static dependency analysis, multi-version memory, and conflict detection—enabling multi-core transaction processing while maintaining sequential semantics.
-2. **CLOB Precompile** (`0x0100`): The first EVM precompile that gives Solidity smart contracts direct, atomic access to a native order book—enabling composable DeFi strategies (vault → order → fill → callback) in a single transaction.
+1. **Parallel EVM Execution**: Optimistic concurrency control (Block-STM / Grevm pattern) with static dependency analysis, multi-version memory, and conflict detection, enabling multi-core transaction processing while maintaining sequential semantics.
+2. **CLOB Precompile** (`0x0100`): The first EVM precompile that gives Solidity smart contracts direct, atomic access to a native order book, enabling composable DeFi strategies (vault → order → fill → callback) in a single transaction.
 3. **BFT Proof-of-Stake Consensus**: Two-round prevote/precommit finality with stake-weighted proposer rotation and escalating slashing. A two-phase **HotStuff-2** pipeline is implemented as the optimized upgrade path (≈33% lower latency than three-phase CometBFT, with linear message complexity and optimistic responsiveness), exercised in benchmarks.
-4. **Frequent Batch Auctions (FBA)**: Uniform-price discrete auctions that eliminate front-running and MEV extraction from order matching—transactions within a batch window are indistinguishable by arrival time.
+4. **Frequent Batch Auctions (FBA)**: Uniform-price discrete auctions that eliminate front-running and MEV extraction from order matching. Transactions within a batch window are indistinguishable by arrival time.
 5. **Commit-Reveal MEV Protection**: Two-phase transaction submission for EVM where users commit a hash before revealing the transaction, preventing sandwich attacks and information leakage.
 
 **v7.0 additions:**
@@ -70,7 +70,7 @@ By unifying general-purpose smart contracts with institutional-grade order books
 
 **Decoupling insight (Polkadot):** Polkadot separates *canonicality* (which history is valid) from *validity* (whether state transitions are correct). Mersennet adopts a related insight: *execution domains* (EVM, MersennetOrders) can be distinct while sharing a single canonicality layer and state root.
 
-**Mersennet's contribution:** The first L1 to embed a **parallel EVM** and a native CLOB in **one block, one state, one finality**—with a precompile enabling **atomic** EVM ↔ CLOB interaction in a **single transaction**. This avoids the composability gap of separate chains (dYdX), the async latency of dual-execution designs (Hyperliquid's HyperEVM reads previous-block state and CoreWriter actions are delayed by seconds), the performance gap of EVM-only CLOBs, and the centralization of off-chain matching (Vertex). The combination of parallel execution (Monad/Sei-class throughput), native order matching (12x faster than Hyperliquid), true atomic composability (no other chain achieves this), MEV-resistant batch auctions, and full EVM ecosystem compatibility is unique among all existing architectures.
+**Mersennet's contribution:** The first L1 to embed a **parallel EVM** and a native CLOB in **one block, one state, one finality**, with a precompile enabling **atomic** EVM ↔ CLOB interaction in a **single transaction**. This avoids the composability gap of separate chains (dYdX), the async latency of dual-execution designs (Hyperliquid's HyperEVM reads previous-block state and CoreWriter actions are delayed by seconds), the performance gap of EVM-only CLOBs, and the centralization of off-chain matching (Vertex). The combination of parallel execution (Monad/Sei-class throughput), native order matching (12x faster than Hyperliquid), true atomic composability (no other chain achieves this), MEV-resistant batch auctions, and full EVM ecosystem compatibility is unique among all existing architectures.
 
 ---
 
@@ -90,22 +90,22 @@ But:
 
 $$\text{APPLY}(\{ \text{Alice}: \$50, \text{Bob}: \$50 \}, \text{"send \$70 from Alice to Bob"}) = \text{ERROR}$$
 
-In **Bitcoin**, the state is the collection of unspent transaction outputs (UTXOs), each with a denomination and an owner. Transactions consume UTXOs and create new ones. In **Ethereum**, the state comprises accounts—each with a balance, nonce, code, and storage—and state transitions execute arbitrary contract code. **Mersennet** extends this paradigm by introducing a **multi-domain state**: in addition to EVM accounts (balance, nonce, code, storage), Mersennet maintains **MersennetOrders state** (markets, order books, positions, collateral) and **Bridge state** (cross-domain message queues). The state transition function $\mathcal{T}$ of Mersennet therefore operates over a tuple:
+In **Bitcoin**, the state is the collection of unspent transaction outputs (UTXOs), each with a denomination and an owner. Transactions consume UTXOs and create new ones. In **Ethereum**, the state comprises accounts (each with a balance, nonce, code, and storage), and state transitions execute arbitrary contract code. **Mersennet** extends this paradigm by introducing a **multi-domain state**: in addition to EVM accounts (balance, nonce, code, storage), Mersennet maintains **MersennetOrders state** (markets, order books, positions, collateral) and **Bridge state** (cross-domain message queues). The state transition function $\mathcal{T}$ of Mersennet therefore operates over a tuple:
 
 $$S = (S_{evm}, S_{orders}, S_{bridge})$$
 
-and applies transitions from multiple domains—EVM transactions, order submissions, and bridge messages—atomically within a single block.
+and applies transitions from multiple domains (EVM transactions, order submissions, and bridge messages) atomically within a single block.
 
 ### The Problem: General Programmability vs. Specialized Performance
 
-Satoshi Nakamoto's Bitcoin demonstrated that decentralized consensus over a shared ledger could replace trusted intermediaries for value transfer. Ethereum generalized this further by embedding a Turing-complete virtual machine, enabling arbitrary "smart contracts"—programs that execute on the blockchain and control value. However, Ethereum's design prioritizes generality over latency. Order matching—the core of exchanges and trading venues—requires:
+Satoshi Nakamoto's Bitcoin demonstrated that decentralized consensus over a shared ledger could replace trusted intermediaries for value transfer. Ethereum generalized this further by embedding a Turing-complete virtual machine, enabling arbitrary "smart contracts," programs that execute on the blockchain and control value. However, Ethereum's design prioritizes generality over latency. Order matching, the core of exchanges and trading venues, requires:
 
 - **Determinism**: Identical inputs must produce identical outputs across all nodes
 - **Low latency**: Trades must execute and finalize quickly
 - **Provable correctness**: Matching logic must be verifiable and auditable
 - **Risk management**: Margins, liquidations, and position tracking must be first-class
 
-Implementing a full-featured order matching engine purely in EVM bytecode is possible but inefficient: gas costs, block times, and lack of specialized data structures (e.g., price-time priority order books) make it impractical for high-throughput trading. Conversely, specialized chains built only for order matching lack the composability of smart contracts—they cannot easily integrate with DeFi protocols, token standards, or cross-chain bridges.
+Implementing a full-featured order matching engine purely in EVM bytecode is possible but inefficient: gas costs, block times, and lack of specialized data structures (e.g., price-time priority order books) make it impractical for high-throughput trading. Conversely, specialized chains built only for order matching lack the composability of smart contracts: they cannot easily integrate with DeFi protocols, token standards, or cross-chain bridges.
 
 ### Mersennet's Solution: Unified Multi-Domain Architecture
 
@@ -174,9 +174,9 @@ The idea of combining blockchain consensus with specialized execution layers has
 
 ### 1.1 Motivation
 
-The blockchain industry has evolved from Bitcoin's simple UTXO model to Ethereum's account-based model with Turing-complete smart contracts. This evolution enabled decentralized applications (dApps), token standards (ERC-20, ERC-721), decentralized exchanges (DEXs), lending protocols, and more. However, certain application classes—notably **order-driven trading**—remain challenging. Automated Market Makers (AMMs) like Uniswap provide constant-product or similar pricing; they are simple and composable but suffer from impermanent loss, slippage, and poor execution for large orders. Central limit order books (CLOBs) offer price-time priority and better execution, but implementing them purely in EVM is gas-intensive and constrained by block times. Hybrid approaches (e.g., dYdX v3's off-chain order book with on-chain settlement) introduce centralization and custody concerns.
+The blockchain industry has evolved from Bitcoin's simple UTXO model to Ethereum's account-based model with Turing-complete smart contracts. This evolution enabled decentralized applications (dApps), token standards (ERC-20, ERC-721), decentralized exchanges (DEXs), lending protocols, and more. However, certain application classes, notably **order-driven trading**, remain challenging. Automated Market Makers (AMMs) like Uniswap provide constant-product or similar pricing; they are simple and composable but suffer from impermanent loss, slippage, and poor execution for large orders. Central limit order books (CLOBs) offer price-time priority and better execution, but implementing them purely in EVM is gas-intensive and constrained by block times. Hybrid approaches (e.g., dYdX v3's off-chain order book with on-chain settlement) introduce centralization and custody concerns.
 
-Traditional blockchain architectures therefore face a fundamental tension: **general-purpose programmability vs. specialized high-performance execution**. Ethereum's EVM provides universal computation but struggles with latency-sensitive applications like order matching. Specialized chains optimized for trading (e.g., dYdX v4 on Cosmos) lack the composability and ecosystem of general-purpose blockchains—they cannot easily interoperate with DeFi protocols, NFT marketplaces, or cross-chain bridges without additional infrastructure.
+Traditional blockchain architectures therefore face a fundamental tension: **general-purpose programmability vs. specialized high-performance execution**. Ethereum's EVM provides universal computation but struggles with latency-sensitive applications like order matching. Specialized chains optimized for trading (e.g., dYdX v4 on Cosmos) lack the composability and ecosystem of general-purpose blockchains. They cannot easily interoperate with DeFi protocols, NFT marketplaces, or cross-chain bridges without additional infrastructure.
 
 Mersennet addresses this by architecting a **unified system** that maintains full EVM compatibility while embedding a deterministic, high-throughput order matching engine. This dual-domain approach enables:
 
@@ -204,7 +204,7 @@ Mersennet addresses this by architecting a **unified system** that maintains ful
 - **Hot Configuration**: Runtime parameter updates without node restarts
 - **Parallel EVM Execution** *(v6.0)*: Block-STM optimistic concurrency control with static dependency analysis, multi-version memory (MVCC), and automatic fallback to sequential execution on conflict
 - **HotStuff-2 Consensus** *(v6.0)*: Two-phase BFT protocol with linear communication complexity, optimistic responsiveness, and 33% lower finality latency than three-phase CometBFT
-- **CLOB Precompile** *(v6.0)*: EVM precompile at address `0x0100` enabling Solidity smart contracts to atomically place orders, cancel orders, deposit/withdraw collateral, and query positions—the first native EVM ↔ order book bridge
+- **CLOB Precompile** *(v6.0)*: EVM precompile at address `0x0100` enabling Solidity smart contracts to atomically place orders, cancel orders, deposit/withdraw collateral, and query positions: the first native EVM ↔ order book bridge
 - **Frequent Batch Auctions** *(v6.0)*: Uniform-price discrete auctions for MersennetOrders that eliminate front-running by executing all orders within a batch window at a single clearing price
 - **Commit-Reveal MEV Protection** *(v6.0)*: Two-phase EVM transaction submission with cryptographic commitment, preventing sandwich attacks and transaction information leakage
 
@@ -601,7 +601,7 @@ $$R(h) = R_0 \cdot 2^{-\lfloor h / H \rfloor}$$
 
 Where:
 - $R_0$ = initial reward per block ($2^{61} - 1$ wei ≈ 2.3 MRSN)
-- $H$ = halving interval (33,550,336 blocks — the 5th perfect number $2^{12}(2^{13}-1)$ — ~1.06 years at the default 1s block time)
+- $H$ = halving interval (33,550,336 blocks, the 5th perfect number $2^{12}(2^{13}-1)$, ~1.06 years at the default 1s block time)
 
 Reward is capped by remaining supply:
 $$R_{effective}(h) = \min(R(h), S_{max} - S_{minted}(h))$$
@@ -616,7 +616,7 @@ If $S_{\mathrm{total}} = 0$, rewards are burned.
 
 #### 4.8.3 Supply Cap
 
-Total supply is capped at $S_{max} = 2^{89} - 1$ wei ≈ 618.97M MRSN — a Mersenne prime and a hard protocol ceiling, not the target circulating supply. Block-reward emission follows the halving schedule and converges to ≈ 154.72M MRSN, well below the cap. The remaining MRSN in circulation comes from genesis allocations (Ecosystem & Grants, Foundation Reserve, Team, and Sales), whose absolute amounts are finalized at genesis.
+Total supply is capped at $S_{max} = 2^{89} - 1$ wei ≈ 618.97M MRSN, a Mersenne prime and a hard protocol ceiling, not the target circulating supply. Block-reward emission follows the halving schedule and converges to ≈ 154.72M MRSN, well below the cap. The remaining MRSN in circulation comes from genesis allocations (Ecosystem & Grants, Foundation Reserve, Team, and Sales), whose absolute amounts are finalized at genesis.
 
 Once $S_{minted} \geq S_{max}$, no further rewards are minted (a backstop that the converging emission schedule never reaches in practice).
 
@@ -654,7 +654,7 @@ QCs replace the separate prevote/precommit tallies of CometBFT with a single, co
 
 #### 4.10.3 Protocol Phases
 
-**Phase 1 — Propose:**
+**Phase 1: Propose**
 The leader for round $r$ creates a proposal containing:
 $$Proposal = (blockHash, height, round, proposer, parentQC, justify)$$
 
@@ -662,7 +662,7 @@ Where:
 - $parentQC$: QC from the previous round (chain linkage)
 - $justify$: Highest QC known to the proposer (safety proof)
 
-**Phase 2 — Vote:**
+**Phase 2: Vote**
 Validators receiving a valid proposal vote if it satisfies the safety rules:
 $$Vote = (blockHash, height, round, voter, voterStake)$$
 
@@ -695,7 +695,7 @@ A validator votes on a proposal only if:
 1. $proposal.round > lastVotedRound$ (no equivocation)
 2. $proposal$ extends $lockedQC$ OR $proposal.justify.round > lockedQC.round$ (locking rule)
 
-The locking rule ensures that once a validator locks on a QC, it will not vote for conflicting proposals unless presented with a strictly higher QC—guaranteeing that committed blocks cannot be reverted.
+The locking rule ensures that once a validator locks on a QC, it will not vote for conflicting proposals unless presented with a strictly higher QC, guaranteeing that committed blocks cannot be reverted.
 
 #### 4.10.6 Timeout and View Change
 
@@ -878,7 +878,7 @@ Transactions ──► Dependency Analysis ──► Group Formation ──► P
                  Read/Write Sets         Union-Find           Forked DBs            Conflict Check
 ```
 
-**Phase 1 — Static Dependency Analysis:**
+**Phase 1: Static Dependency Analysis**
 
 For each transaction $tx_i$, compute its access set:
 $$A(tx_i) = (R_i, W_i)$$
@@ -892,14 +892,14 @@ For contract calls: $R_i = \{from_i\}$, $W_i = \{from_i, to_i, contract_i\}$.
 
 The coinbase address is deliberately excluded from access sets to avoid collapsing all transactions into a single group (every transaction pays gas to coinbase).
 
-**Phase 2 — Group Formation (Union-Find):**
+**Phase 2: Group Formation (Union-Find)**
 
 Transactions with overlapping write sets are grouped together:
 $$tx_i \sim tx_j \iff W_i \cap (R_j \cup W_j) \neq \emptyset \lor W_j \cap (R_i \cup W_i) \neq \emptyset$$
 
 Using a Union-Find data structure, transactions are partitioned into disjoint groups $G_1, G_2, \ldots, G_k$ where transactions in different groups have completely independent state access.
 
-**Phase 3 — Parallel Execution:**
+**Phase 3: Parallel Execution**
 
 Each group $G_i$ is executed on a separate thread using `std::thread::scope`:
 
@@ -907,7 +907,7 @@ $$\forall i \in [1, k]: \text{thread}_i \leftarrow \text{execute}(G_i, \text{for
 
 Each thread operates on a cloned `InMemoryDB` fork. Within a group, transactions execute sequentially to respect intra-group ordering.
 
-**Phase 4 — MVCC Validation:**
+**Phase 4: MVCC Validation**
 
 Multi-Version Concurrency Control memory stores speculative writes:
 $$MVCC[address][tx\_index] = AccountInfo$$
@@ -917,7 +917,7 @@ $$\forall tx_i \in G_a, tx_j \in G_b (a \neq b): W_i \cap W_j = \emptyset$$
 
 If validation fails, the block falls back to sequential execution.
 
-**Phase 5 — State Merge:**
+**Phase 5: State Merge**
 
 Since groups have disjoint write sets, the forked DB snapshots are merged directly. Coinbase balance deltas (gas payments) are accumulated across all groups:
 
@@ -1272,7 +1272,7 @@ For reversing (e.g., long 10 → short 5): close full position (realize PnL), th
 
 #### 6.8.2 Complexity of Position Updates
 
-- **Add/Reduce**: $O(1)$ — single hash map lookup and update
+- **Add/Reduce**: $O(1)$, a single hash map lookup and update
 - **Full book scan for margin**: $O(|P|)$ where $|P|$ = number of positions per account
 
 Position updates on fills:
@@ -1292,7 +1292,7 @@ In continuous limit order books (CLOBs), the order of arrival determines executi
 - **Sandwich attacks**: Placing orders before and after a victim's order to extract value
 - **Latency arbitrage**: Exploiting speed advantages to capture stale quotes
 
-FBA eliminates all of these by making order **arrival time within a batch window irrelevant** — only the price matters.
+FBA eliminates all of these by making order **arrival time within a batch window irrelevant**: only the price matters.
 
 #### 6.9.2 Batch Window
 
@@ -1329,7 +1329,7 @@ All matched trades execute at the uniform clearing price $p^*$:
 
 $$AuctionFill = (buyer, seller, price = p^*, size, market)$$
 
-This means **every participant in the batch gets the same price** — eliminating information advantages from speed or ordering.
+This means **every participant in the batch gets the same price**, eliminating information advantages from speed or ordering.
 
 #### 6.9.5 Worked Example
 
@@ -1379,7 +1379,7 @@ A protocol-level insurance fund collects a configurable fraction of trading fees
 
 $$insuranceFund += tradeFee \cdot \frac{contributionRateBps}{10{,}000}$$
 
-The fund covers liquidation deficits — when a liquidated account's losses exceed its collateral:
+The fund covers liquidation deficits, namely when a liquidated account's losses exceed its collateral:
 
 $$deficit = |losses| - collateral$$
 
@@ -1513,13 +1513,13 @@ In 2024, estimated MEV extraction on Ethereum exceeded $600M [14]. For a chain l
 
 #### 7.8.2 Commit-Reveal Scheme
 
-**Phase 1 — Commit:**
+**Phase 1: Commit**
 Users submit a commitment hash:
 $$commitment = H(encrypted\_tx \,||\, salt)$$
 
 Where $H$ is Keccak-256, $encrypted\_tx$ is the transaction bytes, and $salt$ is a random 32-byte value. The commitment reveals nothing about the transaction content.
 
-**Phase 2 — Reveal:**
+**Phase 2: Reveal**
 In a subsequent block (within the commit window), the user reveals the actual transaction and salt. The pool verifies:
 $$H(revealed\_tx \,||\, revealed\_salt) = commitment$$
 
@@ -1618,7 +1618,7 @@ This creates deflationary pressure when network usage is high.
 Total supply is capped at:
 $$S_{max} = 2^{89} - 1 \text{ wei} = 618{,}970{,}019{,}642{,}690{,}137{,}449{,}562{,}111 \text{ wei} \approx 618.97\text{M MRSN}$$
 
-The cap is a Mersenne prime and a **hard protocol ceiling**, not the target circulating supply. Block-reward emission converges to ≈ 154.72M MRSN (see below), well under the cap; the remaining MRSN in circulation comes from genesis allocations — Ecosystem & Grants, Foundation Reserve, Team & Core Contributors, and Sales — whose absolute amounts are finalized at genesis. ~99% of block rewards are emitted by ~year 7–8 (at the 1 s default block time).
+The cap is a Mersenne prime and a **hard protocol ceiling**, not the target circulating supply. Block-reward emission converges to ≈ 154.72M MRSN (see below), well under the cap; the remaining MRSN in circulation comes from genesis allocations (Ecosystem & Grants, Foundation Reserve, Team & Core Contributors, and Sales) whose absolute amounts are finalized at genesis. ~99% of block rewards are emitted by ~year 7–8 (at the 1 s default block time).
 
 #### 8.2.2 Block Rewards
 
@@ -1628,7 +1628,7 @@ $$R_0 = 2^{61} - 1 \text{ wei} = 2{,}305{,}843{,}009{,}213{,}693{,}951 \text{ we
 Reward halving schedule:
 $$R(h) = R_0 \cdot 2^{-\lfloor h / H \rfloor}$$
 
-Where $H = 33{,}550{,}336$ blocks — the 5th perfect number $2^{12}(2^{13}-1)$, whose Mersenne factor $2^{13}-1 = 8191$ is the mainnet chain ID (~1.06 years at the default 1s block time). The geometric series converges to a total emission of $R_0 \times H \times 2 \approx 154.72\text{M MRSN}$.
+Where $H = 33{,}550{,}336$ blocks, the 5th perfect number $2^{12}(2^{13}-1)$, whose Mersenne factor $2^{13}-1 = 8191$ is the mainnet chain ID (~1.06 years at the default 1s block time). The geometric series converges to a total emission of $R_0 \times H \times 2 \approx 154.72\text{M MRSN}$.
 
 Reward is capped by remaining supply:
 $$R_{effective}(h) = \min(R(h), S_{max} - S_{minted}(h))$$
@@ -2103,7 +2103,7 @@ Following the Bitcoin whitepaper's treatment of attacker success probability [1]
 **Analysis**: Under BFT finality, a block is finalized only when 2/3 of stake has precommitted. Let $p = 1 - q$ be the honest stake fraction. The finality threshold is $T = \lfloor 2S_{total}/3 \rfloor + 1$. For a conflicting block to be finalized, the attacker would need $T$ stake to precommit. But the attacker controls only $q \cdot S_{total} < S_{total}/3 < T$. Thus:
 $$P(\text{revert} \mid q < 1/3) = 0$$
 
-Finality is *irreversible* under honest majority. No conflicting block can gain 2/3 support without at least 1/3 of stake double-signing—which is slashed.
+Finality is *irreversible* under honest majority. No conflicting block can gain 2/3 support without at least 1/3 of stake double-signing, which is slashed.
 
 **Bitcoin comparison** [1]: In Nakamoto consensus, attacker success probability follows a Gambler's Ruin. For $q < 0.5$ and $z$ confirmations:
 $$P_{\text{catch-up}} \approx \left(\frac{q}{p}\right)^z$$
@@ -2155,9 +2155,9 @@ v6.0 introduces layered MEV protection. We analyze residual attack surfaces:
 
 ### 13.7 Known Limitations
 
-1. ~~**No Signature Verification**~~: ✅ **Resolved in v5.x** — ECDSA secp256k1 transaction signing and verification implemented
+1. ~~**No Signature Verification**~~: ✅ **Resolved in v5.x**: ECDSA secp256k1 transaction signing and verification implemented
 2. **Centralized Initialization**: Genesis validators are manually configured
-3. ~~**Limited P2P**~~: ✅ **Resolved in v5.x** — UDP gossip, TCP sync, peer discovery implemented
+3. ~~**Limited P2P**~~: ✅ **Resolved in v5.x**: UDP gossip, TCP sync, peer discovery implemented
 4. **No Encryption**: Network messages are unencrypted (noise protocol planned)
 5. **Storage Engine**: sled is used for development; production deployment should use libmdbx or RocksDB for higher throughput (see §16)
 6. **Parallel Execution Heuristic**: Static dependency analysis may over-serialize transactions when addresses are not known upfront (e.g., delegate calls). Runtime MVCC validation catches this but triggers sequential fallback.
@@ -2239,7 +2239,7 @@ MersennetOrders matching is highly efficient:
 On a 1 Gbps connection, block propagation is bounded by:
 - Block size: ~100–500 KB typical (transactions + events + bridge messages)
 - Propagation to ~8 peers: ~4 MB per block
-- At 1 block/second: **~4 MB/s** sustained—well within 1 Gbps
+- At 1 block/second: **~4 MB/s** sustained, well within 1 Gbps
 
 ### 14.2 Latency
 
@@ -2407,7 +2407,7 @@ These execute **sequentially in separate environments**. Smart contracts on Hype
 
 The most valuable DeFi applications require atomic composability:
 
-**Automated Market Making**: A smart contract MM must read the current order book, compute optimal bid/ask, submit orders, and react to fills — all atomically. On Hyperliquid, each step happens in a different block with seconds of delay. On Mersennet, it's one function call.
+**Automated Market Making**: A smart contract MM must read the current order book, compute optimal bid/ask, submit orders, and react to fills, all atomically. On Hyperliquid, each step happens in a different block with seconds of delay. On Mersennet, it's one function call.
 
 **Structured Products**: A vault that borrows collateral, places hedging orders, and adjusts positions based on fills requires atomic execution. On Hyperliquid, the fills arrive blocks later; the vault cannot react in time. On Mersennet, the vault sees fills instantly.
 
@@ -2620,7 +2620,7 @@ The following items from v5.0's roadmap have been implemented:
 - ✅ **Block Pipeline**: Overlapping execution of block N+1 with consensus of block N (Monad-class pipelining). Configurable depth, automatic drain-and-commit.
 - ✅ **Noise Protocol Encryption**: Authenticated P2P using `Noise_XX_25519_ChaChaPoly_BLAKE2s` (same pattern as libp2p and WireGuard). X25519 keypair generation, mutual authentication, encrypted message exchange.
 - ✅ **ZK State Proofs**: Modular prover framework with `StateProver` trait, `MockProver` implementation, batch aggregation (`BatchProofAggregator`), and checkpoint chain verification (`CheckpointStore`). Wired into block production loop for periodic proof checkpoints.
-- ✅ **Account Abstraction (ERC-4337)**: Full `UserOperation` lifecycle—`EntryPoint` with nonce/gas/signature validation, `UserOpMempool` with sender indexing, `Bundler` for bundle creation, paymaster staking support.
+- ✅ **Account Abstraction (ERC-4337)**: Full `UserOperation` lifecycle: `EntryPoint` with nonce/gas/signature validation, `UserOpMempool` with sender indexing, `Bundler` for bundle creation, paymaster staking support.
 - ✅ **Cross-Chain Bridge Infrastructure**: Multi-chain deposit/withdrawal (Ethereum, Arbitrum, Optimism, Base, custom chains), relayer verification, token configuration with min/max/daily limits, Merkle proof generation for withdrawal finalization.
 - ✅ **TypeScript SDK**: `MersennetProvider` (JSON-RPC), `MersennetSubscription` (WebSocket), `MersennetOrders` (CLOB interaction), `MersennetPrecompile` (ABI encoding for `0x0100`). 1,012 lines.
 - ✅ **Block Explorer**: Standalone dark-themed web UI for blocks, transactions, order book, validators, and search. 1,272 lines.
@@ -2632,7 +2632,7 @@ The following items from v5.0's roadmap have been implemented:
 - **Flat State Architecture**: Separate state storage from state trie computation. Store current account state in a flat key-value table; compute Merkle proofs only when needed (for light clients or bridges).
 - **Grafana Dashboards**: Pre-built dashboards for all Prometheus metrics.
 - **Cargo Workspace Restructure** *(completed)*: The repository is now a six-crate workspace (`core`, `network`, `rpc`, `node`, `zkp`, `state-proof`) for independent compilation and testing.
-- **SP1 ZK Integration** *(underway)*: Replace MockProver with the SP1 zkVM for production-grade state transition proofs — the `mersennet-state-proof` crate ships the SP1 prover/verifier glue behind the `prover`/`sp1` feature flags.
+- **SP1 ZK Integration** *(underway)*: Replace MockProver with the SP1 zkVM for production-grade state transition proofs. The `mersennet-state-proof` crate ships the SP1 prover/verifier glue behind the `prover`/`sp1` feature flags.
 
 ### 16.4 Medium-Term (Months 4-6)
 
@@ -2666,11 +2666,11 @@ The following items from v5.0's roadmap have been implemented:
 
 ## 17. Applications
 
-Mersennet's unified architecture—combining EVM programmability with native order matching—enables a wide range of applications. We categorize them into financial, semi-financial, and non-financial use cases, following the framework established in the [Ethereum whitepaper](https://ethereum.org/whitepaper/).
+Mersennet's unified architecture, combining EVM programmability with native order matching, enables a wide range of applications. We categorize them into financial, semi-financial, and non-financial use cases, following the framework established in the [Ethereum whitepaper](https://ethereum.org/whitepaper/).
 
 ### 17.1 Real-World Asset (RWA) Tokenization and Trading
 
-**Problem**: Traditional assets—bonds, equities, real estate, commodities—are illiquid, opaque, and difficult to fractionalize. Settlement takes days; custody is expensive; ownership transfer requires intermediaries.
+**Problem**: Traditional assets (bonds, equities, real estate, commodities) are illiquid, opaque, and difficult to fractionalize. Settlement takes days; custody is expensive; ownership transfer requires intermediaries.
 
 **Mersennet Solution**: Tokenize RWAs as EVM-compatible assets (ERC-20 or custom contracts) and trade them on MersennetOrders. The native order book provides:
 
@@ -2688,7 +2688,7 @@ Mersennet's unified architecture—combining EVM programmability with native ord
 
 ### 17.2 Institutional Credit On-Chain
 
-**Problem**: Institutional credit markets—bonds, loans, credit default swaps (CDS), asset-backed securities (ABS)—are fragmented, over-the-counter, and lack transparent pricing. On-chain credit protocols (e.g., Centrifuge, Maple, Goldfinch) have emerged but typically lack native order books; trading occurs via AMMs or OTC.
+**Problem**: Institutional credit markets such as bonds, loans, credit default swaps (CDS), and asset-backed securities (ABS) are fragmented, over-the-counter, and lack transparent pricing. On-chain credit protocols (e.g., Centrifuge, Maple, Goldfinch) have emerged but typically lack native order books; trading occurs via AMMs or OTC.
 
 **Mersennet Solution**: MersennetOrders can host **credit instrument order books**:
 
@@ -2699,7 +2699,7 @@ Mersennet's unified architecture—combining EVM programmability with native ord
 
 The bridge enables EVM contracts (e.g., collateral managers, oracles) to interact with credit positions. Margin and liquidation logic in MersennetOrders provide risk management for leveraged credit positions.
 
-**Use Case—Tokenized Bond Market**:
+**Use Case: Tokenized Bond Market**
 1. Issuer mints bond tokens (ERC-20) with maturity, coupon, and face value
 2. Market created via `mersennet_orders_addMarket` for the bond token
 3. Institutional buyers and sellers submit limit orders
@@ -2727,7 +2727,7 @@ As with Ethereum, token systems are straightforward on Mersennet. The key operat
 - **Trading**: Tokens can be listed on MersennetOrders for limit order trading
 - **Collateral**: Tokens can back MersennetOrders collateral for leveraged positions
 
-Example: A stablecoin (e.g., USDC) is deployed as an ERC-20. A market is created for USDC/ETH. Users deposit USDC as collateral, trade ETH-perpetuals, and settle in USDC—all within Mersennet's unified state.
+Example: A stablecoin (e.g., USDC) is deployed as an ERC-20. A market is created for USDC/ETH. Users deposit USDC as collateral, trade ETH-perpetuals, and settle in USDC, all within Mersennet's unified state.
 
 ### 17.5 Financial Derivatives and Hedging
 
@@ -2782,7 +2782,7 @@ Mersennet's EVM is Turing-complete. As with Ethereum, malicious or buggy contrac
 - **Bounded computation**: No transaction can run indefinitely
 - **Predictable cost**: Senders know maximum cost upfront (gas_limit × gas_price)
 
-MersennetOrders, by contrast, is **not** Turing-complete. Its logic is fixed: order matching, margin checks, liquidations. This simplifies verification and eliminates gas as a concern for the matching engine. The separation of domains—Turing-complete EVM for flexibility, fixed logic for MersennetOrders—provides both power and predictability.
+MersennetOrders, by contrast, is **not** Turing-complete. Its logic is fixed: order matching, margin checks, liquidations. This simplifies verification and eliminates gas as a concern for the matching engine. The separation of domains (Turing-complete EVM for flexibility, fixed logic for MersennetOrders) provides both power and predictability.
 
 ### 18.3 Scalability Considerations
 
@@ -2792,7 +2792,7 @@ Like Ethereum and Bitcoin, Mersennet requires every full node to process every t
 - Block time (sub-second target)
 - Order matching throughput (10,000+ orders/sec estimated)
 
-**Horizontal scaling**: Multiple validators participate in consensus; each executes the same block and verifies the same state transition. Throughput does not scale with validator count—all validators do the same work.
+**Horizontal scaling**: Multiple validators participate in consensus; each executes the same block and verifies the same state transition. Throughput does not scale with validator count: all validators do the same work.
 
 **Future directions**:
 - **Sharding**: Partition state and transactions across shards; more complex, requires cross-shard messaging
@@ -2809,7 +2809,7 @@ Like Ethereum and Bitcoin, Mersennet requires every full node to process every t
 
 ### 18.5 Implementation Notes and Limitations
 
-- ~~**No transaction signature verification**~~: ✅ **Resolved** — ECDSA secp256k1 signing and verification implemented with chain ID replay protection.
+- ~~**No transaction signature verification**~~: ✅ **Resolved**: ECDSA secp256k1 signing and verification implemented with chain ID replay protection.
 - **Genesis validator bootstrap**: Initial validator set is configured manually; decentralized validator onboarding is future work.
 - **Network encryption**: P2P messages are unencrypted; TLS or noise protocol is planned.
 - **Bridge queue limits**: Queues have configurable max length; under high load, oldest messages may be evicted (FIFO). Applications must handle backpressure.
@@ -2835,7 +2835,7 @@ Like Ethereum and Bitcoin, Mersennet requires every full node to process every t
 | ZK Proofs | No | No | No | No | No | **State proof framework** |
 | TPS | ~7 | ~15 | ~65K | ~200K ops | ~1K | **~72K EVM + 2.4M CLOB** |
 
-Mersennet's distinguishing feature is **TRUE atomic composability** — the CLOB precompile at `0x0100` allows Solidity smart contracts to place orders, receive fill results, and react to them in a **single transaction**. Hyperliquid's HyperEVM, while a major step forward, fundamentally cannot achieve this: CoreWriter actions are queued for the next block and intentionally delayed by seconds. This structural difference means Mersennet can support DeFi use cases (smart contract MMs, vault strategies, atomic liquidation+hedge) that are impossible on any other chain, including Hyperliquid.
+Mersennet's distinguishing feature is **TRUE atomic composability**: the CLOB precompile at `0x0100` allows Solidity smart contracts to place orders, receive fill results, and react to them in a **single transaction**. Hyperliquid's HyperEVM, while a major step forward, fundamentally cannot achieve this: CoreWriter actions are queued for the next block and intentionally delayed by seconds. This structural difference means Mersennet can support DeFi use cases (smart contract MMs, vault strategies, atomic liquidation+hedge) that are impossible on any other chain, including Hyperliquid.
 
 ---
 
@@ -2845,13 +2845,13 @@ Mersennet v7.0 represents a production-grade blockchain architecture that unifie
 
 **Key achievements (v6.0 → v7.0):**
 
-1. **Parallel EVM Execution**: Block-STM optimistic concurrency control achieving ~72,000 TPS—competitive with Solana and Monad
+1. **Parallel EVM Execution**: Block-STM optimistic concurrency control achieving ~72,000 TPS, competitive with Solana and Monad
 2. **CLOB Precompile**: The first EVM precompile for atomic smart contract ↔ order book interaction, enabling composable DeFi strategies impossible on any other chain
-3. **HotStuff-2 Consensus**: Two-phase BFT with ~200ms finality—33% faster than CometBFT and competitive with Hyperliquid's HyperBFT
-4. **Native CLOB Performance**: 2.4M+ operations/second matching engine—12x faster than Hyperliquid with full EVM composability that Hyperliquid lacks
+3. **HotStuff-2 Consensus**: Two-phase BFT with ~200ms finality, 33% faster than CometBFT and competitive with Hyperliquid's HyperBFT
+4. **Native CLOB Performance**: 2.4M+ operations/second matching engine, 12x faster than Hyperliquid with full EVM composability that Hyperliquid lacks
 5. **MEV Protection**: Layered defense with Frequent Batch Auctions (eliminates order book front-running) and Commit-Reveal Pool (protects EVM transactions)
 6. **Production Storage**: ACID-compliant redb backend with pluggable `StateBackend` trait, MVCC support, and crash-safe persistence
-7. **Account Abstraction**: ERC-4337-compatible UserOperation bundling, EntryPoint validation, paymaster support—enabling smart contract wallets for institutional UX
+7. **Account Abstraction**: ERC-4337-compatible UserOperation bundling, EntryPoint validation, paymaster support, enabling smart contract wallets for institutional UX
 8. **Cross-Chain Bridges**: Multi-chain deposit/withdrawal infrastructure with relayer verification, supporting Ethereum, Arbitrum, Optimism, Base, and custom chains
 9. **ZK State Proofs**: Modular framework with mock prover, batch aggregation, and checkpoint chains for trustless light clients and future STARK integration
 10. **Noise P2P Encryption**: Authenticated, encrypted peer communication using the same pattern as libp2p and WireGuard
@@ -2874,7 +2874,7 @@ Mersennet v7.0 represents a production-grade blockchain architecture that unifie
 | ZK Proofs | zkSync (validity proofs) | State proof framework |
 | Smart Contracts | Ethereum (full EVM) | Full EVM + precompile |
 
-The concept of a multi-domain state transition function with parallel execution, atomic cross-domain precompiles, account abstraction, and cross-chain bridges provides a platform with unique potential. Rather than choosing between a general-purpose chain (Ethereum), a parallel chain (Monad), or a specialized trading chain (Hyperliquid), Mersennet offers all three in a single, coherent system—now with the production infrastructure to back it.
+The concept of a multi-domain state transition function with parallel execution, atomic cross-domain precompiles, account abstraction, and cross-chain bridges provides a platform with unique potential. Rather than choosing between a general-purpose chain (Ethereum), a parallel chain (Monad), or a specialized trading chain (Hyperliquid), Mersennet offers all three in a single, coherent system, now with the production infrastructure to back it.
 
 We believe Mersennet is well-positioned to capture the intersection of:
 - **Real-world asset tokenization** ($16T+ market by 2030): Programmable compliance + institutional-grade order books
@@ -2989,11 +2989,11 @@ As Mersennet continues to evolve toward mainnet, we welcome contributions from r
 
 ## Appendix C: Version History
 
-- **v7.0** (March 2026): **Production infrastructure release** — Production storage engine (redb with ACID/MVCC via pluggable `StateBackend` trait), WebSocket real-time subscriptions (6 event types), Block pipeline (overlapping execution+consensus), Noise protocol P2P encryption (Noise_XX_25519_ChaChaPoly_BLAKE2s), ZK state proofs (modular prover framework with batch aggregation and checkpoint chains), Account Abstraction (ERC-4337 UserOperation/EntryPoint/Bundler), Cross-chain bridge infrastructure (Ethereum/Arbitrum/Optimism/Base with relayer verification), TypeScript SDK (1,012 lines), Block Explorer (1,272 lines), production hardening (graceful shutdown, health checks), 72 tests passing, 36 Rust source files, 15,205 lines of Rust
-- **v6.0** (March 2026): **Major architecture upgrade** — Parallel EVM execution (Block-STM optimistic concurrency, MVCC validation, automatic fallback), HotStuff-2 two-phase BFT consensus (33% faster finality, Quorum Certificates, 2-chain commit rule), CLOB Precompile at `0x0100` (8 Solidity-callable functions for atomic EVM ↔ order book interaction), Frequent Batch Auctions (uniform-price MEV-resistant matching), Commit-Reveal MEV protection, Insurance Fund + Auto-Deleveraging, match-time margin validation, comprehensive competitive analysis (vs. Ethereum, Solana, Monad, Sei, Aptos, Sui, Hyperliquid, dYdX, BASE, XDC, TRON), updated benchmarks (60K+ TPS parallel, 1.5M ops/s matching, ~200ms finality), expanded Related Work table, updated code organization (28 source files, 10,600 lines), 16 academic references
-- **v5.0** (January 2026): Technical depth—position VWAP formula, entry price update math, order book complexity table (Big-O), EIP-1559 numerical example, Attack Analysis probability formulae (Bitcoin Gambler's Ruin comparison), Benchmarks section (block execution, order matching, RPC latency), expanded Appendix A (complexity notation, probability), new Appendix D (Complexity Analysis), new Appendix E (Formulae Reference)
-- **v4.0** (January 2026): Incorporates patterns from top blockchain whitepapers—Preface & scope, Related Work table, Terminology, performance numbers, Attack Analysis, wire formats
-- **v3.0** (January 2026): Ethereum-style expansion—conceptual intro, Applications, Miscellanea, comparison table
+- **v7.0** (March 2026): **Production infrastructure release**. Production storage engine (redb with ACID/MVCC via pluggable `StateBackend` trait), WebSocket real-time subscriptions (6 event types), Block pipeline (overlapping execution+consensus), Noise protocol P2P encryption (Noise_XX_25519_ChaChaPoly_BLAKE2s), ZK state proofs (modular prover framework with batch aggregation and checkpoint chains), Account Abstraction (ERC-4337 UserOperation/EntryPoint/Bundler), Cross-chain bridge infrastructure (Ethereum/Arbitrum/Optimism/Base with relayer verification), TypeScript SDK (1,012 lines), Block Explorer (1,272 lines), production hardening (graceful shutdown, health checks), 72 tests passing, 36 Rust source files, 15,205 lines of Rust
+- **v6.0** (March 2026): **Major architecture upgrade**. Parallel EVM execution (Block-STM optimistic concurrency, MVCC validation, automatic fallback), HotStuff-2 two-phase BFT consensus (33% faster finality, Quorum Certificates, 2-chain commit rule), CLOB Precompile at `0x0100` (8 Solidity-callable functions for atomic EVM ↔ order book interaction), Frequent Batch Auctions (uniform-price MEV-resistant matching), Commit-Reveal MEV protection, Insurance Fund + Auto-Deleveraging, match-time margin validation, comprehensive competitive analysis (vs. Ethereum, Solana, Monad, Sei, Aptos, Sui, Hyperliquid, dYdX, BASE, XDC, TRON), updated benchmarks (60K+ TPS parallel, 1.5M ops/s matching, ~200ms finality), expanded Related Work table, updated code organization (28 source files, 10,600 lines), 16 academic references
+- **v5.0** (January 2026): Technical depth, adding position VWAP formula, entry price update math, order book complexity table (Big-O), EIP-1559 numerical example, Attack Analysis probability formulae (Bitcoin Gambler's Ruin comparison), Benchmarks section (block execution, order matching, RPC latency), expanded Appendix A (complexity notation, probability), new Appendix D (Complexity Analysis), new Appendix E (Formulae Reference)
+- **v4.0** (January 2026): Incorporates patterns from top blockchain whitepapers, adding Preface & scope, Related Work table, Terminology, performance numbers, Attack Analysis, wire formats
+- **v3.0** (January 2026): Ethereum-style expansion, adding conceptual intro, Applications, Miscellanea, comparison table
 - **v2.0** (January 2026): Comprehensive technical whitepaper
 - **v1.0** (Initial): Basic technical draft
 

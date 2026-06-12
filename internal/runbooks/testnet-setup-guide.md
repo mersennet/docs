@@ -4,7 +4,7 @@ Bring up the public Mersennet testnet (chain ID **131071** = 2¹⁷−1) from
 fresh servers, and wire it into the live ecosystem
 (explorer / faucet / trade on `*.mersennet.com`).
 
-There are three ways to run it — pick one:
+There are three ways to run it; pick one:
 
 | Path | Use case | Time |
 |---|---|---|
@@ -39,7 +39,7 @@ There are three ways to run it — pick one:
   the world and runs the faucet + monitoring. Validators are never
   exposed directly.
 - Genesis, validator keys, and the faucet key are generated locally by
-  the `genesis` tool and shipped to the servers — no key ever needs to
+  the `genesis` tool and shipped to the servers; no key ever needs to
   be created on a server.
 
 ### Network parameters
@@ -68,15 +68,15 @@ Requirements:
 
 - **Ubuntu 24.04**, your SSH key added at creation (`ssh root@IP` must work).
 - All 5 servers must reach each other on **30303 tcp/udp** (same region
-  or public IPs are both fine — the setup scripts configure `ufw`).
+  or public IPs are both fine; the setup scripts configure `ufw`).
 - Note all 5 public IPs.
 
 ---
 
-## 2. Path A — one-command deploy (recommended)
+## 2. Path A: one-command deploy (recommended)
 
 Run from your workstation, in the chain repo
-(`~/mersennet/mersennet`). You need the Rust toolchain locally — the
+(`~/mersennet/mersennet`). You need the Rust toolchain locally: the
 script builds release binaries and pushes them out.
 
 ### 2.1 Configure
@@ -105,7 +105,7 @@ RPC_DOMAIN=rpc.mersennet.com
 FAUCET_DOMAIN=faucet-api.mersennet.com
 ```
 
-`RPC_DOMAIN` is optional — without it, RPC is plain HTTP on `:8545`,
+`RPC_DOMAIN` is optional; without it, RPC is plain HTTP on `:8545`,
 which is what the current ecosystem Caddy proxies expect.
 
 ### 2.2 Deploy
@@ -161,12 +161,12 @@ ssh root@<IP> journalctl -u mersennet -f
 ssh root@<IP> systemctl restart mersennet
 ```
 
-Monitoring: Grafana at `http://<PUBLIC_IP>:3000` (admin/changeme —
+Monitoring: Grafana at `http://<PUBLIC_IP>:3000` (admin/changeme,
 change it), Prometheus scrapes every node's `:8545/metrics`.
 
 ---
 
-## 3. Path B — manual step-by-step
+## 3. Path B: manual step-by-step
 
 What Path A automates, in case you want a different topology or to do
 the genesis ceremony separately.
@@ -275,7 +275,7 @@ needs 3 of 4 online to produce blocks.
 
 ---
 
-## 4. Path C — local Docker Compose (smoke test)
+## 4. Path C: local Docker Compose (smoke test)
 
 ```bash
 cargo run --bin genesis -- --validators 4 --chain-id 131071 --output-dir genesis-output
@@ -293,7 +293,7 @@ docker compose -f docker-compose.testnet.yml up -d --build
 
 The web properties on **178.104.211.138** currently point at the old
 testnet host (`46.225.30.187`). After your new testnet is up, repoint
-them — `<PUBLIC_IP>` below is your new public node.
+them: `<PUBLIC_IP>` below is your new public node.
 
 ### 5.1 Caddy proxies (explorer RPC + faucet API)
 
@@ -332,7 +332,7 @@ rebuild needed.)
 RPC URL `http://46.225.30.187:8545`. Replace with the new endpoint
 (or better, a `rpc.mersennet.com` domain) in:
 
-- `docs/src/` — search `46.225.30.187`
+- `docs/src/`: search `46.225.30.187`
 - `website/app/site.ts` (`rpcUrl`) and `app/components/CodeTabs.tsx`
 
 then rebuild + rsync both (see repo READMEs).
@@ -345,7 +345,7 @@ then rebuild + rsync both (see repo READMEs).
 
 With `RPC_DOMAIN` set in `nodes.conf`, the deploy script installs
 Caddy + TLS on the public node automatically, giving you
-`https://rpc.mersennet.com` — then use that everywhere instead of the
+`https://rpc.mersennet.com`; then use that everywhere instead of the
 raw IP, which also fixes HTTPS mixed-content for MetaMask users.
 
 ---
@@ -372,11 +372,11 @@ After wiring everything:
 - `genesis-output/keys/*` and `faucet-key.json` are **testnet** keys,
   but still: never commit them, never reuse for mainnet.
 - Validator RPC must stay firewalled (the provided `ufw` scripts do
-  this) — only P2P 30303 is public on validators.
+  this); only P2P 30303 is public on validators.
 - Change the Grafana admin password on first login.
-- Keep `deploy/.genesis-output/` — you need the same genesis to add
+- Keep `deploy/.genesis-output/`: you need the same genesis to add
   more nodes later. To add a full node: copy `rpc-node.json`, give it
   a fresh `node_key`, point `peers` at the validators.
-- Re-genesis (`deploy-testnet.sh` from scratch) wipes the chain — all
+- Re-genesis (`deploy-testnet.sh` from scratch) wipes the chain: all
   balances and deployed contracts are lost. For binary upgrades that
   keep state, use `./deploy/testnet-upgrade.sh`.

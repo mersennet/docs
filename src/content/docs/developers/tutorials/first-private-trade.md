@@ -3,7 +3,7 @@ title: "Your First Private Trade"
 description: "An end-to-end walkthrough: connect to the Mersennet testnet, shield MRSN into a private note, place a shielded order, watch it settle, and verify the chain with an SP1 state proof."
 ---
 
-In about fifteen minutes you'll go from an empty wallet to a settled trade that nobody — not the node, not the sequencer, not the order book — could attribute to you. Everything here runs against the live testnet with the real `@mersennet/sdk`.
+In about fifteen minutes you'll go from an empty wallet to a settled trade that nobody (not the node, not the sequencer, not the order book) could attribute to you. Everything here runs against the live testnet with the real `@mersennet/sdk`.
 
 ## What you'll build
 
@@ -12,9 +12,9 @@ By the end of this tutorial you will have:
 - Connected to the Mersennet testnet over JSON-RPC and verified the chain ID.
 - Funded a transparent account with testnet MRSN from the faucet.
 - **Shielded** MRSN into a private note in the on-chain commitment tree.
-- Placed a **shielded order** on the MRSN/USDC market — public only as a bucketed tier.
+- Placed a **shielded order** on the MRSN/USDC market, public only as a bucketed tier.
 - Reconstructed your private balance client-side from encrypted notes.
-- Verified the chain's state transition with an **SP1 proof** — no trust in the node required.
+- Verified the chain's state transition with an **SP1 proof**, with no trust in the node required.
 
 **Prerequisites:**
 
@@ -23,12 +23,12 @@ By the end of this tutorial you will have:
 - The SDK: `npm install @mersennet/sdk`.
 
 :::tip[When a call fails]
-Every RPC error code Mersennet returns is catalogued in the [error reference](/developers/rpc/errors/). Keep it open — the codes are specific, and the `data` field usually names the exact problem.
+Every RPC error code Mersennet returns is catalogued in the [error reference](/developers/rpc/errors/). Keep it open: the codes are specific, and the `data` field usually names the exact problem.
 :::
 
 ## Step 1: Connect
 
-Point a `MersennetProvider` at the public testnet RPC and confirm you're on the right chain. The testnet chain ID is `0x1ffff` — 131071, a Mersenne prime, naturally.
+Point a `MersennetProvider` at the public testnet RPC and confirm you're on the right chain. The testnet chain ID is `0x1ffff`, which is 131071, a Mersenne prime, naturally.
 
 ```ts title="connect.ts"
 import { MersennetProvider } from '@mersennet/sdk';
@@ -53,11 +53,11 @@ curl -X POST https://rpc.mersennet.com \
 # → { "jsonrpc": "2.0", "id": 1, "result": "0x1ffff" }
 ```
 
-If the result isn't `0x1ffff`, stop — you're talking to the wrong network.
+If the result isn't `0x1ffff`, stop: you're talking to the wrong network.
 
 ## Step 2: Get testnet MRSN
 
-Request funds from the faucet at **https://faucet.mersennet.com** — paste your address in the web UI, or script it:
+Request funds from the faucet at **https://faucet.mersennet.com**. Paste your address in the web UI, or script it:
 
 ```bash title="request-funds.sh"
 curl -X POST https://faucet.mersennet.com/faucet \
@@ -76,9 +76,9 @@ The faucet is rate-limited per address and per IP. Details and troubleshooting l
 
 ## Step 3: Shield your MRSN
 
-Right now your balance is transparent — anyone can read it. Privacy starts when you move value into the shielded pool.
+Right now your balance is transparent: anyone can read it. Privacy starts when you move value into the shielded pool.
 
-Two sentences of theory. A **note** is an encrypted record of value: asset, amount, owner public key, and randomness — only you (and anyone you explicitly authorize) can read it. A **commitment** is a hiding, binding hash of that note, appended to the on-chain commitment tree, revealing nothing about the contents. The full model — including nullifiers, which retire notes when spent — is in [Shielded accounts](/privacy/shielded-accounts/), and every term is defined in the [glossary](/resources/glossary/).
+Two sentences of theory. A **note** is an encrypted record of value: asset, amount, owner public key, and randomness, and only you (and anyone you explicitly authorize) can read it. A **commitment** is a hiding, binding hash of that note, appended to the on-chain commitment tree, revealing nothing about the contents. The full model, including nullifiers, which retire notes when spent, is in [Shielded accounts](/privacy/shielded-accounts/), and every term is defined in the [glossary](/resources/glossary/).
 
 First, derive your viewing key and the note you're about to mint:
 
@@ -114,7 +114,7 @@ const result = await provider.request('mersennet_submitShield', [
 console.log('Shielded:', result);
 ```
 
-The chain records only the commitment. Your address appears once — in the shield itself, because value is visibly *entering* the pool — and never again. Everything you do from here is unlinkable to it. See the [Shielded JSON-RPC reference](/developers/privacy/shielded-rpc/) for the exact payload format and its counterpart, `mersennet_submitUnshield`.
+The chain records only the commitment. Your address appears once (in the shield itself, because value is visibly *entering* the pool) and never again. Everything you do from here is unlinkable to it. See the [Shielded JSON-RPC reference](/developers/privacy/shielded-rpc/) for the exact payload format and its counterpart, `mersennet_submitUnshield`.
 
 :::note[Activation gate]
 Shielded mutation methods are gated by the privacy hard fork. On a pre-privacy node they return error `-32605` ("method disabled in current chain mode"). If you hit it, you're either on the wrong endpoint or the fork hasn't activated on that network yet.
@@ -145,7 +145,7 @@ Under the hood, `placeOrder` fetches the current shielded root as the proof anch
 
 | | |
 |---|---|
-| **Hidden** | Your identity, your exact price, your exact size. They live in the proof witness and the encrypted intent — never on chain in the clear. |
+| **Hidden** | Your identity, your exact price, your exact size. They live in the proof witness and the encrypted intent, never on chain in the clear. |
 | **Public** | The market ID and **bucketed tiers**: a `priceBand` and `sizeBand` coarse enough to be unlinkable, precise enough for the chain to run margin and risk checks in zero knowledge. |
 
 Your intent travels threshold-encrypted through the mempool, so validators order it without reading it. At the next frequent-batch-auction (FBA) tick the committee decrypts the batch, matches everything at one uniform clearing price, and applies fills to the book:
@@ -183,12 +183,12 @@ Your intent travels threshold-encrypted through the mempool, so validators order
 </svg>
 
 :::caution[Testnet markets are sparse]
-Liquidity on the testnet order book is thin and intermittent. Your order may rest unmatched for several FBA ticks — that's the testnet, not your code. Check public per-market activity with `mersennet_getShieldedMarketAggregates` before assuming something is broken.
+Liquidity on the testnet order book is thin and intermittent. Your order may rest unmatched for several FBA ticks: that's the testnet, not your code. Check public per-market activity with `mersennet_getShieldedMarketAggregates` before assuming something is broken.
 :::
 
 ## Step 5: Watch it settle
 
-There is no `getMyFills` endpoint — by design. The node never learns which fills are yours, so your wallet reconstructs its own state by scanning encrypted notes and decrypting the ones addressed to your viewing key. Mint a self-grant (`mersennet_viewGrantToken` issued to your own viewing key — see [selective disclosure](/privacy/selective-disclosure/)), then scan:
+There is no `getMyFills` endpoint, by design. The node never learns which fills are yours, so your wallet reconstructs its own state by scanning encrypted notes and decrypting the ones addressed to your viewing key. Mint a self-grant (`mersennet_viewGrantToken` issued to your own viewing key; see [selective disclosure](/privacy/selective-disclosure/)), then scan:
 
 ```ts title="watch-settlement.ts"
 // Scan and decrypt your own notes, refreshing the local note cache.
@@ -208,11 +208,11 @@ const portfolio = client.reconstructBalances({ spentNullifiers });
 console.log('Spendable:', portfolio.perAsset, 'unspent notes:', portfolio.unspentNoteCount);
 ```
 
-When your order fills, a new note appears in the scan and your reconstructed balance moves — that's settlement, observed entirely client-side. For the public side of the same event, subscribe to `newClearingPrice` or `BatchAuctionResults` over WebSocket (`wss://rpc.mersennet.com`). The full workflow, including nullifier tracking, is covered in [Note scanning & wallet reconstruction](/privacy/note-scanning/).
+When your order fills, a new note appears in the scan and your reconstructed balance moves: that's settlement, observed entirely client-side. For the public side of the same event, subscribe to `newClearingPrice` or `BatchAuctionResults` over WebSocket (`wss://rpc.mersennet.com`). The full workflow, including nullifier tracking, is covered in [Note scanning & wallet reconstruction](/privacy/note-scanning/).
 
 ## Step 6: Verify the chain
 
-You've trusted the RPC node for six steps. Now stop. Every Mersennet block carries a zero-knowledge proof that the whole state transition — your shield, your order, the auction that matched it — was executed correctly:
+You've trusted the RPC node for six steps. Now stop. Every Mersennet block carries a zero-knowledge proof that the whole state transition (your shield, your order, the auction that matched it) was executed correctly:
 
 ```bash title="fetch-state-proof.sh"
 curl -X POST https://rpc.mersennet.com \
@@ -220,12 +220,12 @@ curl -X POST https://rpc.mersennet.com \
   -d '{"jsonrpc":"2.0","method":"mersennet_getLatestStateProof","params":[],"id":1}'
 ```
 
-The response carries `prevStateRoot`, `newStateRoot`, the nullifier roots, and `proofBincodeHex` with `"proofType": "SP1"` — check it yourself, statelessly, with `mersennet_verifyStateProof`. Each SP1 proof is then wrapped into a Groth16 proof and verified by a contract on Ethereum, so even an Ethereum light client can accept Mersennet state roots without trusting a single Mersennet node. Details in [Verifiable state: SP1 + Groth16](/privacy/state-proofs/).
+The response carries `prevStateRoot`, `newStateRoot`, the nullifier roots, and `proofBincodeHex` with `"proofType": "SP1"`. Check it yourself, statelessly, with `mersennet_verifyStateProof`. Each SP1 proof is then wrapped into a Groth16 proof and verified by a contract on Ethereum, so even an Ethereum light client can accept Mersennet state roots without trusting a single Mersennet node. Details in [Verifiable state: SP1 + Groth16](/privacy/state-proofs/).
 
 That's the whole loop: private to everyone, verifiable by anyone.
 
 ## Where to go next
 
-- **[Shielded SDK](/developers/privacy/shielded-sdk/)** — production proving with `NoirWasmProver`, full reconstruction APIs, selective disclosure, and migration helpers.
-- **[MersennetOrders architecture](/architecture/order-book/)** — how the on-chain CLOB, the FBA engine, and the `0x…0100` precompile fit together.
-- **[Run a node](/validators/run-a-node/)** — stop trusting even the proof-serving RPC; run your own.
+- **[Shielded SDK](/developers/privacy/shielded-sdk/)**: production proving with `NoirWasmProver`, full reconstruction APIs, selective disclosure, and migration helpers.
+- **[MersennetOrders architecture](/architecture/order-book/)**: how the on-chain CLOB, the FBA engine, and the `0x…0100` precompile fit together.
+- **[Run a node](/validators/run-a-node/)**: stop trusting even the proof-serving RPC; run your own.

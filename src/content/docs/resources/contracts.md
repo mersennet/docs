@@ -11,14 +11,14 @@ Complete reference of smart contracts deployed on Mersennet testnet (Chain ID 13
 | **Multicall3** | `0x973ee1bf0907287d1eb8a144d88b34f515c83f29` | Batched RPC reads. Used by wagmi, viem, ethers.js for efficient multi-call queries. |
 | **WMRSN** | `0x079bf1207b51acda83e2e8178344f62a883f8479` | ERC-20 wrapped MRSN. Required for DEX pairs and DeFi protocols that need ERC-20 native token representation. |
 
-## DeFi — Mersennet Swap V2
+## DeFi: Mersennet Swap V2
 
 | Contract | Address | Description |
 |----------|---------|-------------|
 | **MersennetSwapFactory** | `0x63f7a64db6d2b965189b8b48b7435668021f6b17` | Creates and tracks liquidity pairs. Uniswap V2–style AMM factory. |
 | **MersennetSwapRouter** | `0x9f337f433e71ce969b991511f1dcd3d0622116bb` | Router for adding/removing liquidity and executing swaps. User-facing entry point for Mersennet Swap V2. |
 
-## DeFi — Mersennet Swap V3
+## DeFi: Mersennet Swap V3
 
 | Contract | Address | Description |
 |----------|---------|-------------|
@@ -40,10 +40,10 @@ Mersennet Swap V3 contracts are live at [http://46.225.30.187:4002](http://46.22
 | **MockDAI** | `0xb88d63a65691effbf4b6808325b1588912c15cf4` | Test DAI (18 decimals). For DeFi development and testing. |
 
 :::note[Testnet Token Faucet]
-Mock tokens (MockUSDC, MockUSDT, MockDAI) include a public `faucet()` function. Anyone can call it to receive test tokens—no approval or whitelist required. Use this for development and testing.
+Mock tokens (MockUSDC, MockUSDT, MockDAI) include a public `faucet()` function. Anyone can call it to receive test tokens, with no approval or whitelist required. Use this for development and testing.
 :::
 
-## DeFi — MersennetOrders CLOB Integration
+## DeFi: MersennetOrders CLOB Integration
 
 | Contract | Address | Description |
 |----------|---------|-------------|
@@ -76,9 +76,9 @@ AtomicArbitrage:     0x77c6de42d5629ac7e454910a46d06fab34be8f14
 
 Contract ABIs can be obtained from:
 
-- **Block Explorer** — [https://explorer.mersennet.com](https://explorer.mersennet.com) — Search by address and view contract details.
-- **Source Code** — Mersennet contracts repository (see [GitHub](https://github.com/mersennet/mersennet)).
-- **Multicall3** — Standard [Multicall3](https://github.com/mds1/multicall) ABI; compatible with wagmi/viem defaults.
+- **Block Explorer**: [https://explorer.mersennet.com](https://explorer.mersennet.com). Search by address and view contract details.
+- **Source Code**: Mersennet contracts repository (see [GitHub](https://github.com/mersennet/mersennet)).
+- **Multicall3**: Standard [Multicall3](https://github.com/mds1/multicall) ABI; compatible with wagmi/viem defaults.
 
 ## Usage Examples
 

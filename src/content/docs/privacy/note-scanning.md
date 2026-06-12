@@ -1,6 +1,6 @@
 ---
 title: "Note scanning & wallet reconstruction"
-description: "How wallets rebuild private state by scanning notes and tracking nullifiers — with no central indexer of your funds."
+description: "How wallets rebuild private state by scanning notes and tracking nullifiers, with no central indexer of your funds."
 ---
 
 Because Mersennet never stores a plaintext balance for you, your wallet rebuilds private state **locally**. It scans the encrypted notes it is allowed to decrypt, drops the ones it has already spent, and sums what remains. There is no central indexer of your funds.
@@ -47,13 +47,13 @@ console.log(result.perAsset); // per-asset totals, spent notes excluded
 
 ## Why nullifiers matter here
 
-A note you received may already have been spent. The only way to know — without a trusted server tracking your account — is to derive each note's nullifier and check it against the public spent-nullifier set. Notes whose nullifier is present are excluded from the balance. This is the same primitive that prevents double-spends in [shielded accounts](/privacy/shielded-accounts/), reused on the read path.
+A note you received may already have been spent. The only way to know, without a trusted server tracking your account, is to derive each note's nullifier and check it against the public spent-nullifier set. Notes whose nullifier is present are excluded from the balance. This is the same primitive that prevents double-spends in [shielded accounts](/privacy/shielded-accounts/), reused on the read path.
 
 ## Positions and open orders
 
 Trading state is reconstructed the same way, over the wallet's local order and fill records:
 
-- `reconstructPositions` — net positions per market.
-- `reconstructOpenOrders` — resting open orders per market.
+- `reconstructPositions`: net positions per market.
+- `reconstructOpenOrders`: resting open orders per market.
 
 These power both your own wallet view and grant-gated [selective disclosure](/privacy/selective-disclosure/) reads. See the [Shielded SDK](/developers/privacy/shielded-sdk/) for the complete API.

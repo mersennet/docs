@@ -18,7 +18,7 @@ Mersennet implements an **EVM-compatible** execution environment, allowing devel
 Mersennet targets the **Shanghai** EVM specification, which includes:
 
 - All pre-Shanghai opcodes and semantics
-- **PUSH0** (EIP-3855) — Push constant 0 onto the stack
+- **PUSH0** (EIP-3855): Push constant 0 onto the stack
 
 This ensures compatibility with the vast majority of Solidity contracts and tooling (Hardhat, Foundry, Remix, and standard wallets).
 
@@ -76,14 +76,14 @@ Gas costs align with Ethereum's Shanghai spec for predictable behavior when port
 
 ### Transaction Format
 
-Mersennet uses a **custom binary transaction format** alongside standard Ethereum RLP-encoded (EIP-155) transactions — `eth_sendRawTransaction` accepts both. Key points:
+Mersennet uses a **custom binary transaction format** alongside standard Ethereum RLP-encoded (EIP-155) transactions, and `eth_sendRawTransaction` accepts both. Key points:
 
 - Transactions include: `from`, `to`, `value`, `data`, `gasLimit`, `gasPrice`, `nonce`
 - Chain ID 131071 is used for replay protection (testnet)
 
 ### EIP-1559 Base Fee (No Priority Tip)
 
-Mersennet implements EIP-1559's dynamic base fee: the base fee adjusts each block based on target utilization (`fee_elasticity_multiplier: 2`, `fee_max_change_denominator: 8`, i.e. up to 12.5% change per block). There is **no separate priority tip** — `eth_maxPriorityFeePerGas` returns `0x0`.
+Mersennet implements EIP-1559's dynamic base fee: the base fee adjusts each block based on target utilization (`fee_elasticity_multiplier: 2`, `fee_max_change_denominator: 8`, i.e. up to 12.5% change per block). There is **no separate priority tip**: `eth_maxPriorityFeePerGas` returns `0x0`.
 
 Validators earn primarily from **block rewards**, not transaction fees. Fee market parameters can be updated via governance.
 
@@ -115,4 +115,4 @@ Same decimal precision, so contract logic that assumes 18 decimals works unchang
 | EIP-1559 | ✅ Dynamic base fee (no priority tip) |
 | Gas metering | ✅ Ethereum-compatible |
 
-Mersennet is designed for **EVM ecosystem compatibility**—deploy your contracts, use your tools, and leverage the native MersennetOrders precompile for advanced DeFi strategies.
+Mersennet is designed for **EVM ecosystem compatibility**: deploy your contracts, use your tools, and leverage the native MersennetOrders precompile for advanced DeFi strategies.

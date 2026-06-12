@@ -21,7 +21,7 @@ Validators are nodes that have **staked** MRSN tokens and registered in the vali
 voting_power(validator) ∝ staked_amount
 ```
 
-Token holders can **delegate** their MRSN to validators, increasing that validator's voting power. The validator set is dynamic—new validators can join by staking, and existing validators can leave by unbonding.
+Token holders can **delegate** their MRSN to validators, increasing that validator's voting power. The validator set is dynamic: new validators can join by staking, and existing validators can leave by unbonding.
 
 ## Proposer Rotation
 
@@ -33,9 +33,9 @@ Block production uses a **round-robin** algorithm with **priority-based weightin
 4. All validators' priorities are incremented by their normalized stake weight each round.
 
 This ensures:
-- **Fair rotation** — No single validator dominates block production
-- **Stake-weighted frequency** — Validators with more stake are chosen more often
-- **Determinism** — Given the same validator set and heights, proposer selection is reproducible
+- **Fair rotation**: No single validator dominates block production
+- **Stake-weighted frequency**: Validators with more stake are chosen more often
+- **Determinism**: Given the same validator set and heights, proposer selection is reproducible
 
 ### Priority Algorithm (Conceptual)
 
@@ -119,7 +119,7 @@ T = 2/3 × total_stake + 1
 finalized ⟺ prevotes ≥ T AND precommits ≥ T
 ```
 
-Finalized blocks are **irreversible**—there are no chain reorganizations. This provides fast, deterministic finality for applications.
+Finalized blocks are **irreversible**: there are no chain reorganizations. This provides fast, deterministic finality for applications.
 
 ## Epoch Transitions
 
@@ -158,9 +158,9 @@ First timeout: 1%. Second: 1.25%. Third: 1.5%. And so on, up to 10%.
 ### Slashing Source Priority
 
 When slashing is executed, tokens are taken from:
-1. **Unbonding queue first** — tokens being withdrawn
-2. **Active stake second** — if unbonding doesn't cover the penalty
-3. **Remainder burned** — if the validator doesn't have enough to cover
+1. **Unbonding queue first**, the tokens being withdrawn
+2. **Active stake second**, if unbonding doesn't cover the penalty
+3. **Remainder burned**, if the validator doesn't have enough to cover
 
 ### Tombstone vs. Jail
 
@@ -287,11 +287,11 @@ State Root (B256)
     └── ...
 ```
 
-Each block produces a new `state_root` — the Merkle root computed over all account state after executing every transaction. This provides:
+Each block produces a new `state_root`, the Merkle root computed over all account state after executing every transaction. This provides:
 
-- **Integrity verification** — Any node can verify state correctness by recomputing the root
-- **Light client proofs** — Merkle proofs can prove account balances without full state
-- **Determinism** — Same transactions on same pre-state always produce the same state root
+- **Integrity verification**: Any node can verify state correctness by recomputing the root
+- **Light client proofs**: Merkle proofs can prove account balances without full state
+- **Determinism**: Same transactions on same pre-state always produce the same state root
 
 ### Storage Model
 
@@ -333,9 +333,9 @@ Nodes exchange three categories of messages:
 
 Nodes discover peers through:
 
-1. **Seed nodes** — Configured in `p2p.peers` (bootstrap addresses)
-2. **Peer exchange** — Connected nodes share their known peer lists
-3. **Persistent peer store** — Known peers are saved to `peers.json` for reconnection on restart
+1. **Seed nodes**: Configured in `p2p.peers` (bootstrap addresses)
+2. **Peer exchange**: Connected nodes share their known peer lists
+3. **Persistent peer store**: Known peers are saved to `peers.json` for reconnection on restart
 
 ### Block Propagation
 
@@ -376,7 +376,7 @@ Transaction and vote gossip uses configurable parameters:
 
 Complete reference of all configuration parameters with their default values.
 
-### `engine` — Core Engine Settings
+### `engine`: Core Engine Settings
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
@@ -387,7 +387,7 @@ Complete reference of all configuration parameters with their default values.
 | `fee_max_change_denominator` | `u64` | `8` | Max base fee change per block (12.5%) |
 | `storage_backend` | `string` | `"sled"` | Storage backend: `"sled"`, `"redb"`, or `"memory"` |
 
-### `mempool` — Transaction Pool
+### `mempool`: Transaction Pool
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
@@ -395,7 +395,7 @@ Complete reference of all configuration parameters with their default values.
 | `max_per_sender` | `usize` | `1000` | Maximum pending txs per sender address |
 | `bump_bps` | `u64` | `1000` | Minimum gas price bump for tx replacement (10%) |
 
-### `p2p` — Peer-to-Peer Networking
+### `p2p`: Peer-to-Peer Networking
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
@@ -406,21 +406,21 @@ Complete reference of all configuration parameters with their default values.
 | `block_time_ms` | `u64` | `1000` | Target block production interval in ms |
 | `noise_enabled` | `bool` | `false` | Enable Noise protocol encryption |
 
-### `rpc` — JSON-RPC Server
+### `rpc`: JSON-RPC Server
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
 | `enabled` | `bool` | `false` | Enable the HTTP JSON-RPC server |
 | `addr` | `string` | `"127.0.0.1:8545"` | RPC listen address and port |
 
-### `ws` — WebSocket Server
+### `ws`: WebSocket Server
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
 | `enabled` | `bool` | `false` | Enable the WebSocket server |
 | `addr` | `string` | `"127.0.0.1:9945"` | WebSocket listen address and port |
 
-### `slashing` — Slashing Parameters
+### `slashing`: Slashing Parameters
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
@@ -431,7 +431,7 @@ Complete reference of all configuration parameters with their default values.
 | `round_timeout_ms` | `u64` | `500` | Consensus round timeout in milliseconds |
 | `unbonding_period` | `u64` | `2` | Epochs before unbonded stake is withdrawable |
 
-### `token_economics` — Reward & Supply
+### `token_economics`: Reward & Supply
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
@@ -439,20 +439,20 @@ Complete reference of all configuration parameters with their default values.
 | `initial_reward_per_block` | `string` | `"2305843009213693951"` | Block reward, 2⁶¹ − 1 wei ≈ 2.3 MRSN (Mersenne prime) |
 | `halving_interval` | `u64` | `33550336` | Blocks between reward halvings (5th perfect number, 2¹² × (2¹³ − 1)) |
 
-### `mersennet_orders` — MersennetOrders Precompile
+### `mersennet_orders`: MersennetOrders Precompile
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
 | `initial_margin_bps` | `u64` | `0` | Initial margin requirement (basis points) |
 | `maintenance_margin_bps` | `u64` | `0` | Maintenance margin requirement (basis points) |
 
-### `bridge` — Cross-Domain Bridge
+### `bridge`: Cross-Domain Bridge
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
 | `max_queue_len` | `usize` | `10000` | Maximum pending bridge messages |
 
-### `zk` — Zero-Knowledge Proofs
+### `zk`: Zero-Knowledge Proofs
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|

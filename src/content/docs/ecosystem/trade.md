@@ -20,7 +20,7 @@ Mersennet Trade is live at **[https://trade.mersennet.com](https://trade.mersenn
 
 ## How It Works
 
-Mersennet Trade connects directly to the MersennetOrders precompile—a native on-chain order matching engine embedded at the EVM level. Unlike AMM-based DEXes, Mersennet Trade uses a Central Limit Order Book (CLOB) model where:
+Mersennet Trade connects directly to the MersennetOrders precompile, a native on-chain order matching engine embedded at the EVM level. Unlike AMM-based DEXes, Mersennet Trade uses a Central Limit Order Book (CLOB) model where:
 
 - **Limit orders** rest on the book at a specified price until filled or cancelled
 - **Market orders** execute immediately against the best available resting orders
@@ -65,7 +65,7 @@ Mersennet Trade supports any pair listed on the MersennetOrders book. Current te
 
 ## Related Resources
 
-- [MersennetOrders Architecture](/architecture/order-book) — How the native CLOB precompile works
-- [Mersennet Swap V2](/ecosystem/swap) — AMM DEX for simple swaps
-- [Mersennet Swap V3](/ecosystem/swap-v3) — Concentrated liquidity AMM
-- [Deployed Contracts](/resources/contracts) — Token addresses and ABIs
+- [MersennetOrders Architecture](/architecture/order-book): How the native CLOB precompile works
+- [Mersennet Swap V2](/ecosystem/swap): AMM DEX for simple swaps
+- [Mersennet Swap V3](/ecosystem/swap-v3): Concentrated liquidity AMM
+- [Deployed Contracts](/resources/contracts): Token addresses and ABIs

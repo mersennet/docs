@@ -2,7 +2,7 @@
 title: "Mersennet Wallet"
 ---
 
-**Mersennet Wallet** is the native browser extension wallet for Mersennet. It provides send/receive, token management, dApp connectivity, and transaction signing—optimized for the Mersennet ecosystem.
+**Mersennet Wallet** is the native browser extension wallet for Mersennet. It provides send/receive, token management, dApp connectivity, and transaction signing, all optimized for the Mersennet ecosystem.
 
 ## Overview
 
@@ -63,10 +63,10 @@ Mersennet Wallet uses the same provider interface as MetaMask. dApps that suppor
 
 Mersennet Wallet works with all Mersennet dApps, including:
 
-- [Mersennet Swap](/ecosystem/swap) — Swap and add liquidity
-- [Mersennet Lend](/ecosystem/lend) — Supply and borrow (when deployed)
-- [Mersennet NFTs](/ecosystem/nfts) — NFT marketplace (when deployed)
-- Block Explorer — View transactions and addresses
+- [Mersennet Swap](/ecosystem/swap): Swap and add liquidity
+- [Mersennet Lend](/ecosystem/lend): Supply and borrow (when deployed)
+- [Mersennet NFTs](/ecosystem/nfts): NFT marketplace (when deployed)
+- Block Explorer: View transactions and addresses
 
 ## Alternative: MetaMask
 
@@ -80,6 +80,6 @@ If you prefer MetaMask, you can add Mersennet manually. See [Wallet Setup](/gett
 
 ## Related Resources
 
-- [Wallet Setup](/getting-started/wallet-setup) — Add Mersennet to MetaMask or Mersennet Wallet
-- [Faucet](/getting-started/faucet) — Get testnet MRSN
-- [First Transaction](/getting-started/first-transaction) — Send your first MRSN
+- [Wallet Setup](/getting-started/wallet-setup): Add Mersennet to MetaMask or Mersennet Wallet
+- [Faucet](/getting-started/faucet): Get testnet MRSN
+- [First Transaction](/getting-started/first-transaction): Send your first MRSN

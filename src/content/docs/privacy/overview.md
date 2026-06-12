@@ -3,7 +3,7 @@ title: "Privacy on Mersennet"
 description: "Account-level privacy for the EVM and the native order book, with selective disclosure and ZK-verified state."
 ---
 
-Mersennet is a zero-knowledge Layer 1 where **privacy and verifiability are the defaults**. Instead of bolting a mixer onto a transparent chain, Mersennet provides *account-level* privacy across both the EVM and the native central limit order book (CLOB) — Aztec-style — while keeping the chain publicly verifiable through succinct proofs.
+Mersennet is a zero-knowledge Layer 1 where **privacy and verifiability are the defaults**. Instead of bolting a mixer onto a transparent chain, Mersennet provides *account-level* privacy across both the EVM and the native central limit order book (CLOB), Aztec-style, while keeping the chain publicly verifiable through succinct proofs.
 
 ## What "account-level privacy" means
 
@@ -18,10 +18,10 @@ On a transparent chain, anyone can read your balances, positions, and order flow
 
 ## The four pillars
 
-- **[Shielded accounts](/privacy/shielded-accounts/)** — balances, transfers, positions, and order flow are concealed using notes, commitments, and nullifiers.
-- **[Risk checks in zero knowledge](/privacy/zk-risk-checks/)** — leverage without open liquidations: solvency and margin are proven with ZK proofs instead of public liquidation auctions.
-- **[Selective disclosure](/privacy/selective-disclosure/)** — grant a scoped viewing key to an auditor, exchange, or counterparty and reveal exactly what you choose.
-- **[Verifiable state](/privacy/state-proofs/)** — every block's state transition is proven with SP1 and verified on-chain through a Groth16 bridge, enabling trustless light clients.
+- **[Shielded accounts](/privacy/shielded-accounts/)**: balances, transfers, positions, and order flow are concealed using notes, commitments, and nullifiers.
+- **[Risk checks in zero knowledge](/privacy/zk-risk-checks/)**: leverage without open liquidations, where solvency and margin are proven with ZK proofs instead of public liquidation auctions.
+- **[Selective disclosure](/privacy/selective-disclosure/)**: grant a scoped viewing key to an auditor, exchange, or counterparty and reveal exactly what you choose.
+- **[Verifiable state](/privacy/state-proofs/)**: every block's state transition is proven with SP1 and verified on-chain through a Groth16 bridge, enabling trustless light clients.
 
 ## How it fits together
 

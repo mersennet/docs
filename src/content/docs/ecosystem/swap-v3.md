@@ -2,7 +2,7 @@
 title: "Mersennet Swap V3 DEX"
 ---
 
-**Mersennet Swap V3** is a concentrated liquidity DEX on Mersennet, built on the Uniswap V3 protocol. It enables capital-efficient liquidity positions with custom price ranges and multiple fee tiers—giving liquidity providers fine-grained control over where their capital is deployed.
+**Mersennet Swap V3** is a concentrated liquidity DEX on Mersennet, built on the Uniswap V3 protocol. It enables capital-efficient liquidity positions with custom price ranges and multiple fee tiers, giving liquidity providers fine-grained control over where their capital is deployed.
 
 ## Overview
 
@@ -102,7 +102,7 @@ uint256 amountOut = swapRouter.exactInputSingle(params);
 
 ## Related Resources
 
-- [Mersennet Swap V2](/ecosystem/swap) — AMM DEX with constant product pools
-- [Ecosystem Directory](/ecosystem/directory) — All live services and contract addresses
-- [Deployed Contracts](/resources/contracts) — Full contract reference
-- [ERC-20 Guide](/developers/contracts/erc20-guide) — Deploy tokens to list on Mersennet Swap
+- [Mersennet Swap V2](/ecosystem/swap): AMM DEX with constant product pools
+- [Ecosystem Directory](/ecosystem/directory): All live services and contract addresses
+- [Deployed Contracts](/resources/contracts): Full contract reference
+- [ERC-20 Guide](/developers/contracts/erc20-guide): Deploy tokens to list on Mersennet Swap

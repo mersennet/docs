@@ -11,7 +11,7 @@ Shielded methods are gated by the privacy hard fork. Before activation, **mutati
 
 ## Encoding convention
 
-All opaque ZK payloads — proofs, encrypted blobs, intent envelopes — are encoded as `bincode` over the typed Rust struct, then `0x`-hex. The SDK provides these encoders/decoders for free. JSON field names use camelCase to match Ethereum conventions.
+All opaque ZK payloads (proofs, encrypted blobs, intent envelopes) are encoded as `bincode` over the typed Rust struct, then `0x`-hex. The SDK provides these encoders/decoders for free. JSON field names use camelCase to match Ethereum conventions.
 
 ## Chain & tree (read-only)
 
@@ -21,10 +21,10 @@ These reads are always available; before privacy activation they return zero/emp
 Returns the current note commitment tree state: `{ shieldedStateRoot, blockNumber, noteCount, nullifierCount }`.
 
 ### `mersennet_getShieldedBalance()`
-Returns **aggregate** shielded-pool counters — `{ totalNoteCount, totalNullifierCount, transparentEoaCount }`. The node never decrypts balances; per-account balances are reconstructed **client-side** from notes obtained via a viewing grant (see [`mersennet_viewBalances`](#selective-disclosure-viewing-grants) and the [Shielded SDK](/developers/privacy/shielded-sdk/)).
+Returns **aggregate** shielded-pool counters: `{ totalNoteCount, totalNullifierCount, transparentEoaCount }`. The node never decrypts balances; per-account balances are reconstructed **client-side** from notes obtained via a viewing grant (see [`mersennet_viewBalances`](#selective-disclosure-viewing-grants) and the [Shielded SDK](/developers/privacy/shielded-sdk/)).
 
 ### `mersennet_getShieldedNotes()`
-Returns `{ noteCount, currentRoot }`. Per-account note ciphertexts are fetched through grant-gated reads (`mersennet_viewNotes`), not this method — viewing keys are never handled server-side.
+Returns `{ noteCount, currentRoot }`. Per-account note ciphertexts are fetched through grant-gated reads (`mersennet_viewNotes`), not this method: viewing keys are never handled server-side.
 
 ### `mersennet_getShieldedMarketAggregates()`
 Public per-market stats for the most recent batch-auction tick: `{ markets: [{ marketId, markPrice, longOpenInterest, shortOpenInterest, lastClearingPrice, lastVolume, liquidatableCount }] }`.
@@ -73,7 +73,7 @@ If the block carries no proof, the response is `{ "blockHeight": …, "proof": n
 
 ## Selective-disclosure (viewing grants)
 
-These methods implement the [selective-disclosure grant lifecycle](/privacy/selective-disclosure/). Reads are **authorization gates, not decryption oracles** — they return encrypted notes or public clearing context for the SDK to reconstruct client-side.
+These methods implement the [selective-disclosure grant lifecycle](/privacy/selective-disclosure/). Reads are **authorization gates, not decryption oracles**: they return encrypted notes or public clearing context for the SDK to reconstruct client-side.
 
 | Method | Scope | Purpose |
 |---|---|---|
@@ -106,7 +106,7 @@ Subscribe via `eth_subscribe` (Ethereum-style) or `mersennet_subscribe` (Mersenn
 | `newAuctionSettled` | `(marketId?)` | `{ marketId, winnerBondCommitment, winningBid }` |
 | `newStateProof` | `()` | `{ blockNumber, prevStateRoot, newStateRoot, blockHash, txCount, proofType }` |
 
-Privacy-mode payloads are **address-free by construction** — CI enforces that no address fields leak into shielded events.
+Privacy-mode payloads are **address-free by construction**: CI enforces that no address fields leak into shielded events.
 
 ```bash
 wscat -c wss://rpc.mersennet.com
@@ -122,11 +122,11 @@ wscat -c wss://rpc.mersennet.com
 | `-32601` | Method not found |
 | `-32602` | Invalid params |
 | `-32603` | Internal error |
-| `-32604` | Forbidden — grant missing, expired, revoked, or out of scope |
+| `-32604` | Forbidden: grant missing, expired, revoked, or out of scope |
 | `-32605` | **Method disabled in current chain mode** (privacy inactive) |
-| `-32000` | Execution error — carries a descriptive message (e.g. proof rejected, stale anchor root, double-spent nullifier, liquidator not registered / bond below minimum) |
+| `-32000` | Execution error: carries a descriptive message (e.g. proof rejected, stale anchor root, double-spent nullifier, liquidator not registered / bond below minimum) |
 
 ## See also
 
-- [Shielded SDK](/developers/privacy/shielded-sdk/) — typed client for these methods.
-- [JSON-RPC overview](/developers/rpc/overview/) and [methods](/developers/rpc/methods/) — the transparent surface.
+- [Shielded SDK](/developers/privacy/shielded-sdk/): typed client for these methods.
+- [JSON-RPC overview](/developers/rpc/overview/) and [methods](/developers/rpc/methods/): the transparent surface.

@@ -17,7 +17,7 @@ JSON-RPC 2.0 envelope:
 | `-32700` | Parse error | Request body is not valid JSON. Check `Content-Type: application/json` and quoting. |
 | `-32601` | Method not found | Typo in the method name, or calling a `mersennet_*` shielded method on a pre-privacy node. See [Methods](/developers/rpc/methods/). |
 | `-32602` | Invalid params | Wrong type, missing field, or malformed hex (addresses are 20 bytes `0x…`, hashes 32 bytes). The message names the offending parameter. |
-| `-32000` | Execution error | Generic server-side failure while executing the request — the message carries the underlying reason. |
+| `-32000` | Execution error | Generic server-side failure while executing the request: the message carries the underlying reason. |
 
 ## Transaction submission
 
@@ -29,7 +29,7 @@ JSON-RPC 2.0 envelope:
 
 | Code | Error | Fix |
 |------|-------|-----|
-| `-32010` | Unknown market | Market ID doesn't exist — list markets first. |
+| `-32010` | Unknown market | Market ID doesn't exist; list markets first. |
 | `-32011` | Invalid size | Size violates the market's lot size or is zero. |
 | `-32012` | FOK not fillable | A fill-or-kill order couldn't be fully matched. Retry as `GTC`/`IOC` or adjust price. |
 | `-32013` | Insufficient collateral | Deposit collateral before placing the order. |
@@ -41,7 +41,7 @@ JSON-RPC 2.0 envelope:
 
 | Code | Meaning | Fix |
 |------|---------|-----|
-| `-32604` | Forbidden | The viewing key or grant doesn't authorize this read. Check the grant's `scope` and expiry — see [Selective Disclosure](/privacy/selective-disclosure/). |
+| `-32604` | Forbidden | The viewing key or grant doesn't authorize this read. Check the grant's `scope` and expiry; see [Selective Disclosure](/privacy/selective-disclosure/). |
 | `-32605` | Method disabled | Shielded methods are gated behind the privacy hard fork. Before activation, mutation methods return this code. |
 
 :::tip[Debugging checklist]

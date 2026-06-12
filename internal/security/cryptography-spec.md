@@ -1,4 +1,4 @@
-# Mersennet — Cryptography Specification
+# Mersennet: Cryptography Specification
 
 **Status:** Draft for third-party audit (Workstream I)
 **Target chain ID:** 7920 (privacy testnet) → 131071 (mainnet, post-fork)
@@ -19,8 +19,8 @@ implementation in `crates/zkp/`, `crates/core/src/shielded_*`, and
 - `q` = BN254 base field modulus (used internally by the curve only)
 - `p` = BLS12-381 scalar field modulus
   `52435875175126190479447740508185965837690552500527637822603658699938581184513`
-- `Fr_bn` = `GF(r)` — BN254 scalar field
-- `Fr_bls` = `GF(p)` — BLS12-381 scalar field
+- `Fr_bn` = `GF(r)`, the BN254 scalar field
+- `Fr_bls` = `GF(p)`, the BLS12-381 scalar field
 - `G1_bn / G2_bn` = BN254 G1 / G2
 - `G1_bls / G2_bls` = BLS12-381 G1 / G2
 - `Hₚ` = Poseidon-2 over BN254 (width 3, capacity 1, rate 2, 8 full
@@ -35,7 +35,7 @@ implementation in `crates/zkp/`, `crates/core/src/shielded_*`, and
 | User wallet | Builds shielded orders, transfers, claims | viewing key `sk_view`, spending key `sk_spend`, BLS pseudonym `pk_psd` |
 | Relayer | Submits encrypted intents to mempool | none (anonymous transport) |
 | Validator | Decrypts threshold mempool, runs FBA, signs blocks | DKG share `sk_i`, consensus key |
-| Combiner | (Logical role — runs inside the block-producer) | none |
+| Combiner | (Logical role, runs inside the block-producer) | none |
 | Auditor | Receives a delegated view token | derived `ViewKey` |
 
 ## 3. Primitives
@@ -93,7 +93,7 @@ derive(domain, index):
     ctr += 1
 ```
 
-**MAX_MSG_LEN = 16** — the generator table allocates 16 slots; that
+**MAX_MSG_LEN = 16**: the generator table allocates 16 slots; that
 covers all current note layouts (value, asset_id, owner_pk, rho,
 psi, ... at most 5–6 fields).
 
@@ -170,7 +170,7 @@ party ever holding `sk`.
 `t = 5, n = 7`. Mainnet target: same (DKG-Pedersen with abort on
 < t commitments).
 
-**Round 1 — Commit.** Each validator `Pᵢ`:
+**Round 1: Commit.** Each validator `Pᵢ`:
 
 1. Picks a random degree-(t-1) polynomial `fᵢ(x) = aᵢ₀ + aᵢ₁·x + …
    + aᵢ_{t-1}·x^{t-1}` over `Fr_bls`.
@@ -179,7 +179,7 @@ party ever holding `sk`.
    randomness and `H` is an independent generator
    `H = HashToCurveG1("MersennetChain-DKG-H-v0")`.
 
-**Round 2 — Distribute.** Each `Pᵢ` sends to every `Pⱼ` (j ≠ i):
+**Round 2: Distribute.** Each `Pᵢ` sends to every `Pⱼ` (j ≠ i):
 
 ```
 sᵢⱼ = fᵢ(j)           // share value
@@ -190,7 +190,7 @@ The share envelope is encrypted under `Pⱼ`'s long-term node key
 using ECIES so observers can audit the transcript but not the
 plaintext.
 
-**Round 3 — Verify.** `Pⱼ` checks for every `i`:
+**Round 3: Verify.** `Pⱼ` checks for every `i`:
 
 ```
 sᵢⱼ·G + tᵢⱼ·H == Σ_{k=0}^{t-1} (j^k)·Cᵢ_k
@@ -199,7 +199,7 @@ sᵢⱼ·G + tᵢⱼ·H == Σ_{k=0}^{t-1} (j^k)·Cᵢ_k
 If the check fails for `(i, j)`, `Pⱼ` broadcasts a
 `SlashingComplaint{ complainant = j, accused = i, evidence = (sᵢⱼ, tᵢⱼ, ECIES_proof) }`.
 
-**Round 4 — Aggregate.** Let `Qᵢ` be the set of validators that
+**Round 4: Aggregate.** Let `Qᵢ` be the set of validators that
 successfully passed Round 3 for `Pᵢ`. `Pᵢ` is in the **qualified
 set** `QUAL` iff `|Qᵢ| ≥ 2t - n`.
 
@@ -214,12 +214,12 @@ skⱼ = Σ_{i ∈ QUAL} sᵢⱼ        (each validator's share of sk)
 **Audit checks (DKG):**
 
 1. The polynomial degree `t-1` matches the reconstruction threshold.
-2. The blinding generator `H` must be **independent** of `G` —
+2. The blinding generator `H` must be **independent** of `G`:
    no known scalar `δ` with `H = δ·G`. We derive `H` via
    try-and-increment hash-to-curve with a fixed domain separator,
    identical to the Pedersen-commitment generator setup.
 3. The Round 3 check is the standard Pedersen-VSS verification.
-4. Round 4's aggregation is over `QUAL` only — a validator who
+4. Round 4's aggregation is over `QUAL` only: a validator who
    fails Round 3 cannot poison the group key.
 5. The complaint mechanism is binding: presenting an invalid
    complaint is itself slashable (the complainant attaches a NIZK
@@ -307,7 +307,7 @@ commitment table.
 2. The derivation is **deterministic** so a hard fork reorg
    produces the same notes.
 3. Owners who lose their EOA private key before migration cannot
-   recover the note (this is fundamental — pre-fork the EOA was
+   recover the note (this is fundamental: pre-fork the EOA was
    already the binding key).
 
 ## 4. Domain separators
@@ -332,13 +332,13 @@ fork.
 
 ## 5. Out-of-scope (for this document, listed in plan)
 
-- **SP1 program body** — Workstream E. Re-execution proof of the
+- **SP1 program body**: Workstream E. Re-execution proof of the
   block.
-- **Barretenberg verifier** — Workstream D5. The in-Rust
+- **Barretenberg verifier**: Workstream D5. The in-Rust
   `MockVerifier` is the audit target until then.
-- **Noir circuit pinning** — Workstream D6. `crates/zkp/circuits/`
+- **Noir circuit pinning**: Workstream D6. `crates/zkp/circuits/`
   contains stub circuits today.
-- **Solidity bridge** — Workstream G. Mirrors §3.7 on Ethereum.
+- **Solidity bridge**: Workstream G. Mirrors §3.7 on Ethereum.
 
 ## 6. Audit-traceability index
 

@@ -1,12 +1,12 @@
-# Mersennet — Executive Summary
+# Mersennet: Executive Summary
 
-> **Confidential** | Series A — $25M | March 2026
+> **Confidential** | Series A, $25M | March 2026
 
 ---
 
 ## Company Overview
 
-**Mersennet** is a high-performance Layer 1 blockchain purpose-built for institutional finance. It is the only blockchain where smart contracts and a native central limit order book (CLOB) share a single atomic state — enabling Solidity contracts to trade on the order book within the same transaction.
+**Mersennet** is a high-performance Layer 1 blockchain purpose-built for institutional finance. It is the only blockchain where smart contracts and a native central limit order book (CLOB) share a single atomic state, enabling Solidity contracts to trade on the order book within the same transaction.
 
 This architectural breakthrough, delivered through CLOB precompile `0x0100`, unlocks compliant, auditable, and composable trading of tokenized real-world assets (RWA) and on-chain credit instruments at institutional speed.
 
@@ -19,7 +19,7 @@ This architectural breakthrough, delivered through CLOB precompile `0x0100`, unl
 
 ## The Opportunity
 
-Traditional finance is in the early stages of tokenizing trillions of dollars in assets — bonds, real estate, commodities, funds, trade finance instruments, and credit products. Yet no existing blockchain provides the trading infrastructure these assets require: deterministic execution, native order matching, regulatory compliance, and institutional-grade performance.
+Traditional finance is in the early stages of tokenizing trillions of dollars in assets: bonds, real estate, commodities, funds, trade finance instruments, and credit products. Yet no existing blockchain provides the trading infrastructure these assets require: deterministic execution, native order matching, regulatory compliance, and institutional-grade performance.
 
 ### Market Size
 
@@ -35,9 +35,9 @@ Sources: BCG "Relevance of On-Chain Asset Tokenization," McKinsey, BIS Global Cr
 
 Three forces are converging to create a window of 12–18 months:
 
-1. **Regulatory clarity** — MiCA (EU), SEC tokenized securities guidance, Basel III credit rules are providing the framework institutions need.
-2. **Institutional entry** — BlackRock ($500M+ BUIDL fund), Fidelity, Standard Chartered, and JPMorgan are actively tokenizing assets.
-3. **Infrastructure gap** — Every major bank is building tokenization capability, but none have compliant trading infrastructure. The first chain to solve this captures the category.
+1. **Regulatory clarity**: MiCA (EU), SEC tokenized securities guidance, Basel III credit rules are providing the framework institutions need.
+2. **Institutional entry**: BlackRock ($500M+ BUIDL fund), Fidelity, Standard Chartered, and JPMorgan are actively tokenizing assets.
+3. **Infrastructure gap**: Every major bank is building tokenization capability, but none have compliant trading infrastructure. The first chain to solve this captures the category.
 
 ---
 
@@ -66,7 +66,7 @@ State = (EVM + MersennetOrders + Bridge)
 
 ### What This Means
 
-A smart contract on Mersennet can atomically: accept a tokenized bond deposit, place a limit order on the native order book, receive a fill, and use the proceeds as DeFi collateral — all in a single 200ms transaction. This is impossible on every other blockchain.
+A smart contract on Mersennet can atomically: accept a tokenized bond deposit, place a limit order on the native order book, receive a fill, and use the proceeds as DeFi collateral, all in a single 200ms transaction. This is impossible on every other blockchain.
 
 ---
 
@@ -134,11 +134,11 @@ Mersennet at $25M Series A represents early-stage pricing for technology that co
 |-----------|-------|
 | Token | MRSN |
 | Max Supply | 1,000,000,000 (1B) |
-| Block Rewards | 70% (700M) — Bitcoin-style halving every 35M blocks (~1.1 years at 1 s blocks) |
-| Ecosystem & Grants | 10% (100M) — 5-year linear |
-| Foundation Reserve | 10% (100M) — 1-year cliff + 4-year linear |
-| Team & Contributors | 5% (50M) — 1-year cliff + 3-year linear |
-| Sales | 5% (50M) — 6-month cliff + 18-month linear |
+| Block Rewards | 70% (700M): Bitcoin-style halving every 35M blocks (~1.1 years at 1 s blocks) |
+| Ecosystem & Grants | 10% (100M): 5-year linear |
+| Foundation Reserve | 10% (100M): 1-year cliff + 4-year linear |
+| Team & Contributors | 5% (50M): 1-year cliff + 3-year linear |
+| Sales | 5% (50M): 6-month cliff + 18-month linear |
 
 **Notable:** 10% combined team + investor allocation is the lowest of any major L1 launched in the last three years. 70% goes to validators, ensuring network security and decentralization.
 
@@ -173,15 +173,15 @@ Mersennet at $25M Series A represents early-stage pricing for technology that co
 
 ## Investment Thesis
 
-1. **Unique technology moat** — Only L1 with atomic EVM ↔ CLOB composability. Requires consensus-level integration, creating a 2+ year engineering barrier to entry.
+1. **Unique technology moat**: Only L1 with atomic EVM ↔ CLOB composability. Requires consensus-level integration, creating a 2+ year engineering barrier to entry.
 
-2. **Largest TAM in crypto** — $18.5T+ institutional RWA + credit market, growing 50x by 2030. Not speculative — driven by regulatory frameworks and institutional capital flows.
+2. **Largest TAM in crypto**: $18.5T+ institutional RWA + credit market, growing 50x by 2030. Not speculative, but driven by regulatory frameworks and institutional capital flows.
 
-3. **Active institutional relationships** — Standard Chartered, XDC Network, Binance, and Greg Kidd are not pitch targets — they are active partners with defined pilot timelines.
+3. **Active institutional relationships**: Standard Chartered, XDC Network, Binance, and Greg Kidd are not pitch targets; they are active partners with defined pilot timelines.
 
-4. **Built, not theoretical** — Testnet live with 12 products, 72K TPS measured, comprehensive docs. This is execution, not a whitepaper.
+4. **Built, not theoretical**: Testnet live with 12 products, 72K TPS measured, comprehensive docs. This is execution, not a whitepaper.
 
-5. **Category-defining window** — The "institutional trading L1" category will be captured in the next 12–18 months. First mover with institutional partnerships wins.
+5. **Category-defining window**: The "institutional trading L1" category will be captured in the next 12–18 months. First mover with institutional partnerships wins.
 
 ---
 
@@ -191,7 +191,7 @@ Mersennet at $25M Series A represents early-stage pricing for technology that co
 |------|-----------|
 | Regulatory uncertainty | Early FCA/MAS/SEC engagement via Standard Chartered regulatory relationships |
 | Technical execution | Testnet live, benchmarks proven, incremental path to mainnet |
-| Competition from larger chains | Consensus-level CLOB cannot be retrofitted — requires new L1 |
+| Competition from larger chains | Consensus-level CLOB cannot be retrofitted; requires new L1 |
 | Market timing (RWA slower than expected) | Multiple use cases (RWA + credit + DeFi), EVM compatibility as fallback |
 | Security vulnerabilities | Planned tier-1 audit Q3 2026, bug bounty program, formal verification |
 | Key person risk | $25M enables hiring of 15-person core team, reducing single-point-of-failure |

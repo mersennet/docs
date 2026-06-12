@@ -1,17 +1,17 @@
 ---
 title: "Selective disclosure & viewing grants"
-description: "Grant a scoped viewing key to reveal exactly what you choose — a balance, a position, a single order — without exposing the rest of your account."
+description: "Grant a scoped viewing key to reveal exactly what you choose (a balance, a position, a single order) without exposing the rest of your account."
 ---
 
-Privacy by default does not mean opacity. Mersennet lets an account holder **grant a scoped viewing key** to an auditor, exchange, or counterparty that reveals exactly the data they need — and nothing else. The rest of the account stays shielded.
+Privacy by default does not mean opacity. Mersennet lets an account holder **grant a scoped viewing key** to an auditor, exchange, or counterparty that reveals exactly the data they need, and nothing else. The rest of the account stays shielded.
 
 ## Viewing grants
 
 A viewing grant is a capability you mint and hand to a grantee. It is **scoped**, **time-bounded**, and **revocable**.
 
-- **Scoped** — each grant authorizes one or more read scopes: `balances:read`, `positions:read`, `orders:read`.
-- **Time-bounded** — grants carry an expiry; reads fail once expired.
-- **Revocable** — the grantor can revoke at any time, immediately invalidating future reads.
+- **Scoped**: each grant authorizes one or more read scopes: `balances:read`, `positions:read`, `orders:read`.
+- **Time-bounded**: grants carry an expiry; reads fail once expired.
+- **Revocable**: the grantor can revoke at any time, immediately invalidating future reads.
 
 ```ts
 // Grant a scoped, expiring viewing key
@@ -47,7 +47,7 @@ flowchart LR
 
 ## The node never decrypts your data
 
-Grant-gated reads are **authorization gates, not decryption oracles**. For balances, `mersennet_viewBalances` returns the *encrypted* notes the grantee is authorized to see (paginated), and the grantee runs `reconstructPortfolio` client-side — the node never decrypts a balance. Position and order reads return the public per-market clearing context plus the records needed for the grantee to run `reconstructPositions` / `reconstructOpenOrders` locally, authorized by the grant.
+Grant-gated reads are **authorization gates, not decryption oracles**. For balances, `mersennet_viewBalances` returns the *encrypted* notes the grantee is authorized to see (paginated), and the grantee runs `reconstructPortfolio` client-side; the node never decrypts a balance. Position and order reads return the public per-market clearing context plus the records needed for the grantee to run `reconstructPositions` / `reconstructOpenOrders` locally, authorized by the grant.
 
 This keeps the trust model honest: a viewing grant lets a specific party recompute a specific view, without ever placing your plaintext on the server.
 

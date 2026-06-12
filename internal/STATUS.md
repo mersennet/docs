@@ -1,4 +1,4 @@
-# Mersennet — Workstream Status
+# Mersennet: Workstream Status
 
 **Branch:** `feat/zk-privacy` (close-out work on `feat/zk-e4-e5-f-closeout`)
 **Last sync:** 2026-06-05
@@ -13,7 +13,7 @@ external dep (e.g. `nargo`, `sp1up`, audit).
 
 ---
 
-## A — State + snapshot
+## A: State + snapshot
 
 | ID | Description | Status | Reference |
 |---|---|---|---|
@@ -26,7 +26,7 @@ external dep (e.g. `nargo`, `sp1up`, audit).
 | A7 | `ShieldedPersistence` (redb) | ✅ | `crates/core/src/shielded_persistence.rs` |
 | A8 | `export/import_state_snapshot` with shielded tables + `PZS1` envelope | ✅ | `crates/core/src/engine_snapshot.rs` |
 
-## B — Shielded subsystems
+## B: Shielded subsystems
 
 | ID | Description | Status | Reference |
 |---|---|---|---|
@@ -36,7 +36,7 @@ external dep (e.g. `nargo`, `sp1up`, audit).
 | B4 | `ThresholdMempool` admit / decrypt / drain | ✅ | `crates/core/src/threshold_mempool.rs` |
 | B5 | `ShieldedEvm` transparent ⇄ shielded bridge | ✅ | `crates/core/src/shielded_evm.rs` |
 
-## C — RPC + WS
+## C: RPC + WS
 
 | ID | Description | Status | Reference |
 |---|---|---|---|
@@ -45,7 +45,7 @@ external dep (e.g. `nargo`, `sp1up`, audit).
 | C3 | WS: `newShieldedRoot`, `newClearingPrice`, `newAuctionSettled`, `newStateProof` | ✅ | `crates/rpc/src/ws.rs` + node dispatch |
 | C4 | `mersennet_getStateProof(blockNumber)` reads from `block.state_proof` | ✅ | `crates/rpc/src/rpc_shielded.rs` |
 
-## D — Cryptography
+## D: Cryptography
 
 | ID | Description | Status | Reference |
 |---|---|---|---|
@@ -57,15 +57,15 @@ external dep (e.g. `nargo`, `sp1up`, audit).
 | D6 | Noir circuit compilation pipeline | ✅ | `crates/zkp/src/noir.rs`, `scripts/zk/compile_noir_artifacts.py` |
 | D7 | Cryptography spec for the auditor | ✅ | `docs/security/cryptography-spec.md` |
 
-## E — SP1 state proofs
+## E: SP1 state proofs
 
 | ID | Description | Status | Reference |
 |---|---|---|---|
 | E1 | SP1 RISC-V toolchain | ✅ | WSL toolchain bootstrap + `cargo-prove prove build` |
 | E2 | SP1 prove path now consumes full witness-bearing `BlockProgramInput`, re-derives `BlockProgramOutput`, replays the shielded transfer / shield / unshield / liquidation-execute sub-path, replays deterministic pre-tick FBA market clearing, replays order admission from canonical decrypted-intent witnesses bound to an explicit oracle snapshot, replays liquidation claim/settle from the pre-tick witness, and proves `shielded_event_root` | ✅ | `crates/core/src/engine.rs`, `crates/core/src/state_proof.rs`, `crates/core/src/zk_sp1.rs`, `crates/zkp/src/sp1.rs`, `programs/state-transition/`, `programs/state-transition-host/` |
-| E3 | Vkey pin + release-artifact capture — DONE. Reproducible Docker ELF (vkey `0013c6c7…`) proved (`core`) and cryptographically verified (`{"verified": true}`) via `MERSENNET_SP1_MODE=local`. | ✅ | `scripts/zk/sp1-prove-response.json`, `scripts/zk/sp1-verify-response.json`, `scripts/zk/sp1-prove.trace.log`, `crates/zkp/params/sp1/state-transition.vk.hash`, `scripts/zk/README.md` |
-| E4 | `ProverClient::network()` integration — c-kzg conflict resolved by making the SP1 host revm-free (proof types extracted to `mersennet-state-proof`). Both prove and verify dispatch `ProverClient::builder().network().build()` behind the `network` feature; `cargo check --features network` passes. Turnkey: `scripts/zk/sp1-network-prove-request.request.json` is staged and the one-command delegated flow is documented. **Only the credentialed `MERSENNET_SP1_MODE=network` execution remains** (gated on Succinct `NETWORK_PRIVATE_KEY` / `NETWORK_RPC_URL`). | 🟡 | `crates/state-proof/`, `programs/state-transition-host/`, `scripts/zk/sp1-network-prove-request.request.json` |
-| E5 | Groth16 wrap for Ethereum bridge verifier — verifier + bridge contracts complete and tested (21 Foundry tests), chain-side `verifyStateProof` precompile wired, and a tested chain-side `bridge_export` helper emits the `submitStateProof(uint256[8], uint256[])` calldata. **Remaining: the SP1→Groth16 wrapping circuit + verifying key + one real wrapped proof** (out-of-repo: needs the wrapping-circuit toolchain / trusted setup). | 🟡 | `contracts/src/zk/`, `crates/core/src/bridge_export.rs`, `crates/core/src/precompiles.rs` |
+| E3 | Vkey pin + release-artifact capture: DONE. Reproducible Docker ELF (vkey `0013c6c7…`) proved (`core`) and cryptographically verified (`{"verified": true}`) via `MERSENNET_SP1_MODE=local`. | ✅ | `scripts/zk/sp1-prove-response.json`, `scripts/zk/sp1-verify-response.json`, `scripts/zk/sp1-prove.trace.log`, `crates/zkp/params/sp1/state-transition.vk.hash`, `scripts/zk/README.md` |
+| E4 | `ProverClient::network()` integration: c-kzg conflict resolved by making the SP1 host revm-free (proof types extracted to `mersennet-state-proof`). Both prove and verify dispatch `ProverClient::builder().network().build()` behind the `network` feature; `cargo check --features network` passes. Turnkey: `scripts/zk/sp1-network-prove-request.request.json` is staged and the one-command delegated flow is documented. **Only the credentialed `MERSENNET_SP1_MODE=network` execution remains** (gated on Succinct `NETWORK_PRIVATE_KEY` / `NETWORK_RPC_URL`). | 🟡 | `crates/state-proof/`, `programs/state-transition-host/`, `scripts/zk/sp1-network-prove-request.request.json` |
+| E5 | Groth16 wrap for Ethereum bridge verifier: verifier + bridge contracts complete and tested (21 Foundry tests), chain-side `verifyStateProof` precompile wired, and a tested chain-side `bridge_export` helper emits the `submitStateProof(uint256[8], uint256[])` calldata. **Remaining: the SP1→Groth16 wrapping circuit + verifying key + one real wrapped proof** (out-of-repo: needs the wrapping-circuit toolchain / trusted setup). | 🟡 | `contracts/src/zk/`, `crates/core/src/bridge_export.rs`, `crates/core/src/precompiles.rs` |
 
 Remaining E close-out items are both external/out-of-repo: one delegated
 network proof against the Succinct network (E4, gated on credentials), and
@@ -74,38 +74,38 @@ toolchain / trusted setup). All in-repo code, tests, calldata helpers, and
 docs for both are complete; the network-prover c-kzg conflict is resolved
 and the host `--features network` compile lane passes locally.
 
-## F — Client / SDK / UX
+## F: Client / SDK / UX
 
 | ID | Description | Status |
 |---|---|---|
-| F1 | WASM Noir prover — `NoirWasmProver` (`ZkProver`) maps typed calls to named Noir circuit inputs via an injected `NoirProvingBackend`; exported + typed + tested + wiring example (`sdk/examples/noir-prover-wiring.js`). Real `@noir-lang/noir_js` + `@aztec/bb.js` backend is wired by the wallet. | ✅ (`sdk/src/noir-prover.ts`) |
-| F2 | Wallet note scanner — `scanGrantedNotes` (grant-gated ciphertext scan + decrypt) + `scanAndReconstructBalances` (paged `viewBalances`, nullifier-aware spendable balance reconstruction) + `reconstructPortfolio`; tested end-to-end. | ✅ (`sdk/src/reconstruction.ts`, `sdk/src/shielded.ts`) |
-| F3 | Mersennet Trade shielded order UI | ⬜ external (tracked in [trade](https://github.com/mersennet/trade)); all repo-local SDK/API support complete — `ShieldedClient.placeOrder` (`mersennet_submitShieldedOrder`), `NoirWasmProver` injection, and grant-gated reads are exported and tested |
-| F4 | Migration UX — `deriveMigrationNote` / `matchesMigrationNote` plus `planMigration` (pre-fork preview + per-asset totals) / `confirmMigration` (post-fork landed-note confirmation); tested + example (`sdk/examples/migration-drive.js`). | ✅ (`sdk/src/migration.ts`) |
-| F5 | Selective-disclosure grant lifecycle (ADR-019) — grant signature verification, persistence + revocation, `mersennet_viewGrantStatus`, gated `mersennet_viewPortfolioDigest` / `mersennet_viewNotes`, and the reconstruction reads `mersennet_viewBalances` (`balances:read`, notes + spent nullifiers), `mersennet_viewPositions` (`positions:read`), `mersennet_viewOrders` (`orders:read`); SDK `provider.viewBalances/viewPositions/viewOrders` + `scanAndReconstructBalances`; tested. | ✅ (`crates/rpc/src/rpc_shielded.rs`, `sdk/src/provider.ts`) |
+| F1 | WASM Noir prover: `NoirWasmProver` (`ZkProver`) maps typed calls to named Noir circuit inputs via an injected `NoirProvingBackend`; exported + typed + tested + wiring example (`sdk/examples/noir-prover-wiring.js`). Real `@noir-lang/noir_js` + `@aztec/bb.js` backend is wired by the wallet. | ✅ (`sdk/src/noir-prover.ts`) |
+| F2 | Wallet note scanner: `scanGrantedNotes` (grant-gated ciphertext scan + decrypt) + `scanAndReconstructBalances` (paged `viewBalances`, nullifier-aware spendable balance reconstruction) + `reconstructPortfolio`; tested end-to-end. | ✅ (`sdk/src/reconstruction.ts`, `sdk/src/shielded.ts`) |
+| F3 | Mersennet Trade shielded order UI | ⬜ external (tracked in [trade](https://github.com/mersennet/trade)); all repo-local SDK/API support complete: `ShieldedClient.placeOrder` (`mersennet_submitShieldedOrder`), `NoirWasmProver` injection, and grant-gated reads are exported and tested |
+| F4 | Migration UX: `deriveMigrationNote` / `matchesMigrationNote` plus `planMigration` (pre-fork preview + per-asset totals) / `confirmMigration` (post-fork landed-note confirmation); tested + example (`sdk/examples/migration-drive.js`). | ✅ (`sdk/src/migration.ts`) |
+| F5 | Selective-disclosure grant lifecycle (ADR-019): grant signature verification, persistence + revocation, `mersennet_viewGrantStatus`, gated `mersennet_viewPortfolioDigest` / `mersennet_viewNotes`, and the reconstruction reads `mersennet_viewBalances` (`balances:read`, notes + spent nullifiers), `mersennet_viewPositions` (`positions:read`), `mersennet_viewOrders` (`orders:read`); SDK `provider.viewBalances/viewPositions/viewOrders` + `scanAndReconstructBalances`; tested. | ✅ (`crates/rpc/src/rpc_shielded.rs`, `sdk/src/provider.ts`) |
 | F6 | Go / Python SDK shielded extensions | ✅ (`sdk-go/`, `sdk-python/`) |
 
-## G — Ethereum bridge
+## G: Ethereum bridge
 
 | ID | Description | Status | Reference |
 |---|---|---|---|
-| G1 | `Groth16Verifier.sol` — BN254 Groth16 verifier on Ethereum (ecAdd/ecMul/ecPairing precompiles, settable+lockable VK) | ✅ | `contracts/src/zk/Groth16Verifier.sol` |
-| G2 | `MersennetBridge.sol` — state-proof verifier + deposit/withdraw message bus (monotonic block + root continuity, sorted-pair Merkle withdrawals) | ✅ | `contracts/src/zk/MersennetBridge.sol` |
+| G1 | `Groth16Verifier.sol`: BN254 Groth16 verifier on Ethereum (ecAdd/ecMul/ecPairing precompiles, settable+lockable VK) | ✅ | `contracts/src/zk/Groth16Verifier.sol` |
+| G2 | `MersennetBridge.sol`: state-proof verifier + deposit/withdraw message bus (monotonic block + root continuity, sorted-pair Merkle withdrawals) | ✅ | `contracts/src/zk/MersennetBridge.sol` |
 | G3 | Foundry test suite (21 tests passing) | ✅ | `contracts/test/zk/Groth16Verifier.t.sol`, `contracts/test/zk/MersennetBridge.t.sol` |
 | G4 | Audit-prep pass | 🟡 (verifier/bridge frozen + tested; final pass pending the E5 wrapping VK) | `contracts/src/zk/README.md` |
 
-## H — Testnet bring-up
+## H: Testnet bring-up
 
 | ID | Description | Status | Reference |
 |---|---|---|---|
 | H2 | Privacy testnet validator configs (5-of-7, chain 7920) | ✅ | `testnet/configs/privacy/` |
 | H3 | docker-compose + bootstrap script + runbook | ✅ | `testnet/docker-compose.privacy.yml`, `testnet/scripts/bootstrap-privacy-genesis.sh`, `docs/runbooks/privacy-testnet-bootstrap.md` |
 | H4 | Synthetic load script | ✅ | `testnet/scripts/privacy-load.sh` |
-| H5 | Chaos exercise — kill-validator-at-random | ✅ | `testnet/scripts/chaos-kill-validator.sh` |
+| H5 | Chaos exercise: kill-validator-at-random | ✅ | `testnet/scripts/chaos-kill-validator.sh` |
 | H6 | 8-week bake | 🟡 | bake checklist drafted; clock starts once remaining E blockers are cleared |
 | H7 | Privacy metrics + Grafana dashboard | ✅ | `crates/core/src/prometheus.rs`, `deploy/monitoring/grafana-privacy-dashboard.json` |
 
-## I — Third-party audit
+## I: Third-party audit
 
 | ID | Description | Status |
 |---|---|---|
@@ -118,7 +118,7 @@ and the host `--features network` compile lane passes locally.
 
 All I* gated on the remaining E blockers being cleared and the privacy-fork audit packet being assembled.
 
-## J — Governance + activation
+## J: Governance + activation
 
 | ID | Description | Status |
 |---|---|---|
@@ -129,7 +129,7 @@ All I* gated on the remaining E blockers being cleared and the privacy-fork audi
 | J5 | Deprecation window | 🔒 |
 | J6 | Post-mortem template | 🔒 |
 
-## K — CI / tooling
+## K: CI / tooling
 
 | ID | Description | Status | Reference |
 |---|---|---|---|
@@ -141,12 +141,12 @@ All I* gated on the remaining E blockers being cleared and the privacy-fork audi
 
 ---
 
-## Execution Checklist — Remaining E / H / I
+## Execution Checklist: Remaining E / H / I
 
 Use this section as the working close-out list for the zk privacy fork.
 Owners are taken from `.github/CODEOWNERS`.
 
-### E — SP1 state-proof close-out
+### E: SP1 state-proof close-out
 
 E2 and E3 are now closed on this branch. The remaining SP1 close-out
 work is E4 through E5.
@@ -168,7 +168,7 @@ work is E4 through E5.
 - E2b. Liquidation claim shaping, winner ordering, settlement, canonical event derivation, and executor-side liquidation event replay are now shared across runtime and zk replay. The focused regression `crates/zkp/src/sp1.rs::tests::execute_block_program_replays_liquidation_events()` covers the canonical SP1 event-root path.
 - E2b. `crates/core/src/state_proof.rs::shielded_tick_witness()` and `crates/core/src/state_proof.rs::snapshot_subsystem_digests()` should stay serialization/binding helpers over shared witness-level helpers, not drift back into runtime-only semantic hashing or transition logic.
 
-### H — Testnet bake start criteria
+### H: Testnet bake start criteria
 
 | Item | Owner | Files | Commands | Exit criteria |
 |---|---|---|---|---|
@@ -176,7 +176,7 @@ work is E4 through E5.
 | H6b. Start T-8 testnet activation lane | `@mersennet/core` | `testnet/configs/privacy/`, `testnet/docker-compose.privacy.yml`, `testnet/scripts/bootstrap-privacy-genesis.sh`, `testnet/scripts/privacy-load.sh`, `docs/runbooks/privacy-testnet-bootstrap.md`, `docs/runbooks/zk-fork-activation.md` | `cargo check -p mersennet-node --features prover,sp1`<br>`cargo check --manifest-path programs/state-transition/Cargo.toml`<br>`cargo test --manifest-path programs/state-transition-host/Cargo.toml`<br>Then execute the T-8 checklist in `docs/runbooks/zk-fork-activation.md`. | Privacy testnet is restarted on the candidate release, SP1 lanes stay green, shielded RPC/order flow passes the runbook checks, and the 8-week bake clock is officially running. |
 | H6c. Ongoing bake evidence | `@mersennet/core`, `@mersennet/docs` | `docs/STATUS.md`, `docs/runbooks/zk-fork-activation.md`, `deploy/monitoring/grafana-privacy-dashboard.json` | Every two weeks, rerun:<br>`cargo check -p mersennet-node --features prover,sp1`<br>`cargo check --manifest-path programs/state-transition/Cargo.toml`<br>`cargo test --manifest-path programs/state-transition-host/Cargo.toml` | Bake log captures recurring validation, backend swaps, and incident-free operation through the full 8-week window. |
 
-### I — Audit path enablement and execution
+### I: Audit path enablement and execution
 
 | Item | Owner | Files | Commands | Exit criteria |
 |---|---|---|---|---|

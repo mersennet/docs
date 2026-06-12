@@ -1,6 +1,6 @@
-# Mersennet — Architecture Decision Records
+# Mersennet: Architecture Decision Records
 
-**Version 1.0 — March 2026**
+**Version 1.0, March 2026**
 **Classification: Technical Architecture Document**
 **Audience: Engineering leadership, technical due diligence, protocol contributors**
 
@@ -36,7 +36,7 @@
 
 Mersennet is a **Layer 1 blockchain** that combines a parallel EVM execution engine with a native, high-performance Central Limit Order Book (CLOB). The core differentiator is **atomic EVM ↔ CLOB composability** through a custom revm precompile at address `0x0100`, enabling Solidity smart contracts to place orders, manage collateral, and query positions in a single transaction with no bridge latency.
 
-**Competitive positioning:** Hyperliquid has HyperEVM (alpha) alongside its native CLOB, but EVM ↔ CLOB composability is **async** — CoreWriter actions are delayed by seconds, reads are 1 block stale. Mersennet's CLOB precompile is the key architectural differentiator: **true atomic same-transaction EVM ↔ CLOB** — unique in the industry.
+**Competitive positioning:** Hyperliquid has HyperEVM (alpha) alongside its native CLOB, but EVM ↔ CLOB composability is **async**: CoreWriter actions are delayed by seconds, reads are 1 block stale. Mersennet's CLOB precompile is the key architectural differentiator: **true atomic same-transaction EVM ↔ CLOB**, unique in the industry.
 
 ### Key Performance Characteristics
 
@@ -228,7 +228,7 @@ State Root (B256, keccak256 Binary Merkle)
 **Context:**
 Mersennet's thesis requires both general-purpose smart contracts (EVM) and a high-performance order matching engine (CLOB) within a single blockchain. The core question is whether these two execution domains should maintain separate state or share a unified canonical state.
 
-Separate state models (as used by dYdX v4 on its app-chain, or Polkadot parachains) introduce composability gaps: operations that span both domains require asynchronous bridge messages, breaking atomicity and introducing latency. For institutional use cases—where a smart contract must atomically deposit collateral, place an order, and react to fill results—this gap is unacceptable.
+Separate state models (as used by dYdX v4 on its app-chain, or Polkadot parachains) introduce composability gaps: operations that span both domains require asynchronous bridge messages, breaking atomicity and introducing latency. For institutional use cases (where a smart contract must atomically deposit collateral, place an order, and react to fill results), this gap is unacceptable.
 
 **Decision:**
 Adopt a unified multi-domain state tuple:
@@ -262,7 +262,7 @@ In sled, sub-states are stored as separate trees:
 | **Sidechain with IBC** | Cosmos ecosystem tooling | Asynchronous message passing, packet relay latency |
 
 **Consequences:**
-- *Positive:* Atomic composability—a single EVM transaction can call the CLOB precompile, place an order, and react to the fill in the same execution context.
+- *Positive:* Atomic composability, since a single EVM transaction can call the CLOB precompile, place an order, and react to the fill in the same execution context.
 - *Positive:* Single state root simplifies light client verification.
 - *Negative:* State management complexity increases; each commit must serialize all three sub-states.
 - *Negative:* The CLOB precompile uses a global `Mutex<MersennetOrdersState>`, which serializes concurrent precompile access within parallel execution.
@@ -301,7 +301,7 @@ The engine exposes both `execute_block()` (sequential) and `execute_block_parall
 
 **Consequences:**
 - *Positive:* ~6x measured speedup on 8 cores for independent-transfer workloads.
-- *Positive:* Zero developer burden—no access list declarations required.
+- *Positive:* Zero developer burden, with no access list declarations required.
 - *Positive:* Automatic sequential fallback preserves correctness under all conditions.
 - *Negative:* Static analysis is conservative (only examines `from`/`to`, not storage-level access). Contract interactions that touch shared storage may be grouped together unnecessarily.
 - *Negative:* Forking InMemoryDB per group incurs memory overhead proportional to state size × group count.
@@ -356,7 +356,7 @@ The existing CometBFT-style three-phase consensus (`consensus.rs`) is retained a
 - *Positive:* 33% faster finality compared to three-phase protocols (~200ms target).
 - *Positive:* Linear message complexity (O(n) per round vs. O(n²) for classic PBFT).
 - *Positive:* Same BFT safety guarantees (tolerates f < n/3 Byzantine validators).
-- *Negative:* Two-chain commit means a block is not finalized until the *next* round's QC forms—one round of latency is inherent.
+- *Negative:* Two-chain commit means a block is not finalized until the *next* round's QC forms, so one round of latency is inherent.
 - *Negative:* Less battle-tested in production than CometBFT.
 
 ---
@@ -398,7 +398,7 @@ Register a custom precompile at the fixed address `0x000000000000000000000000000
 | **System contract** (Solana-style) | Account-model based | Requires different EVM execution model, breaks Ethereum compatibility |
 
 **Consequences:**
-- *Positive:* Atomic composability—unique among all existing L1 chains. A Solidity vault can deposit collateral, place a limit order, and handle the fill callback in a single transaction.
+- *Positive:* Atomic composability, unique among all existing L1 chains. A Solidity vault can deposit collateral, place a limit order, and handle the fill callback in a single transaction.
 - *Positive:* 3–4x cheaper than DEX swap operations (50K gas for placeOrder vs. 150K+ for Uniswap V3 swap).
 - *Positive:* Full ABI encoding means standard Ethereum tooling (ethers.js, viem) can interact with the precompile.
 - *Negative:* The global mutex serializes all precompile access within parallel execution, limiting the parallelism benefit for CLOB-heavy workloads.
@@ -434,7 +434,7 @@ The batch interval is configurable (default: 100ms). The engine exposes `execute
 | **Commit-reveal only** | Hides individual tx content | Doesn't address order-level MEV in the CLOB specifically |
 
 **Consequences:**
-- *Positive:* Eliminates front-running and latency arbitrage within each batch window—all orders in a batch are treated as simultaneous.
+- *Positive:* Eliminates front-running and latency arbitrage within each batch window: all orders in a batch are treated as simultaneous.
 - *Positive:* Uniform price ensures fair execution (no adverse selection from sequential matching).
 - *Positive:* Simple implementation (~390 lines) with no cryptographic ceremony.
 - *Negative:* Adds execution latency equal to the batch interval (~100ms default).
@@ -452,7 +452,7 @@ EVM transactions are visible in the mempool before execution. This creates a wel
 **Decision:**
 Implement a two-phase commit-reveal scheme in `crates/core/src/commit_reveal.rs`:
 
-**Phase 1 — Commit:**
+**Phase 1: Commit**
 The user submits a `TxCommitment` containing:
 - `commitment_hash`: `keccak256(encrypted_tx || salt)`
 - `sender`: The user's address
@@ -460,7 +460,7 @@ The user submits a `TxCommitment` containing:
 
 The pool stores this in a `HashMap<B256, TxCommitment>`.
 
-**Phase 2 — Reveal:**
+**Phase 2: Reveal**
 Within the `commit_window` (default: 2 blocks), the user submits a `TxReveal` containing:
 - `commitment_hash`: Must match a pending commitment
 - `encrypted_tx`: The actual transaction data
@@ -552,7 +552,7 @@ State is committed via `PersistentState::commit_state()` which writes dirty EVM 
 | **In-memory only** | Fastest possible, zero I/O | No persistence; suitable only for testing |
 
 **Consequences:**
-- *Positive:* Pure Rust—no C/C++ build dependencies, no FFI.
+- *Positive:* Pure Rust, with no C/C++ build dependencies and no FFI.
 - *Positive:* Simple API that maps well to the multi-tree state model.
 - *Positive:* Adequate for development and testnet workloads.
 - *Negative:* sled is not considered production-ready by its author (still alpha). Performance under heavy write loads is inferior to libmdbx/RocksDB.
@@ -592,7 +592,7 @@ Implement a three-pool architecture in `crates/core/src/mempool.rs`:
 └───────────────────────────────────────────────┘
 ```
 
-Each pool is a `HashMap<Address, BTreeMap<u64, Transaction>>` — per-sender queues ordered by nonce.
+Each pool is a `HashMap<Address, BTreeMap<u64, Transaction>>`: per-sender queues ordered by nonce.
 
 **Transaction lifecycle:**
 1. **insert()**: Validates nonce, balance, and gas price. Routes to pending (ready), queued (future nonce), or base_fee_pool (under-priced).
@@ -664,10 +664,10 @@ Transactions must be cryptographically authenticated. The choice of signature sc
 **Decision:**
 Use **ECDSA over the secp256k1 curve** via the `k256` crate (v0.13), matching Ethereum's transaction signing scheme. Implementation details (`crates/core/src/crypto/mod.rs`):
 
-- **Signing hash**: `keccak256(chain_id || nonce || gas_price || gas_limit || to || value || data)` — an EIP-155-inspired format with chain ID replay protection.
+- **Signing hash**: `keccak256(chain_id || nonce || gas_price || gas_limit || to || value || data)`, an EIP-155-inspired format with chain ID replay protection.
 - **Signature format**: `(r, s, v)` where `v = recovery_id + 35 + chain_id * 2` (EIP-155).
 - **Recovery**: `VerifyingKey::recover_from_prehash()` recovers the signer's public key from the message hash and signature.
-- **Address derivation**: `keccak256(uncompressed_pubkey[1..])[-20:]` — standard Ethereum address derivation.
+- **Address derivation**: `keccak256(uncompressed_pubkey[1..])[-20:]`, the standard Ethereum address derivation.
 
 **Alternatives Considered:**
 
@@ -691,17 +691,17 @@ Use **ECDSA over the secp256k1 curve** via the `k256` crate (v0.13), matching Et
 **Status:** Accepted
 
 **Context:**
-In a leveraged trading system, positions can become insolvent (negative equity) if the market moves faster than liquidation can execute. Without a backstop mechanism, the deficit must be absorbed by someone—either the protocol, other traders, or it creates a bad debt that undermines system solvency.
+In a leveraged trading system, positions can become insolvent (negative equity) if the market moves faster than liquidation can execute. Without a backstop mechanism, the deficit must be absorbed by someone: either the protocol, other traders, or it creates a bad debt that undermines system solvency.
 
 **Decision:**
 Implement a two-tier insolvency protection mechanism in `MersennetOrdersState`:
 
-**Tier 1 — Insurance Fund:**
+**Tier 1: Insurance Fund**
 - An `insurance_fund` (U256) accumulates from a configurable fraction of trade fees (`insurance_contribution_rate_bps`, default: 10 bps = 0.1%).
 - When a liquidation results in a deficit (position value < maintenance margin), the insurance fund absorbs the loss up to its balance.
 - The fund is part of `S_orders` and committed with every block.
 
-**Tier 2 — Auto-Deleveraging (ADL):**
+**Tier 2: Auto-Deleveraging (ADL)**
 - When the insurance fund is insufficient to cover a deficit, ADL is triggered.
 - Profitable traders on the opposite side of the market are force-closed, starting with the most profitable, until the deficit is covered.
 - ADL events are recorded with the deleveraged accounts and position adjustments.
@@ -723,7 +723,7 @@ Implement a two-tier insolvency protection mechanism in `MersennetOrdersState`:
 **Consequences:**
 - *Positive:* Protocol solvency is guaranteed under all market conditions.
 - *Positive:* Industry-standard approach (used by BitMEX, Binance, dYdX).
-- *Positive:* Transparent and deterministic—ADL priority is computable by any node.
+- *Positive:* Transparent and deterministic: ADL priority is computable by any node.
 - *Negative:* ADL risk for profitable traders (their positions may be involuntarily closed).
 - *Negative:* Insurance fund must be bootstrapped; new deployments start with zero coverage.
 
@@ -734,7 +734,7 @@ Implement a two-tier insolvency protection mechanism in `MersennetOrdersState`:
 **Status:** Accepted
 
 **Context:**
-Hyperliquid chose dual-execution (HyperCore + HyperEVM) for maximum CLOB performance but at the cost of async composability. HyperEVM runs as a separate Cancun-spec EVM alongside the native CLOB; they execute sequentially. EVM reads HyperCore state from the previous block (1 block stale). CoreWriter at `0x333...333` queues orders for the next block — seconds delay. This design optimizes for raw CLOB throughput (200K ops/s) but makes atomic EVM ↔ CLOB flows impossible.
+Hyperliquid chose dual-execution (HyperCore + HyperEVM) for maximum CLOB performance but at the cost of async composability. HyperEVM runs as a separate Cancun-spec EVM alongside the native CLOB; they execute sequentially. EVM reads HyperCore state from the previous block (1 block stale). CoreWriter at `0x333...333` queues orders for the next block, introducing seconds of delay. This design optimizes for raw CLOB throughput (200K ops/s) but makes atomic EVM ↔ CLOB flows impossible.
 
 **Decision:**
 Mersennet chose integrated execution with a precompile at `0x0100` that runs MersennetOrders operations **synchronously** within EVM transaction execution. The CLOB state is co-located with EVM state in the same block; precompile calls execute inline during `revm.transact_commit()`. A single transaction can deposit collateral, place an order, and react to the fill in one atomic step.
@@ -743,14 +743,14 @@ Mersennet chose integrated execution with a precompile at `0x0100` that runs Mer
 
 | Alternative | Pros | Cons |
 |---|---|---|
-| **Dual-execution** (Hyperliquid) | Max CLOB throughput, independent scaling | Async composability — CoreWriter delayed by seconds, reads stale by 1 block |
-| **Bridge messages** (dYdX) | Clean domain separation | Latent — multi-block latency, no atomicity |
+| **Dual-execution** (Hyperliquid) | Max CLOB throughput, independent scaling | Async composability: CoreWriter delayed by seconds, reads stale by 1 block |
+| **Bridge messages** (dYdX) | Clean domain separation | Latent: multi-block latency, no atomicity |
 | **Contract-based CLOB** (Solidity) | No protocol changes | Gas-prohibitive (10–50x), BTreeMap impossible in EVM |
 
 **Consequences:**
-- *Positive:* True atomic composability — unique in the industry. Enables use cases impossible on any other chain (vault: deposit → place order → handle fill in one tx).
-- *Positive:* Measured 2,484,170 CLOB ops/s and 72,181 EVM TPS — competitive with or exceeding dual-execution designs.
-- *Negative:* Precompile uses global mutex, limiting parallel precompile calls within a block. Worth it — atomic composability is the core value proposition.
+- *Positive:* True atomic composability, unique in the industry. Enables use cases impossible on any other chain (vault: deposit → place order → handle fill in one tx).
+- *Positive:* Measured 2,484,170 CLOB ops/s and 72,181 EVM TPS, competitive with or exceeding dual-execution designs.
+- *Negative:* Precompile uses global mutex, limiting parallel precompile calls within a block. Worth it: atomic composability is the core value proposition.
 
 ---
 
