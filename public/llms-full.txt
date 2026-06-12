@@ -8027,8 +8027,8 @@ source: https://docs.mersennet.com/whitepaper/
 
 # Mersennet: A Hybrid Blockchain Architecture Combining EVM Execution with Deterministic Order Matching
 
-**Version 7.0**  
-**Date: March 2026**  
+**Version 7.1**  
+**Date: June 2026**  
 **Authors: Mersennet Development Team**
 
 ---
@@ -8037,7 +8037,7 @@ source: https://docs.mersennet.com/whitepaper/
 
 This document is a technical whitepaper describing the Mersennet protocol, a Layer 1 blockchain that unifies EVM execution with native order matching. It is intended as a specification of the system's design, architecture, and rationale. It is not a formal specification in the sense of the Ethereum Yellow Paper; parameters and mechanisms may evolve based on implementation experience and community feedback. Non-core aspects such as API bindings, client libraries, and operator tooling are documented elsewhere. This whitepaper draws structural inspiration from foundational works including the [Bitcoin whitepaper](https://bitcoin.org/bitcoin.pdf) [1], [Ethereum whitepaper](https://ethereum.org/whitepaper/) [2], [Solana](https://solana.com/solana-whitepaper.pdf) [3], and [Polkadot](https://polkadot.network/PolkaDotPaper.pdf) [4].
 
-**Version History:** v1.0 (initial draft), v2.0 (comprehensive technical), v3.0 (Ethereum-style expansion), v4.0 (incorporates patterns from top blockchain whitepapers), v5.0 (formula fixes, technical depth), v6.0 (parallel EVM execution, HotStuff-2 consensus, CLOB precompile, Frequent Batch Auctions, MEV protection, comprehensive benchmarks), v7.0 (production storage engine, WebSocket subscriptions, block pipeline, Noise P2P encryption, ZK state proofs, Account Abstraction, cross-chain bridges, TypeScript SDK, block explorer).
+**Version History:** v1.0 (initial draft), v2.0 (comprehensive technical), v3.0 (Ethereum-style expansion), v4.0 (incorporates patterns from top blockchain whitepapers), v5.0 (formula fixes, technical depth), v6.0 (parallel EVM execution, HotStuff-2 consensus, CLOB precompile, Frequent Batch Auctions, MEV protection, comprehensive benchmarks), v7.0 (production storage engine, WebSocket subscriptions, block pipeline, Noise P2P encryption, ZK state proofs, Account Abstraction, cross-chain bridges, TypeScript SDK, block explorer), v7.1 (Mersenne-prime tokenomics finalized — 2^89−1 supply cap, 2^61−1 block reward, 33,550,336-block halving; CLOB collateral backed 1:1 by escrowed native MRSN).
 
 ---
 
@@ -9245,6 +9245,8 @@ $$MM = notional \cdot \frac{maintenanceMarginBps}{10,000}$$
 Default values:
 - Initial margin: 0 bps (disabled by default, configurable)
 - Maintenance margin: 0 bps (disabled by default, configurable)
+
+**Collateral backing.** Collateral is backed 1:1 by escrowed native MRSN. `depositCollateral` transfers the requested amount of native MRSN from the caller into the precompile's own address (`0x0100`) before crediting the account's collateral; the native debit happens first, so a deposit the caller cannot cover reverts and no collateral is created. `withdrawCollateral` validates the margin requirement, decrements collateral, and pays the native MRSN back out of the escrow. Because deposits and withdrawals only relocate native MRSN between the caller and the escrow, total supply is conserved. (The unsigned `mersennet_orders_depositCollateral` JSON-RPC helper used for testnet seeding is gated by `allow_unsigned_orders_rpc` and is the only path that credits collateral without native backing.)
 
 #### 6.6.2 Account Equity
 
@@ -11012,6 +11014,7 @@ As Mersennet continues to evolve toward mainnet, we welcome contributions from r
 
 ## Appendix C: Version History
 
+- **v7.1** (June 2026): **Tokenomics & collateral finalization**. Mersenne-prime tokenomics adopted across the protocol: supply cap $2^{89}-1$ wei (≈618.97M MRSN, a hard ceiling), initial block reward $2^{61}-1$ wei (≈2.3 MRSN), halving every 33,550,336 blocks (the 5th perfect number $2^{12}(2^{13}-1)$, whose Mersenne factor $2^{13}-1=8191$ is the mainnet chain ID); block-reward emission converges to ≈154.72M MRSN. CLOB collateral is now **backed 1:1 by escrowed native MRSN**: `depositCollateral` moves native MRSN into the precompile escrow (`0x0100`) and `withdrawCollateral` pays it back, so an unbackable deposit reverts rather than minting collateral. WebSocket `MersennetOrdersTrades` fill events are now emitted to subscribers.
 - **v7.0** (March 2026): **Production infrastructure release**. Production storage engine (redb with ACID/MVCC via pluggable `StateBackend` trait), WebSocket real-time subscriptions (6 event types), Block pipeline (overlapping execution+consensus), Noise protocol P2P encryption (Noise_XX_25519_ChaChaPoly_BLAKE2s), ZK state proofs (modular prover framework with batch aggregation and checkpoint chains), Account Abstraction (ERC-4337 UserOperation/EntryPoint/Bundler), Cross-chain bridge infrastructure (Ethereum/Arbitrum/Optimism/Base with relayer verification), TypeScript SDK (1,012 lines), Block Explorer (1,272 lines), production hardening (graceful shutdown, health checks), 72 tests passing, 36 Rust source files, 15,205 lines of Rust
 - **v6.0** (March 2026): **Major architecture upgrade**. Parallel EVM execution (Block-STM optimistic concurrency, MVCC validation, automatic fallback), HotStuff-2 two-phase BFT consensus (33% faster finality, Quorum Certificates, 2-chain commit rule), CLOB Precompile at `0x0100` (8 Solidity-callable functions for atomic EVM ↔ order book interaction), Frequent Batch Auctions (uniform-price MEV-resistant matching), Commit-Reveal MEV protection, Insurance Fund + Auto-Deleveraging, match-time margin validation, comprehensive competitive analysis (vs. Ethereum, Solana, Monad, Sei, Aptos, Sui, Hyperliquid, dYdX, BASE, XDC, TRON), updated benchmarks (60K+ TPS parallel, 1.5M ops/s matching, ~200ms finality), expanded Related Work table, updated code organization (28 source files, 10,600 lines), 16 academic references
 - **v5.0** (January 2026): Technical depth, adding position VWAP formula, entry price update math, order book complexity table (Big-O), EIP-1559 numerical example, Attack Analysis probability formulae (Bitcoin Gambler's Ruin comparison), Benchmarks section (block execution, order matching, RPC latency), expanded Appendix A (complexity notation, probability), new Appendix D (Complexity Analysis), new Appendix E (Formulae Reference)
