@@ -596,8 +596,8 @@ Block reward at height $h$:
 $$R(h) = R_0 \cdot 2^{-\lfloor h / H \rfloor}$$
 
 Where:
-- $R_0$ = initial reward per block
-- $H$ = halving interval (default: 35,000,000 blocks, ~2.22 years at 2s block time)
+- $R_0$ = initial reward per block ($2^{61} - 1$ wei ≈ 2.3 MRSN)
+- $H$ = halving interval (33,550,336 blocks — the 5th perfect number $2^{12}(2^{13}-1)$ — ~1.06 years at the default 1s block time)
 
 Reward is capped by remaining supply:
 $$R_{effective}(h) = \min(R(h), S_{max} - S_{minted}(h))$$
@@ -612,7 +612,7 @@ If $S_{\mathrm{total}} = 0$, rewards are burned.
 
 #### 4.8.3 Supply Cap
 
-Total supply is capped at $S_{max}$ (default: 1,000,000,000 MRSN). Block rewards pool is 700M MRSN (70%); remainder allocated to Ecosystem & Grants (10%), Foundation Reserve (10%), Team (5%), and Sales (5%).
+Total supply is capped at $S_{max} = 2^{89} - 1$ wei ≈ 618.97M MRSN — a Mersenne prime and a hard protocol ceiling, not the target circulating supply. Block-reward emission follows the halving schedule and converges to ≈ 154.72M MRSN, well below the cap. The remaining MRSN in circulation comes from genesis allocations (Ecosystem & Grants, Foundation Reserve, Team, and Sales), whose absolute amounts are finalized at genesis.
 
 Once $S_{minted} \geq S_{max}$, no further rewards are minted.
 
@@ -1612,21 +1612,21 @@ This creates deflationary pressure when network usage is high.
 #### 8.2.1 Supply Schedule
 
 Total supply is capped at:
-$$S_{max} = 1,000,000,000 \text{ MRSN}$$
+$$S_{max} = 2^{89} - 1 \text{ wei} = 618{,}970{,}019{,}642{,}690{,}137{,}449{,}562{,}111 \text{ wei} \approx 618.97\text{M MRSN}$$
 
-Allocation: Block rewards 70% (700M), Ecosystem & Grants 10% (100M), Foundation Reserve 10% (100M), Team & Core Contributors 5% (50M), Sales 5% (50M). ~99% of block rewards emitted by ~year 7 (at the 1 s default block time).
+The cap is a Mersenne prime and a **hard protocol ceiling**, not the target circulating supply. Block-reward emission converges to ≈ 154.72M MRSN (see below), well under the cap; the remaining MRSN in circulation comes from genesis allocations — Ecosystem & Grants, Foundation Reserve, Team & Core Contributors, and Sales — whose absolute amounts are finalized at genesis. ~99% of block rewards are emitted by ~year 7–8 (at the 1 s default block time).
 
 #### 8.2.2 Block Rewards
 
 Initial reward per block:
-$$R_0 = 10 \text{ MRSN}$$
+$$R_0 = 2^{61} - 1 \text{ wei} = 2{,}305{,}843{,}009{,}213{,}693{,}951 \text{ wei} \approx 2.3 \text{ MRSN}$$
 
 Reward halving schedule:
 $$R(h) = R_0 \cdot 2^{-\lfloor h / H \rfloor}$$
 
-Where $H = 35,000,000$ blocks (~2.22 years at 2s block time). Block rewards pool: 700M MRSN.
+Where $H = 33{,}550{,}336$ blocks — the 5th perfect number $2^{12}(2^{13}-1)$, whose Mersenne factor $2^{13}-1 = 8191$ is the mainnet chain ID (~1.06 years at the default 1s block time). The geometric series converges to a total emission of $R_0 \times H \times 2 \approx 154.72\text{M MRSN}$.
 
-Reward is capped by remaining block rewards pool (700M MRSN):
+Reward is capped by remaining supply:
 $$R_{effective}(h) = \min(R(h), S_{max} - S_{minted}(h))$$
 
 #### 8.2.3 Supply Dynamics
@@ -2588,9 +2588,9 @@ Configuration is JSON-based with hot-reload support:
     "unbonding_period": 2
   },
   "token_economics": {
-    "max_supply": "1000000000000000000000000000",
-    "initial_reward_per_block": "10000000000000000000",
-    "halving_interval": 35000000
+    "max_supply": "618970019642690137449562111",
+    "initial_reward_per_block": "2305843009213693951",
+    "halving_interval": 33550336
   }
 }
 ```

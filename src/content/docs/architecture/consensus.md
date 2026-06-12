@@ -435,9 +435,9 @@ Complete reference of all configuration parameters with their default values.
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
-| `max_supply` | `string` | `"1000000000000000000000000000"` | Maximum MRSN supply (1B × 10¹⁸) |
-| `initial_reward_per_block` | `string` | `"10000000000000000000"` | Block reward (10 MRSN × 10¹⁸) |
-| `halving_interval` | `u64` | `35000000` | Blocks between reward halvings |
+| `max_supply` | `string` | `"618970019642690137449562111"` | Supply cap, 2⁸⁹ − 1 wei ≈ 618.97M MRSN (Mersenne prime; hard ceiling) |
+| `initial_reward_per_block` | `string` | `"2305843009213693951"` | Block reward, 2⁶¹ − 1 wei ≈ 2.3 MRSN (Mersenne prime) |
+| `halving_interval` | `u64` | `33550336` | Blocks between reward halvings (5th perfect number, 2¹² × (2¹³ − 1)) |
 
 ### `mersennet_orders` — MersennetOrders Precompile
 
@@ -503,9 +503,9 @@ Complete reference of all configuration parameters with their default values.
     "unbonding_period": 2
   },
   "token_economics": {
-    "max_supply": "1000000000000000000000000000",
-    "initial_reward_per_block": "10000000000000000000",
-    "halving_interval": 35000000
+    "max_supply": "618970019642690137449562111",
+    "initial_reward_per_block": "2305843009213693951",
+    "halving_interval": 33550336
   },
   "mersennet_orders": {
     "initial_margin_bps": 0,

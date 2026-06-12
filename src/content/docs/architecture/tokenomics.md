@@ -10,39 +10,49 @@ This document provides complete tokenomics documentation for Mersennet (MRSN), i
 |-----------|-------|
 | **Token Name** | Mersennet |
 | **Ticker** | MRSN |
-| **Max Supply** | 1,000,000,000 (1 billion) |
+| **Supply Cap** | 2⁸⁹ − 1 wei ≈ 618,970,019.64 MRSN |
 | **Decimals** | 18 |
-| **Chain ID** | 131071 |
+| **Chain ID** | 8191 (mainnet) · 131071 (testnet) |
 
-## Allocation Breakdown
+Mersennet's constants are chosen from the number theory the network is named for:
 
-| Category | Percentage | Tokens | Vesting |
-|----------|------------|--------|---------|
-| **Block Rewards** | 70% | 700,000,000 | Halving schedule (see below) |
-| **Ecosystem & Grants** | 10% | 100,000,000 | 5-year linear from TGE |
-| **Foundation Reserve** | 10% | 100,000,000 | 1-year cliff + 4-year linear |
-| **Team & Core Contributors** | 5% | 50,000,000 | 1-year cliff + 3-year linear |
-| **Sales (Private + Public)** | 5% | 50,000,000 | 6-month cliff + 18-month linear |
+- **Supply cap = 2⁸⁹ − 1** (`618970019642690137449562111` wei) — a **Mersenne prime**.
+- **Initial block reward = 2⁶¹ − 1** (`2305843009213693951` wei ≈ 2.3 MRSN) — a **Mersenne prime**.
+- **Halving interval = 33,550,336 blocks** — the **5th perfect number**, `2¹² × (2¹³ − 1)`, whose Mersenne factor `2¹³ − 1 = 8191` is the mainnet chain ID.
 
-### Block Rewards (70%)
+### Cap vs. emission — two distinct numbers
 
-The largest allocation ensures long-term validator incentives and network security. Tokens are **minted on every block** according to the halving schedule—none are pre-minted. Distribution is proportional to validator stake.
+The **supply cap** and the **amount actually emitted** are deliberately different:
 
-### Ecosystem & Grants (10%)
+- The **cap (2⁸⁹ − 1 ≈ 618.97M MRSN)** is a hard protocol ceiling enforced on every block. `total_minted` can never exceed it. It is an *upper bound*, not a target circulating supply.
+- **Block-reward emission** follows the halving schedule below and converges to **≈ 154.72M MRSN** — well under the cap. The headroom between emission and the cap absorbs genesis allocations and leaves a permanent safety margin, so the cap is never reached in practice.
 
-Developer grants, DApp incentives, hackathons, bridge integrations, and strategic partnerships. Controlled by governance with 5-year linear vesting.
+## Allocation
 
-### Foundation Reserve (10%)
+MRSN enters circulation two ways: **minted** block rewards (over time) and **genesis** allocations (pre-mined at launch).
 
-Protocol development, security audits, infrastructure, legal, and operations. 1-year cliff followed by 4-year linear vesting.
+| Source | Mechanism | Amount |
+|--------|-----------|--------|
+| **Block Rewards** | Minted per block on the halving schedule | ≈ 154.72M MRSN over the full schedule (none pre-minted) |
+| **Ecosystem & Grants** | Genesis allocation, 5-year linear from TGE | Set at genesis |
+| **Foundation Reserve** | Genesis allocation, 1-year cliff + 4-year linear | Set at genesis |
+| **Team & Core Contributors** | Genesis allocation, 1-year cliff + 3-year linear | Set at genesis |
+| **Sales (Private + Public)** | Genesis allocation, 6-month cliff + 18-month linear | Set at genesis |
 
-### Team & Core Contributors (5%)
+:::note
+Absolute genesis allocation amounts (and their split across the pre-mine categories) are finalized by the Foundation at genesis. They are bounded by — but no longer derived from — the supply cap, since the cap is a ceiling rather than the target circulating supply. The protocol-enforced facts (cap, block reward, halving) are fixed and stated precisely throughout this page.
+:::
 
-4-year vesting: 1-year cliff, then monthly linear unlock over 3 years.
+### Block Rewards
 
-### Sales (5%)
+Validator rewards are **minted on every block** according to the halving schedule — none are pre-minted. Distribution is proportional to validator stake (see [Reward Distribution](#reward-distribution)).
 
-Private and public sale allocation. 6-month cliff + 18-month linear vesting.
+### Genesis allocations
+
+- **Ecosystem & Grants** — developer grants, DApp incentives, hackathons, bridge integrations, and strategic partnerships. Governance-controlled, 5-year linear vesting.
+- **Foundation Reserve** — protocol development, security audits, infrastructure, legal, and operations. 1-year cliff + 4-year linear vesting.
+- **Team & Core Contributors** — 1-year cliff, then monthly linear unlock over 3 years.
+- **Sales** — private and public sale allocation. 6-month cliff + 18-month linear vesting.
 
 ## Emission Schedule
 
@@ -50,47 +60,50 @@ Private and public sale allocation. 6-month cliff + 18-month linear vesting.
 
 | Parameter | Value |
 |-----------|-------|
-| **Block Rewards Pool** | 700,000,000 MRSN |
-| **Initial Reward per Block** | 10 MRSN |
-| **Halving Interval** | 35,000,000 blocks |
+| **Initial Reward per Block** | 2⁶¹ − 1 wei ≈ 2.3 MRSN |
+| **Halving Interval** | 33,550,336 blocks |
 | **Block Time** | ~1 second |
-| **Halving Period** | ~1.11 years |
+| **Halving Period** | ~1.06 years |
+| **Total Emitted (all eras)** | ≈ 154.72M MRSN |
 
 ### Halving Epochs
 
-Rewards follow a Bitcoin-style halving schedule:
+Rewards follow a Bitcoin-style halving schedule (each era spans one halving interval = 33,550,336 blocks):
 
-| Era | Block Range | Reward/Block | Minted in Era |
-|-----|-------------|--------------|---------------|
-| 0 | 0 — 34,999,999 | 10 MRSN | 350,000,000 |
-| 1 | 35,000,000 — 69,999,999 | 5 MRSN | 175,000,000 |
-| 2 | 70,000,000 — 104,999,999 | 2.5 MRSN | 87,500,000 |
-| 3 | 105,000,000 — 139,999,999 | 1.25 MRSN | 43,750,000 |
-| 4 | 140,000,000 — 174,999,999 | 0.625 MRSN | 21,875,000 |
-| 5 | 175,000,000 — 209,999,999 | 0.3125 MRSN | 10,937,500 |
-| 6 | 210,000,000 — 244,999,999 | 0.15625 MRSN | 5,468,750 |
+| Era | Reward/Block (MRSN) | Minted in Era (MRSN) | Cumulative % of Emission |
+|-----|---------------------|----------------------|--------------------------|
+| 0 | ≈ 2.3058 | ≈ 77,361,808 | 50.0% |
+| 1 | ≈ 1.1529 | ≈ 38,680,904 | 75.0% |
+| 2 | ≈ 0.5765 | ≈ 19,340,452 | 87.5% |
+| 3 | ≈ 0.2882 | ≈ 9,670,226 | 93.75% |
+| 4 | ≈ 0.1441 | ≈ 4,835,113 | 96.875% |
+| 5 | ≈ 0.0721 | ≈ 2,417,557 | 98.4% |
 | ... | (continues halving) | ... | ... |
 
-The geometric series converges to exactly 700,000,000 MRSN:
+The geometric series converges to the total emission:
 
 ```
-total = initial_reward × halving_interval × 2
-      = 10 × 35,000,000 × 2
-      = 700,000,000 MRSN ✓
+total_emission = initial_reward × halving_interval × 2
+               = 2.305843009213693951 × 33,550,336 × 2
+               ≈ 154,723,615 MRSN
 ```
+
+This total sits far below the **2⁸⁹ − 1 ≈ 618.97M MRSN** cap — emission never approaches the ceiling.
 
 ### Emission Timeline
 
-| Milestone | Era | Approx. Time | Block Rewards Minted | % of Pool |
-|-----------|-----|---------------|----------------------|------------|
-| First halving | 1 | ~1.1 years | 350,000,000 | 50.0% |
-| Second halving | 2 | ~2.2 years | 525,000,000 | 75.0% |
-| 87.5% minted | 3 | ~3.3 years | 612,500,000 | 87.5% |
-| 93.75% minted | 4 | ~4.4 years | 656,250,000 | 93.75% |
-| 96.9% minted | 5 | ~5.5 years | 678,125,000 | 96.9% |
-| **99%+ minted** | **6** | **~6.7 years** | **689,062,500** | **98.4%** |
+At ~1 s block time (~1.06 years per halving):
 
-**99% of block rewards are emitted by approximately year 7** (at ~1 s block time).
+| Milestone | Era | Approx. Time | % of Emission |
+|-----------|-----|--------------|---------------|
+| First halving | 1 | ~1.1 years | 50.0% |
+| Second halving | 2 | ~2.1 years | 75.0% |
+| 87.5% emitted | 3 | ~3.2 years | 87.5% |
+| 93.75% emitted | 4 | ~4.3 years | 93.75% |
+| 96.9% emitted | 5 | ~5.3 years | 96.875% |
+| **99%+ emitted** | **7** | **~7.4 years** | **99.2%** |
+
+**99% of block rewards are emitted by approximately year 7–8** (at ~1 s block time).
 
 ## Reward Distribution
 
@@ -102,21 +115,23 @@ validator_reward = (effective_reward × validator_stake) / total_stake
 
 ### Example: Equal Stake
 
-With 4 validators each staking 1,000,000 MRSN:
+With 4 validators each staking 1,000,000 MRSN, in era 0 (reward ≈ 2.3058 MRSN/block):
 
 - Total stake = 4,000,000 MRSN
-- Block reward = 10 MRSN
-- Each validator = 10 × (1,000,000 / 4,000,000) = **2.5 MRSN per block**
+- Block reward ≈ 2.3058 MRSN
+- Each validator ≈ 2.3058 × (1,000,000 / 4,000,000) = **≈ 0.5765 MRSN per block**
 
 ### Example: Unequal Stake
 
-| Validator | Stake | Share | Reward/Block |
-|-----------|-------|-------|--------------|
-| A | 5,000,000 | 50% | 5.0 MRSN |
-| B | 3,000,000 | 30% | 3.0 MRSN |
-| C | 1,500,000 | 15% | 1.5 MRSN |
-| D | 500,000 | 5% | 0.5 MRSN |
-| **Total** | **10,000,000** | **100%** | **10.0 MRSN** |
+In era 0 (block reward ≈ 2.3058 MRSN):
+
+| Validator | Stake | Share | Reward/Block (MRSN) |
+|-----------|-------|-------|---------------------|
+| A | 5,000,000 | 50% | ≈ 1.1529 |
+| B | 3,000,000 | 30% | ≈ 0.6918 |
+| C | 1,500,000 | 15% | ≈ 0.3459 |
+| D | 500,000 | 5% | ≈ 0.1153 |
+| **Total** | **10,000,000** | **100%** | **≈ 2.3058** |
 
 ### Supply Cap Enforcement
 
@@ -127,19 +142,20 @@ remaining_supply = max_supply - total_minted
 effective_reward = min(scheduled_reward, remaining_supply)
 ```
 
-Individual validator rewards are calculated from `effective_reward`. This ensures `total_minted` never exceeds 1,000,000,000 MRSN.
+Individual validator rewards are calculated from `effective_reward`. This guarantees `total_minted` never exceeds **2⁸⁹ − 1 wei (≈ 618.97M MRSN)**. In practice the halving schedule converges to ≈ 154.72M MRSN, so the clamp is a hard backstop rather than an active limit.
 
 ### Rounding and Burns
 
-Due to integer division with 18-decimal precision, the sum of individual rewards may be slightly less than the effective reward. The difference is **implicitly burned**—typically negligible (0–2 wei per block) but enforces the supply cap.
+Due to integer division with 18-decimal precision, the sum of individual rewards may be slightly less than the effective reward. The difference is **implicitly burned** — typically negligible (0–2 wei per block) but it keeps `total_minted` strictly within the cap.
 
 ## Summary
 
 | Topic | Summary |
 |-------|---------|
-| **Max supply** | 1 billion MRSN |
-| **Block rewards** | 70% of supply, 10 MRSN/block initially |
-| **Halving** | Every 35M blocks (~1.11 years at ~1 s blocks) |
-| **99% emission** | ~year 7 |
+| **Supply cap** | 2⁸⁹ − 1 wei ≈ 618.97M MRSN (hard ceiling, Mersenne prime) |
+| **Block reward** | 2⁶¹ − 1 wei ≈ 2.3 MRSN/block initially (Mersenne prime), minted per block |
+| **Halving** | Every 33,550,336 blocks (5th perfect number, ~1.06 years at ~1 s blocks) |
+| **Total emission** | ≈ 154.72M MRSN (converges well below the cap) |
+| **99% emission** | ~year 7–8 |
 | **Distribution** | Proportional to validator stake |
-| **Allocations** | 70% rewards, 10% ecosystem, 10% foundation, 5% team, 5% sales |
+| **Genesis allocations** | Ecosystem, Foundation, Team, Sales — amounts finalized at genesis |

@@ -54,6 +54,6 @@ once, linked everywhere.
 
 **Direct staking** — Validators bond MRSN directly; delegation is not yet implemented. See [Staking](/validators/staking/).
 
-**Halving schedule** — Block rewards start at 10 MRSN and halve every 35,000,000 blocks; the 700M-MRSN reward pool converges exactly. See [Tokenomics](/architecture/tokenomics/).
+**Halving schedule** — Block rewards start at 2⁶¹ − 1 wei (≈2.3 MRSN) and halve every 33,550,336 blocks (the 5th perfect number); total emission converges to ≈154.72M MRSN, well below the 2⁸⁹ − 1 wei (≈618.97M MRSN) supply cap. See [Tokenomics](/architecture/tokenomics/).
 
 **Mersenne prime** — A prime of the form 2ᵖ−1. The network's namesake and its chain IDs: testnet `131071` (2¹⁷−1), mainnet `8191` (2¹³−1) — and the logo's five bars are `11111₂` = 31 = 2⁵−1.

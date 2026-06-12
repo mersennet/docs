@@ -30,14 +30,14 @@ Block rewards are distributed **proportionally to stake**:
 validator_reward = (block_reward × validator_stake) / total_stake
 ```
 
-- **Initial block reward**: 10 MRSN per block
-- **Halving**: Every 35,000,000 blocks (~1.1 years at ~1 s blocks)
+- **Initial block reward**: ≈2.3 MRSN per block (2⁶¹ − 1 wei)
+- **Halving**: Every 33,550,336 blocks (~1.06 years at ~1 s blocks)
 - **Crediting**: Rewards are applied directly to validator/delegator balances—no claiming step required
 
-Example with 4 validators each staking 1M MRSN:
+Example with 4 validators each staking 1M MRSN (era 0, reward ≈2.3058 MRSN):
 - Total stake = 4M MRSN
-- Block reward = 10 MRSN
-- Each validator receives 10 × (1M / 4M) = **2.5 MRSN per block**
+- Block reward ≈ 2.3058 MRSN
+- Each validator receives 2.3058 × (1M / 4M) = **≈0.5765 MRSN per block**
 
 ## Unbonding Period
 

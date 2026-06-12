@@ -29,7 +29,7 @@
 | **Chain ID** | `131071` (`0x1EEF` hex) |
 | **Currency** | MRSN (18 decimals) |
 | **Block Time** | ~1 second |
-| **Max Supply** | 1,000,000,000 MRSN |
+| **Supply Cap** | 2⁸⁹ − 1 wei ≈ 618.97M MRSN (Mersenne prime; hard ceiling) |
 | **Consensus** | DPoS (HotStuff-2 BFT design) |
 | **EVM** | Shanghai spec via `revm` |
 | **Native Precompile** | MersennetOrders CLOB at `0x0100` |
@@ -431,8 +431,8 @@ docker-compose up -d
 | 2026-03 | Vanilla JS for frontends | No build step required, instant deploy via SCP |
 | 2026-03 | Embedded faucet HTML | Single binary deployment, no static file dependency |
 | 2026-03 | redb over sled | ACID-compliant, pure Rust, better write performance |
-| 2026-03 | Block reward halving at 35M blocks | ~2.22 years per halving, 99% emitted by year 13 |
-| 2026-03 | 70/10/10/5/5 allocation | Block rewards dominant, reasonable team/ecosystem/foundation split |
+| 2026-03 | Block reward halving at 33,550,336 blocks (5th perfect number) | ~1.06 years per halving, 99% emitted by ~year 7–8 |
+| 2026-03 | Genesis allocation: ecosystem / foundation / team / sales | Block-reward emission (≈154.72M MRSN) dominant; genesis allocation amounts finalized at genesis, bounded by the cap |
 | 2026-03 | Nginx rate limiting | 50 req/s general, 5 req/s for sendRawTransaction, 5 WS connections per IP |
 | 2026-03 | `DEPLOYER_KEY` env var | Removed hardcoded private keys from scripts |
 

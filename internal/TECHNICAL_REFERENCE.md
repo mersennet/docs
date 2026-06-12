@@ -537,7 +537,7 @@ New validators receive a penalty: `-(total_voting_stake + total_voting_stake / 8
 - **Distribution:** Pro-rata by stake
 - **Burn:** `burned = scheduled_reward - Σ(distributed_rewards)` (rounding dust)
 - **Supply cap:** Rewards capped at `remaining_supply = max_supply - total_minted`
-- **Defaults:** 1B MRSN max supply (18 decimals), 10 MRSN/block initial reward, 35M block halving interval. Block rewards: 70% of supply.
+- **Defaults:** 2⁸⁹ − 1 wei (≈618.97M MRSN, Mersenne prime) supply cap (18 decimals), 2⁶¹ − 1 wei (≈2.3 MRSN)/block initial reward, 33,550,336-block halving interval (5th perfect number). Block-reward emission converges to ≈154.72M MRSN, well below the cap.
 
 ---
 
@@ -1313,9 +1313,9 @@ JSON-based configuration loaded from a file path. All fields have defaults.
     "unbonding_period": 2
   },
   "token_economics": {
-    "max_supply": "1000000000000000000000000000",
-    "initial_reward_per_block": "10000000000000000000",
-    "halving_interval": 35000000
+    "max_supply": "618970019642690137449562111",
+    "initial_reward_per_block": "2305843009213693951",
+    "halving_interval": 33550336
   },
   "rpc": {
     "enabled": false,
@@ -1364,9 +1364,9 @@ JSON-based configuration loaded from a file path. All fields have defaults.
 | `slashing.escalation_max_bps` | 1,000 | basis points (10%) |
 | `slashing.round_timeout_ms` | 500 | milliseconds |
 | `slashing.unbonding_period` | 2 | blocks |
-| `token_economics.max_supply` | 1B × 10^18 (MRSN) | wei |
-| `token_economics.initial_reward_per_block` | 10 × 10^18 (MRSN) | wei |
-| `token_economics.halving_interval` | 35,000,000 | blocks |
+| `token_economics.max_supply` | 2⁸⁹ − 1 = 618970019642690137449562111 (≈618.97M MRSN) | wei |
+| `token_economics.initial_reward_per_block` | 2⁶¹ − 1 = 2305843009213693951 (≈2.3 MRSN) | wei |
+| `token_economics.halving_interval` | 33,550,336 | blocks |
 | `rpc.addr` | 127.0.0.1:8545 | — |
 | `p2p.listen` | 0.0.0.0:30303 | — |
 | `p2p.block_time_ms` | 1,000 | milliseconds |
@@ -1545,9 +1545,9 @@ Each validator has:
     "unbonding_period": 2
   },
   "token_economics": {
-    "max_supply": "1000000000000000000000000000",
-    "initial_reward_per_block": "10000000000000000000",
-    "halving_interval": 35000000
+    "max_supply": "618970019642690137449562111",
+    "initial_reward_per_block": "2305843009213693951",
+    "halving_interval": 33550336
   }
 }
 ```
