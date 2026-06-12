@@ -11,9 +11,9 @@ Mersennet has an on-chain DEX called **Mersennet Swap**, a Uniswap V2–style AM
 | MersennetSwapFactory | `0x63f7a64db6d2b965189b8b48b7435668021f6b17` |
 | MersennetSwapRouter | `0x9f337f433e71ce969b991511f1dcd3d0622116bb` |
 | WMRSN | `0x079bf1207b51acda83e2e8178344f62a883f8479` |
-| MockUSDC | `0xb22f77d89122e9e3784bfd3eee9616273f38238d` |
-| MockUSDT | `0x877feca38919acd7aaf7cb81f100e0454aa95c17` |
-| MockDAI | `0xb88d63a65691effbf4b6808325b1588912c15cf4` |
+| MockUSDC | `0x2e06b6e7479ddf54b46458b5a61f302d962957ea` |
+| MockUSDT | `0x7cfd9b3e373c3f4fd34aed80d7ae083fc0b20eb7` |
+| MockDAI | `0x4359446ffb3e262294923ec61f35769ce62fa5ad` |
 
 ## Router ABI (Key Functions)
 
@@ -44,7 +44,7 @@ const RPC_URL = "https://rpc.mersennet.com";
 const CHAIN_ID = 131071;
 const ROUTER = "0x9f337f433e71ce969b991511f1dcd3d0622116bb";
 const WMRSN = "0x079bf1207b51acda83e2e8178344f62a883f8479";
-const MOCK_USDC = "0xb22f77d89122e9e3784bfd3eee9616273f38238d";
+const MOCK_USDC = "0x2e06b6e7479ddf54b46458b5a61f302d962957ea";
 
 const provider = new ethers.JsonRpcProvider(RPC_URL, CHAIN_ID);
 const router = new ethers.Contract(ROUTER, ROUTER_ABI, provider);
@@ -73,8 +73,8 @@ const provider = new ethers.JsonRpcProvider(RPC_URL, CHAIN_ID);
 const wallet = new ethers.Wallet(process.env.PRIVATE_KEY, provider);
 const router = new ethers.Contract(ROUTER, ROUTER_ABI, wallet);
 
-const USDC = "0xb22f77d89122e9e3784bfd3eee9616273f38238d";
-const USDT = "0x877feca38919acd7aaf7cb81f100e0454aa95c17";
+const USDC = "0x2e06b6e7479ddf54b46458b5a61f302d962957ea";
+const USDT = "0x7cfd9b3e373c3f4fd34aed80d7ae083fc0b20eb7";
 
 const amountIn = ethers.parseUnits("10", 6); // 10 USDC
 const path = [USDC, USDT];

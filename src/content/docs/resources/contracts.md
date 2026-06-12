@@ -35,9 +35,9 @@ Mersennet Swap V3 contracts are live at [http://46.225.30.187:4002](http://46.22
 
 | Contract | Address | Description |
 |----------|---------|-------------|
-| **MockUSDC** | `0xb22f77d89122e9e3784bfd3eee9616273f38238d` | Test USDC (6 decimals). For DeFi development and testing. |
-| **MockUSDT** | `0x877feca38919acd7aaf7cb81f100e0454aa95c17` | Test USDT (6 decimals). For DeFi development and testing. |
-| **MockDAI** | `0xb88d63a65691effbf4b6808325b1588912c15cf4` | Test DAI (18 decimals). For DeFi development and testing. |
+| **MockUSDC** | `0x2e06b6e7479ddf54b46458b5a61f302d962957ea` | Test USDC (6 decimals). For DeFi development and testing. |
+| **MockUSDT** | `0x7cfd9b3e373c3f4fd34aed80d7ae083fc0b20eb7` | Test USDT (6 decimals). For DeFi development and testing. |
+| **MockDAI** | `0x4359446ffb3e262294923ec61f35769ce62fa5ad` | Test DAI (18 decimals). For DeFi development and testing. |
 
 :::note[Testnet Token Faucet]
 Mock tokens (MockUSDC, MockUSDT, MockDAI) include a public `faucet()` function. Anyone can call it to receive test tokens, with no approval or whitelist required. Use this for development and testing.
@@ -62,9 +62,9 @@ Chain ID: 131071
 MersennetOrders CLOB:    0x0000000000000000000000000000000000000100 (precompile)
 Multicall3:          0x973ee1bf0907287d1eb8a144d88b34f515c83f29
 WMRSN:               0x079bf1207b51acda83e2e8178344f62a883f8479
-MockUSDC:            0xb22f77d89122e9e3784bfd3eee9616273f38238d
-MockUSDT:            0x877feca38919acd7aaf7cb81f100e0454aa95c17
-MockDAI:             0xb88d63a65691effbf4b6808325b1588912c15cf4
+MockUSDC:            0x2e06b6e7479ddf54b46458b5a61f302d962957ea
+MockUSDT:            0x7cfd9b3e373c3f4fd34aed80d7ae083fc0b20eb7
+MockDAI:             0x4359446ffb3e262294923ec61f35769ce62fa5ad
 MersennetSwapV2Factory:  0x63f7a64db6d2b965189b8b48b7435668021f6b17
 MersennetSwapV2Router:   0x9f337f433e71ce969b991511f1dcd3d0622116bb
 VaultStrategy:       0x3beef509cb30609ba62c56dae369c545d9b359a8
@@ -91,7 +91,7 @@ function faucet() external;
 
 ```javascript
 const usdc = new ethers.Contract(
-  '0xb22f77d89122e9e3784bfd3eee9616273f38238d',
+  '0x2e06b6e7479ddf54b46458b5a61f302d962957ea',
   ['function faucet() external'],
   signer
 );

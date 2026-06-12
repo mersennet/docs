@@ -24,9 +24,9 @@
 |----------|---------|-------------|
 | Multicall3 | `0x973ee1bf0907287d1eb8a144d88b34f515c83f29` | Batch RPC calls |
 | WMRSN | `0x079bf1207b51acda83e2e8178344f62a883f8479` | Wrapped MRSN (ERC-20) |
-| MockUSDC | `0xb22f77d89122e9e3784bfd3eee9616273f38238d` | Testnet USDC (6 decimals) |
-| MockUSDT | `0x877feca38919acd7aaf7cb81f100e0454aa95c17` | Testnet USDT (6 decimals) |
-| MockDAI | `0xb88d63a65691effbf4b6808325b1588912c15cf4` | Testnet DAI (18 decimals) |
+| MockUSDC | `0x2e06b6e7479ddf54b46458b5a61f302d962957ea` | Testnet USDC (6 decimals) |
+| MockUSDT | `0x7cfd9b3e373c3f4fd34aed80d7ae083fc0b20eb7` | Testnet USDT (6 decimals) |
+| MockDAI | `0x4359446ffb3e262294923ec61f35769ce62fa5ad` | Testnet DAI (18 decimals) |
 | MersennetSwapFactory | `0x63f7a64db6d2b965189b8b48b7435668021f6b17` | DEX pair factory |
 | MersennetSwapRouter | `0x9f337f433e71ce969b991511f1dcd3d0622116bb` | DEX swap router |
 
