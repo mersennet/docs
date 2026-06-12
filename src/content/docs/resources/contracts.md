@@ -28,7 +28,7 @@ Complete reference of smart contracts deployed on Mersennet testnet (Chain ID 13
 | **Quoter** | *Recently deployed* | Off-chain quote simulation for swap amounts. |
 
 :::note
-Mersennet Swap V3 contracts are live at [http://46.225.30.187:4002](http://46.225.30.187:4002). Verified addresses will be added here once confirmed on-chain. See [Mersennet Swap V3](/ecosystem/swap-v3) for protocol documentation.
+Mersennet Swap V3 contracts are live at [http://46.225.30.187:4002](http://46.225.30.187:4002). Verified addresses will be added here once confirmed on-chain.
 :::
 
 ## Mock Tokens
@@ -105,10 +105,6 @@ await usdc.faucet();
 function deposit() external payable;
 function withdraw(uint256 wad) external;
 ```
-
-### Mersennet Swap
-
-See [Mersennet Swap V2](/ecosystem/swap) and [Mersennet Swap V3](/ecosystem/swap-v3) for swap and liquidity examples.
 
 ## Upcoming Deployments
 

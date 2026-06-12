@@ -66,6 +66,4 @@ Mersennet Trade supports any pair listed on the MersennetOrders book. Current te
 ## Related Resources
 
 - [MersennetOrders Architecture](/architecture/order-book): How the native CLOB precompile works
-- [Mersennet Swap V2](/ecosystem/swap): AMM DEX for simple swaps
-- [Mersennet Swap V3](/ecosystem/swap-v3): Concentrated liquidity AMM
 - [Deployed Contracts](/resources/contracts): Token addresses and ABIs

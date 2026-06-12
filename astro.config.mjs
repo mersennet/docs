@@ -10,11 +10,7 @@ export default defineConfig({
   redirects: {
     '/overview': '/',
     '/architecture/prime-orders': '/architecture/order-book/',
-    '/ecosystem/primeswap': '/ecosystem/swap/',
-    '/ecosystem/primeswap-v3': '/ecosystem/swap-v3/',
     '/ecosystem/primetrade': '/ecosystem/trade/',
-    '/ecosystem/primefi': '/ecosystem/lend/',
-    '/ecosystem/primeport': '/ecosystem/nfts/',
   },
   markdown: {
     remarkPlugins: [remarkMath],
@@ -132,13 +128,7 @@ export default defineConfig({
         {
           label: 'Ecosystem',
           items: [
-            { slug: 'ecosystem/swap' },
-            { slug: 'ecosystem/swap-v3' },
             { slug: 'ecosystem/trade' },
-            { slug: 'ecosystem/lend' },
-            { slug: 'ecosystem/nfts' },
-            { slug: 'ecosystem/wallet' },
-            { slug: 'ecosystem/directory' },
           ],
         },
         {

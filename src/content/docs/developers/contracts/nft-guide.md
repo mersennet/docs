@@ -217,10 +217,3 @@ console.log("Balance:", balance.toString());
 await nft.transferFrom(wallet.address, "0xNewOwner", tokenId);
 ```
 
-## Integration with Mersennet NFTs
-
-[Mersennet NFTs](/ecosystem/nfts) is the NFT marketplace on Mersennet. To list your collection:
-
-1. Deploy your NFT contract.
-2. Mint tokens and host metadata (IPFS or your API).
-3. Integrate with Mersennet NFTs's listing flow (Seaport protocol).

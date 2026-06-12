@@ -146,21 +146,6 @@ cast call 0xTokenAddress "balanceOf(address)(uint256)" 0xYourAddress \
 cast calldata "transfer(address,uint256)" 0xRecipient 1000000000000000000
 ```
 
-## Integrate with Mersennet Swap
-
-To list your token on [Mersennet Swap](/ecosystem/swap), you need:
-
-1. **WMRSN** for MRSN pairs: `0x079bf1207b51acda83e2e8178344f62a883f8479`
-2. **MersennetSwapRouter** for adding liquidity: `0x9f337f433e71ce969b991511f1dcd3d0622116bb`
-
-Approve the router and add liquidity:
-
-```javascript
-const ROUTER = "0x9f337f433e71ce969b991511f1dcd3d0622116bb";
-await token.approve(ROUTER, ethers.MaxUint256);
-// Then call router.addLiquidity
-```
-
 ## Deployed Token Addresses
 
 These are pre-deployed tokens on Mersennet testnet:

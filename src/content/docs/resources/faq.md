@@ -73,17 +73,9 @@ Approximately **1 second** per block.
 
 ## Ecosystem
 
-### What is Mersennet Swap?
+### What is Mersennet Trade?
 
-Mersennet Swap is the native AMM/DEX on Mersennet, a Uniswap V2 fork with 0.3% swap fee. See [Mersennet Swap DEX](/ecosystem/swap).
-
-### What is Mersennet Lend?
-
-Mersennet Lend is an Aave-style lending/borrowing protocol. Contracts are built and ready for deployment. See [Mersennet Lend Lending](/ecosystem/lend).
-
-### What is Mersennet NFTs?
-
-Mersennet NFTs is a Seaport-based NFT marketplace supporting ERC-721 and ERC-1155. See [Mersennet NFTs NFT Marketplace](/ecosystem/nfts).
+Mersennet Trade is the native perpetuals and spot trading terminal, built on the on-chain CLOB precompile (`MersennetOrders`) for explicit bid/ask price discovery and limit/market orders. See [Mersennet Trade](/ecosystem/trade).
 
 ---
 
