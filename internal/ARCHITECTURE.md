@@ -1,6 +1,6 @@
 # Mersennet — Architecture Decision Records
 
-**Version 1.0 — March 2026**
+**Version 2.0 — June 2026**
 **Classification: Technical Architecture Document**
 **Audience: Engineering leadership, technical due diligence, protocol contributors**
 
@@ -38,20 +38,35 @@ Mersennet is a **Layer 1 blockchain** that combines a parallel EVM execution eng
 
 **Competitive positioning:** Hyperliquid has HyperEVM (alpha) alongside its native CLOB, but EVM ↔ CLOB composability is **async** — CoreWriter actions are delayed by seconds, reads are 1 block stale. Mersennet's CLOB precompile is the key architectural differentiator: **true atomic same-transaction EVM ↔ CLOB** — unique in the industry.
 
-### Key Performance Characteristics
+- shielded state, shielded orders, threshold mempool, liquidation
+     auctions, and shielded EVM bridge are implemented in-repo;
+- local SP1 prove/verify transcript capture is complete;
+- remaining protocol close-out is a delegated network proof (E4) and
+     the external SP1→Groth16 wrapping artifact flow (E5);
+- repo-local client surfaces for wallet reconstruction, migration UX,
+     Noir prover wiring, and selective-disclosure reads are implemented.
 
-| Metric | Measured | Mechanism |
-|---|---|---|
-| EVM Throughput | 72,181 TPS | Parallel execution (Block-STM) on 8 cores |
-| CLOB Operations | 2,484,170 ops/s | Native Rust matching engine (O(log n) BTreeMap) |
-| FBA Throughput | 5,053,782 ops/s | Frequent batch auctions, clearing price |
-| HotStuff-2 Round | 0.001 ms/round | Two-phase BFT, 2-chain commit |
-| Finality | ~200 ms | HotStuff-2 consensus |
-| Block Gas Limit | 30,000,000 | EIP-1559 fee market with dynamic base fee |
+### Current Architectural Objective
 
-### Codebase Profile
+Prime Chain's current objective is to ship a **privacy-first hybrid
+chain** rather than a universal private-compute environment. Public
+market-level state remains observable; trader-specific balances,
+positions, notes, and order flow move behind shielded commitments and
+grant-gated disclosure paths.
 
-| Dimension | Value |
+Concretely, the protocol aims to provide:
+
+- true same-transaction EVM ↔ CLOB composability for public execution;
+- shielded notes + nullifier-based state for trader-specific data;
+- threshold-encrypted order admission and batch execution;
+- succinct state-transition proofs for export, auditability, and bridge
+     verification;
+- selective disclosure via scoped viewing grants instead of address-keyed
+     public reads.
+
+### Workspace Profile
+
+| Dimension | Current state |
 |---|---|
 | Language | Rust (2024 edition) |
 | Workspace | 6 crates (`crates/{core,network,rpc,node,zkp,state-proof}`) |
@@ -66,16 +81,43 @@ Mersennet is a **Layer 1 blockchain** that combines a parallel EVM execution eng
 Existing blockchains force a choice: general-purpose smart contracts (Ethereum) **or** high-performance order matching (Hyperliquid). Multi-chain approaches (dYdX v4) lose atomic composability. Mersennet resolves this by embedding both execution domains in a single state tuple:
 
 ```
-S = (S_evm, S_orders, S_bridge)
+S = (S_evm, S_orders, S_shielded, S_bridge, S_proofs)
 ```
 
-All three domains share one consensus layer, one block structure, one state root, and one finality guarantee.
+Where:
+
+- `S_evm` = public EVM accounts, storage, precompiles, code publication;
+- `S_orders` = market metadata, public aggregates, and matching context;
+- `S_shielded` = note commitments, nullifier set, encrypted note payloads,
+     shielded order/intents, liquidation state, and transparent↔shielded bridge state;
+- `S_bridge` = cross-domain message queues and Ethereum bridge-facing proof exports;
+- `S_proofs` = state-proof artifacts and the canonical `BlockProgramInput` /
+     `BlockProgramOutput` proving boundary.
+
+All domains share one consensus layer, one block structure, one finality
+path, and one state-root commitment strategy.
 
 ---
 
 ## 2. System Architecture
 
-### 2.1 High-Level Component Diagram
+### 2.1 Current Workspace Topology
+
+The current protocol is implemented as a Cargo workspace rather than the
+earlier monolithic `src/core/*` layout. The canonical execution surfaces are:
+
+| Workspace member | Responsibility |
+|---|---|
+| `crates/core` | execution engine, shielded subsystems, precompiles, bridge export, state proof collection |
+| `crates/network` | P2P / transport / sync wiring |
+| `crates/rpc` | JSON-RPC + shielded RPC + WS subscriptions |
+| `crates/node` | binaries, operator entrypoints, faucet/loadtest/genesis tooling |
+| `crates/zkp` | cryptographic primitives, Noir adapters, SP1 executor and witness types |
+| `crates/state-proof` | revm-free proof envelopes for SP1 / bridge-facing proof interchange |
+| `programs/state-transition` | zkVM guest program |
+| `programs/state-transition-host` | host-side prove/verify runner for local and network SP1 modes |
+
+### 2.2 Current High-Level Architecture
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────┐
@@ -88,7 +130,7 @@ All three domains share one consensus layer, one block structure, one state root
 │  │              │    │  │ MEMPOOL    │  │ COMMIT-REVEAL POOL     │ │   │
 │  │  Eth-compat: │    │  │ pending    │  │ commit()  → hash store │ │   │
 │  │  eth_*       │    │  │ queued     │  │ reveal()  → tx data    │ │   │
-│  │  mersennet_*     │    │  │ base_fee   │  │ window = 2 blocks      │ │   │
+│  │  prime_*     │    │  │ base_fee   │  │ window = 2 blocks      │ │   │
 │  └─────────────┘    │  └─────┬──────┘  └────────────────────────┘ │   │
 │                      │        │                                      │   │
 │  ┌─────────────┐    │        ▼                                      │   │
@@ -114,7 +156,7 @@ All three domains share one consensus layer, one block structure, one state root
 │         │           │  │                   │                     │ │   │
 │         │           │  │                   ▼                     │ │   │
 │         │           │  │  ┌─────────────────────────────────────┐│ │   │
-│         │           │  │  │         MersennetOrders State           ││ │   │
+│         │           │  │  │         PrimeOrders State           ││ │   │
 │         │           │  │  │  Markets │ OrderBooks │ Positions   ││ │   │
 │         │           │  │  │  Collateral │ Margin │ Insurance    ││ │   │
 │         │           │  │  └───────────────┬─────────────────────┘│ │   │
@@ -148,7 +190,7 @@ All three domains share one consensus layer, one block structure, one state root
 │                      │  ┌──────────────────────────────────────────┐│   │
 │                      │  │  PERSISTENT STATE  (state.rs + sled)     ││   │
 │                      │  │                                          ││   │
-│                      │  │  accounts │ storage │ mersennet_orders │      ││   │
+│                      │  │  accounts │ storage │ prime_orders │      ││   │
 │                      │  │  bridge_queues │ blocks │ pruning │       ││   │
 │                      │  │  height_meta                              ││   │
 │                      │  │                                          ││   │
@@ -159,7 +201,10 @@ All three domains share one consensus layer, one block structure, one state root
 └─────────────────────────────────────────────────────────────────────────┘
 ```
 
-### 2.2 Module Dependency Graph
+### 2.3 Current State Composition
+
+The protocol has evolved from a public `(S_evm, S_orders, S_bridge)`
+tuple into a privacy-aware multi-domain state model:
 
 ```
                     ┌──────────────────────┐
@@ -180,7 +225,7 @@ All three domains share one consensus layer, one block structure, one state root
    └────────────┘       │   │   │
                         ▼   │   ▼
                 ┌──────────┐│┌──────────────┐
-                │ EVM/revm │││ MersennetOrders  │
+                │ EVM/revm │││ PrimeOrders  │
                 │ + Precomp│││ + FBA Engine │
                 └──────────┘│└──────────────┘
                             ▼
@@ -192,28 +237,39 @@ All three domains share one consensus layer, one block structure, one state root
                             ▼
           ┌─────────────────────────────────┐
           │   PersistentState (sled)        │
-          │   accounts│storage│mersennet_orders │
+          │   accounts│storage│prime_orders │
           │   bridge_queues│blocks│merkle   │
           └─────────────────────────────────┘
 ```
 
-### 2.3 State Composition
+Where:
 
-```
-State Root (B256, keccak256 Binary Merkle)
-├── S_evm
-│   ├── accounts tree (address → balance, nonce, code_hash, code)
-│   └── storage tree  (address||slot → value)
-├── S_orders
-│   ├── markets      (MarketId → Market)
-│   ├── orders       (OrderId → Order)
-│   ├── books        (MarketId → OrderBook {bids, asks})
-│   ├── accounts     (Address → collateral, positions, open_orders)
-│   └── insurance_fund, margin_params
-└── S_bridge
-    ├── orders_to_evm queue (VecDeque<BridgeMessage>)
-    └── evm_to_orders queue (VecDeque<BridgeMessage>)
-```
+- `S_evm`: public EVM accounts, contract storage, code publication state,
+     and precompile-facing execution context.
+- `S_orders`: public market metadata, batch-clearing context, and the
+     aggregate view of the order-driven markets.
+- `S_shielded`: note tree, recent roots, nullifier set, encrypted note
+     payloads, shielded order/intents, liquidation state, viewing grants,
+     and transparent↔shielded migration/bridge state.
+- `S_bridge`: cross-domain queues and Ethereum bridge export surface.
+- `S_proofs`: state-proof commitments and canonical `BlockProgramInput` /
+     `BlockProgramOutput` proving boundary.
+
+This is still one canonical block/state transition: public execution,
+shielded execution, and proof materialization all share one finality path.
+
+### 2.4 Document Scope Note
+
+The ADR bodies below were originally written against an earlier
+monolithic layout (`src/core/*`, `src/rpc/*`, `state.rs + sled`). Their
+architectural intent is still useful, but path names and some subsystem
+boundaries have moved. For the authoritative current implementation
+status, use:
+
+- `docs/STATUS.md` for live workstream state,
+- `docs/security/privacy-fork-audit-packet.md` for ZK/proof close-out,
+- `docs/shielded-rpc.md` and `docs/security/cryptography-spec.md` for the
+     privacy perimeter and cryptographic contract.
 
 ---
 
@@ -245,7 +301,7 @@ In sled, sub-states are stored as separate trees:
 |---|---|
 | `accounts` | EVM account records (balance, nonce, code_hash, code) |
 | `storage` | EVM contract storage (address+slot → value) |
-| `mersennet_orders` | Serialized MersennetOrdersSnapshot (markets, orders, books, accounts) |
+| `prime_orders` | Serialized PrimeOrdersSnapshot (markets, orders, books, accounts) |
 | `bridge_orders_to_evm` | Serialized BridgeQueueRecord |
 | `bridge_evm_to_orders` | Serialized BridgeQueueRecord |
 | `blocks` | JSON-serialized Block records |
@@ -265,7 +321,7 @@ In sled, sub-states are stored as separate trees:
 - *Positive:* Atomic composability—a single EVM transaction can call the CLOB precompile, place an order, and react to the fill in the same execution context.
 - *Positive:* Single state root simplifies light client verification.
 - *Negative:* State management complexity increases; each commit must serialize all three sub-states.
-- *Negative:* The CLOB precompile uses a global `Mutex<MersennetOrdersState>`, which serializes concurrent precompile access within parallel execution.
+- *Negative:* The CLOB precompile uses a global `Mutex<PrimeOrdersState>`, which serializes concurrent precompile access within parallel execution.
 
 ---
 
@@ -386,7 +442,7 @@ Register a custom precompile at the fixed address `0x000000000000000000000000000
 | `isLiquidatable` | keccak256 of sig | 10,000 | `(address account) → (bool)` |
 | `getBestBidAsk` | keccak256 of sig | 5,000 | `(uint64 marketId) → (uint256 bestBid, uint256 bestAsk)` |
 
-**State access mechanism:** The precompile accesses `MersennetOrdersState` through a global `Lazy<Mutex<Option<Arc<Mutex<MersennetOrdersState>>>>>`. Before block execution, `set_mersennet_orders_context()` installs the shared state; after execution, `clear_mersennet_orders_context()` removes it. The engine reclaims sole ownership via `Arc::try_unwrap`.
+**State access mechanism:** The precompile accesses `PrimeOrdersState` through a global `Lazy<Mutex<Option<Arc<Mutex<PrimeOrdersState>>>>>`. Before block execution, `set_prime_orders_context()` installs the shared state; after execution, `clear_prime_orders_context()` removes it. The engine reclaims sole ownership via `Arc::try_unwrap`.
 
 **Alternatives Considered:**
 
@@ -422,7 +478,7 @@ Implement Frequent Batch Auctions (FBA) via the `FBAEngine` and `BatchAuction` s
 3. **Pro-rata allocation**: When one side is oversubscribed, fills are allocated proportionally to order size, preventing any single participant from capturing disproportionate fill.
 4. **Pairing**: Buyers and sellers are paired sequentially to produce individual `AuctionFill` records.
 
-The batch interval is configurable (default: 100ms). The engine exposes `execute_batch_auctions()` which runs all pending auctions and applies fills to `MersennetOrdersState`.
+The batch interval is configurable (default: 100ms). The engine exposes `execute_batch_auctions()` which runs all pending auctions and applies fills to `PrimeOrdersState`.
 
 **Alternatives Considered:**
 
@@ -536,11 +592,11 @@ Mersennet needs an embedded key-value store for persisting EVM account state, co
 Use **sled 0.34**, a Rust-native embedded database built on a lock-free B+ tree with zero-copy reads. sled is used through 8 separate trees within a single database:
 
 ```
-accounts, storage, mersennet_orders, bridge_orders_to_evm,
+accounts, storage, prime_orders, bridge_orders_to_evm,
 bridge_evm_to_orders, blocks, pruning, height_meta
 ```
 
-State is committed via `PersistentState::commit_state()` which writes dirty EVM accounts (tracked by a `Mutex<HashSet<Address>>`), serializes the MersennetOrders snapshot, serializes bridge queues, and flushes to disk. The dirty-tracking optimization avoids full-state rewrites on each block.
+State is committed via `PersistentState::commit_state()` which writes dirty EVM accounts (tracked by a `Mutex<HashSet<Address>>`), serializes the PrimeOrders snapshot, serializes bridge queues, and flushes to disk. The dirty-tracking optimization avoids full-state rewrites on each block.
 
 **Alternatives Considered:**
 
@@ -628,7 +684,7 @@ Every block must produce a verifiable commitment to the entire chain state. This
 **Decision:**
 Implement a **binary Merkle tree** over sorted key-value pairs in `crates/core/src/state.rs`. The algorithm:
 
-1. Collect all key-value pairs from all sled trees (accounts, storage, mersennet_orders, bridge queues).
+1. Collect all key-value pairs from all sled trees (accounts, storage, prime_orders, bridge queues).
 2. Sort by key (lexicographic).
 3. Hash each pair: `leaf = keccak256(key || value)`.
 4. Build a binary tree bottom-up: pairs of leaves are combined as `keccak256(left || right)`. Odd leaves are promoted.
@@ -694,7 +750,7 @@ Use **ECDSA over the secp256k1 curve** via the `k256` crate (v0.13), matching Et
 In a leveraged trading system, positions can become insolvent (negative equity) if the market moves faster than liquidation can execute. Without a backstop mechanism, the deficit must be absorbed by someone—either the protocol, other traders, or it creates a bad debt that undermines system solvency.
 
 **Decision:**
-Implement a two-tier insolvency protection mechanism in `MersennetOrdersState`:
+Implement a two-tier insolvency protection mechanism in `PrimeOrdersState`:
 
 **Tier 1 — Insurance Fund:**
 - An `insurance_fund` (U256) accumulates from a configurable fraction of trade fees (`insurance_contribution_rate_bps`, default: 10 bps = 0.1%).
@@ -737,7 +793,7 @@ Implement a two-tier insolvency protection mechanism in `MersennetOrdersState`:
 Hyperliquid chose dual-execution (HyperCore + HyperEVM) for maximum CLOB performance but at the cost of async composability. HyperEVM runs as a separate Cancun-spec EVM alongside the native CLOB; they execute sequentially. EVM reads HyperCore state from the previous block (1 block stale). CoreWriter at `0x333...333` queues orders for the next block — seconds delay. This design optimizes for raw CLOB throughput (200K ops/s) but makes atomic EVM ↔ CLOB flows impossible.
 
 **Decision:**
-Mersennet chose integrated execution with a precompile at `0x0100` that runs MersennetOrders operations **synchronously** within EVM transaction execution. The CLOB state is co-located with EVM state in the same block; precompile calls execute inline during `revm.transact_commit()`. A single transaction can deposit collateral, place an order, and react to the fill in one atomic step.
+Mersennet chose integrated execution with a precompile at `0x0100` that runs PrimeOrders operations **synchronously** within EVM transaction execution. The CLOB state is co-located with EVM state in the same block; precompile calls execute inline during `revm.transact_commit()`. A single transaction can deposit collateral, place an order, and react to the fill in one atomic step.
 
 **Alternatives Considered:**
 
@@ -800,9 +856,9 @@ Mersennet chose integrated execution with a precompile at `0x0100` that runs Mer
 ### 4.2 Order Lifecycle (Continuous Matching)
 
 ```
-  Trader                  Engine                MersennetOrders
+  Trader                  Engine                PrimeOrders
     │                       │                       │
-    │  mersennet_submitOrder     │                       │
+    │  prime_submitOrder     │                       │
     │  (or precompile call)  │                       │
     │ ─────────────────────▶│                       │
     │                       │  validate:             │
@@ -858,7 +914,7 @@ Mersennet chose integrated execution with a precompile at `0x0100` that runs Mer
        │                                        │
   12. commit_state()                            │
       ├── write_evm_state (dirty accounts)      │
-      ├── commit_mersennet_orders (snapshot)         │
+      ├── commit_prime_orders (snapshot)         │
       ├── commit_bridge_queues                   │
       └── compute_state_root (binary merkle)    │
        │                                        │
@@ -895,7 +951,7 @@ Mersennet chose integrated execution with a precompile at `0x0100` that runs Mer
   └────┬────┘
        │
   ┌────┴────┐
-  │ Apply   │  apply_results() → MersennetOrdersState
+  │ Apply   │  apply_results() → PrimeOrdersState
   │ Phase   │  Update positions (buyer: +size, seller: -size)
   │         │  Update market.last_price
   │         │  Return unmatched orders
@@ -1027,7 +1083,7 @@ Three-validator testnet deployed via `docker-compose.yml`:
       └────────────────┼────────────────┘
                        │
               ┌────────┴────────┐
-              │  mersennet-testnet  │
+              │  prime-testnet  │
               │  (bridge network)│
               └─────────────────┘
 ```
@@ -1044,7 +1100,7 @@ The `AppConfig` structure supports JSON configuration with sensible defaults:
 |---|---|---|
 | `engine` | chain_id, state_path, gas_limit_per_block | 131071, "state", 30M |
 | `mempool` | max_total, max_per_sender, bump_bps | 10K, 1K, 1000 (10%) |
-| `mersennet_orders` | initial_margin_bps, maintenance_margin_bps | 0, 0 |
+| `prime_orders` | initial_margin_bps, maintenance_margin_bps | 0, 0 |
 | `bridge` | max_queue_len | 10,000 |
 | `slashing` | double_sign_bps, timeout_bps, escalation | 500, 100, 25/1000 |
 | `token_economics` | max_supply, reward_per_block, halving | 1B MRSN, 10 MRSN, 35M blocks |
@@ -1064,7 +1120,7 @@ The `AppConfig` structure supports JSON configuration with sensible defaults:
 | `consensus` | `crates/core/src/consensus.rs` | ~895 | CometBFT-style consensus, validator set, staking, slashing, rewards |
 | `hotstuff2` | `crates/core/src/hotstuff2.rs` | ~765 | HotStuff-2 two-phase BFT, QC formation, 2-chain commit |
 | `parallel` | `crates/core/src/parallel.rs` | ~584 | Block-STM parallel executor, dependency analysis, MVCC, merge |
-| `mersennet_orders` | `crates/core/src/mersennet_orders.rs` | ~863 | CLOB matching engine, margin, liquidation, ADL, insurance fund |
+| `prime_orders` | `crates/core/src/prime_orders.rs` | ~863 | CLOB matching engine, margin, liquidation, ADL, insurance fund |
 | `precompiles` | `crates/core/src/precompiles.rs` | ~684 | revm precompiles (CLOB 0x0100, shielded 0x0200/0x0201, state proof 0x0300) |
 | `precompile_abi` | `crates/core/src/precompile_abi.rs` | ~253 | ABI encoding/decoding, function selectors, gas constants |
 | `fba` | `crates/core/src/fba.rs` | ~389 | Frequent batch auctions, clearing price, pro-rata allocation |
@@ -1076,8 +1132,8 @@ The `AppConfig` structure supports JSON configuration with sensible defaults:
 | `bridge` | `crates/core/src/bridge.rs` | ~89 | Cross-domain message queues (orders↔evm) |
 | `shielded_*` | `crates/core/src/shielded_{evm,orders,state,persistence}.rs` | ~2,527 | Privacy fork: shielded notes, orders, state, persistence |
 | `zk_proofs` / `zk_sp1` | `crates/core/src/zk_{proofs,sp1}.rs` | ~931 | ZK state proofs, SP1 integration |
-| `events` | `crates/core/src/events.rs` | ~192 | Domain event types (MersennetOrders, Bridge) |
-| `errors` | `crates/core/src/errors.rs` | ~65 | Error types for MersennetOrders and RPC |
+| `events` | `crates/core/src/events.rs` | ~192 | Domain event types (PrimeOrders, Bridge) |
+| `errors` | `crates/core/src/errors.rs` | ~65 | Error types for PrimeOrders and RPC |
 | `rpc` | `crates/rpc/src/rpc.rs` | ~1,816 | JSON-RPC server (tiny_http), Ethereum-compatible API |
 | `rpc_router` | `crates/rpc/src/rpc_router.rs` | ~1,021 | RPC method dispatch, parameter parsing, response formatting |
 | `rpc_shielded` | `crates/rpc/src/rpc_shielded.rs` | ~2,118 | Shielded/privacy RPC methods, viewing keys, state proofs |

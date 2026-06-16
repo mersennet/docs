@@ -184,8 +184,8 @@ When the block timer fires, the following sequence executes:
                ▼
   ┌─────────────────────────┐
   │  6. REWARD DISTRIBUTION │  Calculate block reward based on token
-  │                         │  economics (10 MRSN/block, halving every
-  │                         │  35M blocks). Distribute proportionally
+  │                         │  economics (2.3 MRSN/block, halving every
+  │                         │  90,154,327 blocks). Distribute proportionally
   │                         │  to validators by stake weight.
   └────────────┬────────────┘
                │

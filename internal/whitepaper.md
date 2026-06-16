@@ -215,33 +215,33 @@ Mersennet consists of four primary execution domains unified under a single cons
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
 │                    HotStuff-2 Consensus Layer                       │
-│  (2-Phase BFT, PoS, QC Formation, Slashing, Optimistic Response)   │
+│  (2-Phase BFT, PoS, QC Formation, Slashing, Optimistic Response)    │
 └─────────────────────────────────────────────────────────────────────┘
-                                │
-          ┌─────────────────────┼─────────────────────┐
-          │                     │                     │
+                               │
+          ┌────────────────────┼─────────────────────┐
+          │                    │                     │
 ┌─────────▼──────────┐  ┌──────▼──────────┐  ┌───────▼────────┐
-│  MersennetEVM          │  │  MersennetOrders    │  │  Bridge        │
+│  MersennetEVM      │  │ MersennetOrders │  │      Bridge    │
 │  ┌───────────────┐ │  │  ┌────────────┐ │  │  (Queues)      │
 │  │ Parallel Exec │ │  │  │ CLOB Engine│ │  │                │
 │  │ (Block-STM)   │ │  │  │            │ │  │  Commit-Reveal │
 │  │ ┌───────────┐ │ │  │  │  FBA Engine│ │  │  Pool          │
 │  │ │ Tx Groups │ │ │  │  └────────────┘ │  └───────┬────────┘
 │  │ └───────────┘ │ │  └──────┬──────────┘          │
-│  └───────────────┘ │         │                      │
+│  └───────────────┘ │         │                     │
 │  ┌───────────────┐ │  ┌──────▼──────────┐          │
 │  │ CLOB          │◄├──┤  Precompile     │          │
 │  │ Precompile    │ │  │  0x0100         │          │
-│  │ (0x0100)      │ │  │  EVM ↔ CLOB    │          │
+│  │ (0x0100)      │ │  │  EVM ↔ CLOB     │          │
 │  └───────────────┘ │  └─────────────────┘          │
-└─────────┬──────────┘                                │
-          │                                           │
-          └─────────────────┬─────────────────────────┘
+└─────────┬──────────┘                               │
+          │                                          │
+          └─────────────────┬────────────────────────┘
                             │
                 ┌───────────▼───────────┐
                 │   Unified State DB    │
-                │   (sled, persistent)   │
-                │   Binary Merkle Tree   │
+                │   (sled, persistent)  │
+                │   Binary Merkle Tree  │
                 └───────────────────────┘
 ```
 

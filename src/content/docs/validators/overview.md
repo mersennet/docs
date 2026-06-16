@@ -49,8 +49,8 @@ Validators earn **block rewards** in MRSN, distributed proportionally to stake:
 validator_reward = (block_reward × validator_stake) / total_stake
 ```
 
-- **Initial reward**: 10 MRSN per block
-- **Halving**: Every 35,000,000 blocks (~1.1 years at ~1 s blocks), the reward halves
+- **Initial reward**: 2.3 MRSN per block
+- **Halving**: Every 90,154,327 blocks (~2.8 years at ~1 s blocks), the reward halves
 - **Distribution**: Rewards are credited directly to validator addresses—no claiming required
 
 The more stake you have (your own + delegations), the larger your share of each block's reward.

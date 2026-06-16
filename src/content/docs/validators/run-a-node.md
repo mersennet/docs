@@ -147,9 +147,9 @@ Mersennet uses a JSON configuration file. Create `config.json` with the sections
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
-| `max_supply` | `string` | `"1000000000000000000000000000"` | Max MRSN supply (1B × 10¹⁸) |
-| `initial_reward_per_block` | `string` | `"10000000000000000000"` | Block reward (10 MRSN) |
-| `halving_interval` | `u64` | `35000000` | Blocks between reward halvings |
+| `max_supply` | `string` | `"618970019642690137449562111"` | Max MRSN supply (2^89 − 1) |
+| `initial_reward_per_block` | `string` | `"2300000000000000000"` | Initial block reward (2.3 MRSN) |
+| `halving_interval` | `u64` | `90154327` | Blocks between reward halvings |
 
 #### `mersennet_orders` — MersennetOrders Precompile
 

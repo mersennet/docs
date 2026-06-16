@@ -601,7 +601,7 @@ $$R(h) = R_0 \cdot 2^{-\lfloor h / H \rfloor}$$
 
 Where:
 - $R_0$ = initial reward per block
-- $H$ = halving interval (default: 35,000,000 blocks, ~1.1 years at the default 1s block time)
+- $H$ = halving interval (default: 90,154,327 blocks, ~2.8 years at the default 1s block time)
 
 Reward is capped by remaining supply:
 $$R_{effective}(h) = \min(R(h), S_{max} - S_{minted}(h))$$
@@ -616,7 +616,7 @@ If $S_{\mathrm{total}} = 0$, rewards are burned.
 
 #### 4.8.3 Supply Cap
 
-Total supply is capped at $S_{max}$ (default: 1,000,000,000 MRSN). Block rewards pool is 700M MRSN (70%); remainder allocated to Ecosystem & Grants (10%), Foundation Reserve (10%), Team (5%), and Sales (5%).
+Total supply is capped at $S_{max}$ (default: 618,970,019.642690137449562111 MRSN, i.e. $2^{89}-1$). Block rewards pool is 414,709,913 MRSN (67%); remainder allocated to Ecosystem & Grants (9%), Foundation Reserve (9%), Team & Core Contributors (6%), and Sales (9%).
 
 Once $S_{minted} \geq S_{max}$, no further rewards are minted.
 
@@ -1618,19 +1618,19 @@ This creates deflationary pressure when network usage is high.
 Total supply is capped at:
 $$S_{max} = 1,000,000,000 \text{ MRSN}$$
 
-Allocation: Block rewards 70% (700M), Ecosystem & Grants 10% (100M), Foundation Reserve 10% (100M), Team & Core Contributors 5% (50M), Sales 5% (50M). ~99% of block rewards emitted by ~year 7 (at the 1 s default block time).
+Allocation: Block rewards 67% (414,709,913 MRSN), Ecosystem & Grants 9% (55,707,301 MRSN), Foundation Reserve 9% (55,707,301 MRSN), Team & Core Contributors 6% (37,138,201 MRSN), Sales 9% (55,707,301 MRSN). ~99% of block rewards are emitted by ~year 17 (at the 1 s default block time).
 
 #### 8.2.2 Block Rewards
 
 Initial reward per block:
-$$R_0 = 10 \text{ MRSN}$$
+$$R_0 = 2.3 \text{ MRSN}$$
 
 Reward halving schedule:
 $$R(h) = R_0 \cdot 2^{-\lfloor h / H \rfloor}$$
 
-Where $H = 35,000,000$ blocks (~1.1 years at the default 1s block time). Block rewards pool: 700M MRSN.
+Where $H = 90,154,327$ blocks (~2.8 years at the default 1s block time). Block rewards pool: 414,709,913 MRSN.
 
-Reward is capped by remaining block rewards pool (700M MRSN):
+Reward is capped by the remaining block rewards pool (414,709,913 MRSN):
 $$R_{effective}(h) = \min(R(h), S_{max} - S_{minted}(h))$$
 
 #### 8.2.3 Supply Dynamics
@@ -2542,9 +2542,9 @@ Configuration is JSON-based with hot-reload support:
     "unbonding_period": 2
   },
   "token_economics": {
-    "max_supply": "1000000000000000000000000000",
-    "initial_reward_per_block": "10000000000000000000",
-    "halving_interval": 35000000
+    "max_supply": "618970019642690137449562111",
+    "initial_reward_per_block": "2300000000000000000",
+    "halving_interval": 90154327
   }
 }
 ```

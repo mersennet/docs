@@ -8,7 +8,7 @@ title: "FAQ"
 
 ### What is Mersennet?
 
-**Mersennet** is a high-performance, EVM-compatible Layer 1 blockchain built for speed, composability, and institutional-grade DeFi. It combines Ethereum's smart contract ecosystem with a **native order matching engine (MersennetOrders)**—enabling atomic cross-domain workflows (EVM + CLOB) in a single transaction. Key features include ~1 second block times, HotStuff-2 BFT Proof-of-Stake consensus, and a 1 billion MRSN max supply with halving block rewards.
+**Mersennet** is a high-performance, EVM-compatible Layer 1 blockchain built for speed, composability, and institutional-grade DeFi. It combines Ethereum's smart contract ecosystem with a **native order matching engine (MersennetOrders)**—enabling atomic cross-domain workflows (EVM + CLOB) in a single transaction. Key features include ~1 second block times, HotStuff-2 BFT Proof-of-Stake consensus, and a 618,970,019.642690137449562111 MRSN total supply with halving block rewards.
 
 ### Is Mersennet EVM compatible?
 
@@ -32,7 +32,7 @@ Yes. Mersennet is fully EVM compatible. You can deploy Solidity contracts withou
 
 ### What is the max supply of MRSN?
 
-**1 billion (1,000,000,000) MRSN** with 18 decimals. 70% is allocated to block rewards (halving schedule), 10% ecosystem/grants, 10% foundation, 5% team, 5% sales. See [Tokenomics](/architecture/tokenomics) for details.
+**618,970,019.642690137449562111 MRSN** with 18 decimals. 67% goes to block rewards, 9% to ecosystem & grants, 9% to the foundation reserve, 6% to the team, and 9% to private/public sales. See [Tokenomics](/architecture/tokenomics) for details.
 
 ### What is WMRSN?
 
