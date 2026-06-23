@@ -36,11 +36,7 @@
 
 ## Ecosystem
 
-- [Mersennet Swap DEX](/ecosystem/swap): Uniswap V2-style AMM with WMRSN pairs.
-- [Mersennet Swap V3](/ecosystem/swap-v3): Concentrated liquidity DEX (Uniswap V3).
 - [Mersennet Trade](/ecosystem/trade): Order book trading terminal using MersennetOrders CLOB.
-- [Mersennet Lend Lending](/ecosystem/lend): Lending and borrowing protocol.
-- [Mersennet NFTs NFTs](/ecosystem/nfts): NFT marketplace.
 - [Deployed Contracts](/resources/contracts): All testnet contract addresses.
 
 ## Validators
