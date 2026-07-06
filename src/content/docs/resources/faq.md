@@ -36,7 +36,7 @@ The supply **cap** is **2⁸⁹ − 1 wei ≈ 618.97M MRSN** (a Mersenne prime) 
 
 ### What is WMRSN?
 
-**WMRSN** is the ERC-20 wrapped version of native MRSN. It's required for DEX pairs (e.g., WMRSN/USDC on Mersennet Swap) and DeFi protocols that expect ERC-20 tokens. Wrap with `deposit()` and unwrap with `withdraw()`. Address: `0x079bf1207b51acda83e2e8178344f62a883f8479`.
+**WMRSN** is the ERC-20 wrapped version of native MRSN, for DeFi protocols that expect ERC-20 tokens. Wrap with `deposit()` and unwrap with `withdraw()`. Address: `0xbB012E05C1b42c1F0Efa4509317fdB31A31aD640` (see [Deployed Contracts](/resources/contracts) for the always-current list).
 
 ## Development
 

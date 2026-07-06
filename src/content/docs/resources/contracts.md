@@ -2,100 +2,66 @@
 title: "Deployed Contracts"
 ---
 
-Complete reference of smart contracts deployed on Mersennet testnet (Chain ID 131071). All addresses are verified for the current testnet deployment.
+Reference of contracts deployed on Mersennet testnet (Chain ID 131071). All addresses below are live on the current chain (deployed 2026-07-06 after the consensus-overhaul reset).
+
+:::caution[Testnet resets]
+Testnet chain state may be wiped during protocol upgrades. When that happens, contracts are redeployed and this page is updated — always treat this page (or `deployments.json` in the contracts repository) as the source of truth for addresses.
+:::
+
+## Native Precompiles
+
+| Contract | Address | Description |
+|----------|---------|-------------|
+| **MersennetOrders** | `0x0000000000000000000000000000000000000100` | Native CLOB matching engine. `placeOrder`, `cancelOrder`, `depositCollateral`, `withdrawCollateral`, `getPosition`, `getCollateral`, `getBestBidAsk`. Collateral is escrowed 1:1 in native MRSN at this address. |
 
 ## Foundation
 
 | Contract | Address | Description |
 |----------|---------|-------------|
-| **Multicall3** | `0x973ee1bf0907287d1eb8a144d88b34f515c83f29` | Batched RPC reads. Used by wagmi, viem, ethers.js for efficient multi-call queries. |
-| **WMRSN** | `0x079bf1207b51acda83e2e8178344f62a883f8479` | ERC-20 wrapped MRSN. Required for DEX pairs and DeFi protocols that need ERC-20 native token representation. |
-
-## DeFi: Mersennet Swap V2
-
-| Contract | Address | Description |
-|----------|---------|-------------|
-| **MersennetSwapFactory** | `0x63f7a64db6d2b965189b8b48b7435668021f6b17` | Creates and tracks liquidity pairs. Uniswap V2–style AMM factory. |
-| **MersennetSwapRouter** | `0x9f337f433e71ce969b991511f1dcd3d0622116bb` | Router for adding/removing liquidity and executing swaps. User-facing entry point for Mersennet Swap V2. |
-
-## DeFi: Mersennet Swap V3
-
-| Contract | Address | Description |
-|----------|---------|-------------|
-| **UniswapV3Factory** | *Recently deployed* | Creates V3 pools with configurable fee tiers (0.05%, 0.3%, 1%). |
-| **SwapRouter** | *Recently deployed* | Executes swaps across V3 concentrated liquidity pools. |
-| **NonfungiblePositionManager** | *Recently deployed* | Mints, modifies, and burns concentrated liquidity positions as ERC-721 NFTs. |
-| **Quoter** | *Recently deployed* | Off-chain quote simulation for swap amounts. |
-
-:::note
-Mersennet Swap V3 contracts are live at [http://46.225.30.187:4002](http://46.225.30.187:4002). Verified addresses will be added here once confirmed on-chain.
-:::
+| **Multicall3** | `0xcBF3BBCc74D851cc896Aa128F61557DF65e420Fc` | Batched RPC reads. Used by wagmi, viem, ethers.js for efficient multi-call queries. |
+| **WMRSN** | `0xbB012E05C1b42c1F0Efa4509317fdB31A31aD640` | ERC-20 wrapped MRSN for protocols that need an ERC-20 representation of the native token. |
 
 ## Mock Tokens
 
 | Contract | Address | Description |
 |----------|---------|-------------|
-| **MockUSDC** | `0x2e06b6e7479ddf54b46458b5a61f302d962957ea` | Test USDC (6 decimals). For DeFi development and testing. |
-| **MockUSDT** | `0x7cfd9b3e373c3f4fd34aed80d7ae083fc0b20eb7` | Test USDT (6 decimals). For DeFi development and testing. |
-| **MockDAI** | `0x4359446ffb3e262294923ec61f35769ce62fa5ad` | Test DAI (18 decimals). For DeFi development and testing. |
+| **MockUSDC** | `0x8F4E0beE0fE201f10419947A7C043003F16BfD73` | Test USDC (6 decimals). |
+| **MockUSDT** | `0x6fbE796cAA747D84E3aC7611fFc2dC6D11124eD4` | Test USDT (6 decimals). |
+| **MockDAI** | `0x04833e1Be9c451A89fC6cD1e5E698E2D4936d7F9` | Test DAI (18 decimals). |
 
 :::note[Testnet Token Faucet]
-Mock tokens (MockUSDC, MockUSDT, MockDAI) include a public `faucet()` function. Anyone can call it to receive test tokens, with no approval or whitelist required. Use this for development and testing.
-:::
-
-## DeFi: MersennetOrders CLOB Integration
-
-| Contract | Address | Description |
-|----------|---------|-------------|
-| **VaultStrategy** | `0x3beef509cb30609ba62c56dae369c545d9b359a8` | Demonstrates atomic EVM + CLOB interaction via the precompile. Deposits collateral, places orders, and reacts to fills in a single transaction. |
-| **SmartContractMM** | `0x9f6d643f12eae11b53509598016be83e9f5bc412` | On-chain market maker with grid strategy, inventory management, and automatic rebalancing. |
-| **AtomicArbitrage** | `0x77c6de42d5629ac7e454910a46d06fab34be8f14` | Atomic arbitrage across CLOB and AMM pools. Buy on CLOB, sell on AMM (or vice versa) in a single transaction. |
-
-:::tip
-These contracts demonstrate Mersennet's unique capability: **atomic composability between EVM smart contracts and the native CLOB**. This is impossible on other order book chains like Hyperliquid or dYdX where the order book is off-chain.
+Mock tokens include a public `faucet()` function — anyone can call it to mint 10,000 test tokens, no approval or whitelist required. The [Faucet](https://faucet.mersennet.com) can also send them to you with one click.
 :::
 
 ## Quick Reference (Copy-Paste)
 
 ```
 Chain ID: 131071
-MersennetOrders CLOB:    0x0000000000000000000000000000000000000100 (precompile)
-Multicall3:          0x973ee1bf0907287d1eb8a144d88b34f515c83f29
-WMRSN:               0x079bf1207b51acda83e2e8178344f62a883f8479
-MockUSDC:            0x2e06b6e7479ddf54b46458b5a61f302d962957ea
-MockUSDT:            0x7cfd9b3e373c3f4fd34aed80d7ae083fc0b20eb7
-MockDAI:             0x4359446ffb3e262294923ec61f35769ce62fa5ad
-MersennetSwapV2Factory:  0x63f7a64db6d2b965189b8b48b7435668021f6b17
-MersennetSwapV2Router:   0x9f337f433e71ce969b991511f1dcd3d0622116bb
-VaultStrategy:       0x3beef509cb30609ba62c56dae369c545d9b359a8
-SmartContractMM:     0x9f6d643f12eae11b53509598016be83e9f5bc412
-AtomicArbitrage:     0x77c6de42d5629ac7e454910a46d06fab34be8f14
+MersennetOrders CLOB: 0x0000000000000000000000000000000000000100 (precompile)
+Multicall3:           0xcBF3BBCc74D851cc896Aa128F61557DF65e420Fc
+WMRSN:                0xbB012E05C1b42c1F0Efa4509317fdB31A31aD640
+MockUSDC:             0x8F4E0beE0fE201f10419947A7C043003F16BfD73
+MockUSDT:             0x6fbE796cAA747D84E3aC7611fFc2dC6D11124eD4
+MockDAI:              0x04833e1Be9c451A89fC6cD1e5E698E2D4936d7F9
 ```
 
 ## ABI Links
 
-Contract ABIs can be obtained from:
-
-- **Block Explorer**: [https://explorer.mersennet.com](https://explorer.mersennet.com). Search by address and view contract details.
-- **Source Code**: Mersennet contracts repository (see [GitHub](https://github.com/mersennet/mersennet)).
+- **Block Explorer**: [https://explorer.mersennet.com](https://explorer.mersennet.com) — search by address and view contract details.
+- **Source Code**: Mersennet contracts repository (see [GitHub](https://github.com/mersennet)).
 - **Multicall3**: Standard [Multicall3](https://github.com/mds1/multicall) ABI; compatible with wagmi/viem defaults.
 
 ## Usage Examples
 
 ### Get Test Tokens (Faucet)
 
-```solidity
-// MockUSDC, MockUSDT, MockDAI all have:
-function faucet() external;
-```
-
 ```javascript
 const usdc = new ethers.Contract(
-  '0x2e06b6e7479ddf54b46458b5a61f302d962957ea',
+  '0x8F4E0beE0fE201f10419947A7C043003F16BfD73',
   ['function faucet() external'],
   signer
 );
-await usdc.faucet();
+await usdc.faucet(); // mints 10,000 USDC to the caller
 ```
 
 ### Wrap MRSN
@@ -106,14 +72,16 @@ function deposit() external payable;
 function withdraw(uint256 wad) external;
 ```
 
-## Upcoming Deployments
+### Trade on the CLOB from a contract
 
-| Contract | Status |
-|----------|--------|
-| Mersennet Lend (Lending) | Ready for deployment |
-| Mersennet NFTs (Seaport) | Ready for deployment |
-| Liquid Staking | Contracts ready |
-| MersennetOrders Batch Orders (`mersennet_orders_submitBatchOrder`) | In development |
-| MEV Commit-Reveal Protection | In development |
+```solidity
+interface IMersennetOrders {
+    function depositCollateral(uint256 amount) external returns (bool);
+    function placeOrder(uint64 marketId, bool isBuy, uint256 price, uint256 size, uint8 tif)
+        external returns (uint256 orderId, uint256 filled, uint256 remaining);
+}
 
-Contract addresses for new deployments will be added to this page and the [Network Information](/getting-started/network-info) doc.
+IMersennetOrders constant CLOB = IMersennetOrders(0x0000000000000000000000000000000000000100);
+```
+
+EVM contracts compose atomically with the native order book — deposit, trade, and react to fills in a single transaction.

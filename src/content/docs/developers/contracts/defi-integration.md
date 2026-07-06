@@ -2,18 +2,22 @@
 title: "DeFi Integration"
 ---
 
-Mersennet has an on-chain DEX called **Mersennet Swap**, a Uniswap V2–style AMM. This guide shows how to swap tokens, add liquidity, and query prices using the deployed Router contract.
+:::caution[AMM contracts not deployed on the current testnet]
+The Mersennet Swap AMM described in this guide is **not deployed on the current testnet chain** (the chain was reset for the consensus overhaul; only the [foundation contracts](/resources/contracts) were redeployed). Trading on Mersennet happens on the native [MersennetOrders CLOB](/architecture/order-book). This guide is kept as an integration reference for when the AMM returns.
+:::
 
-## Deployed Contract Addresses
+Mersennet Swap is a Uniswap V2–style AMM. This guide shows how to swap tokens, add liquidity, and query prices using a Router contract.
+
+## Contract Addresses
+
+For current, live addresses always check [Deployed Contracts](/resources/contracts). The token addresses on the current chain:
 
 | Contract | Address |
 |----------|---------|
-| MersennetSwapFactory | `0x63f7a64db6d2b965189b8b48b7435668021f6b17` |
-| MersennetSwapRouter | `0x9f337f433e71ce969b991511f1dcd3d0622116bb` |
-| WMRSN | `0x079bf1207b51acda83e2e8178344f62a883f8479` |
-| MockUSDC | `0x2e06b6e7479ddf54b46458b5a61f302d962957ea` |
-| MockUSDT | `0x7cfd9b3e373c3f4fd34aed80d7ae083fc0b20eb7` |
-| MockDAI | `0x4359446ffb3e262294923ec61f35769ce62fa5ad` |
+| WMRSN | `0xbB012E05C1b42c1F0Efa4509317fdB31A31aD640` |
+| MockUSDC | `0x8F4E0beE0fE201f10419947A7C043003F16BfD73` |
+| MockUSDT | `0x6fbE796cAA747D84E3aC7611fFc2dC6D11124eD4` |
+| MockDAI | `0x04833e1Be9c451A89fC6cD1e5E698E2D4936d7F9` |
 
 ## Router ABI (Key Functions)
 
@@ -43,8 +47,8 @@ const { ethers } = require("ethers");
 const RPC_URL = "https://rpc.mersennet.com";
 const CHAIN_ID = 131071;
 const ROUTER = "0x9f337f433e71ce969b991511f1dcd3d0622116bb";
-const WMRSN = "0x079bf1207b51acda83e2e8178344f62a883f8479";
-const MOCK_USDC = "0x2e06b6e7479ddf54b46458b5a61f302d962957ea";
+const WMRSN = "0xbB012E05C1b42c1F0Efa4509317fdB31A31aD640";
+const MOCK_USDC = "0x8F4E0beE0fE201f10419947A7C043003F16BfD73";
 
 const provider = new ethers.JsonRpcProvider(RPC_URL, CHAIN_ID);
 const router = new ethers.Contract(ROUTER, ROUTER_ABI, provider);
@@ -73,8 +77,8 @@ const provider = new ethers.JsonRpcProvider(RPC_URL, CHAIN_ID);
 const wallet = new ethers.Wallet(process.env.PRIVATE_KEY, provider);
 const router = new ethers.Contract(ROUTER, ROUTER_ABI, wallet);
 
-const USDC = "0x2e06b6e7479ddf54b46458b5a61f302d962957ea";
-const USDT = "0x7cfd9b3e373c3f4fd34aed80d7ae083fc0b20eb7";
+const USDC = "0x8F4E0beE0fE201f10419947A7C043003F16BfD73";
+const USDT = "0x6fbE796cAA747D84E3aC7611fFc2dC6D11124eD4";
 
 const amountIn = ethers.parseUnits("10", 6); // 10 USDC
 const path = [USDC, USDT];
