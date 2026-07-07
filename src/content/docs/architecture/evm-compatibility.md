@@ -11,7 +11,7 @@ Mersennet implements an **EVM-compatible** execution environment, allowing devel
 | **EVM Version** | Shanghai |
 | **Chain ID** | 131071 |
 | **Token** | MRSN (18 decimals) |
-| **Block Time** | ~1 second |
+| **Block Time** | ~2 seconds |
 
 ## Shanghai EVM
 

@@ -422,7 +422,7 @@ Connect Grafana to your Prometheus instance and create dashboards for:
 - **Network**: Peer count, P2P message rates
 - **MersennetOrders**: Order submission rate, fill rate, active markets
 
-The public Grafana dashboard is available at [http://46.225.30.187:3000](http://46.225.30.187:3000).
+Network health is also observable without running your own stack: the [explorer's Network page](https://explorer.mersennet.com/network) shows live validator status, block cadence, and peer counts.
 
 ### Alerting Rules
 

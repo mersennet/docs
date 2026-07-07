@@ -7,15 +7,16 @@ source: https://docs.mersennet.com/architecture/consensus/
 ---
 
 
-Mersennet uses **Proof-of-Stake (HotStuff-2 BFT)** with round-robin proposer selection and priority-based weighting. This document provides a deep dive into how consensus works, from validator selection to block finalization and slashing.
+Mersennet uses **leader-gated Proof-of-Stake BFT** (HotStuff-2 style): one elected validator produces each block, every validator re-executes it, and signed finality votes gossip across the network until a 2/3-stake quorum finalizes the height. This document is a deep dive into how consensus works, from leader election to finalization and slashing.
 
 ## Overview
 
 | Parameter | Value |
 |-----------|-------|
-| **Consensus** | Proof-of-Stake (HotStuff-2 BFT) |
-| **Block Time** | ~1 second |
-| **Finality** | BFT (Byzantine Fault Tolerant) |
+| **Consensus** | Proof-of-Stake BFT, single elected leader per height |
+| **Block Time** | ~2 seconds on the current testnet (configurable per network) |
+| **Finality** | ≥ 2/3 of total stake, signed votes gossiped per block |
+| **Failover** | Timeout-based round rotation to the next leader |
 | **Implementation** | Rust |
 
 ## Validator Selection
@@ -28,33 +29,24 @@ voting_power(validator) ∝ staked_amount
 
 Token holders can **delegate** their MRSN to validators, increasing that validator's voting power. The validator set is dynamic: new validators can join by staking, and existing validators can leave by unbonding.
 
-## Proposer Rotation
+## Leader Election
 
-Block production uses a **round-robin** algorithm with **priority-based weighting**:
-
-1. Each validator has a **priority** value that accumulates over time.
-2. The validator with the **highest priority** is selected as the proposer for the current block.
-3. After selection, the proposer's priority is reduced by the total weight of all validators.
-4. All validators' priorities are incremented by their normalized stake weight each round.
-
-This ensures:
-- **Fair rotation**: No single validator dominates block production
-- **Stake-weighted frequency**: Validators with more stake are chosen more often
-- **Determinism**: Given the same validator set and heights, proposer selection is reproducible
-
-### Priority Algorithm (Conceptual)
+Exactly one validator is elected to produce each block. Election is deterministic round-robin over the validator set:
 
 ```
-priority[i] += normalized_weight[i]   (each round)
-priority[proposer] -= total_weight     (after selection)
-proposer = argmax(priority)
+leader(height, round) = validators[(height + round) mod validator_count]
 ```
 
-Weights are normalized from stake to prevent overflow with 18-decimal MRSN values.
+- `round` starts at 0 for every height. If the elected leader fails to produce a block within the round timeout, every node independently advances to `round + 1`, which rotates leadership to the next validator — no coordinator required.
+- Because the formula is pure, every node computes the same leader for the same `(height, round)` — non-leaders simply wait, import, and vote.
+
+This gives:
+
+- **Liveness under failure**: A crashed leader delays its height by one timeout, then the next validator takes over.
+- **Fair rotation**: Each validator leads an equal share of heights.
+- **Determinism**: No leader ambiguity, so no competing blocks under normal operation.
 
 ## Block Production Cycle
-
-The block production cycle proceeds as follows:
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────┐
@@ -63,68 +55,43 @@ The block production cycle proceeds as follows:
 
   Height N
     │
-    │  1. PROPOSER SELECTION
-    │     └─ Select validator with highest priority
+    │  1. LEADER ELECTION
+    │     └─ leader = validators[(N + round) mod count]
     │
-    │  2. PROPOSAL PHASE
-    │     └─ Proposer builds block (txs, orders, state)
-    │     └─ Broadcasts block to all validators
+    │  2. PROPOSAL
+    │     └─ Leader pulls txs from its mempool, executes the block,
+    │        computes the content-committing block hash, and gossips it
     │
-    │  3. PREVOTE PHASE
-    │     └─ Validators receive block, validate
-    │     └─ Broadcast prevote for block hash
-    │     └─ Wait for 2/3+ prevotes
+    │  3. IMPORT & RE-EXECUTION
+    │     └─ Every other node re-executes the block's transactions
+    │        against its own state and verifies the parent-hash link
     │
-    │  4. PRECOMMIT PHASE
-    │     └─ Validators broadcast precommit
-    │     └─ Wait for 2/3+ precommits
+    │  4. VOTE
+    │     └─ Each validator signs a finality vote over (height, block_hash)
+    │        and gossips it on the "vote" topic
     │
     │  5. FINALIZATION
-    │     └─ Block committed to chain
-    │     └─ State root updated
-    │     └─ Rewards distributed
+    │     └─ When votes covering ≥ 2/3 of total stake accumulate,
+    │        the height is finalized — rewards and state are committed
     │
     ▼
   Height N+1
 ```
 
-### Diagram: Block Production Flow
+### Content-Committing Block Hash
 
-```
-     Validator A          Validator B          Validator C          Validator D
-     (Proposer)           (Voter)              (Voter)               (Voter)
-          │                     │                    │                     │
-          │  Create Block       │                    │                     │
-          │─────────────────────┤                    │                     │
-          │                     │                    │                     │
-          │  Broadcast Block    │                    │                     │
-          │─────────────────────┼────────────────────┼─────────────────────┤
-          │                     │                    │                     │
-          │                     │  Prevote           │  Prevote             │  Prevote
-          │                     │◄───────────────────┼─────────────────────┤
-          │                     │                    │                     │
-          │                     │  Precommit (2/3+)  │  Precommit           │  Precommit
-          │                     │◄───────────────────┼─────────────────────┤
-          │                     │                    │                     │
-          │  FINALIZE           │                    │                     │
-          │─────────────────────┼────────────────────┼─────────────────────┤
-          │                     │                    │                     │
-          ▼                     ▼                    ▼                     ▼
-```
+The block hash commits to the block's actual content — `parent_hash`, `timestamp`, `transactions_root`, `state_root`, `receipts_root`, gas usage, and transaction count — so a vote for a hash is a vote for the exact state transition, and every block is hash-linked to its parent. Imports reject any block whose `parent_hash` does not match the local head.
 
 ## Block Finalization
 
-A block is **finalized** when:
-
-1. **Prevote threshold**: More than 2/3 of total stake has broadcast a prevote for the block hash
-2. **Precommit threshold**: More than 2/3 of total stake has broadcast a precommit
+A block is **finalized** when signed votes from validators representing more than 2/3 of total stake have been observed for its hash:
 
 ```
 T = 2/3 × total_stake + 1
-finalized ⟺ prevotes ≥ T AND precommits ≥ T
+finalized ⟺ Σ stake(voters for block_hash) ≥ T
 ```
 
-Finalized blocks are **irreversible**: there are no chain reorganizations. This provides fast, deterministic finality for applications.
+Votes are ECDSA signatures over a domain-separated digest of `(height, block_hash)`; each receiving node recovers the signer, checks it against the validator set, and accumulates stake until quorum. Finalized blocks are **irreversible** — there are no chain reorganizations.
 
 ## Epoch Transitions
 
@@ -143,7 +110,7 @@ The exact epoch length is configurable. Validator set changes take effect at the
 | Type | Trigger | Base Penalty | Consequence |
 |------|---------|--------------|-------------|
 | **Double-sign** | Signing two different blocks at same height | 5% of stake | **Tombstoned** (permanent ban) |
-| **Timeout** | Failing to precommit after prevoting | 1% of stake | **Jailed** (temporary exclusion) |
+| **Timeout** | Missing your production slot as elected leader | 1% of stake | **Jailed** (temporary exclusion) |
 
 ### Escalation
 
@@ -179,7 +146,8 @@ Every finalized block contains the following fields:
 | Field | Type | Description |
 |-------|------|-------------|
 | `number` | `u64` | Sequential block height starting from 0 (genesis) |
-| `hash` | `B256` | Keccak-256 hash uniquely identifying this block |
+| `hash` | `B256` | Content-committing Keccak-256 hash (binds parent, roots, timestamp) |
+| `parent_hash` | `B256` | Hash of the previous block — imports reject broken links |
 | `chain_id` | `u64` | Network identifier (131071 for testnet) |
 | `state_root` | `B256` | Merkle root of the post-execution state trie |
 | `transactions` | `Vec<Transaction>` | Ordered list of transactions included in the block |
@@ -190,7 +158,7 @@ Every finalized block contains the following fields:
 | `gas_used` | `u64` | Total gas consumed by all transactions |
 | `base_fee` | `U256` | EIP-1559 base fee for this block (adjusts per block) |
 | `finalized` | `bool` | Whether 2/3+ stake committed to this block |
-| `consensus` | `Finalization` | BFT finalization data (prevotes, precommits, round info) |
+| `consensus` | `Finalization` | BFT finalization data (vote summary, round info) |
 | `rewards` | `Vec<Reward>` | Per-validator block reward distributions |
 | `total_reward` | `U256` | Sum of all rewards paid this block |
 | `burned_reward` | `U256` | Portion of rewards burned (e.g. slashed stake) |
@@ -250,10 +218,9 @@ A transaction moves through the following stages from submission to finalization
      │  └─ Compute post-execution state_root
      │
   6. CONSENSUS & FINALIZATION
-     │  ├─ Proposer broadcasts block to validators
-     │  ├─ Validators verify block, broadcast prevote
-     │  ├─ On 2/3+ prevotes, broadcast precommit
-     │  └─ On 2/3+ precommits, block is finalized (irreversible)
+     │  ├─ Leader gossips the block; every node re-executes it
+     │  ├─ Each validator signs a vote over (height, block_hash)
+     │  └─ On ≥ 2/3 stake voting for the hash, the block is final
      │
   7. RECEIPT
      └─ Client queries receipt via eth_getTransactionReceipt
@@ -330,9 +297,9 @@ Nodes exchange three categories of messages:
 
 | Message | Transport | Purpose |
 |---------|-----------|---------|
-| `Tx` | TCP + UDP gossip | Propagate new transactions to peers |
-| `Block` | TCP sync | Broadcast finalized blocks |
-| `Vote` | TCP + UDP gossip | Exchange prevote/precommit messages |
+| `Tx` | UDP gossip | Propagate new transactions (wallet txs carry their raw signed envelope so peers re-verify the true EIP-155 signature) |
+| `Block` | UDP gossip + TCP sync | Broadcast produced blocks; TCP backfills gaps for catching-up nodes |
+| `Vote` | UDP gossip | Signed finality votes over `(height, block_hash)` |
 
 ### Peer Discovery
 
@@ -345,19 +312,17 @@ Nodes discover peers through:
 ### Block Propagation
 
 ```
-  Proposer Node                    Validator Node A              Validator Node B
+   Leader Node                    Validator Node A              Validator Node B
        │                                │                              │
        │  1. Produce block              │                              │
-       │  2. TCP broadcast ─────────────┤                              │
-       │                                │──── TCP forward ─────────────┤
+       │  2. Gossip block ──────────────┤──────────────────────────────┤
        │                                │                              │
-       │  3. Collect prevotes ◄─────────┤                              │
-       │                     ◄──────────┼──────────────────────────────┤
+       │                                │  3. Re-execute & verify      │  Re-execute & verify
        │                                │                              │
-       │  4. Collect precommits ◄───────┤                              │
-       │                        ◄───────┼──────────────────────────────┤
+       │  4. Signed votes  ◄────────────┤◄─────────────────────────────┤
+       │     gossip everywhere          │  (every node counts stake)   │
        │                                │                              │
-       │  5. Finalize & commit          │  Finalize & commit           │  Finalize & commit
+       │  5. ≥2/3 stake → FINAL         │  ≥2/3 stake → FINAL          │  ≥2/3 stake → FINAL
        ▼                                ▼                              ▼
 ```
 
@@ -408,7 +373,7 @@ Complete reference of all configuration parameters with their default values.
 | `peer_store_path` | `string` | `"state/peers.json"` | Path to persistent peer list |
 | `listen` | `string` | `"0.0.0.0:30303"` | P2P listen address |
 | `peers` | `string[]` | `[]` | Seed peer addresses for bootstrap |
-| `block_time_ms` | `u64` | `1000` | Target block production interval in ms |
+| `block_time_ms` | `u64` | `1000` | Target block production interval in ms (the public testnet runs `2000`) |
 | `noise_enabled` | `bool` | `false` | Enable Noise protocol encryption |
 
 ### `rpc`: JSON-RPC Server
@@ -488,7 +453,7 @@ Complete reference of all configuration parameters with their default values.
     "peers": [
       "46.225.30.187:30303"
     ],
-    "block_time_ms": 1000,
+    "block_time_ms": 2000,
     "noise_enabled": false
   },
   "rpc": {
@@ -530,11 +495,11 @@ Complete reference of all configuration parameters with their default values.
 
 Mersennet's PoS consensus provides:
 
-- **Fast finality** (~1s block time)
-- **Fair proposer rotation** (stake-weighted round-robin)
-- **BFT security** (2/3+ stake required)
-- **Economic security** (slashing for misbehavior)
-- **No reversals** (finalized blocks are final)
+- **Fast finality** (~2s blocks, one vote round to quorum)
+- **Fair leader rotation** (deterministic round-robin with timeout failover)
+- **BFT security** (≥ 2/3 of stake must sign every finalized block)
+- **Economic security** (escalating slashing for misbehavior)
+- **No reversals** (finalized blocks are final; every block hash-links to its parent)
 
 
 ---
@@ -551,7 +516,7 @@ Mersennet implements an **EVM-compatible** execution environment, allowing devel
 | **EVM Version** | Shanghai |
 | **Chain ID** | 131071 |
 | **Token** | MRSN (18 decimals) |
-| **Block Time** | ~1 second |
+| **Block Time** | ~2 seconds |
 
 ## Shanghai EVM
 
@@ -745,7 +710,7 @@ The heart of the node. Contains all types, execution logic, and consensus:
 | `config` | `AppConfig` and all sub-config structs (`EngineConfig`, `P2pConfig`, etc.) |
 | `events` | Domain event types for MersennetOrders and Bridge operations |
 | `errors` | Error types for RPC validation and MersennetOrders |
-| `network` | Network simulation and consensus message types (`Prevote`, `Precommit`, etc.) |
+| `network` | Consensus message types and finality-vote handling |
 | `bridge` | Cross-domain bridge queue (EVM ↔ MersennetOrders) |
 | `prometheus` | Prometheus metrics registry and `/metrics` endpoint |
 | `identity` | Node identity (keypair) generation and persistence |
@@ -852,19 +817,18 @@ When the block timer fires, the following sequence executes:
                │
                ▼
   ┌─────────────────────────┐
-  │  7. FINALIZATION        │  Run BFT consensus:
-  │                         │    - Broadcast block to peers
-  │                         │    - Collect prevotes (2/3+ stake)
-  │                         │    - Collect precommits (2/3+ stake)
-  │                         │    - Process slashing evidence
-  │                         │    - Mark block as finalized
+  │  7. BROADCAST           │  Gossip the block to all peers. Every node
+  │                         │  re-executes it and verifies the parent-hash
+  │                         │  link and content-committing block hash.
   └────────────┬────────────┘
                │
                ▼
   ┌─────────────────────────┐
-  │  8. BROADCAST           │  Send finalized block to all connected
-  │                         │  peers via TCP. Update Prometheus metrics.
-  │                         │  Notify WebSocket subscribers.
+  │  8. FINALIZATION        │  Each validator signs a finality vote over
+  │                         │  (height, block_hash) and gossips it. When
+  │                         │  votes cover ≥2/3 of stake, the height is
+  │                         │  final. Slashing evidence is processed.
+  │                         │  Metrics + WebSocket subscribers notified.
   └─────────────────────────┘
 ```
 
@@ -976,9 +940,11 @@ Configuration:
 - `fee_elasticity_multiplier`: 2 (target gas = gas_limit / 2 = 15M)
 - `fee_max_change_denominator`: 8 (max 12.5% change per block)
 
-## Custom Transaction Format
+## Transaction Formats
 
-Mersennet uses a custom binary format for transaction signing, inspired by EIP-155:
+**Standard Ethereum RLP is the canonical format.** `eth_sendRawTransaction` accepts legacy EIP-155, EIP-2930, and EIP-1559 envelopes, verifies the real Ethereum signing hash, and uses `keccak256(raw_rlp)` as the transaction hash — so MetaMask, ethers.js, and Foundry work with no adaptation, and the hash your wallet computes is the hash on chain.
+
+A legacy custom binary format is also still accepted for internal tooling:
 
 ### Signing Hash Input
 
@@ -1094,6 +1060,16 @@ Unlike CLOBs implemented purely in Solidity (gas-intensive, slow) or on separate
 |                                                                  |
 +------------------------------------------------------------------+
 ```
+
+## Consensus Consistency
+
+Every order book mutation is a **mined transaction**. Whether an order arrives as a wallet-signed precompile call or through the `mersennet_orders_*` convenience RPC, it enters the mempool, gossips to the elected leader, and executes inside a block that every validator re-executes identically. That gives three guarantees:
+
+1. **One book, everywhere** — the order book state is part of consensus state, byte-identical on every node.
+2. **Fills are on-chain events** — every match emits a `trade` domain event in the block, which the explorer, the trade indexer, and the `MersennetOrdersTrades` WebSocket topic all consume.
+3. **Collateral is real** — `depositCollateral` escrows native MRSN 1:1 at the precompile address inside the same journaled transaction; the CLOB ledger can never desync from token balances.
+
+The practical consequence for integrators: a successful `submitOrder` RPC response means *accepted into the mempool*, not *executed*. The order rests or fills when its transaction mines (typically the next block, ~2s). Poll `getOpenOrders` or subscribe to the WebSocket feed rather than assuming synchronous execution.
 
 ## IMersennetOrders Interface
 
@@ -3839,7 +3815,7 @@ See [RPC Methods Reference](/developers/rpc/methods) for full details.
 | `mersennet_validators` | Get list of validators |
 | `mersennet_getDomainEvents` | Get domain events for a block range |
 | `mersennet_getCodeAttestation` / `mersennet_getCodeHash` | On-chain contract code-publication registry lookups |
-| `mersennet_orders_*` | MersennetOrders trading methods (addMarket, submitOrder, cancelOrder, getOrderBook, etc.) |
+| `mersennet_orders_*` | MersennetOrders trading methods (submitOrder, cancelOrder, depositCollateral, getOrderBook, getOpenOrders). Writes route through consensus and return `{accepted, txHash}`. |
 | `mersennet_bridge_*` | MersennetBridge bridge methods (enqueueOrdersToEvm, enqueueEvmToOrders, dequeueOrdersToEvm, dequeueEvmToOrders) |
 | **Shielded / ZK** | Shielded transfers & orders, SP1 state proofs, and selective-disclosure reads; see the [Shielded JSON-RPC reference](/developers/privacy/shielded-rpc) |
 | **WebSocket** | `eth_subscribe` and `mersennet_subscribe` push notifications (new heads, trades, shielded roots, state proofs) |
@@ -4805,31 +4781,38 @@ source: https://docs.mersennet.com/getting-started/faucet/
 ---
 
 
-Use the Mersennet faucet to receive testnet MRSN for development and testing.
+The Mersennet faucet sends free testnet MRSN — the native token you'll use for gas, trading collateral, and experimenting. It also mints the mock stablecoins (USDC, USDT, DAI) used across the testnet.
 
 ## Web Interface
 
-1. Open the faucet: **https://faucet.mersennet.com**
-2. Enter your wallet address (the one you'll use on Mersennet).
-3. Click the request button to receive testnet MRSN.
+1. Open the faucet: **[https://faucet.mersennet.com](https://faucet.mersennet.com)**
+2. Paste your wallet address — or click **Connect** to fill it from MetaMask.
+3. Click **Claim 1,000 MRSN**. The drip usually lands within a few seconds; the faucet links you straight to the transaction in the explorer.
+
+Below the main claim you can also grab **10,000 each of MockUSDC, MockUSDT, and MockDAI** with one click per token.
 
 :::tip
-Ensure your wallet is connected to Mersennet (Chain ID 131071) before requesting. The faucet sends MRSN to the address you provide.
+One click on **＋ Add Mersennet to wallet** configures MetaMask with the right chain ID (131071), RPC, and explorer — no manual setup needed.
 :::
+
+## What You Get
+
+| Claim | Amount | Cooldown |
+|-------|--------|----------|
+| MRSN (native) | 1,000 MRSN | 1 claim per address per hour |
+| MockUSDC / MockUSDT / MockDAI | 10,000 per token | On demand |
+
+The mock tokens also have a public `faucet()` function on-chain, so contracts and scripts can mint them directly — see [Deployed Contracts](/resources/contracts) for addresses.
 
 ## Programmatic Access
 
-You can request tokens via HTTP for scripts or CI/CD:
+Request MRSN via HTTP for scripts or CI/CD:
 
 ```bash
 curl -X POST https://faucet.mersennet.com/faucet \
   -H "Content-Type: application/json" \
   -d '{"address": "0xYourWalletAddress"}'
 ```
-
-Replace `0xYourWalletAddress` with your Ethereum-style address (e.g., `0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb`).
-
-### Example Response
 
 ```json
 {
@@ -4838,26 +4821,24 @@ Replace `0xYourWalletAddress` with your Ethereum-style address (e.g., `0x742d35C
 }
 ```
 
----
+Mock tokens work the same way:
 
-## Rate Limits
+```bash
+curl -X POST https://faucet.mersennet.com/claim-token \
+  -H "Content-Type: application/json" \
+  -d '{"address": "0xYourWalletAddress", "token": "usdc"}'
+```
 
-The faucet enforces rate limits to prevent abuse:
-
-- **Per address**: Limited requests per address per time window.
-- **Per IP**: Additional limits may apply for high-volume requests.
-
-If your request is rate-limited, wait a few minutes before trying again. For automated testing, consider using multiple test addresses or caching faucet responses.
-
----
+`token` accepts `usdc`, `usdt`, or `dai`.
 
 ## Troubleshooting
 
 | Issue | Solution |
 |-------|----------|
-| Request fails | Check that your address is a valid 0x-prefixed Ethereum address (40 hex chars). |
-| No MRSN received | Verify the transaction on the [block explorer](https://explorer.mersennet.com). Confirm you're on Chain ID 131071. |
-| Rate limited | Wait before retrying. Use a different address if needed for testing. |
+| `rate limited` error | Each address can claim MRSN once per hour. Wait, or use a second test address. |
+| Request fails | Check that your address is a valid 0x-prefixed Ethereum address (40 hex characters). |
+| No MRSN received | Look up the returned `tx_hash` on the [explorer](https://explorer.mersennet.com). Confirm your wallet is on Chain ID 131071. |
+| Tokens not visible in MetaMask | Import the token contract address manually, or claim through the faucet UI, which offers to add the token for you. |
 
 
 ---
@@ -5080,7 +5061,7 @@ Use the following configuration to connect to Mersennet testnet.
 | **Block Explorer** | https://explorer.mersennet.com |
 | **Faucet** | https://faucet.mersennet.com |
 | **Currency Symbol** | MRSN |
-| **Block Time** | ~1 second |
+| **Block Time** | ~2 seconds |
 
 :::tip
 The WebSocket endpoint may not be enabled on all nodes. If subscriptions fail, use HTTP RPC for polling.
@@ -5237,29 +5218,29 @@ source: https://docs.mersennet.com/getting-started/overview/
 ---
 
 
-**Mersennet** is a high-performance, EVM-compatible Layer 1 blockchain built for speed, composability, and institutional-grade DeFi. It combines the familiarity of Ethereum's smart contract ecosystem with a **native order matching engine (MersennetOrders)**, enabling atomic cross-domain workflows that are impossible on traditional chains.
+**Mersennet** is an EVM-compatible Layer 1 with two things most chains don't have: a **native order matching engine (MersennetOrders)** built into the execution layer, and **account-level privacy** with verifiable state. Your Solidity contracts deploy unchanged — and they can place, fill, and cancel orders on a real order book atomically, inside the same transaction.
 
 ## Why Mersennet?
 
 | Feature | Mersennet |
 |---------|-------------|
 | **EVM Compatibility** | Deploy existing Solidity contracts without modification |
-| **Block Time** | ~1 second for fast confirmation |
+| **Block Time** | ~2 seconds with immediate BFT finality |
 | **Native CLOB** | MersennetOrders, on-chain order matching with EVM composability |
 | **Account-level privacy** | Shielded accounts, ZK risk checks, and shielded orders (privacy hard fork) |
 | **Verifiable state** | State transitions proven with SP1 and verifiable via a Groth16 bridge |
-| **Consensus** | BFT proof-of-stake (prevote/precommit, stake-weighted proposer) |
+| **Consensus** | Leader-gated BFT proof-of-stake — one elected producer per block, finalized by a 2/3-stake vote quorum |
 | **Token** | MRSN (18 decimals, 2⁸⁹ − 1 wei ≈ 618.97M supply cap) |
 | **Implementation** | Rust-based node for reliability and performance |
 
 ## Key Capabilities
 
 - **EVM Compatibility**: Use Hardhat, Foundry, Remix, and all standard Ethereum tooling. Your contracts work as-is.
-- **Fast Finality**: ~1 second block times with BFT consensus for quick confirmations.
+- **Fast Finality**: ~2 second blocks, finalized by a 2/3-stake vote quorum — no confirmations to wait for and no reorgs.
 - **MersennetOrders**: A native central limit order book (CLOB) accessible via EVM precompile, enabling DeFi strategies that combine smart contracts with order matching in a single transaction.
 - **Account-level privacy**: Shielded accounts conceal balances, positions, and order flow, and leverage is secured by zero-knowledge risk checks instead of public liquidation auctions. See [Privacy on Mersennet](/privacy/overview/).
 - **Verifiable state**: Every block's state transition is proven with SP1 and wrapped into a Groth16 proof an Ethereum contract can verify, so the chain is checkable from a succinct proof.
-- **BFT Proof-of-Stake**: Stake-weighted proposer rotation with two-round prevote/precommit finality and escalating slashing.
+- **BFT Proof-of-Stake**: Deterministic leader rotation with timeout failover, signed finality votes from every validator, and escalating slashing for misbehavior.
 - **Mersenne-prime supply cap**: A hard ceiling of 2⁸⁹ − 1 wei (≈618.97M MRSN), with halving block rewards and structured tokenomics. Block-reward emission converges to ≈154.72M MRSN, well below the cap.
 
 ## Built for Developers
@@ -5284,7 +5265,7 @@ source: https://docs.mersennet.com/getting-started/wallet-setup/
 ---
 
 
-Connect to Mersennet testnet using MetaMask or the native Mersennet Wallet.
+Connect to Mersennet testnet with MetaMask or any EVM-compatible wallet — setup takes under a minute.
 
 ## Option 1: MetaMask (Manual Setup)
 
@@ -5339,23 +5320,9 @@ Click **Approve** in MetaMask to add the network.
 
 ---
 
-## Option 3: Mersennet Wallet
+## Option 3: Other EVM Wallets
 
-:::note
-Mersennet Wallet is currently in development. For now, use MetaMask or any EVM-compatible wallet.
-:::
-
-**Mersennet Wallet** is a browser extension wallet built natively for the Mersennet ecosystem. It supports Chain ID 131071 out of the box and provides a tailored experience for Mersennet dApps.
-
-### Installation
-
-1. Install the Mersennet Wallet browser extension (Chrome/Chromium).
-2. Create or import a wallet.
-3. Mersennet testnet is preconfigured; select it from the network list.
-
-:::note
-Mersennet Wallet is built with React and ethers.js, using Chrome Manifest V3. It is designed for the Mersennet ecosystem and may offer additional features for MersennetOrders and native dApps.
-:::
+Any EVM-compatible wallet works — Rabby, Frame, Rainbow, hardware wallets through MetaMask, or programmatic wallets via ethers.js/viem. Use the same network parameters as above. Transactions are standard EIP-155 signed transactions, so nothing about your signing flow changes.
 
 ---
 
@@ -5375,7 +5342,7 @@ import { Card, CardGrid, LinkCard } from '@astrojs/starlight/components';
 
 <CardGrid stagger>
   <Card title="Deploy in minutes" icon="rocket">
-    Hardhat, Foundry, ethers: all unchanged. Chain ID `131071`, ~1s blocks, EVM Shanghai.
+    Hardhat, Foundry, ethers: all unchanged. Chain ID `131071`, ~2s blocks, EVM Shanghai.
 
     [Deploy with Hardhat](/developers/quick-start/hardhat/) ·
     [Deploy with Foundry](/developers/quick-start/foundry/)
@@ -5760,9 +5727,14 @@ A light client does not need to re-execute Mersennet or trust a specific RPC pro
 
 This is the foundation for trustless bridges, cross-chain messaging, and independent verification of the chain's privacy invariants.
 
-## Activation
+## Current Status on Testnet
 
-State proofs and the bridge are part of the privacy hard fork. Before activation, blocks may not carry a proof; in that case proof reads return `{ "blockHeight": …, "proof": null, "reason": … }`. See the [Shielded JSON-RPC reference](/developers/privacy/shielded-rpc/) for exact response shapes.
+The testnet generates, gossips, and verifies a state proof for **every block** — this is live today, ahead of the privacy hard fork. Proof responses include a `proverMode` field:
+
+- `development` — the proof pipeline runs end-to-end with a fast development prover (what the testnet currently uses; the [explorer](https://explorer.mersennet.com/verify) labels these "Development proof")
+- `sp1` — real SP1 zkVM proving on dedicated prover hardware
+
+The proof format, roots, and verification flow are identical in both modes, so integrations built against development proofs carry over unchanged. See the [Shielded JSON-RPC reference](/developers/privacy/shielded-rpc/) for exact response shapes.
 
 
 ---
@@ -5962,20 +5934,38 @@ Notable milestones and updates for the Mersennet ecosystem.
 
 ---
 
+## July 2026
+
+### Consensus & Correctness Overhaul (testnet reset)
+
+The largest protocol upgrade to date, requiring a coordinated testnet re-genesis:
+
+- **Real networked BFT**: leader-gated block production (one elected validator per height, timeout failover), signed finality votes gossiped between nodes, 2/3-stake quorum finality
+- **Content-committing block hashes**: every block hash binds `parent_hash`, `timestamp`, transaction root, state root, and receipts root; imports verify the hash-link
+- **Standard Ethereum transactions**: EIP-155 / typed-envelope RLP is canonical — MetaMask and ethers.js work out of the box, and the wallet-computed hash is the on-chain hash
+- **Consensus-routed CLOB**: every order, cancel, and collateral deposit is a mined precompile transaction, so the order book is identical on every node and fills are on-chain events
+- **SP1 proofs on every block** (development prover), gossiped and verified across the network, labeled honestly in the explorer
+
+### Trading Goes Live End-to-End
+
+- [trade.mersennet.com](https://trade.mersennet.com): live order books on 5 perp markets (MRSN, BTC, ETH, SOL, ARB), real trade tape, candles built from on-chain fills, realistic 8-hour funding
+- Wallet flow verified end-to-end: faucet → signed transfer → collateral deposit → order resting on-chain
+- Foundation contracts redeployed on the fresh chain: Multicall3, WMRSN, MockUSDC/USDT/DAI (see [Deployed Contracts](/resources/contracts))
+
+### Explorer & Docs
+
+- Explorer serves pruned history from its indexer, labels development proofs, and decodes CLOB trade events in every block
+- Docs updated for consensus-routed orders, current contract addresses, and the live network parameters
+
+---
+
 ## March 2026
 
-### Mersennet Swap V3 Deployed
+### DeFi Experiments (retired)
 
-Concentrated liquidity DEX built on the Uniswap V3 protocol, deployed to Mersennet testnet.
-
-- Concentrated liquidity positions with custom price ranges
-- Multiple fee tiers: 0.05%, 0.3%, 1%
-- NFT-based position management (ERC-721)
-- Live at [http://46.225.30.187:4002](http://46.225.30.187:4002)
+Uniswap V2- and V3-style AMM deployments were trialed on the previous testnet chain. They were retired in the July 2026 reset — trading now happens on the native [MersennetOrders CLOB](/architecture/order-book).
 
 ### Block Explorer Upgraded
-
-Mersennet Explorer explorer upgraded with enhanced features:
 
 - Token balance display for addresses
 - ABI decoding for verified contract interactions
@@ -5985,19 +5975,11 @@ Mersennet Explorer explorer upgraded with enhanced features:
 
 ## February 2026
 
-### Mersennet Swap V2 Deployed
-
-Automated Market Maker DEX (Uniswap V2 fork) deployed with Factory and Router contracts.
-
-- Constant product pools (x × y = k)
-- WMRSN/USDC, WMRSN/USDT, WMRSN/DAI pools seeded with initial liquidity
-- Live at [http://46.225.30.187:4000](http://46.225.30.187:4000)
-
 ### Testnet Launch
 
 Mersennet testnet launched with BFT proof-of-stake consensus.
 
-- 4-validator network on Hetzner VPS infrastructure
+- 4-validator network plus a public RPC full node
 - Chain ID 131071, EVM Shanghai compatibility
 - JSON-RPC and WebSocket endpoints live
 - Testnet faucet deployed at [https://faucet.mersennet.com](https://faucet.mersennet.com)
@@ -6009,10 +5991,8 @@ Mersennet testnet launched with BFT proof-of-stake consensus.
 
 ### Documentation Site Launched
 
-Docusaurus-based documentation portal deployed.
-
 - Getting Started guides (network info, wallet setup, faucet, first transaction)
-- Developer documentation (Hardhat, Foundry, ERC-20, NFT, DeFi integration)
+- Developer documentation (Hardhat, Foundry, ERC-20, contract integration)
 - Validator guides (run a node, staking, monitoring)
 - Architecture deep-dives (consensus, node architecture, EVM compatibility, MersennetOrders)
 - Live at [https://docs.mersennet.com](https://docs.mersennet.com)
@@ -6119,7 +6099,7 @@ source: https://docs.mersennet.com/resources/faq/
 
 ### What is Mersennet?
 
-**Mersennet** is a high-performance, EVM-compatible Layer 1 blockchain built for speed, composability, and institutional-grade DeFi. It combines Ethereum's smart contract ecosystem with a **native order matching engine (MersennetOrders)**, enabling atomic cross-domain workflows (EVM + CLOB) in a single transaction. Key features include ~1 second block times, HotStuff-2 BFT Proof-of-Stake consensus, and a 2⁸⁹ − 1 wei (≈618.97M MRSN) supply cap with halving block rewards.
+**Mersennet** is a high-performance, EVM-compatible Layer 1 blockchain built for speed, composability, and institutional-grade DeFi. It combines Ethereum's smart contract ecosystem with a **native order matching engine (MersennetOrders)**, enabling atomic cross-domain workflows (EVM + CLOB) in a single transaction. Key features include ~2 second blocks with immediate BFT finality, leader-gated Proof-of-Stake consensus, and a 2⁸⁹ − 1 wei (≈618.97M MRSN) supply cap with halving block rewards.
 
 ### Is Mersennet EVM compatible?
 
@@ -6131,15 +6111,15 @@ Yes. Mersennet is fully EVM compatible. You can deploy Solidity contracts withou
 
 ### What is MersennetOrders?
 
-**MersennetOrders** is Mersennet's native central limit order book (CLOB). It's an on-chain matching engine accessible via an EVM precompile, allowing smart contracts to place, cancel, and fill orders atomically in the same transaction. This enables DeFi strategies that combine AMM liquidity with order book execution, something not possible on traditional EVM-only chains.
+**MersennetOrders** is Mersennet's native central limit order book (CLOB). It's an on-chain matching engine accessible via an EVM precompile, so smart contracts can deposit collateral, place, cancel, and fill orders atomically in the same transaction — strategies like on-chain market making and atomic arbitrage that are impossible when the order book lives off-chain.
 
 ## Tokens & Faucet
 
 ### How do I get testnet tokens?
 
 1. Add Mersennet to your wallet (see [Wallet Setup](/getting-started/wallet-setup)).
-2. Use the **Faucet** at [https://faucet.mersennet.com](https://faucet.mersennet.com) to receive testnet MRSN.
-3. For mock stablecoins (USDC, USDT, DAI), call the `faucet()` function on each contract; see [Deployed Contracts](/resources/contracts).
+2. Use the **Faucet** at [https://faucet.mersennet.com](https://faucet.mersennet.com) — 1,000 MRSN per address per hour, plus one-click claims of 10,000 MockUSDC/USDT/DAI.
+3. Contracts and scripts can also call the public `faucet()` function on each mock token directly; see [Deployed Contracts](/resources/contracts).
 
 ### What is the max supply of MRSN?
 
@@ -6157,11 +6137,7 @@ Use Hardhat or Foundry with Mersennet as a network. Add the RPC URL `https://rpc
 
 ### What wallets are supported?
 
-- **Mersennet Wallet**: Native Chrome extension for Mersennet (Chain ID 131071 preconfigured).
-- **MetaMask**: Add Mersennet manually via [Wallet Setup](/getting-started/wallet-setup).
-- **Mersennet Wallet Mobile**: React Native wallet (APK available).
-
-Any EIP-1193–compatible wallet can connect once Mersennet is added as a custom network.
+Any EIP-1193–compatible wallet — MetaMask, Rabby, Frame, Rainbow, and others — once Mersennet is added as a custom network (see [Wallet Setup](/getting-started/wallet-setup)). Transactions are standard EIP-155 signed transactions: the hash your wallet shows you is the hash on chain, and hardware wallets work through their usual integrations.
 
 ### Is there a bridge?
 
@@ -6180,7 +6156,7 @@ A cross-chain bridge is planned (Tier 3 in the roadmap). For now, testnet assets
 
 ### What is the block time?
 
-Approximately **1 second** per block.
+Approximately **2 seconds** per block on the current testnet. Blocks are final as soon as a 2/3-stake vote quorum lands — there is no confirmation depth to wait for.
 
 ## Ecosystem
 
@@ -6459,7 +6435,7 @@ Validators perform three critical functions:
 
 1. **Block Production**: Validators take turns proposing new blocks containing transactions, order submissions, and state updates. The proposer is selected via a round-robin algorithm weighted by stake.
 
-2. **Consensus Participation**: All validators participate in the BFT (Byzantine Fault Tolerant) consensus process. They vote on proposed blocks (prevote and precommit phases) to achieve finality. A block is finalized when more than 2/3 of total stake has voted for it.
+2. **Consensus Participation**: All validators participate in BFT (Byzantine Fault Tolerant) consensus. Each validator re-executes every proposed block and gossips a signed finality vote for its hash; a block is finalized when votes covering more than 2/3 of total stake have been observed.
 
 3. **Network Security**: By staking MRSN tokens, validators have economic skin in the game. Malicious or negligent behavior is penalized through slashing, which protects the network from attacks and downtime.
 
@@ -6471,8 +6447,8 @@ Mersennet uses stake-weighted BFT consensus with the following characteristics:
 |--------|-------------|
 | **Proposer Selection** | Round-robin with priority-based weighting. Validators with higher stake are selected more frequently to propose blocks. |
 | **Voting Power** | Proportional to staked MRSN. One validator with 2M MRSN has twice the voting power of a validator with 1M MRSN. |
-| **Finality Threshold** | >2/3 of total stake must precommit for a block to be finalized. |
-| **Block Time** | ~1 second per block. |
+| **Finality Threshold** | >2/3 of total stake must sign a finality vote for a block to be finalized. |
+| **Block Time** | ~2 seconds per block. |
 
 :::note
 Delegation is not yet implemented; all stake is currently bonded directly
@@ -6488,7 +6464,7 @@ Each block is produced by a single **proposer**, the validator selected for that
 3. Applies state transitions
 4. Broadcasts the proposed block to other validators
 
-Other validators then vote on the block. Once 2/3+ stake has precommitted, the block is **finalized** and irreversible. There are no chain reorganizations for finalized blocks.
+Other validators re-execute the block and gossip signed votes. Once 2/3+ of stake has voted for its hash, the block is **finalized** and irreversible. There are no chain reorganizations for finalized blocks.
 
 ## Earning Rewards
 
@@ -6499,7 +6475,7 @@ validator_reward = (block_reward × validator_stake) / total_stake
 ```
 
 - **Initial reward**: ≈2.3 MRSN per block (2⁶¹ − 1 wei)
-- **Halving**: Every 33,550,336 blocks (~1.06 years at ~1 s blocks), the reward halves
+- **Halving**: Every 33,550,336 blocks (~2.1 years at ~2 s blocks), the reward halves
 - **Distribution**: Rewards are credited directly to validator addresses, with no claiming required
 
 The more stake you have (your own + delegations), the larger your share of each block's reward.
@@ -6511,7 +6487,7 @@ Validators can lose stake through **slashing** for consensus violations:
 | Offense | Penalty | Consequence |
 |---------|---------|-------------|
 | **Double-signing** | 5% of stake (base) | **Tombstoned**, permanently banned from the validator set |
-| **Downtime / Precommit timeout** | 1% of stake (base) | **Jailed**, temporarily excluded; can unjail after period |
+| **Downtime / Missed slot** | 1% of stake (base) | **Jailed**, temporarily excluded; can unjail after period |
 
 Penalties **escalate** with repeated offenses (up to 10% max). Double-signing is the most severe: a tombstoned validator cannot rejoin the network.
 
@@ -6958,7 +6934,7 @@ Connect Grafana to your Prometheus instance and create dashboards for:
 - **Network**: Peer count, P2P message rates
 - **MersennetOrders**: Order submission rate, fill rate, active markets
 
-The public Grafana dashboard is available at [http://46.225.30.187:3000](http://46.225.30.187:3000).
+Network health is also observable without running your own stack: the [explorer's Network page](https://explorer.mersennet.com/network) shows live validator status, block cadence, and peer counts.
 
 ### Alerting Rules
 
@@ -7165,7 +7141,7 @@ validator_reward = (block_reward × validator_stake) / total_stake
 ```
 
 - **Initial block reward**: ≈2.3 MRSN per block (2⁶¹ − 1 wei)
-- **Halving**: Every 33,550,336 blocks (~1.06 years at ~1 s blocks)
+- **Halving**: Every 33,550,336 blocks (~2.1 years at ~2 s blocks)
 - **Crediting**: Rewards are applied directly to validator/delegator balances, with no claiming step required
 
 Example with 4 validators each staking 1M MRSN (era 0, reward ≈2.3058 MRSN):
@@ -7207,11 +7183,11 @@ Validators (and their delegators) can lose stake through slashing:
 Double-signing is permanent. A tombstoned validator cannot rejoin. Never duplicate your validator key across nodes.
 :::
 
-### Downtime (Precommit Timeout)
+### Downtime (Missed Production Slot)
 
 | Aspect | Detail |
 |--------|--------|
-| **What** | Failing to send a precommit vote in a consensus round |
+| **What** | Failing to produce a block when elected leader (or persistent failure to vote) |
 | **Base penalty** | 1% of stake |
 | **Consequence** | **Jailed**, temporarily excluded; can unjail after jail period |
 | **Cause** | Node offline, network issues, slow hardware |
@@ -7959,7 +7935,7 @@ The `ConsensusEngine` supports both legacy CometBFT and HotStuff-2:
 pub fn run_hotstuff2_round(&mut self, block_hash: B256, height: u64) -> HotStuff2Result
 ```
 
-On first invocation, the HotStuff-2 state machine is initialized from the current validator set. Subsequent calls run simulated rounds using the existing validator stakes and addresses.
+On first invocation, the HotStuff-2 state machine is initialized from the current validator set. In production the pipeline is fully networked: one elected leader per height produces the block, every validator re-executes it and gossips a signed finality vote, and the height finalizes once votes covering ≥ 2/3 of total stake are observed. Leader election is deterministic round-robin over `(height + round)`, with timeout-based round rotation for failover.
 
 ---
 

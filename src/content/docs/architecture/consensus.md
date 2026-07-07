@@ -2,15 +2,16 @@
 title: "Consensus Mechanism"
 ---
 
-Mersennet uses **Proof-of-Stake (HotStuff-2 BFT)** with round-robin proposer selection and priority-based weighting. This document provides a deep dive into how consensus works, from validator selection to block finalization and slashing.
+Mersennet uses **leader-gated Proof-of-Stake BFT** (HotStuff-2 style): one elected validator produces each block, every validator re-executes it, and signed finality votes gossip across the network until a 2/3-stake quorum finalizes the height. This document is a deep dive into how consensus works, from leader election to finalization and slashing.
 
 ## Overview
 
 | Parameter | Value |
 |-----------|-------|
-| **Consensus** | Proof-of-Stake (HotStuff-2 BFT) |
-| **Block Time** | ~1 second |
-| **Finality** | BFT (Byzantine Fault Tolerant) |
+| **Consensus** | Proof-of-Stake BFT, single elected leader per height |
+| **Block Time** | ~2 seconds on the current testnet (configurable per network) |
+| **Finality** | ≥ 2/3 of total stake, signed votes gossiped per block |
+| **Failover** | Timeout-based round rotation to the next leader |
 | **Implementation** | Rust |
 
 ## Validator Selection
@@ -23,33 +24,24 @@ voting_power(validator) ∝ staked_amount
 
 Token holders can **delegate** their MRSN to validators, increasing that validator's voting power. The validator set is dynamic: new validators can join by staking, and existing validators can leave by unbonding.
 
-## Proposer Rotation
+## Leader Election
 
-Block production uses a **round-robin** algorithm with **priority-based weighting**:
-
-1. Each validator has a **priority** value that accumulates over time.
-2. The validator with the **highest priority** is selected as the proposer for the current block.
-3. After selection, the proposer's priority is reduced by the total weight of all validators.
-4. All validators' priorities are incremented by their normalized stake weight each round.
-
-This ensures:
-- **Fair rotation**: No single validator dominates block production
-- **Stake-weighted frequency**: Validators with more stake are chosen more often
-- **Determinism**: Given the same validator set and heights, proposer selection is reproducible
-
-### Priority Algorithm (Conceptual)
+Exactly one validator is elected to produce each block. Election is deterministic round-robin over the validator set:
 
 ```
-priority[i] += normalized_weight[i]   (each round)
-priority[proposer] -= total_weight     (after selection)
-proposer = argmax(priority)
+leader(height, round) = validators[(height + round) mod validator_count]
 ```
 
-Weights are normalized from stake to prevent overflow with 18-decimal MRSN values.
+- `round` starts at 0 for every height. If the elected leader fails to produce a block within the round timeout, every node independently advances to `round + 1`, which rotates leadership to the next validator — no coordinator required.
+- Because the formula is pure, every node computes the same leader for the same `(height, round)` — non-leaders simply wait, import, and vote.
+
+This gives:
+
+- **Liveness under failure**: A crashed leader delays its height by one timeout, then the next validator takes over.
+- **Fair rotation**: Each validator leads an equal share of heights.
+- **Determinism**: No leader ambiguity, so no competing blocks under normal operation.
 
 ## Block Production Cycle
-
-The block production cycle proceeds as follows:
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────┐
@@ -58,68 +50,43 @@ The block production cycle proceeds as follows:
 
   Height N
     │
-    │  1. PROPOSER SELECTION
-    │     └─ Select validator with highest priority
+    │  1. LEADER ELECTION
+    │     └─ leader = validators[(N + round) mod count]
     │
-    │  2. PROPOSAL PHASE
-    │     └─ Proposer builds block (txs, orders, state)
-    │     └─ Broadcasts block to all validators
+    │  2. PROPOSAL
+    │     └─ Leader pulls txs from its mempool, executes the block,
+    │        computes the content-committing block hash, and gossips it
     │
-    │  3. PREVOTE PHASE
-    │     └─ Validators receive block, validate
-    │     └─ Broadcast prevote for block hash
-    │     └─ Wait for 2/3+ prevotes
+    │  3. IMPORT & RE-EXECUTION
+    │     └─ Every other node re-executes the block's transactions
+    │        against its own state and verifies the parent-hash link
     │
-    │  4. PRECOMMIT PHASE
-    │     └─ Validators broadcast precommit
-    │     └─ Wait for 2/3+ precommits
+    │  4. VOTE
+    │     └─ Each validator signs a finality vote over (height, block_hash)
+    │        and gossips it on the "vote" topic
     │
     │  5. FINALIZATION
-    │     └─ Block committed to chain
-    │     └─ State root updated
-    │     └─ Rewards distributed
+    │     └─ When votes covering ≥ 2/3 of total stake accumulate,
+    │        the height is finalized — rewards and state are committed
     │
     ▼
   Height N+1
 ```
 
-### Diagram: Block Production Flow
+### Content-Committing Block Hash
 
-```
-     Validator A          Validator B          Validator C          Validator D
-     (Proposer)           (Voter)              (Voter)               (Voter)
-          │                     │                    │                     │
-          │  Create Block       │                    │                     │
-          │─────────────────────┤                    │                     │
-          │                     │                    │                     │
-          │  Broadcast Block    │                    │                     │
-          │─────────────────────┼────────────────────┼─────────────────────┤
-          │                     │                    │                     │
-          │                     │  Prevote           │  Prevote             │  Prevote
-          │                     │◄───────────────────┼─────────────────────┤
-          │                     │                    │                     │
-          │                     │  Precommit (2/3+)  │  Precommit           │  Precommit
-          │                     │◄───────────────────┼─────────────────────┤
-          │                     │                    │                     │
-          │  FINALIZE           │                    │                     │
-          │─────────────────────┼────────────────────┼─────────────────────┤
-          │                     │                    │                     │
-          ▼                     ▼                    ▼                     ▼
-```
+The block hash commits to the block's actual content — `parent_hash`, `timestamp`, `transactions_root`, `state_root`, `receipts_root`, gas usage, and transaction count — so a vote for a hash is a vote for the exact state transition, and every block is hash-linked to its parent. Imports reject any block whose `parent_hash` does not match the local head.
 
 ## Block Finalization
 
-A block is **finalized** when:
-
-1. **Prevote threshold**: More than 2/3 of total stake has broadcast a prevote for the block hash
-2. **Precommit threshold**: More than 2/3 of total stake has broadcast a precommit
+A block is **finalized** when signed votes from validators representing more than 2/3 of total stake have been observed for its hash:
 
 ```
 T = 2/3 × total_stake + 1
-finalized ⟺ prevotes ≥ T AND precommits ≥ T
+finalized ⟺ Σ stake(voters for block_hash) ≥ T
 ```
 
-Finalized blocks are **irreversible**: there are no chain reorganizations. This provides fast, deterministic finality for applications.
+Votes are ECDSA signatures over a domain-separated digest of `(height, block_hash)`; each receiving node recovers the signer, checks it against the validator set, and accumulates stake until quorum. Finalized blocks are **irreversible** — there are no chain reorganizations.
 
 ## Epoch Transitions
 
@@ -138,7 +105,7 @@ The exact epoch length is configurable. Validator set changes take effect at the
 | Type | Trigger | Base Penalty | Consequence |
 |------|---------|--------------|-------------|
 | **Double-sign** | Signing two different blocks at same height | 5% of stake | **Tombstoned** (permanent ban) |
-| **Timeout** | Failing to precommit after prevoting | 1% of stake | **Jailed** (temporary exclusion) |
+| **Timeout** | Missing your production slot as elected leader | 1% of stake | **Jailed** (temporary exclusion) |
 
 ### Escalation
 
@@ -174,7 +141,8 @@ Every finalized block contains the following fields:
 | Field | Type | Description |
 |-------|------|-------------|
 | `number` | `u64` | Sequential block height starting from 0 (genesis) |
-| `hash` | `B256` | Keccak-256 hash uniquely identifying this block |
+| `hash` | `B256` | Content-committing Keccak-256 hash (binds parent, roots, timestamp) |
+| `parent_hash` | `B256` | Hash of the previous block — imports reject broken links |
 | `chain_id` | `u64` | Network identifier (131071 for testnet) |
 | `state_root` | `B256` | Merkle root of the post-execution state trie |
 | `transactions` | `Vec<Transaction>` | Ordered list of transactions included in the block |
@@ -185,7 +153,7 @@ Every finalized block contains the following fields:
 | `gas_used` | `u64` | Total gas consumed by all transactions |
 | `base_fee` | `U256` | EIP-1559 base fee for this block (adjusts per block) |
 | `finalized` | `bool` | Whether 2/3+ stake committed to this block |
-| `consensus` | `Finalization` | BFT finalization data (prevotes, precommits, round info) |
+| `consensus` | `Finalization` | BFT finalization data (vote summary, round info) |
 | `rewards` | `Vec<Reward>` | Per-validator block reward distributions |
 | `total_reward` | `U256` | Sum of all rewards paid this block |
 | `burned_reward` | `U256` | Portion of rewards burned (e.g. slashed stake) |
@@ -245,10 +213,9 @@ A transaction moves through the following stages from submission to finalization
      │  └─ Compute post-execution state_root
      │
   6. CONSENSUS & FINALIZATION
-     │  ├─ Proposer broadcasts block to validators
-     │  ├─ Validators verify block, broadcast prevote
-     │  ├─ On 2/3+ prevotes, broadcast precommit
-     │  └─ On 2/3+ precommits, block is finalized (irreversible)
+     │  ├─ Leader gossips the block; every node re-executes it
+     │  ├─ Each validator signs a vote over (height, block_hash)
+     │  └─ On ≥ 2/3 stake voting for the hash, the block is final
      │
   7. RECEIPT
      └─ Client queries receipt via eth_getTransactionReceipt
@@ -325,9 +292,9 @@ Nodes exchange three categories of messages:
 
 | Message | Transport | Purpose |
 |---------|-----------|---------|
-| `Tx` | TCP + UDP gossip | Propagate new transactions to peers |
-| `Block` | TCP sync | Broadcast finalized blocks |
-| `Vote` | TCP + UDP gossip | Exchange prevote/precommit messages |
+| `Tx` | UDP gossip | Propagate new transactions (wallet txs carry their raw signed envelope so peers re-verify the true EIP-155 signature) |
+| `Block` | UDP gossip + TCP sync | Broadcast produced blocks; TCP backfills gaps for catching-up nodes |
+| `Vote` | UDP gossip | Signed finality votes over `(height, block_hash)` |
 
 ### Peer Discovery
 
@@ -340,19 +307,17 @@ Nodes discover peers through:
 ### Block Propagation
 
 ```
-  Proposer Node                    Validator Node A              Validator Node B
+   Leader Node                    Validator Node A              Validator Node B
        │                                │                              │
        │  1. Produce block              │                              │
-       │  2. TCP broadcast ─────────────┤                              │
-       │                                │──── TCP forward ─────────────┤
+       │  2. Gossip block ──────────────┤──────────────────────────────┤
        │                                │                              │
-       │  3. Collect prevotes ◄─────────┤                              │
-       │                     ◄──────────┼──────────────────────────────┤
+       │                                │  3. Re-execute & verify      │  Re-execute & verify
        │                                │                              │
-       │  4. Collect precommits ◄───────┤                              │
-       │                        ◄───────┼──────────────────────────────┤
+       │  4. Signed votes  ◄────────────┤◄─────────────────────────────┤
+       │     gossip everywhere          │  (every node counts stake)   │
        │                                │                              │
-       │  5. Finalize & commit          │  Finalize & commit           │  Finalize & commit
+       │  5. ≥2/3 stake → FINAL         │  ≥2/3 stake → FINAL          │  ≥2/3 stake → FINAL
        ▼                                ▼                              ▼
 ```
 
@@ -403,7 +368,7 @@ Complete reference of all configuration parameters with their default values.
 | `peer_store_path` | `string` | `"state/peers.json"` | Path to persistent peer list |
 | `listen` | `string` | `"0.0.0.0:30303"` | P2P listen address |
 | `peers` | `string[]` | `[]` | Seed peer addresses for bootstrap |
-| `block_time_ms` | `u64` | `1000` | Target block production interval in ms |
+| `block_time_ms` | `u64` | `1000` | Target block production interval in ms (the public testnet runs `2000`) |
 | `noise_enabled` | `bool` | `false` | Enable Noise protocol encryption |
 
 ### `rpc`: JSON-RPC Server
@@ -483,7 +448,7 @@ Complete reference of all configuration parameters with their default values.
     "peers": [
       "46.225.30.187:30303"
     ],
-    "block_time_ms": 1000,
+    "block_time_ms": 2000,
     "noise_enabled": false
   },
   "rpc": {
@@ -525,8 +490,8 @@ Complete reference of all configuration parameters with their default values.
 
 Mersennet's PoS consensus provides:
 
-- **Fast finality** (~1s block time)
-- **Fair proposer rotation** (stake-weighted round-robin)
-- **BFT security** (2/3+ stake required)
-- **Economic security** (slashing for misbehavior)
-- **No reversals** (finalized blocks are final)
+- **Fast finality** (~2s blocks, one vote round to quorum)
+- **Fair leader rotation** (deterministic round-robin with timeout failover)
+- **BFT security** (≥ 2/3 of stake must sign every finalized block)
+- **Economic security** (escalating slashing for misbehavior)
+- **No reversals** (finalized blocks are final; every block hash-links to its parent)

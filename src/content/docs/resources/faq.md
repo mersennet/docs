@@ -8,7 +8,7 @@ title: "FAQ"
 
 ### What is Mersennet?
 
-**Mersennet** is a high-performance, EVM-compatible Layer 1 blockchain built for speed, composability, and institutional-grade DeFi. It combines Ethereum's smart contract ecosystem with a **native order matching engine (MersennetOrders)**, enabling atomic cross-domain workflows (EVM + CLOB) in a single transaction. Key features include ~1 second block times, HotStuff-2 BFT Proof-of-Stake consensus, and a 2⁸⁹ − 1 wei (≈618.97M MRSN) supply cap with halving block rewards.
+**Mersennet** is a high-performance, EVM-compatible Layer 1 blockchain built for speed, composability, and institutional-grade DeFi. It combines Ethereum's smart contract ecosystem with a **native order matching engine (MersennetOrders)**, enabling atomic cross-domain workflows (EVM + CLOB) in a single transaction. Key features include ~2 second blocks with immediate BFT finality, leader-gated Proof-of-Stake consensus, and a 2⁸⁹ − 1 wei (≈618.97M MRSN) supply cap with halving block rewards.
 
 ### Is Mersennet EVM compatible?
 
@@ -20,15 +20,15 @@ Yes. Mersennet is fully EVM compatible. You can deploy Solidity contracts withou
 
 ### What is MersennetOrders?
 
-**MersennetOrders** is Mersennet's native central limit order book (CLOB). It's an on-chain matching engine accessible via an EVM precompile, allowing smart contracts to place, cancel, and fill orders atomically in the same transaction. This enables DeFi strategies that combine AMM liquidity with order book execution, something not possible on traditional EVM-only chains.
+**MersennetOrders** is Mersennet's native central limit order book (CLOB). It's an on-chain matching engine accessible via an EVM precompile, so smart contracts can deposit collateral, place, cancel, and fill orders atomically in the same transaction — strategies like on-chain market making and atomic arbitrage that are impossible when the order book lives off-chain.
 
 ## Tokens & Faucet
 
 ### How do I get testnet tokens?
 
 1. Add Mersennet to your wallet (see [Wallet Setup](/getting-started/wallet-setup)).
-2. Use the **Faucet** at [https://faucet.mersennet.com](https://faucet.mersennet.com) to receive testnet MRSN.
-3. For mock stablecoins (USDC, USDT, DAI), call the `faucet()` function on each contract; see [Deployed Contracts](/resources/contracts).
+2. Use the **Faucet** at [https://faucet.mersennet.com](https://faucet.mersennet.com) — 1,000 MRSN per address per hour, plus one-click claims of 10,000 MockUSDC/USDT/DAI.
+3. Contracts and scripts can also call the public `faucet()` function on each mock token directly; see [Deployed Contracts](/resources/contracts).
 
 ### What is the max supply of MRSN?
 
@@ -46,11 +46,7 @@ Use Hardhat or Foundry with Mersennet as a network. Add the RPC URL `https://rpc
 
 ### What wallets are supported?
 
-- **Mersennet Wallet**: Native Chrome extension for Mersennet (Chain ID 131071 preconfigured).
-- **MetaMask**: Add Mersennet manually via [Wallet Setup](/getting-started/wallet-setup).
-- **Mersennet Wallet Mobile**: React Native wallet (APK available).
-
-Any EIP-1193–compatible wallet can connect once Mersennet is added as a custom network.
+Any EIP-1193–compatible wallet — MetaMask, Rabby, Frame, Rainbow, and others — once Mersennet is added as a custom network (see [Wallet Setup](/getting-started/wallet-setup)). Transactions are standard EIP-155 signed transactions: the hash your wallet shows you is the hash on chain, and hardware wallets work through their usual integrations.
 
 ### Is there a bridge?
 
@@ -69,7 +65,7 @@ A cross-chain bridge is planned (Tier 3 in the roadmap). For now, testnet assets
 
 ### What is the block time?
 
-Approximately **1 second** per block.
+Approximately **2 seconds** per block on the current testnet. Blocks are final as soon as a 2/3-stake vote quorum lands — there is no confirmation depth to wait for.
 
 ## Ecosystem
 

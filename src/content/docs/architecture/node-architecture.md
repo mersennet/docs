@@ -84,7 +84,7 @@ The heart of the node. Contains all types, execution logic, and consensus:
 | `config` | `AppConfig` and all sub-config structs (`EngineConfig`, `P2pConfig`, etc.) |
 | `events` | Domain event types for MersennetOrders and Bridge operations |
 | `errors` | Error types for RPC validation and MersennetOrders |
-| `network` | Network simulation and consensus message types (`Prevote`, `Precommit`, etc.) |
+| `network` | Consensus message types and finality-vote handling |
 | `bridge` | Cross-domain bridge queue (EVM ↔ MersennetOrders) |
 | `prometheus` | Prometheus metrics registry and `/metrics` endpoint |
 | `identity` | Node identity (keypair) generation and persistence |
@@ -191,19 +191,18 @@ When the block timer fires, the following sequence executes:
                │
                ▼
   ┌─────────────────────────┐
-  │  7. FINALIZATION        │  Run BFT consensus:
-  │                         │    - Broadcast block to peers
-  │                         │    - Collect prevotes (2/3+ stake)
-  │                         │    - Collect precommits (2/3+ stake)
-  │                         │    - Process slashing evidence
-  │                         │    - Mark block as finalized
+  │  7. BROADCAST           │  Gossip the block to all peers. Every node
+  │                         │  re-executes it and verifies the parent-hash
+  │                         │  link and content-committing block hash.
   └────────────┬────────────┘
                │
                ▼
   ┌─────────────────────────┐
-  │  8. BROADCAST           │  Send finalized block to all connected
-  │                         │  peers via TCP. Update Prometheus metrics.
-  │                         │  Notify WebSocket subscribers.
+  │  8. FINALIZATION        │  Each validator signs a finality vote over
+  │                         │  (height, block_hash) and gossips it. When
+  │                         │  votes cover ≥2/3 of stake, the height is
+  │                         │  final. Slashing evidence is processed.
+  │                         │  Metrics + WebSocket subscribers notified.
   └─────────────────────────┘
 ```
 
@@ -315,9 +314,11 @@ Configuration:
 - `fee_elasticity_multiplier`: 2 (target gas = gas_limit / 2 = 15M)
 - `fee_max_change_denominator`: 8 (max 12.5% change per block)
 
-## Custom Transaction Format
+## Transaction Formats
 
-Mersennet uses a custom binary format for transaction signing, inspired by EIP-155:
+**Standard Ethereum RLP is the canonical format.** `eth_sendRawTransaction` accepts legacy EIP-155, EIP-2930, and EIP-1559 envelopes, verifies the real Ethereum signing hash, and uses `keccak256(raw_rlp)` as the transaction hash — so MetaMask, ethers.js, and Foundry work with no adaptation, and the hash your wallet computes is the hash on chain.
+
+A legacy custom binary format is also still accepted for internal tooling:
 
 ### Signing Hash Input
 

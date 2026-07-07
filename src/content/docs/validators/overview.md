@@ -10,7 +10,7 @@ Validators perform three critical functions:
 
 1. **Block Production**: Validators take turns proposing new blocks containing transactions, order submissions, and state updates. The proposer is selected via a round-robin algorithm weighted by stake.
 
-2. **Consensus Participation**: All validators participate in the BFT (Byzantine Fault Tolerant) consensus process. They vote on proposed blocks (prevote and precommit phases) to achieve finality. A block is finalized when more than 2/3 of total stake has voted for it.
+2. **Consensus Participation**: All validators participate in BFT (Byzantine Fault Tolerant) consensus. Each validator re-executes every proposed block and gossips a signed finality vote for its hash; a block is finalized when votes covering more than 2/3 of total stake have been observed.
 
 3. **Network Security**: By staking MRSN tokens, validators have economic skin in the game. Malicious or negligent behavior is penalized through slashing, which protects the network from attacks and downtime.
 
@@ -22,8 +22,8 @@ Mersennet uses stake-weighted BFT consensus with the following characteristics:
 |--------|-------------|
 | **Proposer Selection** | Round-robin with priority-based weighting. Validators with higher stake are selected more frequently to propose blocks. |
 | **Voting Power** | Proportional to staked MRSN. One validator with 2M MRSN has twice the voting power of a validator with 1M MRSN. |
-| **Finality Threshold** | >2/3 of total stake must precommit for a block to be finalized. |
-| **Block Time** | ~1 second per block. |
+| **Finality Threshold** | >2/3 of total stake must sign a finality vote for a block to be finalized. |
+| **Block Time** | ~2 seconds per block. |
 
 :::note
 Delegation is not yet implemented; all stake is currently bonded directly
@@ -39,7 +39,7 @@ Each block is produced by a single **proposer**, the validator selected for that
 3. Applies state transitions
 4. Broadcasts the proposed block to other validators
 
-Other validators then vote on the block. Once 2/3+ stake has precommitted, the block is **finalized** and irreversible. There are no chain reorganizations for finalized blocks.
+Other validators re-execute the block and gossip signed votes. Once 2/3+ of stake has voted for its hash, the block is **finalized** and irreversible. There are no chain reorganizations for finalized blocks.
 
 ## Earning Rewards
 
@@ -50,7 +50,7 @@ validator_reward = (block_reward × validator_stake) / total_stake
 ```
 
 - **Initial reward**: ≈2.3 MRSN per block (2⁶¹ − 1 wei)
-- **Halving**: Every 33,550,336 blocks (~1.06 years at ~1 s blocks), the reward halves
+- **Halving**: Every 33,550,336 blocks (~2.1 years at ~2 s blocks), the reward halves
 - **Distribution**: Rewards are credited directly to validator addresses, with no claiming required
 
 The more stake you have (your own + delegations), the larger your share of each block's reward.
@@ -62,7 +62,7 @@ Validators can lose stake through **slashing** for consensus violations:
 | Offense | Penalty | Consequence |
 |---------|---------|-------------|
 | **Double-signing** | 5% of stake (base) | **Tombstoned**, permanently banned from the validator set |
-| **Downtime / Precommit timeout** | 1% of stake (base) | **Jailed**, temporarily excluded; can unjail after period |
+| **Downtime / Missed slot** | 1% of stake (base) | **Jailed**, temporarily excluded; can unjail after period |
 
 Penalties **escalate** with repeated offenses (up to 10% max). Double-signing is the most severe: a tombstoned validator cannot rejoin the network.
 

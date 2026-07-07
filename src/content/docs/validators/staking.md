@@ -31,7 +31,7 @@ validator_reward = (block_reward × validator_stake) / total_stake
 ```
 
 - **Initial block reward**: ≈2.3 MRSN per block (2⁶¹ − 1 wei)
-- **Halving**: Every 33,550,336 blocks (~1.06 years at ~1 s blocks)
+- **Halving**: Every 33,550,336 blocks (~2.1 years at ~2 s blocks)
 - **Crediting**: Rewards are applied directly to validator/delegator balances, with no claiming step required
 
 Example with 4 validators each staking 1M MRSN (era 0, reward ≈2.3058 MRSN):
@@ -73,11 +73,11 @@ Validators (and their delegators) can lose stake through slashing:
 Double-signing is permanent. A tombstoned validator cannot rejoin. Never duplicate your validator key across nodes.
 :::
 
-### Downtime (Precommit Timeout)
+### Downtime (Missed Production Slot)
 
 | Aspect | Detail |
 |--------|--------|
-| **What** | Failing to send a precommit vote in a consensus round |
+| **What** | Failing to produce a block when elected leader (or persistent failure to vote) |
 | **Base penalty** | 1% of stake |
 | **Consequence** | **Jailed**, temporarily excluded; can unjail after jail period |
 | **Cause** | Node offline, network issues, slow hardware |

@@ -725,7 +725,7 @@ The `ConsensusEngine` supports both legacy CometBFT and HotStuff-2:
 pub fn run_hotstuff2_round(&mut self, block_hash: B256, height: u64) -> HotStuff2Result
 ```
 
-On first invocation, the HotStuff-2 state machine is initialized from the current validator set. Subsequent calls run simulated rounds using the existing validator stakes and addresses.
+On first invocation, the HotStuff-2 state machine is initialized from the current validator set. In production the pipeline is fully networked: one elected leader per height produces the block, every validator re-executes it and gossips a signed finality vote, and the height finalizes once votes covering ≥ 2/3 of total stake are observed. Leader election is deterministic round-robin over `(height + round)`, with timeout-based round rotation for failover.
 
 ---
 

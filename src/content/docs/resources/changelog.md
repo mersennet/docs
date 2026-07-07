@@ -6,20 +6,38 @@ Notable milestones and updates for the Mersennet ecosystem.
 
 ---
 
+## July 2026
+
+### Consensus & Correctness Overhaul (testnet reset)
+
+The largest protocol upgrade to date, requiring a coordinated testnet re-genesis:
+
+- **Real networked BFT**: leader-gated block production (one elected validator per height, timeout failover), signed finality votes gossiped between nodes, 2/3-stake quorum finality
+- **Content-committing block hashes**: every block hash binds `parent_hash`, `timestamp`, transaction root, state root, and receipts root; imports verify the hash-link
+- **Standard Ethereum transactions**: EIP-155 / typed-envelope RLP is canonical — MetaMask and ethers.js work out of the box, and the wallet-computed hash is the on-chain hash
+- **Consensus-routed CLOB**: every order, cancel, and collateral deposit is a mined precompile transaction, so the order book is identical on every node and fills are on-chain events
+- **SP1 proofs on every block** (development prover), gossiped and verified across the network, labeled honestly in the explorer
+
+### Trading Goes Live End-to-End
+
+- [trade.mersennet.com](https://trade.mersennet.com): live order books on 5 perp markets (MRSN, BTC, ETH, SOL, ARB), real trade tape, candles built from on-chain fills, realistic 8-hour funding
+- Wallet flow verified end-to-end: faucet → signed transfer → collateral deposit → order resting on-chain
+- Foundation contracts redeployed on the fresh chain: Multicall3, WMRSN, MockUSDC/USDT/DAI (see [Deployed Contracts](/resources/contracts))
+
+### Explorer & Docs
+
+- Explorer serves pruned history from its indexer, labels development proofs, and decodes CLOB trade events in every block
+- Docs updated for consensus-routed orders, current contract addresses, and the live network parameters
+
+---
+
 ## March 2026
 
-### Mersennet Swap V3 Deployed
+### DeFi Experiments (retired)
 
-Concentrated liquidity DEX built on the Uniswap V3 protocol, deployed to Mersennet testnet.
-
-- Concentrated liquidity positions with custom price ranges
-- Multiple fee tiers: 0.05%, 0.3%, 1%
-- NFT-based position management (ERC-721)
-- Live at [http://46.225.30.187:4002](http://46.225.30.187:4002)
+Uniswap V2- and V3-style AMM deployments were trialed on the previous testnet chain. They were retired in the July 2026 reset — trading now happens on the native [MersennetOrders CLOB](/architecture/order-book).
 
 ### Block Explorer Upgraded
-
-Mersennet Explorer explorer upgraded with enhanced features:
 
 - Token balance display for addresses
 - ABI decoding for verified contract interactions
@@ -29,19 +47,11 @@ Mersennet Explorer explorer upgraded with enhanced features:
 
 ## February 2026
 
-### Mersennet Swap V2 Deployed
-
-Automated Market Maker DEX (Uniswap V2 fork) deployed with Factory and Router contracts.
-
-- Constant product pools (x × y = k)
-- WMRSN/USDC, WMRSN/USDT, WMRSN/DAI pools seeded with initial liquidity
-- Live at [http://46.225.30.187:4000](http://46.225.30.187:4000)
-
 ### Testnet Launch
 
 Mersennet testnet launched with BFT proof-of-stake consensus.
 
-- 4-validator network on Hetzner VPS infrastructure
+- 4-validator network plus a public RPC full node
 - Chain ID 131071, EVM Shanghai compatibility
 - JSON-RPC and WebSocket endpoints live
 - Testnet faucet deployed at [https://faucet.mersennet.com](https://faucet.mersennet.com)
@@ -53,10 +63,8 @@ Mersennet testnet launched with BFT proof-of-stake consensus.
 
 ### Documentation Site Launched
 
-Docusaurus-based documentation portal deployed.
-
 - Getting Started guides (network info, wallet setup, faucet, first transaction)
-- Developer documentation (Hardhat, Foundry, ERC-20, NFT, DeFi integration)
+- Developer documentation (Hardhat, Foundry, ERC-20, contract integration)
 - Validator guides (run a node, staking, monitoring)
 - Architecture deep-dives (consensus, node architecture, EVM compatibility, MersennetOrders)
 - Live at [https://docs.mersennet.com](https://docs.mersennet.com)

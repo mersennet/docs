@@ -64,6 +64,11 @@ A light client does not need to re-execute Mersennet or trust a specific RPC pro
 
 This is the foundation for trustless bridges, cross-chain messaging, and independent verification of the chain's privacy invariants.
 
-## Activation
+## Current Status on Testnet
 
-State proofs and the bridge are part of the privacy hard fork. Before activation, blocks may not carry a proof; in that case proof reads return `{ "blockHeight": …, "proof": null, "reason": … }`. See the [Shielded JSON-RPC reference](/developers/privacy/shielded-rpc/) for exact response shapes.
+The testnet generates, gossips, and verifies a state proof for **every block** — this is live today, ahead of the privacy hard fork. Proof responses include a `proverMode` field:
+
+- `development` — the proof pipeline runs end-to-end with a fast development prover (what the testnet currently uses; the [explorer](https://explorer.mersennet.com/verify) labels these "Development proof")
+- `sp1` — real SP1 zkVM proving on dedicated prover hardware
+
+The proof format, roots, and verification flow are identical in both modes, so integrations built against development proofs carry over unchanged. See the [Shielded JSON-RPC reference](/developers/privacy/shielded-rpc/) for exact response shapes.

@@ -38,6 +38,16 @@ Unlike CLOBs implemented purely in Solidity (gas-intensive, slow) or on separate
 +------------------------------------------------------------------+
 ```
 
+## Consensus Consistency
+
+Every order book mutation is a **mined transaction**. Whether an order arrives as a wallet-signed precompile call or through the `mersennet_orders_*` convenience RPC, it enters the mempool, gossips to the elected leader, and executes inside a block that every validator re-executes identically. That gives three guarantees:
+
+1. **One book, everywhere** — the order book state is part of consensus state, byte-identical on every node.
+2. **Fills are on-chain events** — every match emits a `trade` domain event in the block, which the explorer, the trade indexer, and the `MersennetOrdersTrades` WebSocket topic all consume.
+3. **Collateral is real** — `depositCollateral` escrows native MRSN 1:1 at the precompile address inside the same journaled transaction; the CLOB ledger can never desync from token balances.
+
+The practical consequence for integrators: a successful `submitOrder` RPC response means *accepted into the mempool*, not *executed*. The order rests or fills when its transaction mines (typically the next block, ~2s). Poll `getOpenOrders` or subscribe to the WebSocket feed rather than assuming synchronous execution.
+
 ## IMersennetOrders Interface
 
 The canonical Solidity interface is defined in `contracts/src/interfaces/IMersennetOrders.sol`. Smart contracts interact with the precompile by casting the precompile address:
