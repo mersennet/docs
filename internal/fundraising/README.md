@@ -1,5 +1,7 @@
 # Mersennet — $25M Series A Fundraising Suite
 
+> ⚠️ **SUPERSEDED (2026-07-09). Do not circulate.** The current, maintained fundraising kit lives in the workspace `fundraising/` folder (seed structure: $4.0M on an $80M post-money SAFE + 3% SAFT). This $25M package predates the consensus overhaul, contains stale protocol facts (~1s blocks, pre-overhaul consensus, pre-EIP-155 tx claims) and a raise size that conflicts with the reconciled seed structure. Kept for historical reference only.
+
 > All materials updated March 2026 | Confidential
 
 ---
