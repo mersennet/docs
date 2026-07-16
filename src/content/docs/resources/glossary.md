@@ -50,7 +50,7 @@ once, linked everywhere.
 
 ## Consensus & economics
 
-**HotStuff-2**: Mersennet's BFT consensus: two-phase, stake-weighted voting with rotating proposers; finality when >2/3 of stake commits (~1s blocks).
+**HotStuff-2**: Mersennet's BFT consensus: two-phase, stake-weighted voting with rotating proposers; finality when >2/3 of stake commits (~2s blocks).
 
 **Direct staking**: Validators bond MRSN directly; delegation is not yet implemented. See [Staking](/validators/staking/).
 
