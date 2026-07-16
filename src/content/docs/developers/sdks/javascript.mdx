@@ -28,7 +28,7 @@ console.log('Chain ID:', await provider.getChainId()); // 131071
 // Place an order (node must have the owner account unlocked)
 const outcome = await orders.submitOrder(
   '0xOwnerAddress',
-  2,          // marketId (MRSN/USDC)
+  2,          // marketId (MRSN/USD)
   'buy',      // side
   '1000000',  // price
   '10',       // size

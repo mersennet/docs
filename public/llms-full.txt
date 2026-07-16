@@ -1332,8 +1332,8 @@ Validator rewards are **minted on every block** according to the halving schedul
 |-----------|-------|
 | **Initial Reward per Block** | 2⁶¹ − 1 wei ≈ 2.3 MRSN |
 | **Halving Interval** | 33,550,336 blocks |
-| **Block Time** | ~1 second |
-| **Halving Period** | ~1.06 years |
+| **Block Time** | ~2 seconds |
+| **Halving Period** | ~2.1 years |
 | **Total Emitted (all eras)** | ≈ 154.72M MRSN |
 
 ### Halving Epochs
@@ -1362,18 +1362,18 @@ This total sits far below the **2⁸⁹ − 1 ≈ 618.97M MRSN** cap: emission n
 
 ### Emission Timeline
 
-At ~1 s block time (~1.06 years per halving):
+At ~2 s block time (~2.1 years per halving):
 
 | Milestone | Era | Approx. Time | % of Emission |
 |-----------|-----|--------------|---------------|
-| First halving | 1 | ~1.1 years | 50.0% |
-| Second halving | 2 | ~2.1 years | 75.0% |
-| 87.5% emitted | 3 | ~3.2 years | 87.5% |
-| 93.75% emitted | 4 | ~4.3 years | 93.75% |
-| 96.9% emitted | 5 | ~5.3 years | 96.875% |
-| **99%+ emitted** | **7** | **~7.4 years** | **99.2%** |
+| First halving | 1 | ~2.1 years | 50.0% |
+| Second halving | 2 | ~4.3 years | 75.0% |
+| 87.5% emitted | 3 | ~6.4 years | 87.5% |
+| 93.75% emitted | 4 | ~8.5 years | 93.75% |
+| 96.9% emitted | 5 | ~10.6 years | 96.875% |
+| **99%+ emitted** | **7** | **~14.9 years** | **99.2%** |
 
-**99% of block rewards are emitted by approximately year 7–8** (at ~1 s block time).
+**99% of block rewards are emitted by approximately year 15** (at ~2 s block time).
 
 ## Reward Distribution
 
@@ -1424,9 +1424,9 @@ Due to integer division with 18-decimal precision, the sum of individual rewards
 |-------|---------|
 | **Supply cap** | 2⁸⁹ − 1 wei ≈ 618.97M MRSN (hard ceiling, Mersenne prime) |
 | **Block reward** | 2⁶¹ − 1 wei ≈ 2.3 MRSN/block initially (Mersenne prime), minted per block |
-| **Halving** | Every 33,550,336 blocks (5th perfect number, ~1.06 years at ~1 s blocks) |
+| **Halving** | Every 33,550,336 blocks (5th perfect number, ~2.1 years at ~2 s blocks) |
 | **Total emission** | ≈ 154.72M MRSN (converges well below the cap) |
-| **99% emission** | ~year 7–8 |
+| **99% emission** | ~year 15 |
 | **Distribution** | Proportional to validator stake |
 | **Genesis allocations** | Ecosystem, Foundation, Team, Sales (amounts finalized at genesis) |
 
@@ -6221,7 +6221,7 @@ once, linked everywhere.
 
 ## Consensus & economics
 
-**HotStuff-2**: Mersennet's BFT consensus: two-phase, stake-weighted voting with rotating proposers; finality when >2/3 of stake commits (~1s blocks).
+**HotStuff-2**: Mersennet's BFT consensus: two-phase, stake-weighted voting with rotating proposers; finality when >2/3 of stake commits (~2s blocks).
 
 **Direct staking**: Validators bond MRSN directly; delegation is not yet implemented. See [Staking](/validators/staking/).
 

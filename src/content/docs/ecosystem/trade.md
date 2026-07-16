@@ -44,11 +44,11 @@ Markets are seeded deterministically at genesis so every node agrees on the same
 
 | Market | Max Leverage |
 |--------|--------------|
-| MRSN/USDC | 50× |
-| BTC/USDC | 100× |
-| ETH/USDC | 50× |
-| SOL/USDC | 20× |
-| ARB/USDC | 20× |
+| MRSN/USD | 50× |
+| BTC/USD | 100× |
+| ETH/USD | 50× |
+| SOL/USD | 20× |
+| ARB/USD | 20× |
 
 ## Getting Started
 

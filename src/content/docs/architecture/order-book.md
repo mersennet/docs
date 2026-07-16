@@ -76,7 +76,7 @@ function placeOrder(
 
 | Parameter | Type | Description |
 |-----------|------|-------------|
-| `marketId` | `uint64` | Numeric market identifier (e.g. 1 = MRSN/USDC) |
+| `marketId` | `uint64` | Numeric market identifier (e.g. 1 = MRSN/USD) |
 | `isBuy` | `bool` | `true` = buy, `false` = sell |
 | `price` | `uint256` | Price in quote-asset units (18 decimals) |
 | `size` | `uint256` | Order size in base-asset units (18 decimals) |

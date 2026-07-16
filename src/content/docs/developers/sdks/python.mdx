@@ -23,7 +23,7 @@ print("Chain ID:", provider.chain_id())  # 131071
 
 # Place an order (node must have the owner account unlocked)
 result = orders.place_order(
-    market=2,          # market ID (MRSN/USDC)
+    market=2,          # market ID (MRSN/USD)
     side="buy",
     price="1000000",
     amount="10",
@@ -224,7 +224,7 @@ positions = orders.get_positions("0xOwnerAddress", market=1)
 ```python
 market_id = orders.add_market(
     base="MRSN",
-    quote="USDC",
+    quote="USD",
     lot="1000000",
     tick="1000",
 )

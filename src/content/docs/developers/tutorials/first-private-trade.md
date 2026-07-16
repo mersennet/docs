@@ -12,7 +12,7 @@ By the end of this tutorial you will have:
 - Connected to the Mersennet testnet over JSON-RPC and verified the chain ID.
 - Funded a transparent account with testnet MRSN from the faucet.
 - **Shielded** MRSN into a private note in the on-chain commitment tree.
-- Placed a **shielded order** on the MRSN/USDC market, public only as a bucketed tier.
+- Placed a **shielded order** on the MRSN/USD market, public only as a bucketed tier.
 - Reconstructed your private balance client-side from encrypted notes.
 - Verified the chain's state transition with an **SP1 proof**, with no trust in the node required.
 
@@ -131,7 +131,7 @@ const provider = new MersennetProvider('https://rpc.mersennet.com');
 const vk = ViewingKeyHelpers.fromSeed(process.env.WALLET_SEED!);
 const client = new ShieldedClient({ provider, viewingKey: vk });
 
-// Market 2 = MRSN/USDC. Buy 5 lots at a limit price of 130 ticks.
+// Market 2 = MRSN/USD. Buy 5 lots at a limit price of 130 ticks.
 const { intentId } = await client.placeOrder({
   marketId: 2n,
   side: 'buy',
