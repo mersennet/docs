@@ -1099,7 +1099,7 @@ function placeOrder(
 
 | Parameter | Type | Description |
 |-----------|------|-------------|
-| `marketId` | `uint64` | Numeric market identifier (e.g. 1 = MRSN/USDC) |
+| `marketId` | `uint64` | Numeric market identifier (e.g. 1 = MRSN/USD) |
 | `isBuy` | `bool` | `true` = buy, `false` = sell |
 | `price` | `uint256` | Price in quote-asset units (18 decimals) |
 | `size` | `uint256` | Order size in base-asset units (18 decimals) |
@@ -3499,7 +3499,7 @@ import { MersennetProvider, MersennetOrders } from '@mersennet/sdk';
 const provider = new MersennetProvider('https://rpc.mersennet.com');
 const orders = new MersennetOrders(provider);
 
-const book = await orders.getOrderBook(2); // MRSN/USDC
+const book = await orders.getOrderBook(2); // MRSN/USD
 console.log('Best bid:', book.bids[book.bids.length - 1]);
 console.log('Best ask:', book.asks[0]);
 ```
@@ -3513,7 +3513,7 @@ from mersennet import MersennetProvider, MersennetOrders
 provider = MersennetProvider("https://rpc.mersennet.com")
 orders = MersennetOrders(provider)
 
-book = orders.get_order_book(2)  # MRSN/USDC
+book = orders.get_order_book(2)  # MRSN/USD
 print("Bids:", book.bids)
 print("Asks:", book.asks)
 ```
@@ -3644,11 +3644,11 @@ The following CLOB markets are registered on the testnet:
 
 | Market ID | Symbol | Description |
 |-----------|--------|-------------|
-| 2 | MRSN/USDC | MRSN priced in USDC |
+| 2 | MRSN/USD | MRSN priced in USD |
 | 3 | MRSN/USDT | MRSN priced in USDT |
 | 4 | MRSN/DAI | MRSN priced in DAI |
-| 5 | BTC/USDC | BTC priced in USDC |
-| 6 | ETH/USDC | ETH priced in USDC |
+| 5 | BTC/USD | BTC priced in USD |
+| 6 | ETH/USD | ETH priced in USD |
 
 ---
 
@@ -3867,6 +3867,139 @@ Common error codes:
 
 
 ---
+source: https://docs.mersennet.com/developers/sdks/go/
+---
+
+
+The Mersennet Go SDK (`github.com/mersennet/sdk-go`) provides a typed client for the JSON-RPC API, MersennetOrders (on-chain order book), and the privacy stack: grant-gated note scanning, portfolio reconstruction, and compliance attestations, at feature parity with the TypeScript SDK (cross-language digest test vectors pin compatibility).
+
+:::tip[Privacy / shielded features]
+This page covers the **transparent** surface (`eth_*` / `mersennet_*` / `mersennet_orders_*`). For the shielded-note workflow (viewing grants, note scanning, reconstruction, attestations), see **[Shielded SDK](/developers/privacy/shielded-sdk)** and the runnable example in `examples/view-notes-end-to-end/` inside the SDK repository.
+:::
+
+## Installation
+
+While the SDK repository is private, vendor it locally and point Go at your checkout:
+
+```bash
+git clone <your-access-url>/mersennet/sdk-go
+```
+
+```go title="go.mod"
+require github.com/mersennet/sdk-go v0.0.0
+
+replace github.com/mersennet/sdk-go => ../sdk-go
+```
+
+Once the repository is public, a plain `go get github.com/mersennet/sdk-go` will work.
+
+## Quick Start
+
+```go
+package main
+
+import (
+    "fmt"
+    "log"
+
+    mersennet "github.com/mersennet/sdk-go"
+)
+
+func main() {
+    provider := mersennet.NewProvider("https://rpc.mersennet.com")
+
+    chainID, err := provider.ChainID()
+    if err != nil {
+        log.Fatal(err)
+    }
+    fmt.Println("Chain ID:", chainID) // 131071
+
+    blockNum, err := provider.BlockNumber()
+    if err != nil {
+        log.Fatal(err)
+    }
+    fmt.Println("Block:", blockNum)
+
+    balance, err := provider.GetBalance("0xYourAddress")
+    if err != nil {
+        log.Fatal(err)
+    }
+    fmt.Println("Balance (wei):", balance)
+}
+```
+
+## Order book
+
+Read the live CLOB and place orders through the `Orders` client:
+
+```go
+orders := mersennet.NewOrders(provider)
+
+// Market 1 = MRSN/USD. Prices and sizes are integer protocol units.
+book, err := orders.GetOrderBook(1)
+if err != nil {
+    log.Fatal(err)
+}
+fmt.Println("Best bid:", book.Bids[0], "Best ask:", book.Asks[0])
+
+// Place a GTC buy (owner account must be unlocked on the node, or use a
+// wallet-signed precompile transaction — see the JSON-RPC reference).
+outcome, err := orders.PlaceOrder(1, "buy", "105", "3", "gtc", "0xOwnerAddress")
+if err != nil {
+    log.Fatal(err)
+}
+fmt.Println("Order ID:", outcome.OrderID)
+```
+
+## Provider reference
+
+| Method | Description |
+|--------|-------------|
+| `GetBlock(number, includeTxs)` | Block by number or `"latest"` |
+| `GetBlockByHash(hash, includeTxs)` | Block by hash |
+| `GetTransaction(hash)` | Transaction by hash |
+| `GetBalance(address)` | Native MRSN balance |
+| `GetNonce(address)` | Account nonce |
+| `SendRawTransaction(rawTx)` | Submit a signed transaction |
+| `Call(txObject)` | Simulate a call (`eth_call`) |
+| `ChainID()` / `BlockNumber()` / `GasPrice()` | Chain metadata |
+| `ViewNotes(grantID, limit, cursorHex)` | Grant-gated encrypted note export |
+
+## Orders reference
+
+| Method | Description |
+|--------|-------------|
+| `PlaceOrder(market, side, price, amount, tif, owner)` | Place an order (GTC/IOC/FOK) |
+| `CancelOrder(orderID)` | Cancel an open order |
+| `GetOrderBook(market)` | Full depth for a market |
+| `AddMarket(base, quote, lot, tick)` | Add a market (admin; disabled on public RPC) |
+
+## Privacy stack
+
+The Go SDK mirrors the TypeScript privacy primitives byte-for-byte (shared digest test vectors run in CI):
+
+- `ScanGrantedNotes(provider, material, opts)` walks grant-gated encrypted notes and decrypts them locally with your delegated viewing material; the chain never sees plaintext.
+- `ReconstructPortfolio(notes, opts)` and `DefaultNullifierDeriver(note)` rebuild balances/positions client-side.
+- `ComputePortfolioDigest(...)` and `BuildPortfolioAttestation(...)` produce the canonical compliance-attestation digest, identical across the TS, Python, and Go SDKs.
+
+```go
+material := mersennet.GrantedViewingMaterial{
+    GrantID:            "0x...",
+    RecipientPublicKey: "0x...",
+    Decrypt:            mersennet.NewMockNoteDecryptor("0x..."),
+}
+
+result, err := mersennet.ScanGrantedNotes(provider, material, &mersennet.GrantedNoteScanOptions{Limit: 64})
+if err != nil {
+    log.Fatal(err)
+}
+fmt.Println("Decrypted notes:", len(result.Notes))
+```
+
+See [Selective disclosure](/privacy/selective-disclosure) for the grant model behind `ViewNotes`.
+
+
+---
 source: https://docs.mersennet.com/developers/sdks/javascript/
 ---
 
@@ -3897,7 +4030,7 @@ console.log('Chain ID:', await provider.getChainId()); // 131071
 // Place an order (node must have the owner account unlocked)
 const outcome = await orders.submitOrder(
   '0xOwnerAddress',
-  2,          // marketId (MRSN/USDC)
+  2,          // marketId (MRSN/USD)
   'buy',      // side
   '1000000',  // price
   '10',       // size
@@ -4207,7 +4340,7 @@ print("Chain ID:", provider.chain_id())  # 131071
 
 # Place an order (node must have the owner account unlocked)
 result = orders.place_order(
-    market=2,          # market ID (MRSN/USDC)
+    market=2,          # market ID (MRSN/USD)
     side="buy",
     price="1000000",
     amount="10",
@@ -4408,7 +4541,7 @@ positions = orders.get_positions("0xOwnerAddress", market=1)
 ```python
 market_id = orders.add_market(
     base="MRSN",
-    quote="USDC",
+    quote="USD",
     lot="1000000",
     tick="1000",
 )
@@ -4489,7 +4622,7 @@ By the end of this tutorial you will have:
 - Connected to the Mersennet testnet over JSON-RPC and verified the chain ID.
 - Funded a transparent account with testnet MRSN from the faucet.
 - **Shielded** MRSN into a private note in the on-chain commitment tree.
-- Placed a **shielded order** on the MRSN/USDC market, public only as a bucketed tier.
+- Placed a **shielded order** on the MRSN/USD market, public only as a bucketed tier.
 - Reconstructed your private balance client-side from encrypted notes.
 - Verified the chain's state transition with an **SP1 proof**, with no trust in the node required.
 
@@ -4608,7 +4741,7 @@ const provider = new MersennetProvider('https://rpc.mersennet.com');
 const vk = ViewingKeyHelpers.fromSeed(process.env.WALLET_SEED!);
 const client = new ShieldedClient({ provider, viewingKey: vk });
 
-// Market 2 = MRSN/USDC. Buy 5 lots at a limit price of 130 ticks.
+// Market 2 = MRSN/USD. Buy 5 lots at a limit price of 130 ticks.
 const { intentId } = await client.placeOrder({
   marketId: 2n,
   side: 'buy',
@@ -4755,11 +4888,11 @@ Markets are seeded deterministically at genesis so every node agrees on the same
 
 | Market | Max Leverage |
 |--------|--------------|
-| MRSN/USDC | 50× |
-| BTC/USDC | 100× |
-| ETH/USDC | 50× |
-| SOL/USDC | 20× |
-| ARB/USDC | 20× |
+| MRSN/USD | 50× |
+| BTC/USD | 100× |
+| ETH/USD | 50× |
+| SOL/USD | 20× |
+| ARB/USD | 20× |
 
 ## Getting Started
 

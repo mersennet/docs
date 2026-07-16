@@ -83,6 +83,7 @@ export default defineConfig({
               items: [
                 { slug: 'developers/sdks/javascript' },
                 { slug: 'developers/sdks/python' },
+                { slug: 'developers/sdks/go' },
               ],
             },
             {

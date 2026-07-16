@@ -1,0 +1,130 @@
+---
+title: "Go SDK"
+---
+
+The Mersennet Go SDK (`github.com/mersennet/sdk-go`) provides a typed client for the JSON-RPC API, MersennetOrders (on-chain order book), and the privacy stack: grant-gated note scanning, portfolio reconstruction, and compliance attestations, at feature parity with the TypeScript SDK (cross-language digest test vectors pin compatibility).
+
+:::tip[Privacy / shielded features]
+This page covers the **transparent** surface (`eth_*` / `mersennet_*` / `mersennet_orders_*`). For the shielded-note workflow (viewing grants, note scanning, reconstruction, attestations), see **[Shielded SDK](/developers/privacy/shielded-sdk)** and the runnable example in `examples/view-notes-end-to-end/` inside the SDK repository.
+:::
+
+## Installation
+
+While the SDK repository is private, vendor it locally and point Go at your checkout:
+
+```bash
+git clone <your-access-url>/mersennet/sdk-go
+```
+
+```go title="go.mod"
+require github.com/mersennet/sdk-go v0.0.0
+
+replace github.com/mersennet/sdk-go => ../sdk-go
+```
+
+Once the repository is public, a plain `go get github.com/mersennet/sdk-go` will work.
+
+## Quick Start
+
+```go
+package main
+
+import (
+    "fmt"
+    "log"
+
+    mersennet "github.com/mersennet/sdk-go"
+)
+
+func main() {
+    provider := mersennet.NewProvider("https://rpc.mersennet.com")
+
+    chainID, err := provider.ChainID()
+    if err != nil {
+        log.Fatal(err)
+    }
+    fmt.Println("Chain ID:", chainID) // 131071
+
+    blockNum, err := provider.BlockNumber()
+    if err != nil {
+        log.Fatal(err)
+    }
+    fmt.Println("Block:", blockNum)
+
+    balance, err := provider.GetBalance("0xYourAddress")
+    if err != nil {
+        log.Fatal(err)
+    }
+    fmt.Println("Balance (wei):", balance)
+}
+```
+
+## Order book
+
+Read the live CLOB and place orders through the `Orders` client:
+
+```go
+orders := mersennet.NewOrders(provider)
+
+// Market 1 = MRSN/USD. Prices and sizes are integer protocol units.
+book, err := orders.GetOrderBook(1)
+if err != nil {
+    log.Fatal(err)
+}
+fmt.Println("Best bid:", book.Bids[0], "Best ask:", book.Asks[0])
+
+// Place a GTC buy (owner account must be unlocked on the node, or use a
+// wallet-signed precompile transaction — see the JSON-RPC reference).
+outcome, err := orders.PlaceOrder(1, "buy", "105", "3", "gtc", "0xOwnerAddress")
+if err != nil {
+    log.Fatal(err)
+}
+fmt.Println("Order ID:", outcome.OrderID)
+```
+
+## Provider reference
+
+| Method | Description |
+|--------|-------------|
+| `GetBlock(number, includeTxs)` | Block by number or `"latest"` |
+| `GetBlockByHash(hash, includeTxs)` | Block by hash |
+| `GetTransaction(hash)` | Transaction by hash |
+| `GetBalance(address)` | Native MRSN balance |
+| `GetNonce(address)` | Account nonce |
+| `SendRawTransaction(rawTx)` | Submit a signed transaction |
+| `Call(txObject)` | Simulate a call (`eth_call`) |
+| `ChainID()` / `BlockNumber()` / `GasPrice()` | Chain metadata |
+| `ViewNotes(grantID, limit, cursorHex)` | Grant-gated encrypted note export |
+
+## Orders reference
+
+| Method | Description |
+|--------|-------------|
+| `PlaceOrder(market, side, price, amount, tif, owner)` | Place an order (GTC/IOC/FOK) |
+| `CancelOrder(orderID)` | Cancel an open order |
+| `GetOrderBook(market)` | Full depth for a market |
+| `AddMarket(base, quote, lot, tick)` | Add a market (admin; disabled on public RPC) |
+
+## Privacy stack
+
+The Go SDK mirrors the TypeScript privacy primitives byte-for-byte (shared digest test vectors run in CI):
+
+- `ScanGrantedNotes(provider, material, opts)` walks grant-gated encrypted notes and decrypts them locally with your delegated viewing material; the chain never sees plaintext.
+- `ReconstructPortfolio(notes, opts)` and `DefaultNullifierDeriver(note)` rebuild balances/positions client-side.
+- `ComputePortfolioDigest(...)` and `BuildPortfolioAttestation(...)` produce the canonical compliance-attestation digest, identical across the TS, Python, and Go SDKs.
+
+```go
+material := mersennet.GrantedViewingMaterial{
+    GrantID:            "0x...",
+    RecipientPublicKey: "0x...",
+    Decrypt:            mersennet.NewMockNoteDecryptor("0x..."),
+}
+
+result, err := mersennet.ScanGrantedNotes(provider, material, &mersennet.GrantedNoteScanOptions{Limit: 64})
+if err != nil {
+    log.Fatal(err)
+}
+fmt.Println("Decrypted notes:", len(result.Notes))
+```
+
+See [Selective disclosure](/privacy/selective-disclosure) for the grant model behind `ViewNotes`.
