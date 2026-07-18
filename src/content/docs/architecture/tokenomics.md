@@ -20,6 +20,10 @@ Mersennet's constants are chosen from the number theory the network is named for
 - **Initial block reward = 2⁶¹ − 1** (`2305843009213693951` wei ≈ 2.3 MRSN), a **Mersenne prime**.
 - **Halving interval = 33,550,336 blocks**, the **5th perfect number**, `2¹² × (2¹³ − 1)`, whose Mersenne factor `2¹³ − 1 = 8191` is the mainnet chain ID.
 
+:::note
+These are the protocol's target constants, defined in the node source (`config.rs`) and the genesis config. The current public testnet was bootstrapped with legacy emission parameters and adopts this schedule from its next network upgrade.
+:::
+
 ### Cap vs. emission: two distinct numbers
 
 The **supply cap** and the **amount actually emitted** are deliberately different:
