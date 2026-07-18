@@ -67,19 +67,23 @@ Read the live CLOB and place orders through the `Orders` client:
 orders := mersennet.NewOrders(provider)
 
 // Market 1 = MRSN/USD. Prices and sizes are integer protocol units.
+// Both sides are sorted by ascending price: best bid is the LAST bid,
+// best ask is the FIRST ask.
 book, err := orders.GetOrderBook(1)
 if err != nil {
     log.Fatal(err)
 }
-fmt.Println("Best bid:", book.Bids[0], "Best ask:", book.Asks[0])
+fmt.Println("Best bid:", book.Bids[len(book.Bids)-1], "Best ask:", book.Asks[0])
 
 // Place a GTC buy (owner account must be unlocked on the node, or use a
 // wallet-signed precompile transaction — see the JSON-RPC reference).
+// The node acknowledges with {"accepted": true, "txHash": "0x..."};
+// the order is placed when that transaction mines.
 outcome, err := orders.PlaceOrder(1, "buy", "105", "3", "gtc", "0xOwnerAddress")
 if err != nil {
     log.Fatal(err)
 }
-fmt.Println("Order ID:", outcome.OrderID)
+fmt.Println("Accepted:", outcome["accepted"], "tx:", outcome["txHash"])
 ```
 
 ## Provider reference

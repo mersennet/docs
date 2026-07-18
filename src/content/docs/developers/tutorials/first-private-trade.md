@@ -3,7 +3,11 @@ title: "Your First Private Trade"
 description: "An end-to-end walkthrough: connect to the Mersennet testnet, shield MRSN into a private note, place a shielded order, watch it settle, and verify the chain with an SP1 state proof."
 ---
 
-In about fifteen minutes you'll go from an empty wallet to a settled trade that nobody (not the node, not the sequencer, not the order book) could attribute to you. Everything here runs against the live testnet with the real `@mersennet/sdk`.
+In about fifteen minutes you'll go from an empty wallet to a settled trade that nobody (not the node, not the sequencer, not the order book) could attribute to you, using the real `@mersennet/sdk`.
+
+:::caution[Shielded methods are fork-gated]
+Steps 1–2 (connect, faucet) run against the live public testnet today. The shielded mutation methods used in Steps 3–5 (`mersennet_submitShield`, `mersennet_submitShieldedOrder`, …) are gated by the **privacy hard fork** and return error `-32605` on the current public testnet until it activates. To run those steps end-to-end now, use a local dev node started in privacy mode; the code is identical.
+:::
 
 ## What you'll build
 
@@ -131,9 +135,9 @@ const provider = new MersennetProvider('https://rpc.mersennet.com');
 const vk = ViewingKeyHelpers.fromSeed(process.env.WALLET_SEED!);
 const client = new ShieldedClient({ provider, viewingKey: vk });
 
-// Market 2 = MRSN/USD. Buy 5 lots at a limit price of 130 ticks.
+// Market 1 = MRSN/USD. Buy 5 lots at a limit price of 130 ticks.
 const { intentId } = await client.placeOrder({
-  marketId: 2n,
+  marketId: 1n,
   side: 'buy',
   price: 130n,
   size: 5n,
@@ -220,7 +224,7 @@ curl -X POST https://rpc.mersennet.com \
   -d '{"jsonrpc":"2.0","method":"mersennet_getLatestStateProof","params":[],"id":1}'
 ```
 
-The response carries `prevStateRoot`, `newStateRoot`, the nullifier roots, and `proofBincodeHex` with `"proofType": "SP1"`. Check it yourself, statelessly, with `mersennet_verifyStateProof`. Each SP1 proof is then wrapped into a Groth16 proof and verified by a contract on Ethereum, so even an Ethereum light client can accept Mersennet state roots without trusting a single Mersennet node. Details in [Verifiable state: SP1 + Groth16](/privacy/state-proofs/).
+The response carries `prevStateRoot`, `newStateRoot`, the nullifier roots, and `proofBincodeHex` with `"proofType": "SP1"`. Check it yourself, statelessly, with `mersennet_verifyStateProof`. Note the `proverMode` field: the public testnet currently runs the **development prover**, which exercises the full proof pipeline without paying real SP1 proving cost. The production design wraps each SP1 proof into a Groth16 proof for verification by an Ethereum contract (not yet deployed), so that even an Ethereum light client can accept Mersennet state roots without trusting a single Mersennet node. Details in [Verifiable state: SP1 + Groth16](/privacy/state-proofs/).
 
 That's the whole loop: private to everyone, verifiable by anyone.
 

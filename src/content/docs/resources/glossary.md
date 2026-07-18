@@ -42,7 +42,7 @@ once, linked everywhere.
 
 **SP1**: The RISC-V zkVM that re-executes each block's state transition and produces a proof of it. Public outputs bind the previous and new state roots, so proofs chain.
 
-**Groth16 wrapper**: SP1 proofs are wrapped into Groth16 (small and cheap to verify in the EVM) so an Ethereum contract ([MersennetBridge](https://github.com/mersennet/contracts)) can verify Mersennet state.
+**Groth16 wrapper**: SP1 proofs are designed to be wrapped into Groth16 (small and cheap to verify in the EVM) so an Ethereum contract ([MersennetBridge](https://github.com/mersennet/contracts)) can verify Mersennet state; the Ethereum verifier is not yet deployed.
 
 **State root continuity**: Each block proof's public inputs include the previous roots; the bridge rejects any proof that doesn't extend the chain it has already accepted.
 

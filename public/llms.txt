@@ -1,12 +1,12 @@
 # Mersennet Documentation
 
-> Mersennet is a zero-knowledge, EVM-equivalent Layer 1 blockchain with account-level privacy, a native on-chain order book (MersennetOrders, precompile 0x0100), and every block proven with SP1 and verifiable on Ethereum via Groth16. Chain ID: 131071. Token: MRSN.
+> Mersennet is a zero-knowledge, EVM-equivalent Layer 1 blockchain with account-level privacy, a native on-chain order book (MersennetOrders, precompile 0x0100), and every block proven with SP1 (with a Groth16 bridge designed for Ethereum verification; the Ethereum verifier is not yet deployed). Chain ID: 131071. Token: MRSN.
 
 ## Getting Started
 
 - [What is Mersennet?](/getting-started/overview): Overview of the chain's capabilities and architecture.
 - [Network Information](/getting-started/network-info): RPC endpoints, Chain ID, WebSocket, deployed contracts.
-- [Wallet Setup](/getting-started/wallet-setup): How to configure MetaMask or Mersennet Wallet.
+- [Wallet Setup](/getting-started/wallet-setup): How to configure MetaMask for Mersennet.
 - [Get Testnet MRSN](/getting-started/faucet): How to use the faucet to get test tokens.
 - [First Transaction](/getting-started/first-transaction): Send your first transaction and deploy a contract.
 
@@ -16,7 +16,7 @@
 - [Deploy with Foundry](/developers/quick-start/foundry): Foundry deployment guide with Mersennet specifics.
 - [ERC-20 Token Guide](/developers/contracts/erc20-guide): Deploy and interact with ERC-20 tokens.
 - [NFT Guide](/developers/contracts/nft-guide): ERC-721 deployment and integration.
-- [DeFi Integration](/developers/contracts/defi-integration): Compose with Mersennet Swap and the native order book.
+- [DeFi Integration](/developers/contracts/defi-integration): AMM integration reference (the AMM is not deployed on the current testnet; trading happens on the native CLOB).
 - [JSON-RPC Overview](/developers/rpc/overview): RPC architecture and Mersennet extensions.
 - [JSON-RPC Methods](/developers/rpc/methods): Complete method reference (eth_*, mersennet_*, mersennet_orders_*).
 - [JavaScript SDK](/developers/sdks/javascript): @mersennet/sdk usage and API reference.
@@ -48,7 +48,7 @@
 
 ## Architecture
 
-- [Consensus Mechanism](/architecture/consensus): HotStuff-2 BFT Proof-of-Stake, proposer rotation, finality, slashing.
+- [Consensus Mechanism](/architecture/consensus): Leader-gated BFT Proof-of-Stake, proposer rotation, finality, slashing.
 - [Node Architecture](/architecture/node-architecture): Crates, engine pipeline, precompiles (0x0100, 0x0200, 0x0201, 0x0202, 0x0300).
 - [MersennetOrders CLOB](/architecture/order-book): Native on-chain order matching precompile at 0x0100.
 - [Token Economics](/architecture/tokenomics): 2^89-1 wei (~618.97M MRSN) supply cap, halving schedule, allocation.
@@ -67,8 +67,8 @@
 - Token: MRSN (18 decimals)
 - Supply Cap: 2^89 - 1 wei = 618,970,019,642,690,137,449,562,111 wei (~618.97M MRSN, a Mersenne prime; hard ceiling, not the circulating target)
 - Block Reward: 2^61 - 1 wei (~2.3 MRSN) initially, halving every 33,550,336 blocks; total emission converges to ~154.72M MRSN
-- Block Time: ~1 second (default)
-- Consensus: Proof-of-Stake, HotStuff-2 BFT (2-phase, ~2/3 stake finality)
+- Block Time: ~2 seconds on the public testnet (code default is 1s; the network sets 2000ms)
+- Consensus: Proof-of-Stake, leader-gated BFT (two-round prevote/precommit, ~2/3 stake finality); a HotStuff-2 pipeline is implemented as the benchmarked upgrade path
 - EVM Level: Shanghai (standard RLP legacy/EIP-2930/EIP-1559 transactions accepted)
 - Privacy: shielded accounts (note/nullifier model), threshold-encrypted orders, SP1-proven state
 - RPC: https://rpc.mersennet.com

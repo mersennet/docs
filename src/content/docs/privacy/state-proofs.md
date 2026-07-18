@@ -1,9 +1,9 @@
 ---
 title: "Verifiable state: SP1 + Groth16 bridge"
-description: "Every block's state transition is proven with SP1 and verified on-chain through a Groth16 bridge, enabling trustless light clients."
+description: "Every block's state transition is proven with SP1, with a Groth16 bridge designed to verify Mersennet state on Ethereum for trustless light clients."
 ---
 
-Privacy is only half of the design. The other half is **verifiability**: anyone should be able to confirm that Mersennet's state evolved correctly, from a succinct proof, without trusting a full node. Mersennet does this by proving each block's state transition with **SP1** and verifying it on Ethereum through a **Groth16** bridge.
+Privacy is only half of the design. The other half is **verifiability**: anyone should be able to confirm that Mersennet's state evolved correctly, from a succinct proof, without trusting a full node. Mersennet does this by proving each block's state transition with **SP1** (live on the testnet today, in development-prover mode) and, in the production design, verifying it on Ethereum through a **Groth16** bridge (the Ethereum verifier contract is not yet deployed).
 
 ## State transition proofs (SP1)
 
@@ -41,7 +41,7 @@ A stateless verifier is available as `mersennet_verifyStateProof`, and `mersenne
 
 ## The Ethereum bridge (Groth16)
 
-To anchor Mersennet on Ethereum, the SP1 proof is **wrapped into a Groth16 proof** and submitted to an on-chain verifier. This lets an Ethereum contract (and therefore any Ethereum-based light client) accept Mersennet state roots as soon as a valid proof is verified.
+To anchor Mersennet on Ethereum, the design **wraps the SP1 proof into a Groth16 proof** and submits it to an on-chain verifier. This lets an Ethereum contract (and therefore any Ethereum-based light client) accept Mersennet state roots as soon as a valid proof is verified. The wrapping circuit and `Groth16Verifier.sol` exist in the contracts repo; **this path is not yet live** — no verifier is deployed on Ethereum today.
 
 ```mermaid
 flowchart LR
@@ -59,7 +59,7 @@ The bridge contract consumes the proof together with the block program's public 
 A light client does not need to re-execute Mersennet or trust a specific RPC provider. It only needs to:
 
 1. Obtain the latest state proof (`mersennet_getLatestStateProof`).
-2. Verify it (`mersennet_verifyStateProof`, or via the Ethereum Groth16 verifier).
+2. Verify it (`mersennet_verifyStateProof` today, or via the Ethereum Groth16 verifier once deployed).
 3. Trust the resulting state root.
 
 This is the foundation for trustless bridges, cross-chain messaging, and independent verification of the chain's privacy invariants.

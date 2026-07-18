@@ -49,9 +49,9 @@ Discord, Facebook, GitHub), post templates, and transparent renders.
 
 | Name | Hex | Usage |
 |------|-----|-------|
-| **Base** | `#0b0b12` | Page background, navbar, footer |
-| **Surface** | `#111122` | Content area background |
-| **Elevated** | `#14142a` | Cards, panels, elevated surfaces |
+| **Base** | `#000000` | Page background, navbar, footer |
+| **Surface** | `#0a0c0b` | Content area background |
+| **Elevated** | `#101512` | Cards, panels, elevated surfaces |
 
 ### Supporting Colors
 
@@ -63,24 +63,20 @@ Discord, Facebook, GitHub), post templates, and transparent renders.
 | **Text Primary** | `#e8edf5` | Primary text on dark backgrounds |
 | **Text Secondary** | `#94a3b8` | Subtitles, descriptions, muted text |
 
-### Brand Gradient
+### No Gradients
 
-The signature Mersennet gradient flows from **Violet** through **Violet Light** to **Cyan**:
-
-```css
-background: linear-gradient(135deg, #4901FF 0%, #6d2fff 50%, #00FFF9 100%);
-```
-
-Used for: hero titles, primary CTA buttons, top bars, logo fills, and accent borders.
+The Mersennet brand is deliberately flat: **no gradients, no shadows, no outlines** on the mark or brand surfaces. Phosphor green on black is the look. If you need visual hierarchy, vary opacity of the phosphor green (e.g. `rgba(125, 255, 155, 0.15)` for subtle fills) rather than introducing a second hue.
 
 ## Typography
 
 ### UI / Headings
 
-- **Font:** Sora
-- **Source:** [Google Fonts](https://fonts.google.com/specimen/Sora)
+- **Font:** Schibsted Grotesk
+- **Source:** [Google Fonts](https://fonts.google.com/specimen/Schibsted+Grotesk)
 - **Usage:** Headings, navigation, body text, buttons
 - **Weights:** 400 (regular), 500 (medium), 600 (semibold), 700 (bold), 800 (extra-bold)
+
+The **wordmark** is always JetBrains Mono Bold, all caps, with 0.14em tracking.
 
 ### Code / Monospace
 
@@ -93,15 +89,15 @@ Used for: hero titles, primary CTA buttons, top bars, logo fills, and accent bor
 
 ```css
 :root {
-  --mersennet-accent: #00FFF9;
-  --mersennet-accent-dim: rgba(0, 255, 249, 0.15);
-  --mersennet-accent-subtle: rgba(0, 255, 249, 0.08);
-  --mersennet-violet: #4901FF;
-  --mersennet-violet-light: #6d2fff;
-  --mersennet-bg-base: #0b0b12;
-  --mersennet-bg-surface: #111122;
-  --mersennet-bg-elevated: #14142a;
-  --mersennet-font-ui: 'Sora', system-ui, -apple-system, sans-serif;
+  --mersennet-accent: #7dff9b;
+  --mersennet-accent-dim: rgba(125, 255, 155, 0.15);
+  --mersennet-accent-subtle: rgba(125, 255, 155, 0.08);
+  --mersennet-deep-green: #0c8f43;
+  --mersennet-teal: #40e0b4;
+  --mersennet-bg-base: #000000;
+  --mersennet-bg-surface: #0a0c0b;
+  --mersennet-bg-elevated: #101512;
+  --mersennet-font-ui: 'Schibsted Grotesk', system-ui, -apple-system, sans-serif;
   --mersennet-font-mono: 'JetBrains Mono', 'Fira Code', monospace;
 }
 ```
@@ -110,26 +106,26 @@ Used for: hero titles, primary CTA buttons, top bars, logo fills, and accent bor
 
 | Asset | Format | Description |
 |-------|--------|-------------|
-| Logo (gradient) | SVG | Double-helix logo with violet→cyan gradient |
-| Favicon | SVG | Browser tab icon |
-| Social Card | PNG | Open Graph / Twitter share image (1200×630) |
+| Logo (mark) | SVG | Five-bar M mark in phosphor green (white, black, and deep-green variants in the kit) |
+| Favicon | SVG | Mark on a rounded black tile |
+| Social Card | SVG/PNG | Open Graph / Twitter share image (1200×630) |
 
 :::tip
-All logo files are available in the [docs-site repository](https://github.com/mersennet/mersennet/tree/main/docs-site/static/img).
+The full media kit (vector masters, transparent PNG renders, and platform-exact social sizes) lives in [`brand/` in the monorepo](https://github.com/mersennet/mersennet/tree/main/brand).
 :::
 
 ## Integration Guide
 
 When building dApps or documentation for Mersennet:
 
-1. Use the **violet-to-cyan gradient** for primary actions and hero elements.
-2. Use **Cyan (`#00FFF9`)** for links, active states, and accent highlights.
-3. Use **Sora** for UI text and **JetBrains Mono** for code.
-4. Prefer dark backgrounds (`#0b0b12` base) for a consistent Mersennet look.
+1. Use **Phosphor Green (`#7dff9b`)** for primary actions, links, active states, and accent highlights on dark backgrounds (deep green `#0c8f43` on light ones).
+2. Keep surfaces flat — no gradients or shadows on brand elements.
+3. Use **Schibsted Grotesk** for UI text and **JetBrains Mono** for code, addresses, and technical content.
+4. Prefer black backgrounds (`#000` base) for a consistent Mersennet look.
 5. Import fonts via Google Fonts:
 
 ```html
-<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 ```
 
 ## Contact

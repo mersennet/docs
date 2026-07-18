@@ -77,7 +77,7 @@ Before running a validator, ensure you meet:
 | Category | Requirement |
 |----------|-------------|
 | **Hardware** | 4 CPU cores, 8 GB RAM, 100 GB SSD, 100 Mbps network |
-| **Software** | Rust 1.75+ (for building from source) |
+| **Software** | Rust 1.85+ (for building from source) |
 | **Stake** | Minimum stake to register (governance may set higher minimums) |
 | **Operational** | 24/7 uptime, monitoring, key management, backup procedures |
 

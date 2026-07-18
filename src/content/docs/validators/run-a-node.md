@@ -24,7 +24,7 @@ Running on HDD (spinning disk) is not recommended. The sled storage backend perf
 
 | Requirement | Version | Purpose |
 |-------------|---------|---------|
-| **Rust** | 1.75 or later | Compiler for building from source |
+| **Rust** | 1.85 or later | Compiler for building from source (the workspace uses Rust edition 2024) |
 | **Git** | Latest | Clone the repository |
 | **build-essential** | Latest | C linker and system libraries |
 | **pkg-config** | Latest | Library discovery for native dependencies |
@@ -41,12 +41,16 @@ Install Rust via [rustup](https://rustup.rs/):
 ```bash
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 source $HOME/.cargo/env
-rustc --version  # Should be 1.75+
+rustc --version  # Should be 1.85+
 ```
 
 ## Build from Source
 
 Clone the Mersennet repository and build the release binary:
+
+:::note[Repository access]
+The `mersennet/mersennet` repository is private during the current testnet phase. If the clone below fails with "Repository not found", request access from the team via [GitHub](https://github.com/mersennet) or the community channels listed in the [FAQ](/resources/faq/); source access is granted to prospective validators.
+:::
 
 ```bash
 git clone https://github.com/mersennet/mersennet.git
@@ -73,7 +77,7 @@ Mersennet uses a JSON configuration file. Create `config.json` with the sections
     "node_key_path": "/var/lib/mersennet/state/node_key.json",
     "listen": "0.0.0.0:30303",
     "peers": ["46.225.30.187:30303"],
-    "block_time_ms": 1000
+    "block_time_ms": 2000
   },
   "rpc": {
     "enabled": true,
@@ -115,7 +119,7 @@ Mersennet uses a JSON configuration file. Create `config.json` with the sections
 | `peer_store_path` | `string` | `"state/peers.json"` | Path to persistent peer list |
 | `listen` | `string` | `"0.0.0.0:30303"` | P2P listen address |
 | `peers` | `string[]` | `[]` | Seed peers for bootstrap |
-| `block_time_ms` | `u64` | `1000` | Block production interval (ms) |
+| `block_time_ms` | `u64` | `1000` | Block production interval (ms). Code default is 1000; the public testnet runs 2000 (~2s blocks) — match the network you join |
 | `noise_enabled` | `bool` | `false` | Encrypt P2P with Noise Protocol |
 
 #### `rpc`: JSON-RPC Server
@@ -141,7 +145,7 @@ Mersennet uses a JSON configuration file. Create `config.json` with the sections
 | `escalation_step_bps` | `u64` | `25` | Penalty increase per offense (0.25%) |
 | `escalation_max_bps` | `u64` | `1000` | Maximum penalty cap (10%) |
 | `round_timeout_ms` | `u64` | `500` | Consensus round timeout (ms) |
-| `unbonding_period` | `u64` | `2` | Epochs before unbonded stake withdrawable |
+| `unbonding_period` | `u64` | `2` | Blocks before unbonded stake is withdrawable (code default; the public testnet configs use 100) |
 
 #### `token_economics`: Rewards & Supply
 
@@ -249,7 +253,7 @@ Create `/etc/systemd/system/mersennet.service`:
 ```ini
 [Unit]
 Description=Mersennet Validator Node
-Documentation=https://docs.mersennet.io
+Documentation=https://docs.mersennet.com
 After=network-online.target
 Wants=network-online.target
 
@@ -592,4 +596,4 @@ du -sh /var/lib/mersennet/state/
 - [Staking Guide](/validators/staking): Stake MRSN and manage delegations
 - [Monitoring & Alerts](/validators/monitoring): Set up Prometheus and Grafana
 - [Node Architecture](/architecture/node-architecture): Understand the node internals
-- [Consensus Mechanism](/architecture/consensus): Deep dive into PoS and HotStuff-2 BFT
+- [Consensus Mechanism](/architecture/consensus): Deep dive into the BFT proof-of-stake consensus

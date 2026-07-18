@@ -770,7 +770,7 @@ Submit a limit order to the CLOB. The order is packaged as a `placeOrder` precom
 ```bash
 curl -X POST https://rpc.mersennet.com \
   -H "Content-Type: application/json" \
-  -d '{"jsonrpc":"2.0","method":"mersennet_orders_submitOrder","params":[{"owner":"0x7f5ce38fb2553e95dd8ef9182a80bc219c9a0d45","market_id":2,"side":"buy","price":"0xfde8","size":"0x64","tif":"gtc"}],"id":1}'
+  -d '{"jsonrpc":"2.0","method":"mersennet_orders_submitOrder","params":[{"owner":"0x7f5ce38fb2553e95dd8ef9182a80bc219c9a0d45","market_id":1,"side":"buy","price":"0xfde8","size":"0x64","tif":"gtc"}],"id":1}'
 ```
 
 **Response:**
@@ -830,7 +830,7 @@ import { MersennetProvider, MersennetOrders } from '@mersennet/sdk';
 const provider = new MersennetProvider('https://rpc.mersennet.com');
 const orders = new MersennetOrders(provider);
 
-const book = await orders.getOrderBook(2); // MRSN/USD
+const book = await orders.getOrderBook(1); // MRSN/USD
 console.log('Best bid:', book.bids[book.bids.length - 1]);
 console.log('Best ask:', book.asks[0]);
 ```
@@ -844,7 +844,7 @@ from mersennet import MersennetProvider, MersennetOrders
 provider = MersennetProvider("https://rpc.mersennet.com")
 orders = MersennetOrders(provider)
 
-book = orders.get_order_book(2)  # MRSN/USD
+book = orders.get_order_book(1)  # MRSN/USD
 print("Bids:", book.bids)
 print("Asks:", book.asks)
 ```
@@ -975,11 +975,11 @@ The following CLOB markets are registered on the testnet:
 
 | Market ID | Symbol | Description |
 |-----------|--------|-------------|
-| 2 | MRSN/USD | MRSN priced in USD |
-| 3 | MRSN/USDT | MRSN priced in USDT |
-| 4 | MRSN/DAI | MRSN priced in DAI |
-| 5 | BTC/USD | BTC priced in USD |
-| 6 | ETH/USD | ETH priced in USD |
+| 1 | MRSN/USD | MRSN perpetual, priced in USD |
+| 2 | BTC/USD | BTC perpetual, priced in USD |
+| 3 | ETH/USD | ETH perpetual, priced in USD |
+| 4 | SOL/USD | SOL perpetual, priced in USD |
+| 5 | ARB/USD | ARB perpetual, priced in USD |
 
 ---
 

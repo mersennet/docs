@@ -21,16 +21,18 @@ provider = MersennetProvider("https://rpc.mersennet.com")
 orders = MersennetOrders(provider)
 print("Chain ID:", provider.chain_id())  # 131071
 
-# Place an order (node must have the owner account unlocked)
+# Place an order (node must have the owner account unlocked).
+# The node acknowledges with {"accepted": True, "txHash": "0x..."};
+# the order is placed when that transaction mines.
 result = orders.place_order(
-    market=2,          # market ID (MRSN/USD)
+    market=1,          # market ID (MRSN/USD)
     side="buy",
     price="1000000",
     amount="10",
     tif="gtc",
     owner="0xOwnerAddress",
 )
-print("Order outcome:", result)
+print("Accepted:", result["accepted"], "tx:", result["txHash"])
 
 # Check balance
 balance = provider.get_balance("0xYourAddress")
@@ -49,7 +51,7 @@ curl -X POST https://rpc.mersennet.com \
 # Place an order (node must have the owner account unlocked)
 curl -X POST https://rpc.mersennet.com \
   -H "Content-Type: application/json" \
-  -d '{"jsonrpc":"2.0","method":"mersennet_orders_submitOrder","params":[{"owner":"0xOwnerAddress","market_id":2,"side":"buy","price":"0xf4240","size":"0xa","tif":"gtc"}],"id":2}'
+  -d '{"jsonrpc":"2.0","method":"mersennet_orders_submitOrder","params":[{"owner":"0xOwnerAddress","market_id":1,"side":"buy","price":"0xf4240","size":"0xa","tif":"gtc"}],"id":2}'
 
 # Check balance
 curl -X POST https://rpc.mersennet.com \

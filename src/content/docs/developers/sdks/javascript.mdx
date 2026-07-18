@@ -25,16 +25,18 @@ const provider = new MersennetProvider('https://rpc.mersennet.com');
 const orders = new MersennetOrders(provider);
 console.log('Chain ID:', await provider.getChainId()); // 131071
 
-// Place an order (node must have the owner account unlocked)
-const outcome = await orders.submitOrder(
-  '0xOwnerAddress',
-  2,          // marketId (MRSN/USD)
-  'buy',      // side
-  '1000000',  // price
-  '10',       // size
-  'gtc'       // time-in-force
-);
-console.log('Order ID:', outcome.order_id);
+// Place an order (node must have the owner account unlocked).
+// The node acknowledges with { accepted, txHash }; the order is placed
+// when that transaction mines.
+const ack = await provider.request('mersennet_orders_submitOrder', [{
+  owner: '0xOwnerAddress',
+  market_id: 1, // MRSN/USD
+  side: 'buy',
+  price: '0xf4240',
+  size: '0xa',
+  tif: 'gtc',
+}]);
+console.log('Accepted:', ack.accepted, 'tx:', ack.txHash);
 
 // Check balance
 const balance = await provider.getBalance('0xYourAddress');
@@ -53,7 +55,7 @@ curl -X POST https://rpc.mersennet.com \
 # Place an order (node must have the owner account unlocked)
 curl -X POST https://rpc.mersennet.com \
   -H "Content-Type: application/json" \
-  -d '{"jsonrpc":"2.0","method":"mersennet_orders_submitOrder","params":[{"owner":"0xOwnerAddress","market_id":2,"side":"buy","price":"0xf4240","size":"0xa","tif":"gtc"}],"id":2}'
+  -d '{"jsonrpc":"2.0","method":"mersennet_orders_submitOrder","params":[{"owner":"0xOwnerAddress","market_id":1,"side":"buy","price":"0xf4240","size":"0xa","tif":"gtc"}],"id":2}'
 
 # Check balance
 curl -X POST https://rpc.mersennet.com \
@@ -156,7 +158,9 @@ MersennetOrders is Mersennet's on-chain order book (CLOB). Use it for limit orde
 ```javascript
 const book = await orders.getOrderBook(1);
 // book: { bids: [{ price, size }], asks: [{ price, size }] }
-console.log("Best bid:", book.bids[0]);
+// Both sides are sorted by ascending price, so the best bid is the LAST
+// element of bids and the best ask is the FIRST element of asks.
+console.log("Best bid:", book.bids[book.bids.length - 1]);
 console.log("Best ask:", book.asks[0]);
 ```
 
@@ -187,17 +191,19 @@ console.log("Collateral:", collateral);
 Requires the RPC node to have the owner account unlocked:
 
 ```javascript
-const outcome = await orders.submitOrder(
-  "0xOwnerAddress",
-  1,           // marketId
-  "buy",       // side: "buy" | "sell"
-  "1000000",   // price
-  "10",        // size
-  "gtc"        // tif: "gtc" | "ioc" | "fok"
-);
-console.log("Order ID:", outcome.order_id);
-console.log("Filled:", outcome.filled);
-console.log("Trades:", outcome.trades);
+// The node responds with an acknowledgement, not a fill report:
+// { accepted: true, txHash: "0x..." }. The order enters the book when
+// that transaction mines; read fills back via getOpenOrders/getOrderBook
+// or the transaction receipt.
+const ack = await provider.request("mersennet_orders_submitOrder", [{
+  owner: "0xOwnerAddress",
+  market_id: 1,  // marketId
+  side: "buy",   // "buy" | "sell"
+  price: "0xf4240",
+  size: "0xa",
+  tif: "gtc",    // "gtc" | "ioc" | "fok"
+}]);
+console.log("Accepted:", ack.accepted, "tx:", ack.txHash);
 ```
 
 ### Deposit Collateral (RPC)
