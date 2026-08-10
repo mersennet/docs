@@ -14,10 +14,10 @@ For current, live addresses always check [Deployed Contracts](/resources/contrac
 
 | Contract | Address |
 |----------|---------|
-| WMRSN | `0xbB012E05C1b42c1F0Efa4509317fdB31A31aD640` |
-| MockUSDC | `0x8F4E0beE0fE201f10419947A7C043003F16BfD73` |
-| MockUSDT | `0x6fbE796cAA747D84E3aC7611fFc2dC6D11124eD4` |
-| MockDAI | `0x04833e1Be9c451A89fC6cD1e5E698E2D4936d7F9` |
+| WMRSN | `0x5bBF04528469591280D36D46209c7CCD5a68a798` |
+| MockUSDC | `0xA44B23d1D0C0133dA71DeCe399d5d5aDE6DD22d1` |
+| MockUSDT | `0x3923578a19d0e9B35cef08B7Eba0cb6D4B9c28F6` |
+| MockDAI | `0x27942c2cEE3e0e02377d01BFE6E74cefC9a9FD45` |
 
 ## Router ABI (Key Functions)
 
@@ -47,8 +47,8 @@ const { ethers } = require("ethers");
 const RPC_URL = "https://rpc.mersennet.com";
 const CHAIN_ID = 131071;
 const ROUTER = "0x9f337f433e71ce969b991511f1dcd3d0622116bb";
-const WMRSN = "0xbB012E05C1b42c1F0Efa4509317fdB31A31aD640";
-const MOCK_USDC = "0x8F4E0beE0fE201f10419947A7C043003F16BfD73";
+const WMRSN = "0x5bBF04528469591280D36D46209c7CCD5a68a798";
+const MOCK_USDC = "0xA44B23d1D0C0133dA71DeCe399d5d5aDE6DD22d1";
 
 const provider = new ethers.JsonRpcProvider(RPC_URL, CHAIN_ID);
 const router = new ethers.Contract(ROUTER, ROUTER_ABI, provider);
@@ -77,8 +77,8 @@ const provider = new ethers.JsonRpcProvider(RPC_URL, CHAIN_ID);
 const wallet = new ethers.Wallet(process.env.PRIVATE_KEY, provider);
 const router = new ethers.Contract(ROUTER, ROUTER_ABI, wallet);
 
-const USDC = "0x8F4E0beE0fE201f10419947A7C043003F16BfD73";
-const USDT = "0x6fbE796cAA747D84E3aC7611fFc2dC6D11124eD4";
+const USDC = "0xA44B23d1D0C0133dA71DeCe399d5d5aDE6DD22d1";
+const USDT = "0x3923578a19d0e9B35cef08B7Eba0cb6D4B9c28F6";
 
 const amountIn = ethers.parseUnits("10", 6); // 10 USDC
 const path = [USDC, USDT];

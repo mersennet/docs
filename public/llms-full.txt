@@ -1452,10 +1452,10 @@ For current, live addresses always check [Deployed Contracts](/resources/contrac
 
 | Contract | Address |
 |----------|---------|
-| WMRSN | `0xbB012E05C1b42c1F0Efa4509317fdB31A31aD640` |
-| MockUSDC | `0x8F4E0beE0fE201f10419947A7C043003F16BfD73` |
-| MockUSDT | `0x6fbE796cAA747D84E3aC7611fFc2dC6D11124eD4` |
-| MockDAI | `0x04833e1Be9c451A89fC6cD1e5E698E2D4936d7F9` |
+| WMRSN | `0x5bBF04528469591280D36D46209c7CCD5a68a798` |
+| MockUSDC | `0xA44B23d1D0C0133dA71DeCe399d5d5aDE6DD22d1` |
+| MockUSDT | `0x3923578a19d0e9B35cef08B7Eba0cb6D4B9c28F6` |
+| MockDAI | `0x27942c2cEE3e0e02377d01BFE6E74cefC9a9FD45` |
 
 ## Router ABI (Key Functions)
 
@@ -1485,8 +1485,8 @@ const { ethers } = require("ethers");
 const RPC_URL = "https://rpc.mersennet.com";
 const CHAIN_ID = 131071;
 const ROUTER = "0x9f337f433e71ce969b991511f1dcd3d0622116bb";
-const WMRSN = "0xbB012E05C1b42c1F0Efa4509317fdB31A31aD640";
-const MOCK_USDC = "0x8F4E0beE0fE201f10419947A7C043003F16BfD73";
+const WMRSN = "0x5bBF04528469591280D36D46209c7CCD5a68a798";
+const MOCK_USDC = "0xA44B23d1D0C0133dA71DeCe399d5d5aDE6DD22d1";
 
 const provider = new ethers.JsonRpcProvider(RPC_URL, CHAIN_ID);
 const router = new ethers.Contract(ROUTER, ROUTER_ABI, provider);
@@ -1515,8 +1515,8 @@ const provider = new ethers.JsonRpcProvider(RPC_URL, CHAIN_ID);
 const wallet = new ethers.Wallet(process.env.PRIVATE_KEY, provider);
 const router = new ethers.Contract(ROUTER, ROUTER_ABI, wallet);
 
-const USDC = "0x8F4E0beE0fE201f10419947A7C043003F16BfD73";
-const USDT = "0x6fbE796cAA747D84E3aC7611fFc2dC6D11124eD4";
+const USDC = "0xA44B23d1D0C0133dA71DeCe399d5d5aDE6DD22d1";
+const USDT = "0x3923578a19d0e9B35cef08B7Eba0cb6D4B9c28F6";
 
 const amountIn = ethers.parseUnits("10", 6); // 10 USDC
 const path = [USDC, USDT];
@@ -1835,10 +1835,10 @@ These are pre-deployed tokens on Mersennet testnet:
 
 | Token | Address | Use Case |
 |-------|---------|----------|
-| WMRSN | `0xbB012E05C1b42c1F0Efa4509317fdB31A31aD640` | Wrapped MRSN for DEX |
-| MockUSDC | `0x8F4E0beE0fE201f10419947A7C043003F16BfD73` | Test stablecoin |
-| MockUSDT | `0x6fbE796cAA747D84E3aC7611fFc2dC6D11124eD4` | Test stablecoin |
-| MockDAI | `0x04833e1Be9c451A89fC6cD1e5E698E2D4936d7F9` | Test stablecoin |
+| WMRSN | `0x5bBF04528469591280D36D46209c7CCD5a68a798` | Wrapped MRSN for DEX |
+| MockUSDC | `0xA44B23d1D0C0133dA71DeCe399d5d5aDE6DD22d1` | Test stablecoin |
+| MockUSDT | `0x3923578a19d0e9B35cef08B7Eba0cb6D4B9c28F6` | Test stablecoin |
+| MockDAI | `0x27942c2cEE3e0e02377d01BFE6E74cefC9a9FD45` | Test stablecoin |
 
 
 ---
@@ -2904,7 +2904,7 @@ Executes a call without creating a transaction (read-only).
 ```bash
 curl -X POST https://rpc.mersennet.com \
   -H "Content-Type: application/json" \
-  -d '{"jsonrpc":"2.0","method":"eth_call","params":[{"to":"0xbB012E05C1b42c1F0Efa4509317fdB31A31aD640","data":"0x70a082310000000000000000000000007f5ce38fb2553e95dd8ef9182a80bc219c9a0d45"},"latest"],"id":1}'
+  -d '{"jsonrpc":"2.0","method":"eth_call","params":[{"to":"0x5bBF04528469591280D36D46209c7CCD5a68a798","data":"0x70a082310000000000000000000000007f5ce38fb2553e95dd8ef9182a80bc219c9a0d45"},"latest"],"id":1}'
 ```
 
 ---
@@ -3052,7 +3052,7 @@ Returns logs matching a filter.
 ```bash
 curl -X POST https://rpc.mersennet.com \
   -H "Content-Type: application/json" \
-  -d '{"jsonrpc":"2.0","method":"eth_getLogs","params":[{"fromBlock":"0x0","toBlock":"latest","address":"0x8F4E0beE0fE201f10419947A7C043003F16BfD73"}],"id":1}'
+  -d '{"jsonrpc":"2.0","method":"eth_getLogs","params":[{"fromBlock":"0x0","toBlock":"latest","address":"0xA44B23d1D0C0133dA71DeCe399d5d5aDE6DD22d1"}],"id":1}'
 ```
 
 ---
@@ -5341,11 +5341,11 @@ The following contracts are deployed on Mersennet testnet and ready for integrat
 | Contract | Address |
 |----------|---------|
 | **MersennetOrders (CLOB precompile)** | `0x0000000000000000000000000000000000000100` |
-| **Multicall3** | `0xcBF3BBCc74D851cc896Aa128F61557DF65e420Fc` |
-| **WMRSN** | `0xbB012E05C1b42c1F0Efa4509317fdB31A31aD640` |
-| **MockUSDC** | `0x8F4E0beE0fE201f10419947A7C043003F16BfD73` |
-| **MockUSDT** | `0x6fbE796cAA747D84E3aC7611fFc2dC6D11124eD4` |
-| **MockDAI** | `0x04833e1Be9c451A89fC6cD1e5E698E2D4936d7F9` |
+| **Multicall3** | `0xdc27E8F5F77721f5930B8C90FADe391E28331Da6` |
+| **WMRSN** | `0x5bBF04528469591280D36D46209c7CCD5a68a798` |
+| **MockUSDC** | `0xA44B23d1D0C0133dA71DeCe399d5d5aDE6DD22d1` |
+| **MockUSDT** | `0x3923578a19d0e9B35cef08B7Eba0cb6D4B9c28F6` |
+| **MockDAI** | `0x27942c2cEE3e0e02377d01BFE6E74cefC9a9FD45` |
 
 ### Usage Notes
 
@@ -6168,16 +6168,16 @@ Testnet chain state may be wiped during protocol upgrades. When that happens, co
 
 | Contract | Address | Description |
 |----------|---------|-------------|
-| **Multicall3** | `0xcBF3BBCc74D851cc896Aa128F61557DF65e420Fc` | Batched RPC reads. Used by wagmi, viem, ethers.js for efficient multi-call queries. |
-| **WMRSN** | `0xbB012E05C1b42c1F0Efa4509317fdB31A31aD640` | ERC-20 wrapped MRSN for protocols that need an ERC-20 representation of the native token. |
+| **Multicall3** | `0xdc27E8F5F77721f5930B8C90FADe391E28331Da6` | Batched RPC reads. Used by wagmi, viem, ethers.js for efficient multi-call queries. |
+| **WMRSN** | `0x5bBF04528469591280D36D46209c7CCD5a68a798` | ERC-20 wrapped MRSN for protocols that need an ERC-20 representation of the native token. |
 
 ## Mock Tokens
 
 | Contract | Address | Description |
 |----------|---------|-------------|
-| **MockUSDC** | `0x8F4E0beE0fE201f10419947A7C043003F16BfD73` | Test USDC (6 decimals). |
-| **MockUSDT** | `0x6fbE796cAA747D84E3aC7611fFc2dC6D11124eD4` | Test USDT (6 decimals). |
-| **MockDAI** | `0x04833e1Be9c451A89fC6cD1e5E698E2D4936d7F9` | Test DAI (18 decimals). |
+| **MockUSDC** | `0xA44B23d1D0C0133dA71DeCe399d5d5aDE6DD22d1` | Test USDC (6 decimals). |
+| **MockUSDT** | `0x3923578a19d0e9B35cef08B7Eba0cb6D4B9c28F6` | Test USDT (6 decimals). |
+| **MockDAI** | `0x27942c2cEE3e0e02377d01BFE6E74cefC9a9FD45` | Test DAI (18 decimals). |
 
 :::note[Testnet Token Faucet]
 Mock tokens include a public `faucet()` function — anyone can call it to mint 10,000 test tokens, no approval or whitelist required. The [Faucet](https://faucet.mersennet.com) can also send them to you with one click.
@@ -6188,11 +6188,11 @@ Mock tokens include a public `faucet()` function — anyone can call it to mint 
 ```
 Chain ID: 131071
 MersennetOrders CLOB: 0x0000000000000000000000000000000000000100 (precompile)
-Multicall3:           0xcBF3BBCc74D851cc896Aa128F61557DF65e420Fc
-WMRSN:                0xbB012E05C1b42c1F0Efa4509317fdB31A31aD640
-MockUSDC:             0x8F4E0beE0fE201f10419947A7C043003F16BfD73
-MockUSDT:             0x6fbE796cAA747D84E3aC7611fFc2dC6D11124eD4
-MockDAI:              0x04833e1Be9c451A89fC6cD1e5E698E2D4936d7F9
+Multicall3:           0xdc27E8F5F77721f5930B8C90FADe391E28331Da6
+WMRSN:                0x5bBF04528469591280D36D46209c7CCD5a68a798
+MockUSDC:             0xA44B23d1D0C0133dA71DeCe399d5d5aDE6DD22d1
+MockUSDT:             0x3923578a19d0e9B35cef08B7Eba0cb6D4B9c28F6
+MockDAI:              0x27942c2cEE3e0e02377d01BFE6E74cefC9a9FD45
 ```
 
 ## ABI Links
@@ -6207,7 +6207,7 @@ MockDAI:              0x04833e1Be9c451A89fC6cD1e5E698E2D4936d7F9
 
 ```javascript
 const usdc = new ethers.Contract(
-  '0x8F4E0beE0fE201f10419947A7C043003F16BfD73',
+  '0xA44B23d1D0C0133dA71DeCe399d5d5aDE6DD22d1',
   ['function faucet() external'],
   signer
 );
@@ -6276,7 +6276,7 @@ The supply **cap** is **2⁸⁹ − 1 wei ≈ 618.97M MRSN** (a Mersenne prime) 
 
 ### What is WMRSN?
 
-**WMRSN** is the ERC-20 wrapped version of native MRSN, for DeFi protocols that expect ERC-20 tokens. Wrap with `deposit()` and unwrap with `withdraw()`. Address: `0xbB012E05C1b42c1F0Efa4509317fdB31A31aD640` (see [Deployed Contracts](/resources/contracts) for the always-current list).
+**WMRSN** is the ERC-20 wrapped version of native MRSN, for DeFi protocols that expect ERC-20 tokens. Wrap with `deposit()` and unwrap with `withdraw()`. Address: `0x5bBF04528469591280D36D46209c7CCD5a68a798` (see [Deployed Contracts](/resources/contracts) for the always-current list).
 
 ## Development
 

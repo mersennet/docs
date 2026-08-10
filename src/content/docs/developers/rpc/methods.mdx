@@ -231,7 +231,7 @@ Executes a call without creating a transaction (read-only).
 ```bash
 curl -X POST https://rpc.mersennet.com \
   -H "Content-Type: application/json" \
-  -d '{"jsonrpc":"2.0","method":"eth_call","params":[{"to":"0xbB012E05C1b42c1F0Efa4509317fdB31A31aD640","data":"0x70a082310000000000000000000000007f5ce38fb2553e95dd8ef9182a80bc219c9a0d45"},"latest"],"id":1}'
+  -d '{"jsonrpc":"2.0","method":"eth_call","params":[{"to":"0x5bBF04528469591280D36D46209c7CCD5a68a798","data":"0x70a082310000000000000000000000007f5ce38fb2553e95dd8ef9182a80bc219c9a0d45"},"latest"],"id":1}'
 ```
 
 ---
@@ -379,7 +379,7 @@ Returns logs matching a filter.
 ```bash
 curl -X POST https://rpc.mersennet.com \
   -H "Content-Type: application/json" \
-  -d '{"jsonrpc":"2.0","method":"eth_getLogs","params":[{"fromBlock":"0x0","toBlock":"latest","address":"0x8F4E0beE0fE201f10419947A7C043003F16BfD73"}],"id":1}'
+  -d '{"jsonrpc":"2.0","method":"eth_getLogs","params":[{"fromBlock":"0x0","toBlock":"latest","address":"0xA44B23d1D0C0133dA71DeCe399d5d5aDE6DD22d1"}],"id":1}'
 ```
 
 ---

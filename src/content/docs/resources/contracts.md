@@ -18,16 +18,16 @@ Testnet chain state may be wiped during protocol upgrades. When that happens, co
 
 | Contract | Address | Description |
 |----------|---------|-------------|
-| **Multicall3** | `0xcBF3BBCc74D851cc896Aa128F61557DF65e420Fc` | Batched RPC reads. Used by wagmi, viem, ethers.js for efficient multi-call queries. |
-| **WMRSN** | `0xbB012E05C1b42c1F0Efa4509317fdB31A31aD640` | ERC-20 wrapped MRSN for protocols that need an ERC-20 representation of the native token. |
+| **Multicall3** | `0xdc27E8F5F77721f5930B8C90FADe391E28331Da6` | Batched RPC reads. Used by wagmi, viem, ethers.js for efficient multi-call queries. |
+| **WMRSN** | `0x5bBF04528469591280D36D46209c7CCD5a68a798` | ERC-20 wrapped MRSN for protocols that need an ERC-20 representation of the native token. |
 
 ## Mock Tokens
 
 | Contract | Address | Description |
 |----------|---------|-------------|
-| **MockUSDC** | `0x8F4E0beE0fE201f10419947A7C043003F16BfD73` | Test USDC (6 decimals). |
-| **MockUSDT** | `0x6fbE796cAA747D84E3aC7611fFc2dC6D11124eD4` | Test USDT (6 decimals). |
-| **MockDAI** | `0x04833e1Be9c451A89fC6cD1e5E698E2D4936d7F9` | Test DAI (18 decimals). |
+| **MockUSDC** | `0xA44B23d1D0C0133dA71DeCe399d5d5aDE6DD22d1` | Test USDC (6 decimals). |
+| **MockUSDT** | `0x3923578a19d0e9B35cef08B7Eba0cb6D4B9c28F6` | Test USDT (6 decimals). |
+| **MockDAI** | `0x27942c2cEE3e0e02377d01BFE6E74cefC9a9FD45` | Test DAI (18 decimals). |
 
 :::note[Testnet Token Faucet]
 Mock tokens include a public `faucet()` function — anyone can call it to mint 10,000 test tokens, no approval or whitelist required. The [Faucet](https://faucet.mersennet.com) can also send them to you with one click.
@@ -38,11 +38,11 @@ Mock tokens include a public `faucet()` function — anyone can call it to mint 
 ```
 Chain ID: 131071
 MersennetOrders CLOB: 0x0000000000000000000000000000000000000100 (precompile)
-Multicall3:           0xcBF3BBCc74D851cc896Aa128F61557DF65e420Fc
-WMRSN:                0xbB012E05C1b42c1F0Efa4509317fdB31A31aD640
-MockUSDC:             0x8F4E0beE0fE201f10419947A7C043003F16BfD73
-MockUSDT:             0x6fbE796cAA747D84E3aC7611fFc2dC6D11124eD4
-MockDAI:              0x04833e1Be9c451A89fC6cD1e5E698E2D4936d7F9
+Multicall3:           0xdc27E8F5F77721f5930B8C90FADe391E28331Da6
+WMRSN:                0x5bBF04528469591280D36D46209c7CCD5a68a798
+MockUSDC:             0xA44B23d1D0C0133dA71DeCe399d5d5aDE6DD22d1
+MockUSDT:             0x3923578a19d0e9B35cef08B7Eba0cb6D4B9c28F6
+MockDAI:              0x27942c2cEE3e0e02377d01BFE6E74cefC9a9FD45
 ```
 
 ## ABI Links
@@ -57,7 +57,7 @@ MockDAI:              0x04833e1Be9c451A89fC6cD1e5E698E2D4936d7F9
 
 ```javascript
 const usdc = new ethers.Contract(
-  '0x8F4E0beE0fE201f10419947A7C043003F16BfD73',
+  '0xA44B23d1D0C0133dA71DeCe399d5d5aDE6DD22d1',
   ['function faucet() external'],
   signer
 );
