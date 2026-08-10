@@ -6,7 +6,7 @@ import { Tabs, TabItem } from '@astrojs/starlight/components';
 
 Complete reference for JSON-RPC methods supported by Mersennet. All examples use `https://rpc.mersennet.com` as the RPC URL.
 
-Mersennet implements the standard `eth_` namespace plus native extensions across `net_`, `web3_`, `txpool_`, `mersennet_`, `mersennet_orders_`, and `mersennet_bridge_`. The privacy/ZK methods (shielded transfers, SP1 state proofs, selective-disclosure reads) also live in the `mersennet_` namespace and are documented separately in the [Shielded JSON-RPC reference](/developers/privacy/shielded-rpc).
+Mersennet implements the standard `eth_` namespace plus native extensions across `net_`, `web3_`, `txpool_`, `mersennet_`, `mersennet_orders_`, `mersennet_staking_`, and `mersennet_bridge_`. The privacy/ZK methods (shielded transfers, SP1 state proofs, selective-disclosure reads) also live in the `mersennet_` namespace and are documented separately in the [Shielded JSON-RPC reference](/developers/privacy/shielded-rpc).
 
 ---
 
@@ -749,7 +749,29 @@ You can also call the precompile directly with a **wallet-signed transaction** (
 
 ### mersennet_orders_addMarket (disabled)
 
-Markets are seeded deterministically from the genesis configuration on every node. This method is disabled: adding a market over RPC would mutate only the node that received the call, forking the CLOB state across the network. Calling it returns a `-32601` error explaining this. The same applies to `mersennet_orders_setMarginParams` and `mersennet_orders_liquidate`.
+This RPC method is disabled: adding a market over RPC would mutate only the node that received the call, forking the CLOB state across the network. Calling it returns a `-32601` error explaining this. The same applies to `mersennet_orders_setMarginParams` and `mersennet_orders_liquidate`.
+
+Market creation is instead **permissionless through consensus**: call `createMarket(bytes32 symbol, uint256 tickSize, uint256 lotSize)` on the CLOB precompile (`0x…0100`) with a wallet-signed transaction. A listing fee of 100 MRSN is charged from the caller into the CLOB insurance fund. Duplicate symbols and zero tick/lot sizes are rejected. Newly created markets appear in `mersennet_orders_getMarkets`.
+
+---
+
+### mersennet_orders_getMarkets
+
+List every CLOB market (genesis-seeded and permissionlessly created), sorted by id.
+
+**Parameters:** none
+
+**Response:**
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": [
+    { "id": 1, "symbol": "MRSN/USD", "tickSize": "0x1", "lotSize": "0x1", "lastPrice": "0xfde8", "status": "active" }
+  ]
+}
+```
 
 ---
 
@@ -921,6 +943,121 @@ triggered via RPC on a single node. Returns `-32601`.
 
 ---
 
+### mersennet_orders_getAccount
+
+Read a trader's full CLOB margin account: native collateral, token collateral
+balances, open-order count, and open positions.
+
+**Parameters:**
+
+1. `address`: Account address
+
+**Response:**
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+    "collateral": "0x3635c9adc5dea00000",
+    "tokenCollateral": [
+      { "token": "0xa44b23d1d0c0133da71dece399d5d5ade6dd22d1", "amount": "0x3b9aca00" }
+    ],
+    "openOrders": 2,
+    "positions": [
+      { "marketId": 1, "size": "100", "entryPrice": "0xfde8", "realizedPnl": "0" }
+    ]
+  }
+}
+```
+
+---
+
+### mersennet_orders_getCollateralAssets
+
+List the registered non-native collateral assets (token address, risk weight,
+and value rate). Margin value per raw token unit is `valueNum / valueDen`,
+haircut by `weightBps`.
+
+**Parameters:** none
+
+---
+
+### mersennet_orders_getTokenCollateral
+
+Read one token-collateral balance for an account.
+
+**Parameters:**
+
+1. `address`: Account address
+2. `token`: Token contract address
+
+**Returns:** Raw token units deposited as collateral (hex).
+
+Deposits and withdrawals go through the CLOB precompile with wallet-signed
+transactions: `depositTokenCollateral(address token, uint256 amount)` and
+`withdrawTokenCollateral(address token, uint256 amount)`.
+
+---
+
+## MersennetStaking Methods
+
+Delegated proof-of-stake reads. The staking precompile is at address
+`0x0000000000000000000000000000000000000400`; writes (`delegate(address,uint256)`,
+`undelegate(address,uint256)`, `claimRewards(address)`, `withdrawUnbonded()`)
+are wallet-signed precompile transactions.
+
+### mersennet_staking_getValidators
+
+List the active validator set with delegation totals and commission.
+
+**Parameters:** none
+
+**Response:**
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": [
+    {
+      "address": "0x7f5ce38fb2553e95dd8ef9182a80bc219c9a0d45",
+      "selfStake": "0x3635c9adc5dea00000",
+      "delegatedTotal": "0xde0b6b3a7640000",
+      "commissionBps": 1000
+    }
+  ]
+}
+```
+
+---
+
+### mersennet_staking_getDelegation
+
+Read one delegator→validator delegation with accrued (unclaimed) rewards.
+
+**Parameters:**
+
+1. `delegator`: Delegator address
+2. `validator`: Validator address
+
+**Returns:** `{ "amount": "0x…", "pendingRewards": "0x…" }` (both in wei).
+
+---
+
+### mersennet_staking_getUnbonding
+
+List a delegator's unbonding entries (undelegated stake still in the lock-up
+window).
+
+**Parameters:**
+
+1. `delegator`: Delegator address
+
+**Returns:** Array of `{ "validator": "0x…", "amount": "0x…", "unlockAtBlock": "0x…" }`.
+
+---
+
 ## MersennetBridge Methods
 
 Cross-domain bridge between the EVM execution environment and the MersennetOrders CLOB.
@@ -1068,5 +1205,6 @@ print(resp.json()["result"])
 | `web3_` | 1 | Client info |
 | `txpool_` | 1 | Mempool status |
 | `mersennet_` | transparent equivalents + code attestation + shielded/ZK | Native equivalents, code-publication lookups, and the shielded/state-proof/disclosure surface ([Privacy](/developers/privacy/shielded-rpc)) |
-| `mersennet_orders_` | 9 | CLOB order book engine |
+| `mersennet_orders_` | 13 | CLOB order book engine (markets, orders, margin, multi-collateral) |
+| `mersennet_staking_` | 3 | Delegated proof-of-stake reads |
 | `mersennet_bridge_` | 4 | Cross-domain bridge |
