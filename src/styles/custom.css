@@ -1,7 +1,7 @@
 /* Mersennet brand theme for Starlight ------------------------------------- */
 
 :root {
-  --sl-font: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  --sl-font: 'Schibsted Grotesk', ui-sans-serif, system-ui, sans-serif;
   --sl-font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', monospace;
 
   /* Phosphor green accent on near-black, matching mersennet.com */
