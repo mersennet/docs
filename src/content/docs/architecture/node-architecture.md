@@ -259,7 +259,7 @@ The state backend supports snapshots for:
 
 ## EVM Integration
 
-Mersennet uses [revm](https://github.com/bluealloy/revm) (Rust EVM) for transaction execution with the Shanghai specification.
+Mersennet uses [revm](https://github.com/bluealloy/revm) (Rust EVM) for transaction execution with the Prague specification (`SpecId::PRAGUE_EOF`).
 
 ### Execution Flow
 
