@@ -23,6 +23,21 @@ Use the following configuration to connect to Mersennet testnet.
 The WebSocket endpoint may not be enabled on all nodes. If subscriptions fail, use HTTP RPC for polling.
 :::
 
+## Node Operators: P2P Bootnodes
+
+Running your own node? These are the canonical seed peers for the testnet
+(UDP 30303 for gossip, TCP 30303 for block sync):
+
+| Bootnode | Address |
+|----------|---------|
+| Public RPC node | `46.225.30.187:30303` |
+| Validator 1 | `46.225.183.192:30303` |
+| Validator 2 | `49.13.54.79:30303` |
+
+The canonical node configuration (including the genesis section every node
+must share) ships in the repository at `networks/testnet/config.json`. See
+[Run a Node](/validators/run-a-node/) for the full guide.
+
 ## Add Mersennet to MetaMask
 
 import AddToMetaMask from '../../../components/AddToMetaMask.astro';
