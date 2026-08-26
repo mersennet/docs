@@ -12,10 +12,21 @@ In Mersennet's Proof-of-Stake model (HotStuff-2 BFT):
 2. **Voting power** is proportional to stake.
 3. **Block rewards** are distributed to all active validators proportionally to their stake.
 
+## Delegated Staking (Live)
+
+Delegation — staking MRSN with an existing validator without running a node — is **live on the testnet** via the `MersennetStaking` precompile at `0x0000000000000000000000000000000000000400`:
+
+| Function | Effect |
+|----------|--------|
+| `delegate(address validator, uint256 amount)` | Bond `amount` wei of MRSN to a validator's pool |
+| `undelegate(address validator, uint256 amount)` | Start unbonding; principal stops earning immediately |
+| `claimRewards(address validator)` | Claim accrued rewards to your balance |
+| `withdrawUnbonded()` | Withdraw principal whose unbonding period has elapsed |
+
+Delegators earn a share of the validator's block rewards (minus validator commission) under an F1-style accounting model. The [explorer's Validators page](https://explorer.mersennet.com/validators) shows each validator's delegated total and commission, and any address page shows its delegations, pending rewards, and unbonding entries. Read methods: `mersennet_staking_getValidators`, `mersennet_staking_getDelegation`, `mersennet_staking_getUnbonding` (see the [RPC reference](/developers/rpc/methods/)).
+
 :::note
-Delegation (staking with a validator without running a node) is **not yet
-implemented**: today all stake is bonded directly by validators. A
-delegation module is on the roadmap and will be activated by governance.
+Joining the **validator set** itself is not yet permissionless — see [Run a Node](/validators/run-a-node/#becoming-a-validator).
 :::
 
 ## Minimum Stake
