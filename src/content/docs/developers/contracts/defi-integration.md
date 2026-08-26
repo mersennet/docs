@@ -46,6 +46,7 @@ const { ethers } = require("ethers");
 
 const RPC_URL = "https://rpc.mersennet.com";
 const CHAIN_ID = 131071;
+// Placeholder: no contract deployed at this address on the current testnet — see the caution above
 const ROUTER = "0x9f337f433e71ce969b991511f1dcd3d0622116bb";
 const WMRSN = "0x5bBF04528469591280D36D46209c7CCD5a68a798";
 const MOCK_USDC = "0xA44B23d1D0C0133dA71DeCe399d5d5aDE6DD22d1";
@@ -215,6 +216,7 @@ await tx.wait();
 ```javascript
 const FACTORY_ABI = ["function getPair(address, address) view returns (address)"];
 const factory = new ethers.Contract(
+  // Placeholder: no contract deployed at this address on the current testnet — see the caution above
   "0x63f7a64db6d2b965189b8b48b7435668021f6b17",
   FACTORY_ABI,
   provider

@@ -4,7 +4,9 @@ description: Build private DeFi on a zero-knowledge EVM Layer 1 with shielded ac
 template: splash
 hero:
   title: Build on the private, verifiable network.
-  tagline: Mersennet is a zero-knowledge EVM Layer 1 with account-level privacy, a native on-chain order book at precompile 0x0100, and every block proven with SP1. Your Solidity stack works unchanged.
+  tagline: Mersennet is a zero-knowledge EVM Layer 1 with account-level privacy, a native on-chain order book at precompile 0x0100, and every block run through the SP1 proof pipeline. Your Solidity stack works unchanged.
+  image:
+    html: '<img src="/img/hero.webp" alt="A translucent block containing a Merkle tree, orbited by rings of light" width="640" loading="eager" style="border-radius: 16px;" />'
   actions:
     - text: Start building
       link: /developers/quick-start/hardhat/
@@ -36,8 +38,8 @@ import { Card, CardGrid, LinkCard } from '@astrojs/starlight/components';
     [MersennetOrders architecture](/architecture/order-book/) ·
     [DeFi integration](/developers/contracts/defi-integration/)
   </Card>
-  <Card title="Run a validator" icon="seti:powershell">
-    Stake MRSN, secure the network, and earn block rewards on a HotStuff-2 BFT chain.
+  <Card title="Stake and run a node" icon="seti:powershell">
+    Delegate MRSN to a validator to earn a share of block rewards, or run a full node on the HotStuff-2 BFT chain. Validator registration opens later.
 
     [Run a node](/validators/run-a-node/) ·
     [Staking guide](/validators/staking/)

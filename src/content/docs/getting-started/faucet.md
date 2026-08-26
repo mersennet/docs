@@ -21,7 +21,7 @@ One click on **＋ Add Mersennet to wallet** configures MetaMask with the right 
 | Claim | Amount | Cooldown |
 |-------|--------|----------|
 | MRSN (native) | 1,000 MRSN | 1 claim per address per hour |
-| MockUSDC / MockUSDT / MockDAI | 10,000 per token | On demand |
+| MockUSDC / MockUSDT / MockDAI | 10,000 per token | 1 claim per token per address per hour |
 
 The mock tokens also have a public `faucet()` function on-chain, so contracts and scripts can mint them directly — see [Deployed Contracts](/resources/contracts) for addresses.
 

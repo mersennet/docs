@@ -143,10 +143,10 @@ When the block timer fires, the following sequence executes:
       │
       ▼
   ┌─────────────────────────┐
-  │  1. PROPOSER SELECTION  │  Consensus selects the validator with the
-  │                         │  highest accumulated priority (stake-weighted
-  │                         │  round-robin). If this node is not the
-  │                         │  proposer, it waits for an incoming block.
+  │  1. PROPOSER SELECTION  │  Consensus selects the leader by deterministic
+  │                         │  round-robin over the validator set
+  │                         │  ((height + round) mod count). If this node is
+  │                         │  not the proposer, it waits for an incoming block.
   └────────────┬────────────┘
                │
                ▼

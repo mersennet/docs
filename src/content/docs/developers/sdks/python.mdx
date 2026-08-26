@@ -14,6 +14,9 @@ Connect, place an order, and check a balance, with the SDK or the equivalent raw
   <TabItem label="Python">
 
 ```python title="quick_reference.py"
+import os
+
+from eth_account import Account
 from mersennet import MersennetProvider, MersennetOrders
 
 # Connect
@@ -21,18 +24,28 @@ provider = MersennetProvider("https://rpc.mersennet.com")
 orders = MersennetOrders(provider)
 print("Chain ID:", provider.chain_id())  # 131071
 
-# Place an order (node must have the owner account unlocked).
-# The node acknowledges with {"accepted": True, "txHash": "0x..."};
-# the order is placed when that transaction mines.
-result = orders.place_order(
-    market=1,          # market ID (MRSN/USD)
-    side="buy",
-    price="1000000",
-    amount="10",
-    tif="gtc",
-    owner="0xOwnerAddress",
-)
-print("Accepted:", result["accepted"], "tx:", result["txHash"])
+# Place an order: sign a placeOrder transaction to the CLOB precompile
+# (0x…0100) locally with eth-account and submit it via
+# eth_sendRawTransaction. The order is placed when the transaction mines.
+PRECOMPILE = "0x0000000000000000000000000000000000000100"
+
+def encode_place_order(market_id: int, is_buy: bool, price: int, size: int, tif: int) -> str:
+    # placeOrder(uint64 marketId, bool isBuy, uint256 price, uint256 size, uint8 tif)
+    words = [market_id, 1 if is_buy else 0, price, size, tif]
+    return "0x4c570d73" + "".join(format(w, "064x") for w in words)
+
+acct = Account.from_key(os.environ["PRIVATE_KEY"])
+signed = acct.sign_transaction({
+    "to": PRECOMPILE,
+    "data": encode_place_order(1, True, 1_000_000, 10, 0),  # market 1 = MRSN, GTC buy
+    "value": 0,
+    "gas": 300_000,
+    "gasPrice": int(provider.gas_price(), 16),
+    "nonce": int(provider.get_nonce(acct.address), 16),
+    "chainId": 131071,
+})
+tx_hash = provider.send_raw_transaction(signed.raw_transaction.hex())
+print("tx:", tx_hash)
 
 # Check balance
 balance = provider.get_balance("0xYourAddress")
@@ -48,8 +61,11 @@ curl -X POST https://rpc.mersennet.com \
   -H "Content-Type: application/json" \
   -d '{"jsonrpc":"2.0","method":"eth_chainId","params":[],"id":1}'
 
-# Place an order (node must have the owner account unlocked)
-curl -X POST https://rpc.mersennet.com \
+# Place an order — LOCAL DEV NODE ONLY. The unsigned RPC path requires
+# mersennet_orders.allow_unsigned_orders_rpc = true; public endpoints return
+# -32604. On public endpoints, sign a placeOrder transaction to the precompile
+# at 0x…0100 and submit it via eth_sendRawTransaction instead.
+curl -X POST http://localhost:8545 \
   -H "Content-Type: application/json" \
   -d '{"jsonrpc":"2.0","method":"mersennet_orders_submitOrder","params":[{"owner":"0xOwnerAddress","market_id":1,"side":"buy","price":"0xf4240","size":"0xa","tif":"gtc"}],"id":2}'
 
@@ -171,7 +187,7 @@ tx_hash = provider.send_raw_transaction("0xSignedTxHex")
 ```
 
 :::note
-`eth_sendRawTransaction` accepts standard Ethereum RLP-encoded transactions (e.g. signed with `eth-account`/web3.py) as well as Mersennet's custom binary format. Alternatively, use `eth_sendTransaction` or `mersennet_sendTransaction` when the node has the account unlocked.
+`eth_sendRawTransaction` accepts standard Ethereum RLP-encoded transactions (e.g. signed with `eth-account`/web3.py) as well as Mersennet's custom binary format.
 :::
 
 ## MersennetOrders
@@ -188,23 +204,49 @@ for ask in book.asks:
 
 ### Place Order
 
-Requires the RPC node to have the owner account unlocked:
+`orders.place_order()` and `orders.cancel_order()` are **deprecated and raise
+`NotImplementedError`**: the unsigned owner-field RPC was removed for security
+(it let anyone trade as anyone). Orders are now signed transactions to the
+CLOB precompile (`0x0000000000000000000000000000000000000100`). Sign the
+`placeOrder` calldata locally with `eth-account`/web3.py and submit it via
+`provider.send_raw_transaction()`:
 
 ```python
-result = orders.place_order(
-    market=1,
-    side="buy",
-    price="1000000",
-    amount="10",
-    tif="gtc",
-    owner="0xOwnerAddress",
-)
+import os
+
+from eth_account import Account
+
+PRECOMPILE = "0x0000000000000000000000000000000000000100"
+
+def encode_place_order(market_id: int, is_buy: bool, price: int, size: int, tif: int) -> str:
+    # placeOrder(uint64 marketId, bool isBuy, uint256 price, uint256 size, uint8 tif)
+    # tif: 0 = GTC, 1 = IOC, 2 = FOK
+    words = [market_id, 1 if is_buy else 0, price, size, tif]
+    return "0x4c570d73" + "".join(format(w, "064x") for w in words)
+
+acct = Account.from_key(os.environ["PRIVATE_KEY"])
+signed = acct.sign_transaction({
+    "to": PRECOMPILE,
+    "data": encode_place_order(1, True, 1_000_000, 10, 0),
+    "value": 0,
+    "gas": 300_000,
+    "gasPrice": int(provider.gas_price(), 16),
+    "nonce": int(provider.get_nonce(acct.address), 16),
+    "chainId": 131071,
+})
+tx_hash = provider.send_raw_transaction(signed.raw_transaction.hex())
+# The order is placed when this transaction mines; read fills back via
+# get_order_book()/get_trades() or the MersennetOrdersTrades WebSocket topic.
 ```
 
 ### Cancel Order
 
+Same flow with the `cancelOrder(uint256 orderId)` calldata (selector
+`0x514fcac7`); the chain enforces order ownership:
+
 ```python
-success = orders.cancel_order(order_id=123)
+def encode_cancel_order(order_id: int) -> str:
+    return "0x514fcac7" + format(order_id, "064x")
 ```
 
 ### Get Trades
@@ -221,16 +263,12 @@ for t in trades:
 positions = orders.get_positions("0xOwnerAddress", market=1)
 ```
 
-### Add Market (Admin)
+### Create Market
 
-```python
-market_id = orders.add_market(
-    base="MRSN",
-    quote="USD",
-    lot="1000000",
-    tick="1000",
-)
-```
+Market creation is the `createMarket(symbol, tickSize, lotSize)` precompile
+call (100 MRSN listing fee), submitted as a signed transaction like
+`placeOrder` above — see [Deployed Contracts](/resources/contracts/) for the
+Solidity interface.
 
 ## WebSocket Subscriptions
 

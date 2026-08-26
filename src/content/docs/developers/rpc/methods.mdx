@@ -84,7 +84,7 @@ Returns the current gas price in wei.
 
 ### eth_maxPriorityFeePerGas
 
-Returns the current priority fee per gas in wei.
+Always returns `0x0` — Mersennet has no priority tips.
 
 **Parameters:** None
 
@@ -106,11 +106,15 @@ curl -X POST https://rpc.mersennet.com \
   -d '{"jsonrpc":"2.0","method":"eth_feeHistory","params":["0x4","latest",[25,50,75]],"id":1}'
 ```
 
+:::note
+`eth_feeHistory` returns an empty `reward` array (Mersennet has no priority tips). Some fee-estimation tooling doesn't expect this — pin a fixed `gasPrice` if estimation misbehaves.
+:::
+
 ---
 
 ### eth_accounts
 
-Returns a list of addresses owned by the node (typically empty on public nodes).
+Always returns an empty array.
 
 **Parameters:** None
 
@@ -250,6 +254,10 @@ Estimates gas for a transaction.
 
 Returns block by block number.
 
+:::note
+Only a recent window of blocks is served from memory; requests for older heights return `null`. Use an indexer for historical data.
+:::
+
 After privacy activation, this method remains public only for
 header-only access. Setting `fullTransactions=true` is rejected because
 full transaction metadata is not part of the post-fork public surface.
@@ -275,11 +283,11 @@ curl -X POST https://rpc.mersennet.com \
     "number": "0x1234",
     "hash": "0x...",
     "proposer": "0x...",
-    "gas_limit": "0x...",
-    "gas_used": "0x...",
-    "base_fee": "0x...",
-    "state_root": "0x...",
-    "domain_events": [],
+    "gasLimit": "0x...",
+    "gasUsed": "0x...",
+    "baseFeePerGas": "0x...",
+    "stateRoot": "0x...",
+    "domainEvents": [],
     "transactions": ["0x...", "0x..."]
   }
 }
@@ -353,15 +361,15 @@ surface because receipt metadata and logs remain private.
   "jsonrpc": "2.0",
   "id": 1,
   "result": {
-    "transaction_hash": "0x...",
-    "block_hash": "0x...",
-    "block_number": "0x...",
-    "transaction_index": "0x0",
+    "transactionHash": "0x...",
+    "blockHash": "0x...",
+    "blockNumber": "0x...",
+    "transactionIndex": "0x0",
     "status": "0x1",
-    "gas_used": "0x...",
+    "gasUsed": "0x...",
     "output": "0x...",
     "logs": [],
-    "contract_address": "0x..."
+    "contractAddress": "0x..."
   }
 }
 ```
@@ -386,11 +394,7 @@ curl -X POST https://rpc.mersennet.com \
 
 ### eth_sendTransaction
 
-Sends a transaction signed by the node.
-
-**Parameters:**
-
-1. `transactionObject`: `{ from, to?, value?, gas?, gasPrice?, data? }`
+**Disabled** on all Mersennet nodes. Returns `-32601`. Sign transactions locally (MetaMask, ethers.js, Foundry) and submit via `eth_sendRawTransaction`.
 
 ---
 
@@ -498,6 +502,10 @@ Creates a filter that notifies when new pending transactions arrive.
 **Parameters:** None
 
 **Returns:** Filter ID (hex string)
+
+:::note
+`eth_getFilterChanges` for this filter type always returns an empty array.
+:::
 
 ---
 
@@ -675,7 +683,7 @@ Same as `eth_getTransactionByHash`.
 
 ### mersennet_sendTransaction
 
-Same as `eth_sendTransaction`.
+**Disabled** on all Mersennet nodes. Returns `-32601`. Sign transactions locally (MetaMask, ethers.js, Foundry) and submit via `eth_sendRawTransaction`.
 
 ---
 
@@ -745,7 +753,7 @@ The native order book engine accessible via RPC. The CLOB precompile is at addre
 
 **Orders route through consensus.** State-mutating CLOB calls (`submitOrder`, `cancelOrder`, `depositCollateral`) do not mutate state synchronously — they build a precompile transaction, submit it to the mempool, and return `{ accepted, txHash }`. The order takes effect when the transaction mines (~1-2 blocks, a few seconds). Poll `mersennet_orders_getOpenOrders` or subscribe to the `MersennetOrdersTrades` WebSocket topic to observe the result.
 
-You can also call the precompile directly with a **wallet-signed transaction** (MetaMask, ethers.js) — see [Deployed Contracts](/resources/contracts/) for the Solidity interface. On this testnet the unsigned RPC path is enabled for frictionless demos (`mersennet_orders.allow_unsigned_orders_rpc = true`); on mainnet it will be disabled and signed precompile transactions become the only write path.
+On the public testnet the unsigned RPC path is **disabled** (`mersennet_orders.allow_unsigned_orders_rpc = false`, the default). State-mutating CLOB calls must be submitted as wallet-signed transactions to the precompile at `0x…0100` via `eth_sendRawTransaction` — see [Deployed Contracts](/resources/contracts/) for the Solidity interface. The unsigned `mersennet_orders_submitOrder`/`cancelOrder`/`depositCollateral` RPCs return error `-32604` unless a node is run locally with `allow_unsigned_orders_rpc = true`.
 
 ### mersennet_orders_addMarket (disabled)
 
@@ -768,7 +776,7 @@ List every CLOB market (genesis-seeded and permissionlessly created), sorted by 
   "jsonrpc": "2.0",
   "id": 1,
   "result": [
-    { "id": 1, "symbol": "MRSN/USD", "tickSize": "0x1", "lotSize": "0x1", "lastPrice": "0xfde8", "status": "active" }
+    { "id": 1, "symbol": "MRSN", "tickSize": "0x1", "lotSize": "0x1", "lastPrice": "0xfde8", "status": "active" }
   ]
 }
 ```
@@ -789,8 +797,10 @@ Submit a limit order to the CLOB. The order is packaged as a `placeOrder` precom
    - `size`: Order size (hex)
    - `tif`: Time-in-force: `"gtc"` (Good-Til-Cancel), `"ioc"` (Immediate-or-Cancel), `"fok"` (Fill-or-Kill)
 
+**Local dev node only** — the unsigned RPC path requires `mersennet_orders.allow_unsigned_orders_rpc = true`; public endpoints return `-32604`:
+
 ```bash
-curl -X POST https://rpc.mersennet.com \
+curl -X POST http://localhost:8545 \
   -H "Content-Type: application/json" \
   -d '{"jsonrpc":"2.0","method":"mersennet_orders_submitOrder","params":[{"owner":"0x7f5ce38fb2553e95dd8ef9182a80bc219c9a0d45","market_id":1,"side":"buy","price":"0xfde8","size":"0x64","tif":"gtc"}],"id":1}'
 ```
@@ -808,21 +818,19 @@ curl -X POST https://rpc.mersennet.com \
 }
 ```
 
-The order rests (or fills) once `txHash` mines. Fills are emitted as `trade` domain events in the block and on the `MersennetOrdersTrades` WebSocket topic.
-
-If the order crosses existing resting orders, `trades` will contain fill details and `filled` will be non-zero.
+The response contains only `{ accepted, txHash }`. Fills happen when the transaction mines; observe them by polling `mersennet_orders_getOpenOrders` / `getTrades` or subscribing to the `MersennetOrdersTrades` WebSocket topic.
 
 ---
 
 ### mersennet_orders_cancelOrder
 
-Cancel an open order.
+Cancel an open order. Like `submitOrder`, this is a local-dev-node-only unsigned path (public endpoints return `-32604`).
 
 **Parameters:**
 
 1. `orderId`: Order ID (hex string)
 
-**Returns:** `true` on success.
+**Returns:** `{ accepted, txHash }` like `submitOrder` — the cancel takes effect when the transaction mines.
 
 ---
 
@@ -852,7 +860,7 @@ import { MersennetProvider, MersennetOrders } from '@mersennet/sdk';
 const provider = new MersennetProvider('https://rpc.mersennet.com');
 const orders = new MersennetOrders(provider);
 
-const book = await orders.getOrderBook(1); // MRSN/USD
+const book = await orders.getOrderBook(1); // MRSN
 console.log('Best bid:', book.bids[book.bids.length - 1]);
 console.log('Best ask:', book.asks[0]);
 ```
@@ -866,7 +874,7 @@ from mersennet import MersennetProvider, MersennetOrders
 provider = MersennetProvider("https://rpc.mersennet.com")
 orders = MersennetOrders(provider)
 
-book = orders.get_order_book(1)  # MRSN/USD
+book = orders.get_order_book(1)  # MRSN
 print("Bids:", book.bids)
 print("Asks:", book.asks)
 ```
@@ -910,7 +918,8 @@ Get all open orders for a specific address.
 Deposit collateral for margin trading. Routes through consensus as a
 `depositCollateral` precompile transaction from `address` — the amount is
 escrowed 1:1 from the account's native MRSN balance. Returns
-`{ accepted, txHash }` like `submitOrder`.
+`{ accepted, txHash }` like `submitOrder`. Like `submitOrder`, this is a
+local-dev-node-only unsigned path (public endpoints return `-32604`).
 
 **Parameters:**
 
@@ -1112,11 +1121,15 @@ The following CLOB markets are registered on the testnet:
 
 | Market ID | Symbol | Description |
 |-----------|--------|-------------|
-| 1 | MRSN/USD | MRSN perpetual, priced in USD |
-| 2 | BTC/USD | BTC perpetual, priced in USD |
-| 3 | ETH/USD | ETH perpetual, priced in USD |
-| 4 | SOL/USD | SOL perpetual, priced in USD |
-| 5 | ARB/USD | ARB perpetual, priced in USD |
+| 1 | MRSN | MRSN perpetual, priced in USD |
+| 2 | BTC | BTC perpetual, priced in USD |
+| 3 | ETH | ETH perpetual, priced in USD |
+| 4 | SOL | SOL perpetual, priced in USD |
+| 5 | ARB | ARB perpetual, priced in USD |
+
+:::note
+Market creation is permissionless via the `createMarket` precompile call, so the live list may contain additional markets — query `mersennet_orders_getMarkets` for the current set.
+:::
 
 ---
 
@@ -1131,6 +1144,7 @@ Mersennet exposes native functionality through EVM precompiles, callable from So
 | `0x…0201` | Shield / Unshield | Transparent ⇄ shielded bridge (`shield`, `unshield`) |
 | `0x…0202` | Code Publication | Register/revoke a contract code attestation |
 | `0x…0300` | State-Proof Verifier | Verify an SP1 state-transition proof on-chain (`verifyStateProof(bytes)`) |
+| `0x…0400` | MersennetStaking | Delegate/undelegate stake, claim rewards, withdraw unbonded |
 
 (Addresses are the 20-byte form, e.g. `0x0000000000000000000000000000000000000100`.)
 

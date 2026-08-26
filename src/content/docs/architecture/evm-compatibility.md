@@ -8,23 +8,24 @@ Mersennet implements an **EVM-compatible** execution environment, allowing devel
 
 | Aspect | Mersennet |
 |--------|-------------|
-| **EVM Version** | Shanghai |
+| **EVM Version** | Prague (revm `SpecId::PRAGUE_EOF`) |
 | **Chain ID** | 131071 |
 | **Token** | MRSN (18 decimals) |
 | **Block Time** | ~2 seconds |
 
-## Shanghai EVM
+## Prague EVM
 
-Mersennet targets the **Shanghai** EVM specification, which includes:
+Mersennet runs the **Prague** EVM specification (revm `SpecId::PRAGUE_EOF`), which includes:
 
-- All pre-Shanghai opcodes and semantics
-- **PUSH0** (EIP-3855): Push constant 0 onto the stack
+- All Shanghai features, including **PUSH0** (EIP-3855)
+- Cancun features, including **transient storage** (`TSTORE`/`TLOAD`, EIP-1153) and **MCOPY** (EIP-5656)
+- Prague-era additions
 
-This ensures compatibility with the vast majority of Solidity contracts and tooling (Hardhat, Foundry, Remix, and standard wallets).
+This means contracts compiled for any solc `evmVersion` up to Cancun deploy and run unchanged, ensuring compatibility with the vast majority of Solidity contracts and tooling (Hardhat, Foundry, Remix, and standard wallets).
 
 ## Supported Opcodes
 
-Mersennet supports the standard Ethereum opcodes defined in the Shanghai spec, including:
+Mersennet supports the standard Ethereum opcodes defined in the Prague spec, including:
 
 - **Arithmetic**: ADD, SUB, MUL, DIV, MOD, etc.
 - **Comparison**: LT, GT, SLT, SGT, EQ, etc.
@@ -51,16 +52,24 @@ Mersennet supports all standard Ethereum precompiles:
 | 0x06 | ecAdd | Elliptic curve point addition |
 | 0x07 | ecMul | Elliptic curve scalar multiplication |
 | 0x08 | ecPairing | BN254 pairing |
+| 0x09 | blake2f | BLAKE2 compression function |
+| 0x0a | KZG point evaluation | EIP-4844 point-evaluation precompile |
+| 0x0b–0x11 | BLS12-381 | Prague BLS12-381 curve operations |
 
-### Mersennet Extension: MersennetOrders
+### Mersennet Extensions
 
-Mersennet adds a **custom precompile** for the native order matching engine:
+Mersennet adds **custom precompiles** for native protocol features:
 
 | Address | Precompile | Description |
 |---------|------------|-------------|
-| **0x0100** | **MersennetOrders** | Native on-chain CLOB |
+| **0x0100** | **MersennetOrders** | Native on-chain CLOB: orders, markets, collateral |
+| **0x0200** | Shielded transfer | Shielded-pool transfers (privacy hard fork) |
+| **0x0201** | Shield / unshield bridge | Transparent ↔ shielded value movement (privacy hard fork) |
+| **0x0202** | Code publication | Contract-code publication for the shielded EVM |
+| **0x0300** | State-proof verifier | Verify SP1 state-transition proofs on-chain |
+| **0x0400** | **MersennetStaking** | Delegated staking: `delegate`, `undelegate`, `claimRewards`, `withdrawUnbonded` |
 
-See [MersennetOrders (On-chain CLOB)](/architecture/order-book) for full documentation.
+See [MersennetOrders (On-chain CLOB)](/architecture/order-book) and the [Staking Guide](/validators/staking/) for full documentation.
 
 ## Gas Metering
 
@@ -70,7 +79,7 @@ Mersennet uses gas metering consistent with Ethereum:
 - Transactions specify a `gasLimit`; execution stops if gas is exhausted
 - Gas is paid in MRSN (converted at the current gas price)
 
-Gas costs align with Ethereum's Shanghai spec for predictable behavior when porting contracts.
+Gas costs align with Ethereum's Prague spec for predictable behavior when porting contracts.
 
 ## Differences from Ethereum Mainnet
 
@@ -107,10 +116,11 @@ Same decimal precision, so contract logic that assumes 18 decimals works unchang
 
 | Feature | Status |
 |---------|--------|
-| Shanghai EVM | ✅ Supported |
+| Prague EVM | ✅ Supported |
 | Standard opcodes | ✅ Supported |
 | Standard precompiles | ✅ Supported |
 | MersennetOrders precompile (0x0100) | ✅ Supported |
+| MersennetStaking precompile (0x0400) | ✅ Supported |
 | Custom tx format | ✅ Custom binary + Ethereum RLP (EIP-155) both accepted |
 | EIP-1559 | ✅ Dynamic base fee (no priority tip) |
 | Gas metering | ✅ Ethereum-compatible |

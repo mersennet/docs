@@ -47,6 +47,10 @@ console.log('Confirmed!');
 
 Prefer the official SDKs or raw JSON-RPC? The same transfer in TypeScript (`@mersennet/sdk`), Python (`mersennet-sdk`), Go, and curl:
 
+:::note[SDK availability]
+The Mersennet SDKs are not yet published to npm/PyPI or public GitHub — they currently live in the monorepo (`sdk-ts`, `sdk-python`, `sdk-go`). Until packages are published, use ethers.js/viem or raw JSON-RPC as shown above.
+:::
+
 <Tabs syncKey="lang">
   <TabItem label="TypeScript">
 
@@ -55,14 +59,9 @@ import { MersennetProvider } from '@mersennet/sdk';
 
 const provider = new MersennetProvider('https://rpc.mersennet.com');
 
-// eth_sendTransaction — requires the node to have the `from` account unlocked.
-// For browser/wallet signing, use ethers.js or viem as shown above.
-const txHash = await provider.sendTransaction({
-  from: '0xYourAddress',
-  to: '0xRecipientAddress',
-  value: '0x16345785d8a0000', // 0.1 MRSN in wei (hex)
-  gas: '0x5208',             // 21000
-});
+// Sign the transaction locally (e.g. with ethers.js), then broadcast
+// the raw bytes. eth_sendTransaction is disabled on all Mersennet nodes.
+const txHash = await provider.sendRawTransaction('0xSignedTxHex');
 
 console.log('Tx hash:', txHash);
 const receipt = await provider.getTransactionReceipt(txHash);
@@ -116,12 +115,8 @@ func main() {
   <TabItem label="curl">
 
 ```bash title="Send MRSN via JSON-RPC"
-# eth_sendTransaction — requires the node to have the `from` account unlocked.
-curl -X POST https://rpc.mersennet.com \
-  -H "Content-Type: application/json" \
-  -d '{"jsonrpc":"2.0","method":"eth_sendTransaction","params":[{"from":"0xYourAddress","to":"0xRecipientAddress","value":"0x16345785d8a0000","gas":"0x5208"}],"id":1}'
-
-# Or broadcast a locally signed transaction:
+# Broadcast a locally signed transaction (eth_sendTransaction is disabled
+# on all Mersennet nodes — sign with your tooling of choice first):
 curl -X POST https://rpc.mersennet.com \
   -H "Content-Type: application/json" \
   -d '{"jsonrpc":"2.0","method":"eth_sendRawTransaction","params":["0xSignedTxHex"],"id":1}'

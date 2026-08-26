@@ -142,7 +142,7 @@ await token.approve("0xSpenderAddress", ethers.MaxUint256);
 cast call 0xTokenAddress "balanceOf(address)(uint256)" 0xYourAddress \
   --rpc-url https://rpc.mersennet.com
 
-# Encode transfer (for use with eth_sendTransaction)
+# Encode transfer calldata (for use with `cast send --private-key …` or any locally signed transaction)
 cast calldata "transfer(address,uint256)" 0xRecipient 1000000000000000000
 ```
 

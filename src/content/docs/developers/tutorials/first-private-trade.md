@@ -16,7 +16,7 @@ By the end of this tutorial you will have:
 - Connected to the Mersennet testnet over JSON-RPC and verified the chain ID.
 - Funded a transparent account with testnet MRSN from the faucet.
 - **Shielded** MRSN into a private note in the on-chain commitment tree.
-- Placed a **shielded order** on the MRSN/USD market, public only as a bucketed tier.
+- Placed a **shielded order** on the MRSN market, public only as a bucketed tier.
 - Reconstructed your private balance client-side from encrypted notes.
 - Verified the chain's state transition with an **SP1 proof**, with no trust in the node required.
 
@@ -24,7 +24,7 @@ By the end of this tutorial you will have:
 
 - Node.js 20+ (the SDK targets modern `fetch` and `bigint`).
 - Testnet MRSN from the [faucet](/getting-started/faucet/).
-- The SDK: `npm install @mersennet/sdk`.
+- The SDK: build from the monorepo (`cd sdk-ts && npm install && npm run build`, then `npm link`). Publication to npm as `@mersennet/sdk` is pending.
 
 :::tip[When a call fails]
 Every RPC error code Mersennet returns is catalogued in the [error reference](/developers/rpc/errors/). Keep it open: the codes are specific, and the `data` field usually names the exact problem.
@@ -111,7 +111,25 @@ const commitment = defaultNoteCommitment(note);
 
 // The shield envelope is the bincode encoding of (your EOA, the amount,
 // the new note commitment), 0x-hex — the standard encoding for every
-// opaque payload on the shielded surface.
+// opaque payload on the shielded surface. bincode uses fixed-width
+// little-endian integers, so the envelope is a plain byte concatenation:
+const strip = (hex: string) => hex.replace(/^0x/, '');
+const leHex = (value: bigint, byteLen: number) => {
+  const out = Buffer.alloc(byteLen);
+  for (let i = 0; i < byteLen; i += 1) {
+    out[i] = Number(value & 0xffn);
+    value >>= 8n;
+  }
+  return out.toString('hex');
+};
+
+const eoa = '0xYourWalletAddress'; // the transparent account funded in Step 2
+const shieldEnvelopeHex =
+  '0x' +
+  strip(eoa) +            // your EOA (20 bytes)
+  leHex(note.value, 32) + // the amount (u256, little-endian)
+  strip(commitment);      // the new note commitment (32 bytes)
+
 const result = await provider.request('mersennet_submitShield', [
   { envelopeBincodeHex: shieldEnvelopeHex },
 ]);
@@ -135,7 +153,7 @@ const provider = new MersennetProvider('https://rpc.mersennet.com');
 const vk = ViewingKeyHelpers.fromSeed(process.env.WALLET_SEED!);
 const client = new ShieldedClient({ provider, viewingKey: vk });
 
-// Market 1 = MRSN/USD. Buy 5 lots at a limit price of 130 ticks.
+// Market 1 = MRSN. Buy 5 lots at a limit price of 130 ticks.
 const { intentId } = await client.placeOrder({
   marketId: 1n,
   side: 'buy',

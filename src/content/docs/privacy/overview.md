@@ -3,6 +3,8 @@ title: "Privacy on Mersennet"
 description: "Account-level privacy for the EVM and the native order book, with selective disclosure and ZK-verified state."
 ---
 
+![Abstract illustration of a shielded account: a glowing orb wrapped in a translucent hexagonal shield](/img/privacy.webp)
+
 Mersennet is a zero-knowledge Layer 1 where **privacy and verifiability are the defaults**. Instead of bolting a mixer onto a transparent chain, Mersennet provides *account-level* privacy across both the EVM and the native central limit order book (CLOB), Aztec-style, while keeping the chain publicly verifiable through succinct proofs.
 
 ## What "account-level privacy" means
@@ -21,7 +23,7 @@ On a transparent chain, anyone can read your balances, positions, and order flow
 - **[Shielded accounts](/privacy/shielded-accounts/)**: balances, transfers, positions, and order flow are concealed using notes, commitments, and nullifiers.
 - **[Risk checks in zero knowledge](/privacy/zk-risk-checks/)**: leverage without open liquidations, where solvency and margin are proven with ZK proofs instead of public liquidation auctions.
 - **[Selective disclosure](/privacy/selective-disclosure/)**: grant a scoped viewing key to an auditor, exchange, or counterparty and reveal exactly what you choose.
-- **[Verifiable state](/privacy/state-proofs/)**: every block's state transition is proven with SP1 (live today in development-prover mode), with a Groth16 bridge designed to verify Mersennet state on Ethereum for trustless light clients.
+- **[Verifiable state](/privacy/state-proofs/)**: every block's state transition runs through the SP1 proof pipeline. The testnet currently emits **development proofs** (deterministic hash commitments over the block program's outputs — not yet zero-knowledge proofs); real SP1 zkVM proving is enabled by the `sp1` build feature. A Groth16 bridge is designed to verify Mersennet state on Ethereum for trustless light clients.
 
 ## How it fits together
 
@@ -43,5 +45,5 @@ flowchart TD
 - Moving funds from transparent to shielded? See **[Migrating to shielded accounts](/privacy/migration/)**.
 
 :::note[Activation]
-Shielded features are gated by the privacy hard fork. Before activation, mutation methods return error `-32605` ("method disabled in current chain mode") and read methods return empty values. See [Verifiable state](/privacy/state-proofs/) and the [activation runbook](/whitepaper/) for details.
+Shielded features are gated by the privacy hard fork. Before activation, mutation methods **and all viewing-grant methods** return error `-32605` ("shielded methods are disabled until the privacy hard fork activates"). The ungated read methods (`mersennet_getShieldedRoot`, `mersennet_getShieldedBalance`, `mersennet_getShieldedNotes`, and the state-proof methods) return structured responses describing the initial empty state. See [Verifiable state](/privacy/state-proofs/) for details.
 :::

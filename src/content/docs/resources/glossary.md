@@ -42,7 +42,7 @@ once, linked everywhere.
 
 **SP1**: The RISC-V zkVM that re-executes each block's state transition and produces a proof of it. Public outputs bind the previous and new state roots, so proofs chain.
 
-**Groth16 wrapper**: SP1 proofs are designed to be wrapped into Groth16 (small and cheap to verify in the EVM) so an Ethereum contract ([MersennetBridge](https://github.com/mersennet/contracts)) can verify Mersennet state; the Ethereum verifier is not yet deployed.
+**Groth16 wrapper**: SP1 proofs are designed to be wrapped into Groth16 (small and cheap to verify in the EVM) so an Ethereum contract (MersennetBridge) can verify Mersennet state; the Ethereum verifier is not yet deployed.
 
 **State root continuity**: Each block proof's public inputs include the previous roots; the bridge rejects any proof that doesn't extend the chain it has already accepted.
 
@@ -52,7 +52,7 @@ once, linked everywhere.
 
 **HotStuff-2**: Mersennet's BFT consensus: two-phase, stake-weighted voting with rotating proposers; finality when >2/3 of stake commits (~2s blocks).
 
-**Direct staking**: Validators bond MRSN directly; delegation is not yet implemented. See [Staking](/validators/staking/).
+**Staking**: Validators bond MRSN directly; anyone else can delegate MRSN to a validator through the native staking precompile (`0x…0400`) and earn a share of its block rewards, minus commission. Undelegating starts an unbonding period. Runtime validator registration is not yet open — the set is currently the 4 genesis validators. See [Staking](/validators/staking/).
 
 **Halving schedule**: Block rewards start at 2⁶¹ − 1 wei (≈2.3 MRSN) and halve every 33,550,336 blocks (the 5th perfect number); total emission converges to ≈154.72M MRSN, well below the 2⁸⁹ − 1 wei (≈618.97M MRSN) supply cap. See [Tokenomics](/architecture/tokenomics/).
 

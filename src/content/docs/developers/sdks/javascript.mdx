@@ -18,6 +18,7 @@ Connect, place an order, and check a balance, with the SDK or the equivalent raw
   <TabItem label="TypeScript">
 
 ```typescript title="quick-reference.ts"
+import { Wallet } from 'ethers';
 import { MersennetProvider, MersennetOrders } from '@mersennet/sdk';
 
 // Connect
@@ -25,17 +26,23 @@ const provider = new MersennetProvider('https://rpc.mersennet.com');
 const orders = new MersennetOrders(provider);
 console.log('Chain ID:', await provider.getChainId()); // 131071
 
-// Place an order (node must have the owner account unlocked).
-// The node acknowledges with { accepted, txHash }; the order is placed
-// when that transaction mines.
-const ack = await provider.request('mersennet_orders_submitOrder', [{
-  owner: '0xOwnerAddress',
-  market_id: 1, // MRSN/USD
-  side: 'buy',
-  price: '0xf4240',
-  size: '0xa',
-  tif: 'gtc',
-}]);
+// Place an order. Every mutating method takes a trailing signer: the SDK
+// builds a placeOrder transaction to the CLOB precompile (0x…0100), your
+// signer signs it locally, and the SDK broadcasts it via
+// eth_sendRawTransaction. The node acknowledges with { accepted, txHash };
+// the order is placed when that transaction mines.
+const wallet = new Wallet(process.env.PRIVATE_KEY!);
+const signer = (tx) => wallet.signTransaction(tx);
+
+const ack = await orders.submitOrder(
+  wallet.address, // owner — must be the signer's address
+  1,              // market ID (MRSN)
+  'buy',
+  '0xf4240',      // price
+  '0xa',          // size
+  'gtc',
+  signer
+);
 console.log('Accepted:', ack.accepted, 'tx:', ack.txHash);
 
 // Check balance
@@ -52,8 +59,11 @@ curl -X POST https://rpc.mersennet.com \
   -H "Content-Type: application/json" \
   -d '{"jsonrpc":"2.0","method":"eth_chainId","params":[],"id":1}'
 
-# Place an order (node must have the owner account unlocked)
-curl -X POST https://rpc.mersennet.com \
+# Place an order — LOCAL DEV NODE ONLY. The unsigned RPC path requires
+# mersennet_orders.allow_unsigned_orders_rpc = true; public endpoints return
+# -32604. On public endpoints, sign a placeOrder transaction to the precompile
+# at 0x…0100 and submit it via eth_sendRawTransaction instead.
+curl -X POST http://localhost:8545 \
   -H "Content-Type: application/json" \
   -d '{"jsonrpc":"2.0","method":"mersennet_orders_submitOrder","params":[{"owner":"0xOwnerAddress","market_id":1,"side":"buy","price":"0xf4240","size":"0xa","tif":"gtc"}],"id":2}'
 
@@ -71,7 +81,7 @@ curl -X POST https://rpc.mersennet.com \
 From the Mersennet monorepo:
 
 ```bash
-cd sdk
+cd sdk-ts
 npm install
 npm run build
 ```
@@ -80,7 +90,7 @@ For use in another project, link or publish the package:
 
 ```bash
 # From your project
-npm install /path/to/mersennet/sdk
+npm install /path/to/mersennet/sdk-ts
 # Or when published: npm install @mersennet/sdk
 ```
 
@@ -132,21 +142,27 @@ console.log("Balance in wei:", wei.toString());
 
 ## Sending Transactions
 
-Use `eth_sendTransaction` (requires the node to have the account unlocked):
+Sign locally and submit via `sendRawTransaction`. The SDK's `sendTransaction` **throws** (`'eth_sendTransaction is disabled; sign the transaction locally and call sendRawTransaction(rawHex)'`) — unlocked-account submission is not supported on any Mersennet node.
 
 ```javascript
-const txHash = await provider.sendTransaction({
-  from: "0x...",
+import { Wallet } from "ethers";
+
+const wallet = new Wallet(process.env.PRIVATE_KEY);
+const raw = await wallet.signTransaction({
   to: "0x...",
   value: "0xde0b6b3a7640000", // 1 MRSN in hex
-  gas: "0x5208",
+  gasLimit: "0x5208",
   gasPrice: "0x3b9aca00",
+  nonce: await provider.getTransactionCount(wallet.address, "pending"),
+  chainId: 131071,
 });
+
+const txHash = await provider.sendRawTransaction(raw);
 console.log("Tx hash:", txHash);
 ```
 
 :::tip
-For transactions from a wallet (e.g., browser), use ethers.js or viem with the Mersennet RPC. The SDK's `sendTransaction` is for server-side flows with unlocked accounts.
+For transactions from a wallet (e.g., browser), use ethers.js or viem with the Mersennet RPC — they sign locally and submit via `eth_sendRawTransaction` out of the box.
 :::
 
 ## Interacting with MersennetOrders
@@ -186,38 +202,56 @@ const collateral = await orders.getCollateral("0xOwnerAddress");
 console.log("Collateral:", collateral);
 ```
 
-### Submit Order (RPC)
+### Submit Order
 
-Requires the RPC node to have the owner account unlocked:
+Every mutating method in `MersennetOrders` requires a trailing signer — a
+function `(tx) => Promise<rawSignedHex>` (wrap ethers, viem, or any secp256k1
+signer). The SDK builds a `placeOrder` transaction to the CLOB precompile,
+your signer signs it locally, and the SDK broadcasts it via
+`eth_sendRawTransaction`. Unsigned submission over RPC fails with `-32604`
+on public endpoints.
 
 ```javascript
+import { Wallet } from "ethers";
+
+const wallet = new Wallet(process.env.PRIVATE_KEY);
+const signer = (tx) => wallet.signTransaction(tx);
+
 // The node responds with an acknowledgement, not a fill report:
 // { accepted: true, txHash: "0x..." }. The order enters the book when
 // that transaction mines; read fills back via getOpenOrders/getOrderBook
 // or the transaction receipt.
-const ack = await provider.request("mersennet_orders_submitOrder", [{
-  owner: "0xOwnerAddress",
-  market_id: 1,  // marketId
-  side: "buy",   // "buy" | "sell"
-  price: "0xf4240",
-  size: "0xa",
-  tif: "gtc",    // "gtc" | "ioc" | "fok"
-}]);
+const ack = await orders.submitOrder(
+  wallet.address, // owner — must be the signer's address
+  1,              // marketId
+  "buy",          // "buy" | "sell"
+  "0xf4240",      // price
+  "0xa",          // size
+  "gtc",          // "gtc" | "ioc" | "fok"
+  signer
+);
 console.log("Accepted:", ack.accepted, "tx:", ack.txHash);
 ```
 
-### Deposit Collateral (RPC)
+### Cancel Order
 
 ```javascript
-await orders.depositCollateral("0xOwnerAddress", "1000000000000000000");
+// cancelOrder(owner, orderId, signer) — signed; the chain enforces ownership.
+await orders.cancelOrder(wallet.address, 123, signer);
 ```
 
-### Withdraw Collateral (Precompile)
-
-Sends a transaction to the CLOB precompile:
+### Deposit Collateral
 
 ```javascript
-await orders.withdrawCollateral("0xOwnerAddress", "500000000000000000");
+await orders.depositCollateral(wallet.address, "1000000000000000000", signer);
+```
+
+### Withdraw Collateral
+
+Sends a transaction to the CLOB precompile (the chain validates margin first):
+
+```javascript
+await orders.withdrawCollateral(wallet.address, "500000000000000000", signer);
 ```
 
 ### Use Precompile Directly
@@ -298,7 +332,8 @@ WebSocket may not be enabled on all nodes. If subscriptions fail, use HTTP polli
 | | `getTransactionReceipt(hash)` | Transaction receipt |
 | | `call(tx)` | eth_call |
 | | `estimateGas(tx)` | eth_estimateGas |
-| | `sendTransaction(tx)` | eth_sendTransaction |
+| | `sendTransaction(tx)` | **Disabled — throws.** Sign locally and use `sendRawTransaction(rawHex)` |
+| | `sendRawTransaction(rawHex)` | eth_sendRawTransaction (locally signed) |
 | | `getChainId()` | Chain ID |
 | | `getGasPrice()` | Gas price (hex) |
 | | `getCode(address)` / `getCodeHash(address)` | Contract bytecode / code hash |
@@ -311,8 +346,8 @@ WebSocket may not be enabled on all nodes. If subscriptions fail, use HTTP polli
 | | `getOpenOrders(owner)` | Open orders |
 | | `getPosition(owner, marketId)` | Position |
 | | `getCollateral(owner)` | Collateral |
-| | `submitOrder(...)` | Submit order |
-| | `cancelOrder(orderId)` | Cancel order |
-| | `depositCollateral(owner, amount)` | Deposit |
-| | `withdrawCollateral(owner, amount)` | Withdraw |
+| | `submitOrder(owner, marketId, side, price, size, tif, signer)` | Submit order (signed precompile tx) |
+| | `cancelOrder(owner, orderId, signer)` | Cancel order (signed precompile tx) |
+| | `depositCollateral(owner, amount, signer)` | Deposit (signed precompile tx) |
+| | `withdrawCollateral(owner, amount, signer)` | Withdraw (signed precompile tx) |
 | | `isLiquidatable(owner)` | Liquidation check |

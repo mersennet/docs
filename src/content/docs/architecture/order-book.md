@@ -2,6 +2,8 @@
 title: "MersennetOrders (On-chain CLOB)"
 ---
 
+![Abstract illustration of an order book: glowing bid and ask depth bars meeting at the spread](/img/orderbook.webp)
+
 MersennetOrders is Mersennet's **native on-chain central limit order book (CLOB)** -- a key differentiator that enables atomic DeFi strategies impossible on traditional chains. It is accessible to smart contracts via an EVM precompile at address `0x0000000000000000000000000000000000000100`.
 
 ## Overview
@@ -76,7 +78,7 @@ function placeOrder(
 
 | Parameter | Type | Description |
 |-----------|------|-------------|
-| `marketId` | `uint64` | Numeric market identifier (e.g. 1 = MRSN/USD) |
+| `marketId` | `uint64` | Numeric market identifier (e.g. 1 = MRSN) |
 | `isBuy` | `bool` | `true` = buy, `false` = sell |
 | `price` | `uint256` | Price in quote-asset units (18 decimals) |
 | `size` | `uint256` | Order size in base-asset units (18 decimals) |
@@ -85,6 +87,41 @@ function placeOrder(
 **Returns:** `orderId` (unique ID), `filled` (amount matched immediately), `remaining` (amount left on book).
 
 **Gas:** 50,000
+
+#### placeOrderExt
+
+Extended order placement with post-only and good-till-date support.
+
+```solidity
+function placeOrderExt(
+    uint64 marketId,
+    bool isBuy,
+    uint256 price,
+    uint256 size,
+    uint8 tif,
+    uint8 flags,
+    uint64 expireAtBlock
+) external returns (uint256 orderId, uint256 filled, uint256 remaining);
+```
+
+- `flags` bit 0 = **post-only**: the order is rejected if any part of it would cross the book immediately.
+- `expireAtBlock` gives **good-till-date** behavior: the chain auto-cancels the resting order at that block height (`0` = never expires).
+
+#### createMarket
+
+Permissionlessly list a new market.
+
+```solidity
+function createMarket(
+    bytes32 symbol,
+    uint256 tickSize,
+    uint256 lotSize
+) external returns (uint64 marketId);
+```
+
+Anyone can call this; the precompile charges a **listing fee in native MRSN** (100 MRSN on testnet) from the caller into the CLOB insurance fund and returns the new `marketId`. User-created markets appear alongside the five genesis markets (MRSN, BTC, ETH, SOL, ARB).
+
+**Gas:** 500,000
 
 #### cancelOrder
 
@@ -98,7 +135,7 @@ function cancelOrder(uint256 orderId) external returns (bool success);
 
 #### depositCollateral
 
-Deposit native MRSN as trading collateral. The `amount` must match `msg.value`.
+Deposit native MRSN as trading collateral. The precompile transfers `amount` from the caller's native MRSN balance to the CLOB escrow within the same call — do not send value with the call; the caller just needs a sufficient balance.
 
 ```solidity
 function depositCollateral(uint256 amount) external returns (bool success);
@@ -163,9 +200,14 @@ function getBestBidAsk(uint64 marketId) external view returns (uint256 bestBid, 
 | Selector | Function |
 |----------|----------|
 | `0x4c570d73` | `placeOrder(uint64,bool,uint256,uint256,uint8)` |
+| `0x2c700c15` | `placeOrderExt(uint64,bool,uint256,uint256,uint8,uint8,uint64)` |
+| `0x83e0341c` | `createMarket(bytes32,uint256,uint256)` |
 | `0x514fcac7` | `cancelOrder(uint256)` |
 | `0xbad4a01f` | `depositCollateral(uint256)` |
 | `0x6112fe2e` | `withdrawCollateral(uint256)` |
+| `0x31e087b1` | `depositTokenCollateral(address,uint256)` |
+| `0xc4708bdd` | `withdrawTokenCollateral(address,uint256)` |
+| `0xa5d498a5` | `getTokenCollateral(address,address)` |
 | `0x0f85fc5a` | `getPosition(uint64)` |
 | `0x5c1548fb` | `getCollateral()` |
 | `0x042e02cf` | `isLiquidatable(address)` |
@@ -229,7 +271,7 @@ Price-time priority:
 - MersennetOrders supports **margin trading** with configurable initial and maintenance margin
 - **Liquidations** can be triggered when margin falls below maintenance via `isLiquidatable()`
 - Smart contracts can call liquidation logic atomically with other operations
-- Collateral is global (not per-market) and denominated in native MRSN
+- Collateral is global (not per-market). Native MRSN is the primary collateral; whitelisted ERC-20 tokens can also be posted via `depositTokenCollateral` and count toward margin at a configured haircut (e.g. USDC at 90% weight on testnet)
 
 ## Summary
 
@@ -239,6 +281,6 @@ Price-time priority:
 | **Atomic composability** | Vault, order, fill in one transaction |
 | **Native matching** | O(log n) order book ops, no gas-heavy Solidity loops |
 | **Shared state** | EVM and CLOB see the same balances and positions |
-| **8 functions** | Complete trading lifecycle via standard Solidity calls |
+| **Full trading lifecycle** | Orders (incl. post-only/GTD), permissionless market listing, multi-collateral margin — all via standard Solidity calls |
 
 No other L1 offers atomic EVM + CLOB interaction in a single transaction. Mersennet enables institutional-grade DeFi strategies -- vaults, arbitrage, market making -- that are infeasible elsewhere.

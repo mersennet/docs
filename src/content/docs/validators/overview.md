@@ -8,7 +8,7 @@ Validators are the backbone of Mersennet. They run full nodes, participate in co
 
 Validators perform three critical functions:
 
-1. **Block Production**: Validators take turns proposing new blocks containing transactions, order submissions, and state updates. The proposer is selected via a round-robin algorithm weighted by stake.
+1. **Block Production**: Validators take turns proposing new blocks containing transactions, order submissions, and state updates. The proposer is selected by deterministic round-robin over the sorted validator set: `validators[(height + round) mod count]`, where `round` advances only on leader timeout.
 
 2. **Consensus Participation**: All validators participate in BFT (Byzantine Fault Tolerant) consensus. Each validator re-executes every proposed block and gossips a signed finality vote for its hash; a block is finalized when votes covering more than 2/3 of total stake have been observed.
 
@@ -20,14 +20,17 @@ Mersennet uses stake-weighted BFT consensus with the following characteristics:
 
 | Aspect | Description |
 |--------|-------------|
-| **Proposer Selection** | Round-robin with priority-based weighting. Validators with higher stake are selected more frequently to propose blocks. |
+| **Proposer Selection** | Deterministic round-robin over the validator set, with round-based failover if the leader misses its slot. |
 | **Voting Power** | Proportional to staked MRSN. One validator with 2M MRSN has twice the voting power of a validator with 1M MRSN. |
 | **Finality Threshold** | >2/3 of total stake must sign a finality vote for a block to be finalized. |
 | **Block Time** | ~2 seconds per block. |
 
 :::note
-Delegation is not yet implemented; all stake is currently bonded directly
-by validators. See the [Staking Guide](/validators/staking/) for details.
+Delegated staking is live via the MersennetStaking precompile at
+`0x0000000000000000000000000000000000000400`: any MRSN holder can `delegate`
+to a validator, earn a share of its rewards (minus commission), and
+`undelegate` / `withdrawUnbonded` after the unbonding period. See the
+[Staking Guide](/validators/staking/) for details.
 :::
 
 ## Block Production
@@ -51,7 +54,7 @@ validator_reward = (block_reward × validator_stake) / total_stake
 
 - **Initial reward**: ≈2.3 MRSN per block (2⁶¹ − 1 wei)
 - **Halving**: Every 33,550,336 blocks (~2.1 years at ~2 s blocks), the reward halves
-- **Distribution**: Rewards are credited directly to validator addresses, with no claiming required
+- **Distribution**: The validator's share is credited directly each block, with no claiming required; delegator rewards accrue in the staking precompile and are collected via `claimRewards`
 
 The more stake you have (your own + delegations), the larger your share of each block's reward.
 
@@ -78,7 +81,7 @@ Before running a validator, ensure you meet:
 |----------|-------------|
 | **Hardware** | 4 CPU cores, 8 GB RAM, 100 GB SSD, 100 Mbps network |
 | **Software** | Rust 1.85+ (for building from source) |
-| **Stake** | Minimum stake to register (governance may set higher minimums) |
+| **Stake** | Validator set is currently fixed at genesis; permissionless registration (with a minimum stake) is planned |
 | **Operational** | 24/7 uptime, monitoring, key management, backup procedures |
 
 See [Run a Validator Node](/validators/run-a-node) for the complete setup guide.

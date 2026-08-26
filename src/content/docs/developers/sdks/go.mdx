@@ -61,12 +61,12 @@ func main() {
 
 ## Order book
 
-Read the live CLOB and place orders through the `Orders` client:
+Read the live CLOB through the `Orders` client:
 
 ```go
 orders := mersennet.NewOrders(provider)
 
-// Market 1 = MRSN/USD. Prices and sizes are integer protocol units.
+// Market 1 = MRSN. Prices and sizes are integer protocol units.
 // Both sides are sorted by ascending price: best bid is the LAST bid,
 // best ask is the FIRST ask.
 book, err := orders.GetOrderBook(1)
@@ -75,15 +75,48 @@ if err != nil {
 }
 fmt.Println("Best bid:", book.Bids[len(book.Bids)-1], "Best ask:", book.Asks[0])
 
-// Place a GTC buy (owner account must be unlocked on the node, or use a
-// wallet-signed precompile transaction — see the JSON-RPC reference).
-// The node acknowledges with {"accepted": true, "txHash": "0x..."};
-// the order is placed when that transaction mines.
-outcome, err := orders.PlaceOrder(1, "buy", "105", "3", "gtc", "0xOwnerAddress")
+// DEPRECATED: PlaceOrder and CancelOrder return ErrSignedOrderRequired
+// unconditionally. Orders are signed transactions to the CLOB precompile
+// (0x0000000000000000000000000000000000000100); the unsigned owner-field
+// RPC was removed for security (it let anyone trade as anyone).
+_, err = orders.PlaceOrder(1, "buy", "105", "3", "gtc", "0xOwnerAddress")
+fmt.Println(err) // ErrSignedOrderRequired
+```
+
+### Placing orders (signed precompile transaction)
+
+The flow the Go SDK supports today: build the `placeOrder` calldata for the
+precompile at `0x…0100` (Solidity interface in
+[Deployed Contracts](/resources/contracts/)), sign the transaction locally
+(e.g. with go-ethereum), and submit it via `Provider.SendRawTransaction`.
+Native Go calldata/signing helpers are a tracked follow-up; the TypeScript
+SDK (`MersennetOrders` + `TxSigner`) is the reference implementation.
+
+```go
+import (
+    "math/big"
+
+    "github.com/ethereum/go-ethereum/common"
+    "github.com/ethereum/go-ethereum/common/hexutil"
+    "github.com/ethereum/go-ethereum/core/types"
+    "github.com/ethereum/go-ethereum/crypto"
+)
+
+// placeOrder(uint64 marketId, bool isBuy, uint256 price, uint256 size, uint8 tif)
+// selector 0x4c570d73; each argument is ABI-encoded as a 32-byte word.
+calldata := encodePlaceOrder(1, true, big.NewInt(105), big.NewInt(3), 0)
+
+key, _ := crypto.HexToECDSA(privateKeyHex)
+precompile := common.HexToAddress("0x0000000000000000000000000000000000000100")
+tx := types.NewTransaction(nonce, precompile, big.NewInt(0), 300_000, gasPrice, calldata)
+signed, _ := types.SignTx(tx, types.NewEIP155Signer(big.NewInt(131071)), key)
+
+rawBytes, _ := signed.MarshalBinary()
+txHash, err := provider.SendRawTransaction(hexutil.Encode(rawBytes))
 if err != nil {
     log.Fatal(err)
 }
-fmt.Println("Accepted:", outcome["accepted"], "tx:", outcome["txHash"])
+fmt.Println("tx:", txHash) // the order is placed when this transaction mines
 ```
 
 ## Provider reference
@@ -104,8 +137,8 @@ fmt.Println("Accepted:", outcome["accepted"], "tx:", outcome["txHash"])
 
 | Method | Description |
 |--------|-------------|
-| `PlaceOrder(market, side, price, amount, tif, owner)` | Place an order (GTC/IOC/FOK) |
-| `CancelOrder(orderID)` | Cancel an open order |
+| `PlaceOrder(market, side, price, amount, tif, owner)` | **Deprecated** — returns `ErrSignedOrderRequired` unconditionally; submit a signed `placeOrder` precompile transaction via `SendRawTransaction` |
+| `CancelOrder(orderID)` | **Deprecated** — returns `ErrSignedOrderRequired` unconditionally; submit a signed `cancelOrder` precompile transaction via `SendRawTransaction` |
 | `GetOrderBook(market)` | Full depth for a market |
 | `AddMarket(base, quote, lot, tick)` | Add a market (admin; disabled on public RPC) |
 

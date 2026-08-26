@@ -111,7 +111,7 @@ Implementing a full-featured order matching engine purely in EVM bytecode is pos
 
 Mersennet addresses this tension by architecting a **single blockchain** with **multiple execution domains**:
 
-1. **MersennetEVM**: Full EVM compatibility (Shanghai spec) for general computation
+1. **MersennetEVM**: Full EVM compatibility (Prague spec) for general computation
 2. **MersennetOrders**: A native, deterministic order matching engine with price-time priority
 3. **Bridge**: Ordered message queues enabling MersennetOrders and MersennetEVM to interoperate atomically
 
@@ -252,7 +252,7 @@ Mersennet consists of four primary execution domains unified under a single cons
 ### 2.2 Component Breakdown
 
 #### 2.2.1 Execution Engine
-- **EVM Runtime**: Full EVM compatibility using revm (Shanghai spec)
+- **EVM Runtime**: Full EVM compatibility using revm (Prague spec)
 - **Parallel Execution** *(v6.0)*: Block-STM optimistic concurrency with dependency analysis, multi-version memory, and automatic fallback
 - **CLOB Precompile** *(v6.0)*: Native EVM precompile at `0x0100` for atomic order book interaction from Solidity
 - **Transaction Processing**: Multi-pool mempool (pending/queued/base_fee), validation pipeline, receipt generation
@@ -735,7 +735,7 @@ On first invocation, the HotStuff-2 state machine is initialized from the curren
 
 Mersennet maintains full EVM compatibility using **revm** (Rust EVM):
 
-- **Spec ID**: Shanghai (latest EVM specification)
+- **Spec ID**: Prague (`PRAGUE_EOF`)
 - **Opcodes**: All standard EVM opcodes supported
 - **Precompiles**: Standard Ethereum precompiles (ecrecover, sha256, etc.)
 - **Gas Metering**: Accurate gas accounting per opcode
@@ -776,10 +776,10 @@ The mempool maintains pending transactions with fee-based prioritization:
 
 #### 5.3.1 Structure
 
-Mempool is organized by sender:
-$$Mempool = \{sender \rightarrow \{nonce \rightarrow Tx\}\}$$
+The mempool maintains three pools — **pending** (executable), **queued** (future-nonce), and **base-fee** (priced below the current base fee) — each organized by sender:
+$$Pool = \{sender \rightarrow \{nonce \rightarrow Tx\}\}$$
 
-Each sender's transactions are ordered by nonce.
+Each sender's transactions are ordered by nonce, and transactions are promoted or demoted between pools as nonces and the base fee move.
 
 #### 5.3.2 Limits
 
@@ -1771,7 +1771,7 @@ $$Packet = (topic, data, ttl, id)$$
 **JSON-serialized wire format** (current implementation):
 ```
 {
-  "topic": string,    // e.g., "block", "tx", "vote", "peer_discovery"
+  "topic": string,    // e.g., "block", "tx", "vote", "peer"
   "data": base64,     // Message payload
   "id": string,       // Unique packet ID (hex hash of topic+data+nonce)
   "ttl": u8           // Time-to-live (hop count)
@@ -1799,7 +1799,12 @@ BlockHashInput = concat(
   gas_used (8 bytes BE),
   base_fee (32 bytes BE),
   coinbase (20 bytes),
-  tx_count (8 bytes BE)
+  tx_count (8 bytes BE),
+  parent_hash (32 bytes),
+  timestamp (8 bytes BE),
+  tx_root (32 bytes),
+  state_root (32 bytes),
+  receipts_root (32 bytes)
 )
 block_hash = keccak256(BlockHashInput)
 ```
@@ -1815,8 +1820,8 @@ block_hash = keccak256(BlockHashInput)
 
 - **Peer Discovery**: Maintain peer list from bootstrap nodes
 - **Peer TTL**: Remove stale peers after timeout
-- **Fanout**: Number of peers to forward to (default: 1)
-- **Max Peers**: Maximum peer connections (default: 8)
+- **Fanout**: Number of peers to forward to (default: 3)
+- **Max Peers**: Maximum peer connections (default: 50)
 
 ### 10.3 TCP State Sync
 
@@ -2357,7 +2362,7 @@ The following benchmarks are from the Mersennet reference implementation (Rust, 
 - CLOB precompile: **3-4x cheaper** than Uniswap V3 swaps
 - End-to-end block: **~200ms finality** in the HotStuff-2 benchmark; the live public testnet finalizes at its configured **~2s** block interval
 
-**Gas cost reference** (EVM, Shanghai): Transfer = 21,000; SSTORE (cold) = 22,100; SLOAD = 2,100; CALL = 2,600 + 100/byte calldata; CREATE2 = 32,000; **CLOB placeOrder = 50,000** (precompile).
+**Gas cost reference** (EVM, Prague): Transfer = 21,000; SSTORE (cold) = 22,100; SLOAD = 2,100; CALL = 2,600 + 100/byte calldata; CREATE2 = 32,000; **CLOB placeOrder = 50,000** (precompile).
 
 **Comprehensive competitive comparison (v6.0):**
 
