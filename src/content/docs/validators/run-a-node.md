@@ -1,8 +1,10 @@
 ---
-title: "Run a Validator Node"
+title: "Run a Node"
 ---
 
-This guide walks you through building, configuring, and running a Mersennet validator node from source.
+This guide walks you through building, configuring, and running a Mersennet node from source — first as a **full node** (syncs the chain, serves RPC, relays transactions), then what it takes to run a **validator**.
+
+Anyone can run a full node against the public testnet today. The node ships with a canonical testnet configuration, syncs historical blocks from the bootnodes at several hundred blocks per second, and then follows live gossip.
 
 ## Prerequisites
 
@@ -10,9 +12,9 @@ This guide walks you through building, configuring, and running a Mersennet vali
 
 | Resource | Minimum | Recommended | Notes |
 |----------|---------|-------------|-------|
-| **CPU** | 4 cores | 8+ cores | Block production and EVM execution are CPU-bound |
-| **RAM** | 8 GB | 16 GB | State trie and mempool reside in memory |
-| **Storage** | 100 GB SSD | 500 GB NVMe SSD | State grows over time; NVMe recommended for I/O |
+| **CPU** | 2 cores | 4+ cores | EVM execution and initial sync are CPU-bound (the testnet validators run 2 vCPU) |
+| **RAM** | 4 GB | 8 GB | State and mempool reside in memory |
+| **Storage** | 40 GB SSD | 200 GB NVMe SSD | State grows over time; NVMe recommended for I/O |
 | **Network** | 100 Mbps | 1 Gbps | Low latency matters for consensus round-trips |
 | **OS** | Ubuntu 22.04+ | Ubuntu 24.04 LTS | Any modern Linux; macOS for development only |
 
@@ -60,35 +62,96 @@ cargo build --release
 
 The binary will be at `target/release/mersennet` (built from the `mersennet-node` crate).
 
+## Join the Testnet (Full Node)
+
+### The canonical config
+
+Every node on the network must share the exact same `genesis`, `engine.chain_id`, and `token_economics` configuration — the genesis state is derived deterministically from it. The canonical testnet configuration ships in the repository:
+
+```
+networks/testnet/config.json
+```
+
+:::danger[Do not hand-write the genesis section]
+A node started with a different `genesis` section computes a different genesis state and will reject (or diverge from) every block it receives. Always start from `networks/testnet/config.json` and only adjust the runtime sections: `rpc`, `ws`, `p2p.listen`, and file paths.
+:::
+
+### Quick start (foreground)
+
+```bash
+mkdir -p ~/mersennet-node && cd ~/mersennet-node
+cp <repo>/networks/testnet/config.json .
+<repo>/target/release/mersennet --config config.json --mode full --rpc
+```
+
+On first start the node:
+
+1. Generates a P2P identity at `keys/node_key.json` (keep this file to retain your peer identity).
+2. Builds the genesis state from the config and logs `registered genesis validator ...` and `seeded genesis market ...` lines.
+3. Pulls historical blocks from the bootnodes in 256-block batches over TCP 30303 (`synced blocks from peer ...` log lines) at several hundred blocks per second.
+4. Switches to following live gossip once caught up (`received block from network ...` followed by `block finalized by 2/3 stake quorum ...`).
+
+Check sync progress against the [explorer](https://explorer.mersennet.com):
+
+```bash
+curl -s http://127.0.0.1:8545 -X POST \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","method":"eth_blockNumber","params":[],"id":1}'
+```
+
+:::note[NAT and firewalls]
+Outbound-only connectivity is enough to sync and follow the chain — block sync and gossip both work from behind NAT. Opening UDP+TCP 30303 to the world additionally lets other peers discover and sync from your node, which strengthens the network.
+:::
+
+### One-command install (systemd)
+
+For a production deployment, the repository ships an installer that sets up the binary, config, dedicated user, and a hardened systemd service (see [Systemd Service](#systemd-service-production) below for what it installs):
+
+```bash
+cargo build --release --bin mersennet
+sudo bash networks/testnet/install.sh
+```
+
+### Bootnodes
+
+The canonical config already lists these seed peers (UDP 30303 gossip, TCP 30303 block sync):
+
+| Bootnode | Address |
+|----------|---------|
+| Public RPC node | `46.225.30.187:30303` |
+| Validator 1 | `46.225.183.192:30303` |
+| Validator 2 | `49.13.54.79:30303` |
+
 ## Configuration
 
-Mersennet uses a JSON configuration file. Create `config.json` with the sections relevant to your deployment.
+Mersennet uses a JSON configuration file. The canonical testnet file covers everything below; this reference explains each section.
 
-### Minimal Validator Configuration
+### Runtime sections you may adjust
 
 ```json
 {
   "engine": {
-    "chain_id": 131071,
-    "state_path": "/var/lib/mersennet/state",
-    "storage_backend": "sled"
+    "state_path": "data/state"
   },
   "p2p": {
-    "node_key_path": "/var/lib/mersennet/state/node_key.json",
+    "node_key_path": "keys/node_key.json",
+    "peer_store_path": "data/peers.json",
     "listen": "0.0.0.0:30303",
-    "peers": ["46.225.30.187:30303"],
+    "peers": ["46.225.30.187:30303", "46.225.183.192:30303", "49.13.54.79:30303"],
     "block_time_ms": 2000
   },
   "rpc": {
-    "enabled": true,
-    "addr": "0.0.0.0:8545"
+    "enabled": false,
+    "addr": "127.0.0.1:8545"
   },
   "ws": {
-    "enabled": true,
-    "addr": "0.0.0.0:9945"
+    "enabled": false,
+    "addr": "127.0.0.1:8546"
   }
 }
 ```
+
+Relative paths resolve against the node's working directory. The RPC defaults to loopback — bind `0.0.0.0` only if you intend to serve the endpoint publicly (put a TLS-terminating reverse proxy such as Caddy or nginx in front).
 
 ### Full Configuration Reference
 
@@ -181,68 +244,48 @@ Check the [Network Information](/getting-started/network-info) page for current 
 
 ## Genesis Setup
 
-For **mainnet** or **testnet**, you need the correct genesis allocations. Genesis is not a separate file: it is the `genesis` section of your `config.json`, defining initial accounts and validators. The chain ID is the numeric `engine.chain_id` (131071 for testnet, 8191 for mainnet; see `mainnet/genesis.json` in the repository for the canonical mainnet parameters).
+Genesis is not a separate file: it is the `genesis` section of your `config.json`, defining initial accounts, validators, CLOB markets, and collateral assets. Every node derives the identical genesis state from it, which is why the section must be byte-for-byte compatible across the network.
 
-Example `genesis` section:
+- **Testnet (chain ID 131071)**: use `networks/testnet/config.json` from the repository — never edit its `genesis`, `engine.chain_id`, or `token_economics` sections.
+- **Mainnet (chain ID 8191)**: see `mainnet/genesis.json` in the repository for the canonical parameters (not yet launched).
 
-```json
-{
-  "engine": {
-    "chain_id": 131071
-  },
-  "genesis": {
-    "accounts": [
-      {
-        "address": "0x...",
-        "balance": "10000000000000000000000000",
-        "nonce": 0
-      }
-    ],
-    "validators": [
-      {
-        "address": "0x...",
-        "stake": "1000000"
-      }
-    ]
-  }
-}
-```
+## Node Modes
 
-## Starting the Node
+The `--mode` flag accepts `full`, `validator`, or `devnet`:
 
-Run the node with your config in validator mode:
+| Mode | Behavior |
+|------|----------|
+| `full` | Syncs, follows consensus, serves RPC/WS, relays transactions. Does not propose blocks. **Use this for the public testnet.** |
+| `validator` | Everything `full` does, plus block production when this node's key is in the active validator set and elected leader. |
+| `devnet` | Local single-node demo chain. This is the default when `--mode` is omitted — always pass `--mode` explicitly for real deployments. |
 
 ```bash
-./target/release/mersennet \
-  --config config.json \
-  --mode validator
+# Full node (RPC enabled)
+./target/release/mersennet --config config.json --mode full --rpc
+
+# Validator
+./target/release/mersennet --config config.json --mode validator
 ```
 
-The `--mode` flag accepts `validator`, `full`, or `devnet` (the default if omitted, which runs a local demo; always pass `--mode` for real deployments).
+## Becoming a Validator
 
-For a **non-validator** (sentinel/full node), start with `--mode full`. The node will sync and serve RPC but will not propose blocks.
+The active validator set currently consists of the four genesis validators. **Runtime validator registration is not yet open**: staking your own node into the active set requires a chain upgrade that is on the roadmap (the precompile selectors are reserved). What you can do today:
 
-## Registering as a Validator
+1. **Run a full node** — identical software, real contribution to network resilience, and the operational dry-run for validating later.
+2. **Delegate MRSN to an existing validator** via the staking precompile and earn a share of block rewards. See the [Staking Guide](/validators/staking) and the [explorer's Validators page](https://explorer.mersennet.com/validators).
+3. **Register interest in validating** through the community channels in the [FAQ](/resources/faq/) — prospective validators for the next validator-set expansion are onboarded from there.
 
-To join the validator set:
-
-1. **Stake MRSN**: Send a staking transaction to register your validator address with your desired stake amount. See [Staking Guide](/validators/staking).
-
-2. **Ensure your node is synced**: Wait until your node has caught up to the latest block height.
-
-3. **Node key**: Your `p2p.node_key_path` must point to a key file that corresponds to the address you staked from. The node will automatically begin participating in consensus once registered and synced.
-
-Validator registration happens through the genesis configuration (for initial validators) or via staking transactions. There is no separate RPC method for registration: once you stake MRSN and your node is synced with the correct validator key, you join the active set.
+When validator onboarding opens, the flow will be: sync a full node, stake MRSN from the address matching your `p2p.node_key_path` identity, and the node begins participating in consensus once the set change takes effect. The node logs its validator address at startup (`validator_addr=0x...`).
 
 ## Systemd Service (Production)
 
-For production deployments, run the node as a systemd service with proper resource limits and security hardening.
+For production deployments, run the node as a systemd service with proper resource limits and security hardening. This is exactly what `sudo bash networks/testnet/install.sh` sets up; the steps below are the manual equivalent.
 
 ### Create a Dedicated User
 
 ```bash
 sudo useradd --system --home-dir /var/lib/mersennet --shell /usr/sbin/nologin mersennet
-sudo mkdir -p /var/lib/mersennet/state
+sudo mkdir -p /var/lib/mersennet/{data,keys}
 sudo chown -R mersennet:mersennet /var/lib/mersennet
 ```
 
@@ -252,7 +295,7 @@ Create `/etc/systemd/system/mersennet.service`:
 
 ```ini
 [Unit]
-Description=Mersennet Validator Node
+Description=Mersennet Full Node (testnet, chain 131071)
 Documentation=https://docs.mersennet.com
 After=network-online.target
 Wants=network-online.target
@@ -265,7 +308,8 @@ WorkingDirectory=/var/lib/mersennet
 
 ExecStart=/usr/local/bin/mersennet \
     --config /etc/mersennet/config.json \
-    --mode validator
+    --mode full \
+    --rpc
 
 Restart=always
 RestartSec=10
@@ -480,11 +524,13 @@ groups:
 
 ### What to Back Up
 
+Paths below follow the canonical config (relative to the node's working directory, `/var/lib/mersennet` under systemd):
+
 | Path | Contents | Critical? |
 |------|----------|-----------|
-| `state/node_key.json` | Node identity keypair (validator signing key) | **Yes**, loss means new identity |
-| `state/peers.json` | Known peer addresses | No, peers rediscovered on restart |
-| `state/sled_db/` | Full chain state (accounts, storage, blocks) | Yes, loss requires full resync |
+| `keys/node_key.json` | Node identity keypair (validator signing key) | **Yes**, loss means new identity |
+| `data/peers.json` | Known peer addresses | No, peers rediscovered on restart |
+| `data/state/` | Full chain state (accounts, storage, blocks) | Yes, loss requires resync (fast: several hundred blocks/s) |
 | `config.json` | Node configuration | Yes, keep in version control |
 
 ### Backup Procedure
@@ -496,7 +542,7 @@ sudo systemctl stop mersennet
 # Create timestamped backup
 BACKUP_DIR="/backups/mersennet/$(date +%Y%m%d-%H%M%S)"
 mkdir -p "$BACKUP_DIR"
-cp -r /var/lib/mersennet/state "$BACKUP_DIR/"
+cp -r /var/lib/mersennet/keys /var/lib/mersennet/data "$BACKUP_DIR/"
 cp /etc/mersennet/config.json "$BACKUP_DIR/"
 
 # Restart the node
@@ -511,8 +557,8 @@ sudo systemctl stop mersennet
 
 # Restore from backup
 BACKUP_DIR="/backups/mersennet/20260101-120000"
-rm -rf /var/lib/mersennet/state
-cp -r "$BACKUP_DIR/state" /var/lib/mersennet/
+rm -rf /var/lib/mersennet/data /var/lib/mersennet/keys
+cp -r "$BACKUP_DIR/data" "$BACKUP_DIR/keys" /var/lib/mersennet/
 chown -R mersennet:mersennet /var/lib/mersennet
 
 # Start the node — it will catch up from the restored height
@@ -532,7 +578,7 @@ Never run two nodes with the same `node_key.json` simultaneously: this may trigg
 | Symptom | Cause | Solution |
 |---------|-------|----------|
 | `failed to read config file` | Config path wrong or missing | Check `--config` path; ensure file exists and is valid JSON |
-| `address already in use` | Port conflict (8545, 30303, or 9945) | Stop conflicting process or change port in config |
+| `address already in use` | Port conflict (8545, 8546, or 30303) | Stop conflicting process or change port in config |
 | `permission denied` | File/directory permissions | `chown -R mersennet:mersennet /var/lib/mersennet` |
 | `failed to install Prometheus metrics exporter` | Duplicate recorder initialization | Ensure only one node instance is running |
 
@@ -588,7 +634,7 @@ curl -s http://localhost:8545 -X POST \
 curl -s http://localhost:8545/metrics | grep mersennet_height
 
 # Check disk usage
-du -sh /var/lib/mersennet/state/
+du -sh /var/lib/mersennet/data/state/
 ```
 
 ## Next Steps
