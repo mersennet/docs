@@ -80,7 +80,7 @@ Before running a validator, ensure you meet:
 | Category | Requirement |
 |----------|-------------|
 | **Hardware** | 4 CPU cores, 8 GB RAM, 100 GB SSD, 100 Mbps network |
-| **Software** | Rust 1.85+ (for building from source) |
+| **Software** | 64-bit Linux, glibc 2.34+ (Ubuntu 22.04+ / Debian 12+) for the [release bundle](https://mersennet.com/downloads/); Rust 1.85+ only if building from source |
 | **Stake** | Validator set is currently fixed at genesis; permissionless registration (with a minimum stake) is planned |
 | **Operational** | 24/7 uptime, monitoring, key management, backup procedures |
 
