@@ -14,9 +14,9 @@ Mersennet Trade is live at **[https://trade.mersennet.com](https://trade.mersenn
 |---------|---------|
 | **Type** | Perpetual futures on a native on-chain order book |
 | **Order Engine** | MersennetOrders native precompile (`0x…0100`) |
-| **Order Types** | Limit, Market, Stop, Trailing, TWAP, Scale |
+| **Order Types** | Limit, Market, Stop, Trailing, TWAP, Scale, Chase — with GTC/IOC/FOK time-in-force, post-only, and on-chain good-till-date expiry |
 | **Funding** | Every 8 hours (typical rates ±0.01% per interval) |
-| **Collateral** | Native MRSN, escrowed 1:1 by the precompile |
+| **Collateral** | Native MRSN plus registered tokens (e.g. USDC), fully escrowed on-chain by the precompile |
 | **Chain** | Mersennet Testnet (Chain ID 131071) |
 | **Wallet** | MetaMask or any EVM-compatible wallet — plus a gasless mode |
 
@@ -40,15 +40,17 @@ User Wallet ──► Trade UI ──► JSON-RPC ──► mempool ──► bl
 
 ## Markets
 
-Markets are seeded deterministically at genesis so every node agrees on the same set:
+Five markets are seeded at genesis, and anyone can list a new market permissionlessly by calling `createMarket` on the precompile (100 MRSN listing fee):
 
 | Market | Max Leverage |
 |--------|--------------|
-| MRSN/USD | 50× |
-| BTC/USD | 100× |
-| ETH/USD | 50× |
-| SOL/USD | 20× |
-| ARB/USD | 20× |
+| MRSN | 50× |
+| BTC | 100× |
+| ETH | 50× |
+| SOL | 20× |
+| ARB | 20× |
+
+Additional user-created markets appear alongside the genesis five — query `mersennet_orders_getMarkets` for the live set.
 
 ## Getting Started
 

@@ -22,7 +22,7 @@ The WebSocket endpoint may not be enabled on all nodes. If subscriptions fail, u
 
 ## Rate Limits
 
-The testnet RPC does not enforce strict rate limits for normal development use. For high-volume applications, consider:
+The testnet RPC enforces a per-IP limit of 100 requests/second. Exceeding it returns HTTP 429 with JSON-RPC error `-32005`. For high-volume applications, consider:
 
 - Running your own node
 - Implementing client-side throttling
@@ -67,11 +67,11 @@ See [RPC Methods Reference](/developers/rpc/methods) for full details.
 
 | Method | Description |
 |--------|-------------|
-| `mersennet_sendTransaction` | Send a transaction (alternative to `eth_sendTransaction`) |
+| `mersennet_sendTransaction` | **Disabled** — returns `-32601`; sign locally and submit via `eth_sendRawTransaction` |
 | `mersennet_validators` | Get list of validators |
 | `mersennet_getDomainEvents` | Get domain events for a block range |
 | `mersennet_getCodeAttestation` / `mersennet_getCodeHash` | On-chain contract code-publication registry lookups |
-| `mersennet_orders_*` | MersennetOrders trading methods (submitOrder, cancelOrder, depositCollateral, getOrderBook, getOpenOrders). Writes route through consensus and return `{accepted, txHash}`. |
+| `mersennet_orders_*` | MersennetOrders trading methods (submitOrder, cancelOrder, depositCollateral, getOrderBook, getOpenOrders). Writes route through consensus and return `{accepted, txHash}` (unsigned write RPCs are disabled on public endpoints — submit signed precompile transactions instead). |
 | `mersennet_bridge_*` | MersennetBridge bridge methods (enqueueOrdersToEvm, enqueueEvmToOrders, dequeueOrdersToEvm, dequeueEvmToOrders) |
 | **Shielded / ZK** | Shielded transfers & orders, SP1 state proofs, and selective-disclosure reads; see the [Shielded JSON-RPC reference](/developers/privacy/shielded-rpc) |
 | **WebSocket** | `eth_subscribe` and `mersennet_subscribe` push notifications (new heads, trades, shielded roots, state proofs) |
@@ -94,7 +94,7 @@ For deployment and sending transactions, you can use:
 
 - **Hardhat / Foundry / ethers.js** signing locally and submitting via `eth_sendRawTransaction`
 - **Remix** with MetaMask (injected provider)
-- **eth_sendTransaction / mersennet_sendTransaction** for server-side flows with unlocked accounts
+- **eth_sendRawTransaction** for all flows — sign locally with your tooling of choice; unlocked-account submission is not supported
 
 ## Error Handling
 

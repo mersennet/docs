@@ -45,7 +45,7 @@ export default config;
 ```
 
 :::note[HttpNetworkConfig]
-Mersennet uses standard JSON-RPC, including `eth_feeHistory` (priority-fee rewards are always 0, since there is no tip). If you encounter issues with gas estimation, you may need to adjust `timeout` in the network config or pin a fixed `gasPrice`. Deployment works with locally signed transactions via `eth_sendRawTransaction` (the Hardhat default) or with `eth_sendTransaction` against a node with an unlocked account.
+Mersennet uses standard JSON-RPC, including `eth_feeHistory` (priority-fee rewards are always 0, since there is no tip). If you encounter issues with gas estimation, you may need to adjust `timeout` in the network config or pin a fixed `gasPrice`. Deployment works with locally signed transactions via `eth_sendRawTransaction` (the Hardhat default).
 :::
 
 ## Sample ERC-20 Contract

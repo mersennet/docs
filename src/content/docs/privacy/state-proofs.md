@@ -1,9 +1,9 @@
 ---
 title: "Verifiable state: SP1 + Groth16 bridge"
-description: "Every block's state transition is proven with SP1, with a Groth16 bridge designed to verify Mersennet state on Ethereum for trustless light clients."
+description: "Every block runs through the SP1 proof pipeline (development proofs today), with a Groth16 bridge designed to verify Mersennet state on Ethereum for trustless light clients."
 ---
 
-Privacy is only half of the design. The other half is **verifiability**: anyone should be able to confirm that Mersennet's state evolved correctly, from a succinct proof, without trusting a full node. Mersennet does this by proving each block's state transition with **SP1** (live on the testnet today, in development-prover mode) and, in the production design, verifying it on Ethereum through a **Groth16** bridge (the Ethereum verifier contract is not yet deployed).
+Privacy is only half of the design. The other half is **verifiability**: anyone should be able to confirm that Mersennet's state evolved correctly, from a succinct proof, without trusting a full node. Every block's state transition runs through the **SP1** proof pipeline. The testnet currently emits **development proofs** — deterministic hash commitments over the block program's outputs, not yet zero-knowledge proofs — while real SP1 zkVM proving is enabled by the `sp1` build feature. In the production design, proofs are verified on Ethereum through a **Groth16** bridge (the Ethereum verifier contract is not yet deployed).
 
 ## State transition proofs (SP1)
 
@@ -33,9 +33,12 @@ curl -s https://rpc.mersennet.com \
   "newMarketStateHash": "0x…",
   "txCount": 12,
   "proofBincodeHex": "0x…",
-  "proofType": "SP1"
+  "proofType": "SP1",
+  "proverMode": "development"
 }
 ```
+
+Note that `proofType` is `"SP1"` in both modes; `proverMode` is the authoritative field distinguishing real SP1 proofs from development ones.
 
 A stateless verifier is available as `mersennet_verifyStateProof`, and `mersennet_getStateProof` fetches the proof for any specific block.
 
@@ -63,6 +66,8 @@ A light client does not need to re-execute Mersennet or trust a specific RPC pro
 3. Trust the resulting state root.
 
 This is the foundation for trustless bridges, cross-chain messaging, and independent verification of the chain's privacy invariants.
+
+Note: trustless verification requires `proverMode: "sp1"`. Development proofs verify pipeline integrity end to end, but anyone can regenerate them from public outputs, so they still require trusting the proving node.
 
 ## Current Status on Testnet
 

@@ -3,6 +3,10 @@ title: "Shielded accounts"
 description: "Notes, commitments, and nullifiers: how Mersennet conceals balances, transfers, positions, and order flow."
 ---
 
+:::note[Activation]
+The operations on this page are gated by the privacy hard fork and currently return error `-32605` on the public testnet.
+:::
+
 A shielded account is not an address with a public balance. It is a set of **notes**, encrypted records of value, that only the owner (and anyone they explicitly authorize) can read. The chain tracks notes through cryptographic commitments and spends them through nullifiers, so it can guarantee correctness without learning ownership.
 
 ## Notes, commitments, nullifiers
@@ -20,6 +24,10 @@ When you spend value, your wallet:
 3. Creates new output **commitments** for the recipient and any change.
 
 The node verifies the proof, checks the nullifier is not already in the **nullifier set**, and appends the new commitments. Balances, parties, and amounts never appear in the clear.
+
+:::caution[Verifier status]
+Noir circuit proofs (Spend, Output, JoinSplit, OrderPlace, LiquidateClaim, LiquidateExecute) are cryptographically verified by the Barretenberg UltraPlonk verifier only in nodes built with the `prover` feature and a configured verify adapter. Default builds use a deterministic development verifier that checks proof/public-input consistency but is **not cryptographically sound**. Production activation of privacy mode requires prover-enabled validator builds.
+:::
 
 ```mermaid
 flowchart LR

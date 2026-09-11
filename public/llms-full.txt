@@ -21,13 +21,13 @@ Mersennet uses **leader-gated Proof-of-Stake BFT** (HotStuff-2 style): one elect
 
 ## Validator Selection
 
-Validators are nodes that have **staked** MRSN tokens and registered in the validator set. Voting power is proportional to stake:
+Validators are nodes with MRSN staked in the genesis validator set. Voting power is proportional to stake:
 
 ```
 voting_power(validator) ∝ staked_amount
 ```
 
-Token holders can **delegate** their MRSN to validators, increasing that validator's voting power. The validator set is dynamic: new validators can join by staking, and existing validators can leave by unbonding.
+Token holders can **delegate** their MRSN to validators via the staking precompile, increasing that validator's voting power. Permissionless runtime validator registration is planned (precompile selectors are reserved) but not yet enabled; the current set is fixed at genesis.
 
 ## Leader Election
 
@@ -93,15 +93,9 @@ finalized ⟺ Σ stake(voters for block_hash) ≥ T
 
 Votes are ECDSA signatures over a domain-separated digest of `(height, block_hash)`; each receiving node recovers the signer, checks it against the validator set, and accumulates stake until quorum. Finalized blocks are **irreversible** — there are no chain reorganizations.
 
-## Epoch Transitions
+## Validator-Set Updates
 
-Mersennet may use **epochs** for validator set updates (e.g. applying pending stake changes, unbonding completions). At epoch boundaries:
-
-- Pending validator additions/removals are applied
-- Unbonding queues are processed
-- Validator set is updated for the next epoch
-
-The exact epoch length is configurable. Validator set changes take effect at the start of the next epoch to ensure consensus continuity.
+Validator-set changes (stake changes, unbonding completions, slashes) are queued and applied at each block boundary; there is no separate epoch schedule. Unbonded stake becomes withdrawable `unbonding_period` blocks after the unbond.
 
 ## Slashing Mechanism
 
@@ -117,7 +111,8 @@ The exact epoch length is configurable. Validator set changes take effect at the
 Penalties **escalate** with repeated offenses:
 
 ```
-actual_penalty = base_bps + (escalation_step × offense_count) + (escalation_step × rounds_missed)
+actual_penalty = base_bps + (escalation_step × offense_count) + (escalation_step × (rounds_missed − 1))
+# rounds_missed is floored at 1, so the first missed round adds no escalation
 actual_penalty = min(actual_penalty, max_escalation_bps)
 ```
 
@@ -399,7 +394,7 @@ Complete reference of all configuration parameters with their default values.
 | `escalation_step_bps` | `u64` | `25` | Penalty increase per repeated offense (0.25%) |
 | `escalation_max_bps` | `u64` | `1000` | Maximum escalated penalty (10%) |
 | `round_timeout_ms` | `u64` | `500` | Consensus round timeout in milliseconds |
-| `unbonding_period` | `u64` | `2` | Epochs before unbonded stake is withdrawable |
+| `unbonding_period` | `u64` | `2` | Blocks before unbonded stake is withdrawable (code default; the public testnet configs use 100) |
 
 ### `token_economics`: Reward & Supply
 
@@ -513,23 +508,24 @@ Mersennet implements an **EVM-compatible** execution environment, allowing devel
 
 | Aspect | Mersennet |
 |--------|-------------|
-| **EVM Version** | Shanghai |
+| **EVM Version** | Prague (revm `SpecId::PRAGUE_EOF`) |
 | **Chain ID** | 131071 |
 | **Token** | MRSN (18 decimals) |
 | **Block Time** | ~2 seconds |
 
-## Shanghai EVM
+## Prague EVM
 
-Mersennet targets the **Shanghai** EVM specification, which includes:
+Mersennet runs the **Prague** EVM specification (revm `SpecId::PRAGUE_EOF`), which includes:
 
-- All pre-Shanghai opcodes and semantics
-- **PUSH0** (EIP-3855): Push constant 0 onto the stack
+- All Shanghai features, including **PUSH0** (EIP-3855)
+- Cancun features, including **transient storage** (`TSTORE`/`TLOAD`, EIP-1153) and **MCOPY** (EIP-5656)
+- Prague-era additions
 
-This ensures compatibility with the vast majority of Solidity contracts and tooling (Hardhat, Foundry, Remix, and standard wallets).
+This means contracts compiled for any solc `evmVersion` up to Cancun deploy and run unchanged, ensuring compatibility with the vast majority of Solidity contracts and tooling (Hardhat, Foundry, Remix, and standard wallets).
 
 ## Supported Opcodes
 
-Mersennet supports the standard Ethereum opcodes defined in the Shanghai spec, including:
+Mersennet supports the standard Ethereum opcodes defined in the Prague spec, including:
 
 - **Arithmetic**: ADD, SUB, MUL, DIV, MOD, etc.
 - **Comparison**: LT, GT, SLT, SGT, EQ, etc.
@@ -556,16 +552,24 @@ Mersennet supports all standard Ethereum precompiles:
 | 0x06 | ecAdd | Elliptic curve point addition |
 | 0x07 | ecMul | Elliptic curve scalar multiplication |
 | 0x08 | ecPairing | BN254 pairing |
+| 0x09 | blake2f | BLAKE2 compression function |
+| 0x0a | KZG point evaluation | EIP-4844 point-evaluation precompile |
+| 0x0b–0x11 | BLS12-381 | Prague BLS12-381 curve operations |
 
-### Mersennet Extension: MersennetOrders
+### Mersennet Extensions
 
-Mersennet adds a **custom precompile** for the native order matching engine:
+Mersennet adds **custom precompiles** for native protocol features:
 
 | Address | Precompile | Description |
 |---------|------------|-------------|
-| **0x0100** | **MersennetOrders** | Native on-chain CLOB |
+| **0x0100** | **MersennetOrders** | Native on-chain CLOB: orders, markets, collateral |
+| **0x0200** | Shielded transfer | Shielded-pool transfers (privacy hard fork) |
+| **0x0201** | Shield / unshield bridge | Transparent ↔ shielded value movement (privacy hard fork) |
+| **0x0202** | Code publication | Contract-code publication for the shielded EVM |
+| **0x0300** | State-proof verifier | Verify SP1 state-transition proofs on-chain |
+| **0x0400** | **MersennetStaking** | Delegated staking: `delegate`, `undelegate`, `claimRewards`, `withdrawUnbonded` |
 
-See [MersennetOrders (On-chain CLOB)](/architecture/order-book) for full documentation.
+See [MersennetOrders (On-chain CLOB)](/architecture/order-book) and the [Staking Guide](/validators/staking/) for full documentation.
 
 ## Gas Metering
 
@@ -575,7 +579,7 @@ Mersennet uses gas metering consistent with Ethereum:
 - Transactions specify a `gasLimit`; execution stops if gas is exhausted
 - Gas is paid in MRSN (converted at the current gas price)
 
-Gas costs align with Ethereum's Shanghai spec for predictable behavior when porting contracts.
+Gas costs align with Ethereum's Prague spec for predictable behavior when porting contracts.
 
 ## Differences from Ethereum Mainnet
 
@@ -612,10 +616,11 @@ Same decimal precision, so contract logic that assumes 18 decimals works unchang
 
 | Feature | Status |
 |---------|--------|
-| Shanghai EVM | ✅ Supported |
+| Prague EVM | ✅ Supported |
 | Standard opcodes | ✅ Supported |
 | Standard precompiles | ✅ Supported |
 | MersennetOrders precompile (0x0100) | ✅ Supported |
+| MersennetStaking precompile (0x0400) | ✅ Supported |
 | Custom tx format | ✅ Custom binary + Ethereum RLP (EIP-155) both accepted |
 | EIP-1559 | ✅ Dynamic base fee (no priority tip) |
 | Gas metering | ✅ Ethereum-compatible |
@@ -769,10 +774,10 @@ When the block timer fires, the following sequence executes:
       │
       ▼
   ┌─────────────────────────┐
-  │  1. PROPOSER SELECTION  │  Consensus selects the validator with the
-  │                         │  highest accumulated priority (stake-weighted
-  │                         │  round-robin). If this node is not the
-  │                         │  proposer, it waits for an incoming block.
+  │  1. PROPOSER SELECTION  │  Consensus selects the leader by deterministic
+  │                         │  round-robin over the validator set
+  │                         │  ((height + round) mod count). If this node is
+  │                         │  not the proposer, it waits for an incoming block.
   └────────────┬────────────┘
                │
                ▼
@@ -885,7 +890,7 @@ The state backend supports snapshots for:
 
 ## EVM Integration
 
-Mersennet uses [revm](https://github.com/bluealloy/revm) (Rust EVM) for transaction execution with the Shanghai specification.
+Mersennet uses [revm](https://github.com/bluealloy/revm) (Rust EVM) for transaction execution with the Prague specification (`SpecId::PRAGUE_EOF`).
 
 ### Execution Flow
 
@@ -1025,6 +1030,8 @@ source: https://docs.mersennet.com/architecture/order-book/
 ---
 
 
+![Abstract illustration of an order book: glowing bid and ask depth bars meeting at the spread](/img/orderbook.webp)
+
 MersennetOrders is Mersennet's **native on-chain central limit order book (CLOB)** -- a key differentiator that enables atomic DeFi strategies impossible on traditional chains. It is accessible to smart contracts via an EVM precompile at address `0x0000000000000000000000000000000000000100`.
 
 ## Overview
@@ -1099,7 +1106,7 @@ function placeOrder(
 
 | Parameter | Type | Description |
 |-----------|------|-------------|
-| `marketId` | `uint64` | Numeric market identifier (e.g. 1 = MRSN/USD) |
+| `marketId` | `uint64` | Numeric market identifier (e.g. 1 = MRSN) |
 | `isBuy` | `bool` | `true` = buy, `false` = sell |
 | `price` | `uint256` | Price in quote-asset units (18 decimals) |
 | `size` | `uint256` | Order size in base-asset units (18 decimals) |
@@ -1108,6 +1115,41 @@ function placeOrder(
 **Returns:** `orderId` (unique ID), `filled` (amount matched immediately), `remaining` (amount left on book).
 
 **Gas:** 50,000
+
+#### placeOrderExt
+
+Extended order placement with post-only and good-till-date support.
+
+```solidity
+function placeOrderExt(
+    uint64 marketId,
+    bool isBuy,
+    uint256 price,
+    uint256 size,
+    uint8 tif,
+    uint8 flags,
+    uint64 expireAtBlock
+) external returns (uint256 orderId, uint256 filled, uint256 remaining);
+```
+
+- `flags` bit 0 = **post-only**: the order is rejected if any part of it would cross the book immediately.
+- `expireAtBlock` gives **good-till-date** behavior: the chain auto-cancels the resting order at that block height (`0` = never expires).
+
+#### createMarket
+
+Permissionlessly list a new market.
+
+```solidity
+function createMarket(
+    bytes32 symbol,
+    uint256 tickSize,
+    uint256 lotSize
+) external returns (uint64 marketId);
+```
+
+Anyone can call this; the precompile charges a **listing fee in native MRSN** (100 MRSN on testnet) from the caller into the CLOB insurance fund and returns the new `marketId`. User-created markets appear alongside the five genesis markets (MRSN, BTC, ETH, SOL, ARB).
+
+**Gas:** 500,000
 
 #### cancelOrder
 
@@ -1121,7 +1163,7 @@ function cancelOrder(uint256 orderId) external returns (bool success);
 
 #### depositCollateral
 
-Deposit native MRSN as trading collateral. The `amount` must match `msg.value`.
+Deposit native MRSN as trading collateral. The precompile transfers `amount` from the caller's native MRSN balance to the CLOB escrow within the same call — do not send value with the call; the caller just needs a sufficient balance.
 
 ```solidity
 function depositCollateral(uint256 amount) external returns (bool success);
@@ -1186,9 +1228,14 @@ function getBestBidAsk(uint64 marketId) external view returns (uint256 bestBid, 
 | Selector | Function |
 |----------|----------|
 | `0x4c570d73` | `placeOrder(uint64,bool,uint256,uint256,uint8)` |
+| `0x2c700c15` | `placeOrderExt(uint64,bool,uint256,uint256,uint8,uint8,uint64)` |
+| `0x83e0341c` | `createMarket(bytes32,uint256,uint256)` |
 | `0x514fcac7` | `cancelOrder(uint256)` |
 | `0xbad4a01f` | `depositCollateral(uint256)` |
 | `0x6112fe2e` | `withdrawCollateral(uint256)` |
+| `0x31e087b1` | `depositTokenCollateral(address,uint256)` |
+| `0xc4708bdd` | `withdrawTokenCollateral(address,uint256)` |
+| `0xa5d498a5` | `getTokenCollateral(address,address)` |
 | `0x0f85fc5a` | `getPosition(uint64)` |
 | `0x5c1548fb` | `getCollateral()` |
 | `0x042e02cf` | `isLiquidatable(address)` |
@@ -1252,7 +1299,7 @@ Price-time priority:
 - MersennetOrders supports **margin trading** with configurable initial and maintenance margin
 - **Liquidations** can be triggered when margin falls below maintenance via `isLiquidatable()`
 - Smart contracts can call liquidation logic atomically with other operations
-- Collateral is global (not per-market) and denominated in native MRSN
+- Collateral is global (not per-market). Native MRSN is the primary collateral; whitelisted ERC-20 tokens can also be posted via `depositTokenCollateral` and count toward margin at a configured haircut (e.g. USDC at 90% weight on testnet)
 
 ## Summary
 
@@ -1262,7 +1309,7 @@ Price-time priority:
 | **Atomic composability** | Vault, order, fill in one transaction |
 | **Native matching** | O(log n) order book ops, no gas-heavy Solidity loops |
 | **Shared state** | EVM and CLOB see the same balances and positions |
-| **8 functions** | Complete trading lifecycle via standard Solidity calls |
+| **Full trading lifecycle** | Orders (incl. post-only/GTD), permissionless market listing, multi-collateral margin — all via standard Solidity calls |
 
 No other L1 offers atomic EVM + CLOB interaction in a single transaction. Mersennet enables institutional-grade DeFi strategies -- vaults, arbitrage, market making -- that are infeasible elsewhere.
 
@@ -1484,6 +1531,7 @@ const { ethers } = require("ethers");
 
 const RPC_URL = "https://rpc.mersennet.com";
 const CHAIN_ID = 131071;
+// Placeholder: no contract deployed at this address on the current testnet — see the caution above
 const ROUTER = "0x9f337f433e71ce969b991511f1dcd3d0622116bb";
 const WMRSN = "0x5bBF04528469591280D36D46209c7CCD5a68a798";
 const MOCK_USDC = "0xA44B23d1D0C0133dA71DeCe399d5d5aDE6DD22d1";
@@ -1653,6 +1701,7 @@ await tx.wait();
 ```javascript
 const FACTORY_ABI = ["function getPair(address, address) view returns (address)"];
 const factory = new ethers.Contract(
+  // Placeholder: no contract deployed at this address on the current testnet — see the caution above
   "0x63f7a64db6d2b965189b8b48b7435668021f6b17",
   FACTORY_ABI,
   provider
@@ -1825,7 +1874,7 @@ await token.approve("0xSpenderAddress", ethers.MaxUint256);
 cast call 0xTokenAddress "balanceOf(address)(uint256)" 0xYourAddress \
   --rpc-url https://rpc.mersennet.com
 
-# Encode transfer (for use with eth_sendTransaction)
+# Encode transfer calldata (for use with `cast send --private-key …` or any locally signed transaction)
 cast calldata "transfer(address,uint256)" 0xRecipient 1000000000000000000
 ```
 
@@ -2342,11 +2391,6 @@ forge create src/MyToken.sol:MyToken \
 
 The `--legacy` flag is recommended: Mersennet implements an EIP-1559 base fee but no priority tip (`eth_maxPriorityFeePerGas` returns `0x0`), so legacy gas-price transactions are the simplest fit.
 
-**Other deployment methods:**
-
-- `eth_sendTransaction`: Requires the RPC node to have the deployer account unlocked
-- `mersennet_sendTransaction`: Mersennet–specific method for sending transactions
-
 ## Node.js Deployment Helper
 
 Alternatively, use a Node.js script with ethers.js, which signs locally and submits via `eth_sendRawTransaction`.
@@ -2362,8 +2406,7 @@ const RPC_URL = "https://rpc.mersennet.com";
 const CHAIN_ID = 131071;
 
 async function main() {
-  // Option A: Use private key (ethers signs, but we use eth_sendTransaction via a custom provider)
-  // Option B: Use a node with unlocked account
+  // Sign locally with the private key; ethers submits via eth_sendRawTransaction
   const provider = new ethers.JsonRpcProvider(RPC_URL, CHAIN_ID);
   const wallet = new ethers.Wallet(process.env.PRIVATE_KEY, provider);
 
@@ -2460,7 +2503,7 @@ cast send 0xRecipient --value 1ether --legacy \
 | `forge create` | ✅ | Use `--legacy` |
 | `cast call` | ✅ | Read-only |
 | `cast send` | ✅ | Use `--legacy` |
-| `eth_sendTransaction` | ✅ | Alternative when the node has an unlocked account |
+| `eth_sendTransaction` | ❌ | Disabled — returns `-32601`; use `eth_sendRawTransaction` |
 | `eth_feeHistory` | ✅ | Supported (priority fee rewards are always 0) |
 
 
@@ -2512,7 +2555,7 @@ export default config;
 ```
 
 :::note[HttpNetworkConfig]
-Mersennet uses standard JSON-RPC, including `eth_feeHistory` (priority-fee rewards are always 0, since there is no tip). If you encounter issues with gas estimation, you may need to adjust `timeout` in the network config or pin a fixed `gasPrice`. Deployment works with locally signed transactions via `eth_sendRawTransaction` (the Hardhat default) or with `eth_sendTransaction` against a node with an unlocked account.
+Mersennet uses standard JSON-RPC, including `eth_feeHistory` (priority-fee rewards are always 0, since there is no tip). If you encounter issues with gas estimation, you may need to adjust `timeout` in the network config or pin a fixed `gasPrice`. Deployment works with locally signed transactions via `eth_sendRawTransaction` (the Hardhat default).
 :::
 
 ## Sample ERC-20 Contract
@@ -2634,7 +2677,7 @@ JSON-RPC 2.0 envelope:
 | Code | Meaning | Typical cause & fix |
 |------|---------|---------------------|
 | `-32700` | Parse error | Request body is not valid JSON. Check `Content-Type: application/json` and quoting. |
-| `-32601` | Method not found | Typo in the method name, or calling a `mersennet_*` shielded method on a pre-privacy node. See [Methods](/developers/rpc/methods/). |
+| `-32601` | Method not found | Typo in the method name, or the method is disabled on this node (e.g. `eth_sendTransaction`). See [Methods](/developers/rpc/methods/). |
 | `-32602` | Invalid params | Wrong type, missing field, or malformed hex (addresses are 20 bytes `0x…`, hashes 32 bytes). The message names the offending parameter. |
 | `-32000` | Execution error | Generic server-side failure while executing the request: the message carries the underlying reason. |
 
@@ -2642,19 +2685,15 @@ JSON-RPC 2.0 envelope:
 
 | Code | Meaning | Typical cause & fix |
 |------|---------|---------------------|
-| `-32005` | Transaction rejected | The mempool refused the transaction. The `data` field carries the rejection reason: nonce too low, insufficient balance, fee below floor, wrong chain ID (testnet `131071`, mainnet `8191`), invalid signature, or a full queue. |
+| `-32005` | Transaction rejected | The mempool refused the transaction. The `data` field carries the rejection reason: nonce too low, insufficient balance, fee below floor, wrong chain ID (testnet `131071`, mainnet `8191`), invalid signature, or a full queue. Also returned (with HTTP 429) when the per-IP rate limit of 100 requests/second is exceeded — back off and retry. |
 
 ## Order book (`mersennet_orders_*`)
 
 | Code | Error | Fix |
 |------|-------|-----|
-| `-32010` | Unknown market | Market ID doesn't exist; list markets first. |
-| `-32011` | Invalid size | Size violates the market's lot size or is zero. |
-| `-32012` | FOK not fillable | A fill-or-kill order couldn't be fully matched. Retry as `GTC`/`IOC` or adjust price. |
-| `-32013` | Insufficient collateral | Deposit collateral before placing the order. |
-| `-32014` | Insufficient equity | Position equity can't support the new order's margin requirement. |
-| `-32015` | Market halted | The market is paused by governance. |
-| `-32016` | Withdrawal exceeds equity | Withdraw less, or close positions first. |
+| `-32604` | Unsigned mutation disabled | Unsigned `mersennet_orders_*` mutations are disabled on this node; submit a signed transaction to the precompile at `0x…0100`. |
+
+CLOB business errors (unknown market, bad tick/lot size, insufficient collateral, withdrawal exceeds equity, …) surface as transaction reverts with a reason string when using the precompile path.
 
 ## Privacy / shielded
 
@@ -2666,7 +2705,7 @@ JSON-RPC 2.0 envelope:
 :::tip[Debugging checklist]
 1. Wrong network? `eth_chainId` should return `0x1ffff` (testnet) or `0x1fff` (mainnet).
 2. Stale nonce? `eth_getTransactionCount(addr, "pending")`.
-3. Shielded call failing? Confirm privacy is active: `mersennet_getLatestStateProof` returns a proof only post-activation.
+3. Shielded call failing? Confirm privacy activation by checking whether shielded mutations return `-32605` ("shielded methods are disabled until the privacy hard fork activates") — that indicates the fork has not activated.
 :::
 
 
@@ -2757,7 +2796,7 @@ Returns the current gas price in wei.
 
 ### eth_maxPriorityFeePerGas
 
-Returns the current priority fee per gas in wei.
+Always returns `0x0` — Mersennet has no priority tips.
 
 **Parameters:** None
 
@@ -2779,11 +2818,15 @@ curl -X POST https://rpc.mersennet.com \
   -d '{"jsonrpc":"2.0","method":"eth_feeHistory","params":["0x4","latest",[25,50,75]],"id":1}'
 ```
 
+:::note
+`eth_feeHistory` returns an empty `reward` array (Mersennet has no priority tips). Some fee-estimation tooling doesn't expect this — pin a fixed `gasPrice` if estimation misbehaves.
+:::
+
 ---
 
 ### eth_accounts
 
-Returns a list of addresses owned by the node (typically empty on public nodes).
+Always returns an empty array.
 
 **Parameters:** None
 
@@ -2923,6 +2966,10 @@ Estimates gas for a transaction.
 
 Returns block by block number.
 
+:::note
+Only a recent window of blocks is served from memory; requests for older heights return `null`. Use an indexer for historical data.
+:::
+
 After privacy activation, this method remains public only for
 header-only access. Setting `fullTransactions=true` is rejected because
 full transaction metadata is not part of the post-fork public surface.
@@ -2948,11 +2995,11 @@ curl -X POST https://rpc.mersennet.com \
     "number": "0x1234",
     "hash": "0x...",
     "proposer": "0x...",
-    "gas_limit": "0x...",
-    "gas_used": "0x...",
-    "base_fee": "0x...",
-    "state_root": "0x...",
-    "domain_events": [],
+    "gasLimit": "0x...",
+    "gasUsed": "0x...",
+    "baseFeePerGas": "0x...",
+    "stateRoot": "0x...",
+    "domainEvents": [],
     "transactions": ["0x...", "0x..."]
   }
 }
@@ -3026,15 +3073,15 @@ surface because receipt metadata and logs remain private.
   "jsonrpc": "2.0",
   "id": 1,
   "result": {
-    "transaction_hash": "0x...",
-    "block_hash": "0x...",
-    "block_number": "0x...",
-    "transaction_index": "0x0",
+    "transactionHash": "0x...",
+    "blockHash": "0x...",
+    "blockNumber": "0x...",
+    "transactionIndex": "0x0",
     "status": "0x1",
-    "gas_used": "0x...",
+    "gasUsed": "0x...",
     "output": "0x...",
     "logs": [],
-    "contract_address": "0x..."
+    "contractAddress": "0x..."
   }
 }
 ```
@@ -3059,11 +3106,7 @@ curl -X POST https://rpc.mersennet.com \
 
 ### eth_sendTransaction
 
-Sends a transaction signed by the node.
-
-**Parameters:**
-
-1. `transactionObject`: `{ from, to?, value?, gas?, gasPrice?, data? }`
+**Disabled** on all Mersennet nodes. Returns `-32601`. Sign transactions locally (MetaMask, ethers.js, Foundry) and submit via `eth_sendRawTransaction`.
 
 ---
 
@@ -3171,6 +3214,10 @@ Creates a filter that notifies when new pending transactions arrive.
 **Parameters:** None
 
 **Returns:** Filter ID (hex string)
+
+:::note
+`eth_getFilterChanges` for this filter type always returns an empty array.
+:::
 
 ---
 
@@ -3348,7 +3395,7 @@ Same as `eth_getTransactionByHash`.
 
 ### mersennet_sendTransaction
 
-Same as `eth_sendTransaction`.
+**Disabled** on all Mersennet nodes. Returns `-32601`. Sign transactions locally (MetaMask, ethers.js, Foundry) and submit via `eth_sendRawTransaction`.
 
 ---
 
@@ -3418,7 +3465,7 @@ The native order book engine accessible via RPC. The CLOB precompile is at addre
 
 **Orders route through consensus.** State-mutating CLOB calls (`submitOrder`, `cancelOrder`, `depositCollateral`) do not mutate state synchronously — they build a precompile transaction, submit it to the mempool, and return `{ accepted, txHash }`. The order takes effect when the transaction mines (~1-2 blocks, a few seconds). Poll `mersennet_orders_getOpenOrders` or subscribe to the `MersennetOrdersTrades` WebSocket topic to observe the result.
 
-You can also call the precompile directly with a **wallet-signed transaction** (MetaMask, ethers.js) — see [Deployed Contracts](/resources/contracts/) for the Solidity interface. On this testnet the unsigned RPC path is enabled for frictionless demos (`mersennet_orders.allow_unsigned_orders_rpc = true`); on mainnet it will be disabled and signed precompile transactions become the only write path.
+On the public testnet the unsigned RPC path is **disabled** (`mersennet_orders.allow_unsigned_orders_rpc = false`, the default). State-mutating CLOB calls must be submitted as wallet-signed transactions to the precompile at `0x…0100` via `eth_sendRawTransaction` — see [Deployed Contracts](/resources/contracts/) for the Solidity interface. The unsigned `mersennet_orders_submitOrder`/`cancelOrder`/`depositCollateral` RPCs return error `-32604` unless a node is run locally with `allow_unsigned_orders_rpc = true`.
 
 ### mersennet_orders_addMarket (disabled)
 
@@ -3441,7 +3488,7 @@ List every CLOB market (genesis-seeded and permissionlessly created), sorted by 
   "jsonrpc": "2.0",
   "id": 1,
   "result": [
-    { "id": 1, "symbol": "MRSN/USD", "tickSize": "0x1", "lotSize": "0x1", "lastPrice": "0xfde8", "status": "active" }
+    { "id": 1, "symbol": "MRSN", "tickSize": "0x1", "lotSize": "0x1", "lastPrice": "0xfde8", "status": "active" }
   ]
 }
 ```
@@ -3462,8 +3509,10 @@ Submit a limit order to the CLOB. The order is packaged as a `placeOrder` precom
    - `size`: Order size (hex)
    - `tif`: Time-in-force: `"gtc"` (Good-Til-Cancel), `"ioc"` (Immediate-or-Cancel), `"fok"` (Fill-or-Kill)
 
+**Local dev node only** — the unsigned RPC path requires `mersennet_orders.allow_unsigned_orders_rpc = true`; public endpoints return `-32604`:
+
 ```bash
-curl -X POST https://rpc.mersennet.com \
+curl -X POST http://localhost:8545 \
   -H "Content-Type: application/json" \
   -d '{"jsonrpc":"2.0","method":"mersennet_orders_submitOrder","params":[{"owner":"0x7f5ce38fb2553e95dd8ef9182a80bc219c9a0d45","market_id":1,"side":"buy","price":"0xfde8","size":"0x64","tif":"gtc"}],"id":1}'
 ```
@@ -3481,21 +3530,19 @@ curl -X POST https://rpc.mersennet.com \
 }
 ```
 
-The order rests (or fills) once `txHash` mines. Fills are emitted as `trade` domain events in the block and on the `MersennetOrdersTrades` WebSocket topic.
-
-If the order crosses existing resting orders, `trades` will contain fill details and `filled` will be non-zero.
+The response contains only `{ accepted, txHash }`. Fills happen when the transaction mines; observe them by polling `mersennet_orders_getOpenOrders` / `getTrades` or subscribing to the `MersennetOrdersTrades` WebSocket topic.
 
 ---
 
 ### mersennet_orders_cancelOrder
 
-Cancel an open order.
+Cancel an open order. Like `submitOrder`, this is a local-dev-node-only unsigned path (public endpoints return `-32604`).
 
 **Parameters:**
 
 1. `orderId`: Order ID (hex string)
 
-**Returns:** `true` on success.
+**Returns:** `{ accepted, txHash }` like `submitOrder` — the cancel takes effect when the transaction mines.
 
 ---
 
@@ -3525,7 +3572,7 @@ import { MersennetProvider, MersennetOrders } from '@mersennet/sdk';
 const provider = new MersennetProvider('https://rpc.mersennet.com');
 const orders = new MersennetOrders(provider);
 
-const book = await orders.getOrderBook(1); // MRSN/USD
+const book = await orders.getOrderBook(1); // MRSN
 console.log('Best bid:', book.bids[book.bids.length - 1]);
 console.log('Best ask:', book.asks[0]);
 ```
@@ -3539,7 +3586,7 @@ from mersennet import MersennetProvider, MersennetOrders
 provider = MersennetProvider("https://rpc.mersennet.com")
 orders = MersennetOrders(provider)
 
-book = orders.get_order_book(1)  # MRSN/USD
+book = orders.get_order_book(1)  # MRSN
 print("Bids:", book.bids)
 print("Asks:", book.asks)
 ```
@@ -3583,7 +3630,8 @@ Get all open orders for a specific address.
 Deposit collateral for margin trading. Routes through consensus as a
 `depositCollateral` precompile transaction from `address` — the amount is
 escrowed 1:1 from the account's native MRSN balance. Returns
-`{ accepted, txHash }` like `submitOrder`.
+`{ accepted, txHash }` like `submitOrder`. Like `submitOrder`, this is a
+local-dev-node-only unsigned path (public endpoints return `-32604`).
 
 **Parameters:**
 
@@ -3785,11 +3833,15 @@ The following CLOB markets are registered on the testnet:
 
 | Market ID | Symbol | Description |
 |-----------|--------|-------------|
-| 1 | MRSN/USD | MRSN perpetual, priced in USD |
-| 2 | BTC/USD | BTC perpetual, priced in USD |
-| 3 | ETH/USD | ETH perpetual, priced in USD |
-| 4 | SOL/USD | SOL perpetual, priced in USD |
-| 5 | ARB/USD | ARB perpetual, priced in USD |
+| 1 | MRSN | MRSN perpetual, priced in USD |
+| 2 | BTC | BTC perpetual, priced in USD |
+| 3 | ETH | ETH perpetual, priced in USD |
+| 4 | SOL | SOL perpetual, priced in USD |
+| 5 | ARB | ARB perpetual, priced in USD |
+
+:::note
+Market creation is permissionless via the `createMarket` precompile call, so the live list may contain additional markets — query `mersennet_orders_getMarkets` for the current set.
+:::
 
 ---
 
@@ -3804,6 +3856,7 @@ Mersennet exposes native functionality through EVM precompiles, callable from So
 | `0x…0201` | Shield / Unshield | Transparent ⇄ shielded bridge (`shield`, `unshield`) |
 | `0x…0202` | Code Publication | Register/revoke a contract code attestation |
 | `0x…0300` | State-Proof Verifier | Verify an SP1 state-transition proof on-chain (`verifyStateProof(bytes)`) |
+| `0x…0400` | MersennetStaking | Delegate/undelegate stake, claim rewards, withdraw unbonded |
 
 (Addresses are the 20-byte form, e.g. `0x0000000000000000000000000000000000000100`.)
 
@@ -3908,7 +3961,7 @@ The WebSocket endpoint may not be enabled on all nodes. If subscriptions fail, u
 
 ## Rate Limits
 
-The testnet RPC does not enforce strict rate limits for normal development use. For high-volume applications, consider:
+The testnet RPC enforces a per-IP limit of 100 requests/second. Exceeding it returns HTTP 429 with JSON-RPC error `-32005`. For high-volume applications, consider:
 
 - Running your own node
 - Implementing client-side throttling
@@ -3953,11 +4006,11 @@ See [RPC Methods Reference](/developers/rpc/methods) for full details.
 
 | Method | Description |
 |--------|-------------|
-| `mersennet_sendTransaction` | Send a transaction (alternative to `eth_sendTransaction`) |
+| `mersennet_sendTransaction` | **Disabled** — returns `-32601`; sign locally and submit via `eth_sendRawTransaction` |
 | `mersennet_validators` | Get list of validators |
 | `mersennet_getDomainEvents` | Get domain events for a block range |
 | `mersennet_getCodeAttestation` / `mersennet_getCodeHash` | On-chain contract code-publication registry lookups |
-| `mersennet_orders_*` | MersennetOrders trading methods (submitOrder, cancelOrder, depositCollateral, getOrderBook, getOpenOrders). Writes route through consensus and return `{accepted, txHash}`. |
+| `mersennet_orders_*` | MersennetOrders trading methods (submitOrder, cancelOrder, depositCollateral, getOrderBook, getOpenOrders). Writes route through consensus and return `{accepted, txHash}` (unsigned write RPCs are disabled on public endpoints — submit signed precompile transactions instead). |
 | `mersennet_bridge_*` | MersennetBridge bridge methods (enqueueOrdersToEvm, enqueueEvmToOrders, dequeueOrdersToEvm, dequeueEvmToOrders) |
 | **Shielded / ZK** | Shielded transfers & orders, SP1 state proofs, and selective-disclosure reads; see the [Shielded JSON-RPC reference](/developers/privacy/shielded-rpc) |
 | **WebSocket** | `eth_subscribe` and `mersennet_subscribe` push notifications (new heads, trades, shielded roots, state proofs) |
@@ -3980,7 +4033,7 @@ For deployment and sending transactions, you can use:
 
 - **Hardhat / Foundry / ethers.js** signing locally and submitting via `eth_sendRawTransaction`
 - **Remix** with MetaMask (injected provider)
-- **eth_sendTransaction / mersennet_sendTransaction** for server-side flows with unlocked accounts
+- **eth_sendRawTransaction** for all flows — sign locally with your tooling of choice; unlocked-account submission is not supported
 
 ## Error Handling
 
@@ -4072,12 +4125,12 @@ func main() {
 
 ## Order book
 
-Read the live CLOB and place orders through the `Orders` client:
+Read the live CLOB through the `Orders` client:
 
 ```go
 orders := mersennet.NewOrders(provider)
 
-// Market 1 = MRSN/USD. Prices and sizes are integer protocol units.
+// Market 1 = MRSN. Prices and sizes are integer protocol units.
 // Both sides are sorted by ascending price: best bid is the LAST bid,
 // best ask is the FIRST ask.
 book, err := orders.GetOrderBook(1)
@@ -4086,15 +4139,48 @@ if err != nil {
 }
 fmt.Println("Best bid:", book.Bids[len(book.Bids)-1], "Best ask:", book.Asks[0])
 
-// Place a GTC buy (owner account must be unlocked on the node, or use a
-// wallet-signed precompile transaction — see the JSON-RPC reference).
-// The node acknowledges with {"accepted": true, "txHash": "0x..."};
-// the order is placed when that transaction mines.
-outcome, err := orders.PlaceOrder(1, "buy", "105", "3", "gtc", "0xOwnerAddress")
+// DEPRECATED: PlaceOrder and CancelOrder return ErrSignedOrderRequired
+// unconditionally. Orders are signed transactions to the CLOB precompile
+// (0x0000000000000000000000000000000000000100); the unsigned owner-field
+// RPC was removed for security (it let anyone trade as anyone).
+_, err = orders.PlaceOrder(1, "buy", "105", "3", "gtc", "0xOwnerAddress")
+fmt.Println(err) // ErrSignedOrderRequired
+```
+
+### Placing orders (signed precompile transaction)
+
+The flow the Go SDK supports today: build the `placeOrder` calldata for the
+precompile at `0x…0100` (Solidity interface in
+[Deployed Contracts](/resources/contracts/)), sign the transaction locally
+(e.g. with go-ethereum), and submit it via `Provider.SendRawTransaction`.
+Native Go calldata/signing helpers are a tracked follow-up; the TypeScript
+SDK (`MersennetOrders` + `TxSigner`) is the reference implementation.
+
+```go
+import (
+    "math/big"
+
+    "github.com/ethereum/go-ethereum/common"
+    "github.com/ethereum/go-ethereum/common/hexutil"
+    "github.com/ethereum/go-ethereum/core/types"
+    "github.com/ethereum/go-ethereum/crypto"
+)
+
+// placeOrder(uint64 marketId, bool isBuy, uint256 price, uint256 size, uint8 tif)
+// selector 0x4c570d73; each argument is ABI-encoded as a 32-byte word.
+calldata := encodePlaceOrder(1, true, big.NewInt(105), big.NewInt(3), 0)
+
+key, _ := crypto.HexToECDSA(privateKeyHex)
+precompile := common.HexToAddress("0x0000000000000000000000000000000000000100")
+tx := types.NewTransaction(nonce, precompile, big.NewInt(0), 300_000, gasPrice, calldata)
+signed, _ := types.SignTx(tx, types.NewEIP155Signer(big.NewInt(131071)), key)
+
+rawBytes, _ := signed.MarshalBinary()
+txHash, err := provider.SendRawTransaction(hexutil.Encode(rawBytes))
 if err != nil {
     log.Fatal(err)
 }
-fmt.Println("Accepted:", outcome["accepted"], "tx:", outcome["txHash"])
+fmt.Println("tx:", txHash) // the order is placed when this transaction mines
 ```
 
 ## Provider reference
@@ -4115,8 +4201,8 @@ fmt.Println("Accepted:", outcome["accepted"], "tx:", outcome["txHash"])
 
 | Method | Description |
 |--------|-------------|
-| `PlaceOrder(market, side, price, amount, tif, owner)` | Place an order (GTC/IOC/FOK) |
-| `CancelOrder(orderID)` | Cancel an open order |
+| `PlaceOrder(market, side, price, amount, tif, owner)` | **Deprecated** — returns `ErrSignedOrderRequired` unconditionally; submit a signed `placeOrder` precompile transaction via `SendRawTransaction` |
+| `CancelOrder(orderID)` | **Deprecated** — returns `ErrSignedOrderRequired` unconditionally; submit a signed `cancelOrder` precompile transaction via `SendRawTransaction` |
 | `GetOrderBook(market)` | Full depth for a market |
 | `AddMarket(base, quote, lot, tick)` | Add a market (admin; disabled on public RPC) |
 
@@ -4166,6 +4252,7 @@ Connect, place an order, and check a balance, with the SDK or the equivalent raw
   <TabItem label="TypeScript">
 
 ```typescript title="quick-reference.ts"
+import { Wallet } from 'ethers';
 import { MersennetProvider, MersennetOrders } from '@mersennet/sdk';
 
 // Connect
@@ -4173,17 +4260,23 @@ const provider = new MersennetProvider('https://rpc.mersennet.com');
 const orders = new MersennetOrders(provider);
 console.log('Chain ID:', await provider.getChainId()); // 131071
 
-// Place an order (node must have the owner account unlocked).
-// The node acknowledges with { accepted, txHash }; the order is placed
-// when that transaction mines.
-const ack = await provider.request('mersennet_orders_submitOrder', [{
-  owner: '0xOwnerAddress',
-  market_id: 1, // MRSN/USD
-  side: 'buy',
-  price: '0xf4240',
-  size: '0xa',
-  tif: 'gtc',
-}]);
+// Place an order. Every mutating method takes a trailing signer: the SDK
+// builds a placeOrder transaction to the CLOB precompile (0x…0100), your
+// signer signs it locally, and the SDK broadcasts it via
+// eth_sendRawTransaction. The node acknowledges with { accepted, txHash };
+// the order is placed when that transaction mines.
+const wallet = new Wallet(process.env.PRIVATE_KEY!);
+const signer = (tx) => wallet.signTransaction(tx);
+
+const ack = await orders.submitOrder(
+  wallet.address, // owner — must be the signer's address
+  1,              // market ID (MRSN)
+  'buy',
+  '0xf4240',      // price
+  '0xa',          // size
+  'gtc',
+  signer
+);
 console.log('Accepted:', ack.accepted, 'tx:', ack.txHash);
 
 // Check balance
@@ -4200,8 +4293,11 @@ curl -X POST https://rpc.mersennet.com \
   -H "Content-Type: application/json" \
   -d '{"jsonrpc":"2.0","method":"eth_chainId","params":[],"id":1}'
 
-# Place an order (node must have the owner account unlocked)
-curl -X POST https://rpc.mersennet.com \
+# Place an order — LOCAL DEV NODE ONLY. The unsigned RPC path requires
+# mersennet_orders.allow_unsigned_orders_rpc = true; public endpoints return
+# -32604. On public endpoints, sign a placeOrder transaction to the precompile
+# at 0x…0100 and submit it via eth_sendRawTransaction instead.
+curl -X POST http://localhost:8545 \
   -H "Content-Type: application/json" \
   -d '{"jsonrpc":"2.0","method":"mersennet_orders_submitOrder","params":[{"owner":"0xOwnerAddress","market_id":1,"side":"buy","price":"0xf4240","size":"0xa","tif":"gtc"}],"id":2}'
 
@@ -4219,7 +4315,7 @@ curl -X POST https://rpc.mersennet.com \
 From the Mersennet monorepo:
 
 ```bash
-cd sdk
+cd sdk-ts
 npm install
 npm run build
 ```
@@ -4228,7 +4324,7 @@ For use in another project, link or publish the package:
 
 ```bash
 # From your project
-npm install /path/to/mersennet/sdk
+npm install /path/to/mersennet/sdk-ts
 # Or when published: npm install @mersennet/sdk
 ```
 
@@ -4280,21 +4376,27 @@ console.log("Balance in wei:", wei.toString());
 
 ## Sending Transactions
 
-Use `eth_sendTransaction` (requires the node to have the account unlocked):
+Sign locally and submit via `sendRawTransaction`. The SDK's `sendTransaction` **throws** (`'eth_sendTransaction is disabled; sign the transaction locally and call sendRawTransaction(rawHex)'`) — unlocked-account submission is not supported on any Mersennet node.
 
 ```javascript
-const txHash = await provider.sendTransaction({
-  from: "0x...",
+import { Wallet } from "ethers";
+
+const wallet = new Wallet(process.env.PRIVATE_KEY);
+const raw = await wallet.signTransaction({
   to: "0x...",
   value: "0xde0b6b3a7640000", // 1 MRSN in hex
-  gas: "0x5208",
+  gasLimit: "0x5208",
   gasPrice: "0x3b9aca00",
+  nonce: await provider.getTransactionCount(wallet.address, "pending"),
+  chainId: 131071,
 });
+
+const txHash = await provider.sendRawTransaction(raw);
 console.log("Tx hash:", txHash);
 ```
 
 :::tip
-For transactions from a wallet (e.g., browser), use ethers.js or viem with the Mersennet RPC. The SDK's `sendTransaction` is for server-side flows with unlocked accounts.
+For transactions from a wallet (e.g., browser), use ethers.js or viem with the Mersennet RPC — they sign locally and submit via `eth_sendRawTransaction` out of the box.
 :::
 
 ## Interacting with MersennetOrders
@@ -4334,38 +4436,56 @@ const collateral = await orders.getCollateral("0xOwnerAddress");
 console.log("Collateral:", collateral);
 ```
 
-### Submit Order (RPC)
+### Submit Order
 
-Requires the RPC node to have the owner account unlocked:
+Every mutating method in `MersennetOrders` requires a trailing signer — a
+function `(tx) => Promise<rawSignedHex>` (wrap ethers, viem, or any secp256k1
+signer). The SDK builds a `placeOrder` transaction to the CLOB precompile,
+your signer signs it locally, and the SDK broadcasts it via
+`eth_sendRawTransaction`. Unsigned submission over RPC fails with `-32604`
+on public endpoints.
 
 ```javascript
+import { Wallet } from "ethers";
+
+const wallet = new Wallet(process.env.PRIVATE_KEY);
+const signer = (tx) => wallet.signTransaction(tx);
+
 // The node responds with an acknowledgement, not a fill report:
 // { accepted: true, txHash: "0x..." }. The order enters the book when
 // that transaction mines; read fills back via getOpenOrders/getOrderBook
 // or the transaction receipt.
-const ack = await provider.request("mersennet_orders_submitOrder", [{
-  owner: "0xOwnerAddress",
-  market_id: 1,  // marketId
-  side: "buy",   // "buy" | "sell"
-  price: "0xf4240",
-  size: "0xa",
-  tif: "gtc",    // "gtc" | "ioc" | "fok"
-}]);
+const ack = await orders.submitOrder(
+  wallet.address, // owner — must be the signer's address
+  1,              // marketId
+  "buy",          // "buy" | "sell"
+  "0xf4240",      // price
+  "0xa",          // size
+  "gtc",          // "gtc" | "ioc" | "fok"
+  signer
+);
 console.log("Accepted:", ack.accepted, "tx:", ack.txHash);
 ```
 
-### Deposit Collateral (RPC)
+### Cancel Order
 
 ```javascript
-await orders.depositCollateral("0xOwnerAddress", "1000000000000000000");
+// cancelOrder(owner, orderId, signer) — signed; the chain enforces ownership.
+await orders.cancelOrder(wallet.address, 123, signer);
 ```
 
-### Withdraw Collateral (Precompile)
-
-Sends a transaction to the CLOB precompile:
+### Deposit Collateral
 
 ```javascript
-await orders.withdrawCollateral("0xOwnerAddress", "500000000000000000");
+await orders.depositCollateral(wallet.address, "1000000000000000000", signer);
+```
+
+### Withdraw Collateral
+
+Sends a transaction to the CLOB precompile (the chain validates margin first):
+
+```javascript
+await orders.withdrawCollateral(wallet.address, "500000000000000000", signer);
 ```
 
 ### Use Precompile Directly
@@ -4446,7 +4566,8 @@ WebSocket may not be enabled on all nodes. If subscriptions fail, use HTTP polli
 | | `getTransactionReceipt(hash)` | Transaction receipt |
 | | `call(tx)` | eth_call |
 | | `estimateGas(tx)` | eth_estimateGas |
-| | `sendTransaction(tx)` | eth_sendTransaction |
+| | `sendTransaction(tx)` | **Disabled — throws.** Sign locally and use `sendRawTransaction(rawHex)` |
+| | `sendRawTransaction(rawHex)` | eth_sendRawTransaction (locally signed) |
 | | `getChainId()` | Chain ID |
 | | `getGasPrice()` | Gas price (hex) |
 | | `getCode(address)` / `getCodeHash(address)` | Contract bytecode / code hash |
@@ -4459,10 +4580,10 @@ WebSocket may not be enabled on all nodes. If subscriptions fail, use HTTP polli
 | | `getOpenOrders(owner)` | Open orders |
 | | `getPosition(owner, marketId)` | Position |
 | | `getCollateral(owner)` | Collateral |
-| | `submitOrder(...)` | Submit order |
-| | `cancelOrder(orderId)` | Cancel order |
-| | `depositCollateral(owner, amount)` | Deposit |
-| | `withdrawCollateral(owner, amount)` | Withdraw |
+| | `submitOrder(owner, marketId, side, price, size, tif, signer)` | Submit order (signed precompile tx) |
+| | `cancelOrder(owner, orderId, signer)` | Cancel order (signed precompile tx) |
+| | `depositCollateral(owner, amount, signer)` | Deposit (signed precompile tx) |
+| | `withdrawCollateral(owner, amount, signer)` | Withdraw (signed precompile tx) |
 | | `isLiquidatable(owner)` | Liquidation check |
 
 
@@ -4483,6 +4604,9 @@ Connect, place an order, and check a balance, with the SDK or the equivalent raw
   <TabItem label="Python">
 
 ```python title="quick_reference.py"
+import os
+
+from eth_account import Account
 from mersennet import MersennetProvider, MersennetOrders
 
 # Connect
@@ -4490,18 +4614,28 @@ provider = MersennetProvider("https://rpc.mersennet.com")
 orders = MersennetOrders(provider)
 print("Chain ID:", provider.chain_id())  # 131071
 
-# Place an order (node must have the owner account unlocked).
-# The node acknowledges with {"accepted": True, "txHash": "0x..."};
-# the order is placed when that transaction mines.
-result = orders.place_order(
-    market=1,          # market ID (MRSN/USD)
-    side="buy",
-    price="1000000",
-    amount="10",
-    tif="gtc",
-    owner="0xOwnerAddress",
-)
-print("Accepted:", result["accepted"], "tx:", result["txHash"])
+# Place an order: sign a placeOrder transaction to the CLOB precompile
+# (0x…0100) locally with eth-account and submit it via
+# eth_sendRawTransaction. The order is placed when the transaction mines.
+PRECOMPILE = "0x0000000000000000000000000000000000000100"
+
+def encode_place_order(market_id: int, is_buy: bool, price: int, size: int, tif: int) -> str:
+    # placeOrder(uint64 marketId, bool isBuy, uint256 price, uint256 size, uint8 tif)
+    words = [market_id, 1 if is_buy else 0, price, size, tif]
+    return "0x4c570d73" + "".join(format(w, "064x") for w in words)
+
+acct = Account.from_key(os.environ["PRIVATE_KEY"])
+signed = acct.sign_transaction({
+    "to": PRECOMPILE,
+    "data": encode_place_order(1, True, 1_000_000, 10, 0),  # market 1 = MRSN, GTC buy
+    "value": 0,
+    "gas": 300_000,
+    "gasPrice": int(provider.gas_price(), 16),
+    "nonce": int(provider.get_nonce(acct.address), 16),
+    "chainId": 131071,
+})
+tx_hash = provider.send_raw_transaction(signed.raw_transaction.hex())
+print("tx:", tx_hash)
 
 # Check balance
 balance = provider.get_balance("0xYourAddress")
@@ -4517,8 +4651,11 @@ curl -X POST https://rpc.mersennet.com \
   -H "Content-Type: application/json" \
   -d '{"jsonrpc":"2.0","method":"eth_chainId","params":[],"id":1}'
 
-# Place an order (node must have the owner account unlocked)
-curl -X POST https://rpc.mersennet.com \
+# Place an order — LOCAL DEV NODE ONLY. The unsigned RPC path requires
+# mersennet_orders.allow_unsigned_orders_rpc = true; public endpoints return
+# -32604. On public endpoints, sign a placeOrder transaction to the precompile
+# at 0x…0100 and submit it via eth_sendRawTransaction instead.
+curl -X POST http://localhost:8545 \
   -H "Content-Type: application/json" \
   -d '{"jsonrpc":"2.0","method":"mersennet_orders_submitOrder","params":[{"owner":"0xOwnerAddress","market_id":1,"side":"buy","price":"0xf4240","size":"0xa","tif":"gtc"}],"id":2}'
 
@@ -4640,7 +4777,7 @@ tx_hash = provider.send_raw_transaction("0xSignedTxHex")
 ```
 
 :::note
-`eth_sendRawTransaction` accepts standard Ethereum RLP-encoded transactions (e.g. signed with `eth-account`/web3.py) as well as Mersennet's custom binary format. Alternatively, use `eth_sendTransaction` or `mersennet_sendTransaction` when the node has the account unlocked.
+`eth_sendRawTransaction` accepts standard Ethereum RLP-encoded transactions (e.g. signed with `eth-account`/web3.py) as well as Mersennet's custom binary format.
 :::
 
 ## MersennetOrders
@@ -4657,23 +4794,49 @@ for ask in book.asks:
 
 ### Place Order
 
-Requires the RPC node to have the owner account unlocked:
+`orders.place_order()` and `orders.cancel_order()` are **deprecated and raise
+`NotImplementedError`**: the unsigned owner-field RPC was removed for security
+(it let anyone trade as anyone). Orders are now signed transactions to the
+CLOB precompile (`0x0000000000000000000000000000000000000100`). Sign the
+`placeOrder` calldata locally with `eth-account`/web3.py and submit it via
+`provider.send_raw_transaction()`:
 
 ```python
-result = orders.place_order(
-    market=1,
-    side="buy",
-    price="1000000",
-    amount="10",
-    tif="gtc",
-    owner="0xOwnerAddress",
-)
+import os
+
+from eth_account import Account
+
+PRECOMPILE = "0x0000000000000000000000000000000000000100"
+
+def encode_place_order(market_id: int, is_buy: bool, price: int, size: int, tif: int) -> str:
+    # placeOrder(uint64 marketId, bool isBuy, uint256 price, uint256 size, uint8 tif)
+    # tif: 0 = GTC, 1 = IOC, 2 = FOK
+    words = [market_id, 1 if is_buy else 0, price, size, tif]
+    return "0x4c570d73" + "".join(format(w, "064x") for w in words)
+
+acct = Account.from_key(os.environ["PRIVATE_KEY"])
+signed = acct.sign_transaction({
+    "to": PRECOMPILE,
+    "data": encode_place_order(1, True, 1_000_000, 10, 0),
+    "value": 0,
+    "gas": 300_000,
+    "gasPrice": int(provider.gas_price(), 16),
+    "nonce": int(provider.get_nonce(acct.address), 16),
+    "chainId": 131071,
+})
+tx_hash = provider.send_raw_transaction(signed.raw_transaction.hex())
+# The order is placed when this transaction mines; read fills back via
+# get_order_book()/get_trades() or the MersennetOrdersTrades WebSocket topic.
 ```
 
 ### Cancel Order
 
+Same flow with the `cancelOrder(uint256 orderId)` calldata (selector
+`0x514fcac7`); the chain enforces order ownership:
+
 ```python
-success = orders.cancel_order(order_id=123)
+def encode_cancel_order(order_id: int) -> str:
+    return "0x514fcac7" + format(order_id, "064x")
 ```
 
 ### Get Trades
@@ -4690,16 +4853,12 @@ for t in trades:
 positions = orders.get_positions("0xOwnerAddress", market=1)
 ```
 
-### Add Market (Admin)
+### Create Market
 
-```python
-market_id = orders.add_market(
-    base="MRSN",
-    quote="USD",
-    lot="1000000",
-    tick="1000",
-)
-```
+Market creation is the `createMarket(symbol, tickSize, lotSize)` precompile
+call (100 MRSN listing fee), submitted as a signed transaction like
+`placeOrder` above — see [Deployed Contracts](/resources/contracts/) for the
+Solidity interface.
 
 ## WebSocket Subscriptions
 
@@ -4780,7 +4939,7 @@ By the end of this tutorial you will have:
 - Connected to the Mersennet testnet over JSON-RPC and verified the chain ID.
 - Funded a transparent account with testnet MRSN from the faucet.
 - **Shielded** MRSN into a private note in the on-chain commitment tree.
-- Placed a **shielded order** on the MRSN/USD market, public only as a bucketed tier.
+- Placed a **shielded order** on the MRSN market, public only as a bucketed tier.
 - Reconstructed your private balance client-side from encrypted notes.
 - Verified the chain's state transition with an **SP1 proof**, with no trust in the node required.
 
@@ -4788,7 +4947,7 @@ By the end of this tutorial you will have:
 
 - Node.js 20+ (the SDK targets modern `fetch` and `bigint`).
 - Testnet MRSN from the [faucet](/getting-started/faucet/).
-- The SDK: `npm install @mersennet/sdk`.
+- The SDK: build from the monorepo (`cd sdk-ts && npm install && npm run build`, then `npm link`). Publication to npm as `@mersennet/sdk` is pending.
 
 :::tip[When a call fails]
 Every RPC error code Mersennet returns is catalogued in the [error reference](/developers/rpc/errors/). Keep it open: the codes are specific, and the `data` field usually names the exact problem.
@@ -4875,7 +5034,25 @@ const commitment = defaultNoteCommitment(note);
 
 // The shield envelope is the bincode encoding of (your EOA, the amount,
 // the new note commitment), 0x-hex — the standard encoding for every
-// opaque payload on the shielded surface.
+// opaque payload on the shielded surface. bincode uses fixed-width
+// little-endian integers, so the envelope is a plain byte concatenation:
+const strip = (hex: string) => hex.replace(/^0x/, '');
+const leHex = (value: bigint, byteLen: number) => {
+  const out = Buffer.alloc(byteLen);
+  for (let i = 0; i < byteLen; i += 1) {
+    out[i] = Number(value & 0xffn);
+    value >>= 8n;
+  }
+  return out.toString('hex');
+};
+
+const eoa = '0xYourWalletAddress'; // the transparent account funded in Step 2
+const shieldEnvelopeHex =
+  '0x' +
+  strip(eoa) +            // your EOA (20 bytes)
+  leHex(note.value, 32) + // the amount (u256, little-endian)
+  strip(commitment);      // the new note commitment (32 bytes)
+
 const result = await provider.request('mersennet_submitShield', [
   { envelopeBincodeHex: shieldEnvelopeHex },
 ]);
@@ -4899,7 +5076,7 @@ const provider = new MersennetProvider('https://rpc.mersennet.com');
 const vk = ViewingKeyHelpers.fromSeed(process.env.WALLET_SEED!);
 const client = new ShieldedClient({ provider, viewingKey: vk });
 
-// Market 1 = MRSN/USD. Buy 5 lots at a limit price of 130 ticks.
+// Market 1 = MRSN. Buy 5 lots at a limit price of 130 ticks.
 const { intentId } = await client.placeOrder({
   marketId: 1n,
   side: 'buy',
@@ -5016,9 +5193,9 @@ Mersennet Trade is live at **[https://trade.mersennet.com](https://trade.mersenn
 |---------|---------|
 | **Type** | Perpetual futures on a native on-chain order book |
 | **Order Engine** | MersennetOrders native precompile (`0x…0100`) |
-| **Order Types** | Limit, Market, Stop, Trailing, TWAP, Scale |
+| **Order Types** | Limit, Market, Stop, Trailing, TWAP, Scale, Chase — with GTC/IOC/FOK time-in-force, post-only, and on-chain good-till-date expiry |
 | **Funding** | Every 8 hours (typical rates ±0.01% per interval) |
-| **Collateral** | Native MRSN, escrowed 1:1 by the precompile |
+| **Collateral** | Native MRSN plus registered tokens (e.g. USDC), fully escrowed on-chain by the precompile |
 | **Chain** | Mersennet Testnet (Chain ID 131071) |
 | **Wallet** | MetaMask or any EVM-compatible wallet — plus a gasless mode |
 
@@ -5042,15 +5219,17 @@ User Wallet ──► Trade UI ──► JSON-RPC ──► mempool ──► bl
 
 ## Markets
 
-Markets are seeded deterministically at genesis so every node agrees on the same set:
+Five markets are seeded at genesis, and anyone can list a new market permissionlessly by calling `createMarket` on the precompile (100 MRSN listing fee):
 
 | Market | Max Leverage |
 |--------|--------------|
-| MRSN/USD | 50× |
-| BTC/USD | 100× |
-| ETH/USD | 50× |
-| SOL/USD | 20× |
-| ARB/USD | 20× |
+| MRSN | 50× |
+| BTC | 100× |
+| ETH | 50× |
+| SOL | 20× |
+| ARB | 20× |
+
+Additional user-created markets appear alongside the genesis five — query `mersennet_orders_getMarkets` for the live set.
 
 ## Getting Started
 
@@ -5091,7 +5270,7 @@ One click on **＋ Add Mersennet to wallet** configures MetaMask with the right 
 | Claim | Amount | Cooldown |
 |-------|--------|----------|
 | MRSN (native) | 1,000 MRSN | 1 claim per address per hour |
-| MockUSDC / MockUSDT / MockDAI | 10,000 per token | On demand |
+| MockUSDC / MockUSDT / MockDAI | 10,000 per token | 1 claim per token per address per hour |
 
 The mock tokens also have a public `faucet()` function on-chain, so contracts and scripts can mint them directly — see [Deployed Contracts](/resources/contracts) for addresses.
 
@@ -5182,6 +5361,10 @@ console.log('Confirmed!');
 
 Prefer the official SDKs or raw JSON-RPC? The same transfer in TypeScript (`@mersennet/sdk`), Python (`mersennet-sdk`), Go, and curl:
 
+:::note[SDK availability]
+The Mersennet SDKs are not yet published to npm/PyPI or public GitHub — they currently live in the monorepo (`sdk-ts`, `sdk-python`, `sdk-go`). Until packages are published, use ethers.js/viem or raw JSON-RPC as shown above.
+:::
+
 <Tabs syncKey="lang">
   <TabItem label="TypeScript">
 
@@ -5190,14 +5373,9 @@ import { MersennetProvider } from '@mersennet/sdk';
 
 const provider = new MersennetProvider('https://rpc.mersennet.com');
 
-// eth_sendTransaction — requires the node to have the `from` account unlocked.
-// For browser/wallet signing, use ethers.js or viem as shown above.
-const txHash = await provider.sendTransaction({
-  from: '0xYourAddress',
-  to: '0xRecipientAddress',
-  value: '0x16345785d8a0000', // 0.1 MRSN in wei (hex)
-  gas: '0x5208',             // 21000
-});
+// Sign the transaction locally (e.g. with ethers.js), then broadcast
+// the raw bytes. eth_sendTransaction is disabled on all Mersennet nodes.
+const txHash = await provider.sendRawTransaction('0xSignedTxHex');
 
 console.log('Tx hash:', txHash);
 const receipt = await provider.getTransactionReceipt(txHash);
@@ -5251,12 +5429,8 @@ func main() {
   <TabItem label="curl">
 
 ```bash title="Send MRSN via JSON-RPC"
-# eth_sendTransaction — requires the node to have the `from` account unlocked.
-curl -X POST https://rpc.mersennet.com \
-  -H "Content-Type: application/json" \
-  -d '{"jsonrpc":"2.0","method":"eth_sendTransaction","params":[{"from":"0xYourAddress","to":"0xRecipientAddress","value":"0x16345785d8a0000","gas":"0x5208"}],"id":1}'
-
-# Or broadcast a locally signed transaction:
+# Broadcast a locally signed transaction (eth_sendTransaction is disabled
+# on all Mersennet nodes — sign with your tooling of choice first):
 curl -X POST https://rpc.mersennet.com \
   -H "Content-Type: application/json" \
   -d '{"jsonrpc":"2.0","method":"eth_sendRawTransaction","params":["0xSignedTxHex"],"id":1}'
@@ -5348,14 +5522,14 @@ Use the following configuration to connect to Mersennet testnet.
 | **Chain ID** | 131071 (Mersenne prime 2¹⁷−1) |
 | **Network Name** | Mersennet Testnet |
 | **RPC URL** | `https://rpc.mersennet.com` |
-| **WebSocket URL** | `wss://rpc.mersennet.com` |
+| **WebSocket URL** | `wss://rpc.mersennet.com` (subscriptions only) |
 | **Block Explorer** | https://explorer.mersennet.com |
 | **Faucet** | https://faucet.mersennet.com |
 | **Currency Symbol** | MRSN |
 | **Block Time** | ~2 seconds |
 
 :::tip
-The WebSocket endpoint may not be enabled on all nodes. If subscriptions fail, use HTTP RPC for polling.
+The public WebSocket endpoint serves `eth_subscribe` streams (new heads, logs, pending transactions) only — send regular JSON-RPC calls over HTTPS. Nodes you run yourself serve WebSocket subscriptions on port 8546.
 :::
 
 ## Node Operators: P2P Bootnodes
@@ -5474,7 +5648,6 @@ export const mersennetTestnet = defineChain({
   rpcUrls: {
     default: {
       http: ['https://rpc.mersennet.com'],
-      webSocket: ['wss://rpc.mersennet.com'],
     },
   },
   blockExplorers: {
@@ -5648,7 +5821,7 @@ import { Card, CardGrid, LinkCard } from '@astrojs/starlight/components';
 
 <CardGrid stagger>
   <Card title="Deploy in minutes" icon="rocket">
-    Hardhat, Foundry, ethers: all unchanged. Chain ID `131071`, ~2s blocks, EVM Shanghai.
+    Hardhat, Foundry, ethers: all unchanged. Chain ID `131071`, ~2s blocks, EVM Prague.
 
     [Deploy with Hardhat](/developers/quick-start/hardhat/) ·
     [Deploy with Foundry](/developers/quick-start/foundry/)
@@ -5665,8 +5838,8 @@ import { Card, CardGrid, LinkCard } from '@astrojs/starlight/components';
     [MersennetOrders architecture](/architecture/order-book/) ·
     [DeFi integration](/developers/contracts/defi-integration/)
   </Card>
-  <Card title="Run a validator" icon="seti:powershell">
-    Stake MRSN, secure the network, and earn block rewards on a HotStuff-2 BFT chain.
+  <Card title="Stake and run a node" icon="seti:powershell">
+    Delegate MRSN to a validator to earn a share of block rewards, or run a full node on the HotStuff-2 BFT chain. Validator registration opens later.
 
     [Run a node](/validators/run-a-node/) ·
     [Staking guide](/validators/staking/)
@@ -5688,22 +5861,28 @@ source: https://docs.mersennet.com/privacy/migration/
 ---
 
 
-Existing transparent balances do not become private automatically. A user moves value into the shielded pool by **shielding** it, spending a transparent balance to create a shielded note. Mersennet ships migration helpers so wallets can drive this safely, with a plan-then-confirm flow.
+:::note[Activation]
+Migration happens at the privacy hard fork, which has not yet activated on the public testnet. The SDK helpers below let wallets prepare for it today; shielded mutation methods currently return error `-32605`.
+:::
+
+At the privacy hard fork, the chain **automatically** snapshots every transparent EOA balance at the activation height and mints one shielded note per account for its owner. You do not submit a transaction to migrate — the migration is engine-driven and deterministic. The SDK migration helpers exist so wallets can *preview* the note the fork will mint (`planMigration`) and *confirm* afterwards that the minted note landed on chain (`confirmMigration`).
+
+Voluntary shielding of *new* funds after the fork is a separate operation, done with `mersennet_submitShield`.
 
 ## The migration flow
 
 ```mermaid
 flowchart TD
-  Plan["planMigration(...)"] --> Review["Wallet shows the plan: amount, derived note, commitment"]
-  Review -->|"user approves"| Shield["mersennet_submitShield"]
-  Shield --> Confirm["confirmMigration(...)"]
+  Plan["planMigration(...) (pre-fork preview)"] --> Review["Wallet shows the plan: amount, derived note, commitment"]
+  Review --> Fork["Privacy hard fork: chain mints one shielded note per account automatically"]
+  Fork --> Confirm["confirmMigration(...) (post-fork check)"]
   Confirm --> Verify["Verify on-chain commitment matches the derived note"]
   Verify --> Done["Funds now shielded"]
 ```
 
-1. **Plan**: `planMigration` computes the migration note the wallet will create, including its derived randomness and the expected note commitment, so the UI can show the user exactly what will happen before signing.
-2. **Submit**: the wallet shields the funds via `mersennet_submitShield`, creating the new note commitment on-chain.
-3. **Confirm**: `confirmMigration` checks that the on-chain commitment matches the planned note, giving the wallet a deterministic success/failure signal.
+1. **Plan (pre-fork)**: `planMigration` computes the migration note the fork will mint for each account, including its derived randomness and the expected note commitment, so the UI can show the user exactly what they will receive.
+2. **Fork**: at the activation height the chain snapshots transparent balances and mints the planned notes automatically. No user transaction is required.
+3. **Confirm (post-fork)**: `confirmMigration` checks that the on-chain commitments match the planned notes, giving the wallet a deterministic success/failure signal.
 
 ## SDK helpers
 
@@ -5711,23 +5890,23 @@ The TypeScript SDK exposes the migration surface as typed functions:
 
 | Helper | Purpose |
 |---|---|
-| `planMigration` | Produce a `MigrationPlan` (amount, derived note, expected commitment) for user review. |
-| `confirmMigration` | Verify the on-chain result against the plan, returning a `MigrationConfirmation`. |
+| `planMigration` | Produce a `MigrationPlan` (amount, derived note, expected commitment) previewing the notes the fork will mint. |
+| `confirmMigration` | Verify the post-fork on-chain result against the plan, returning a `MigrationConfirmation`. |
 | `deriveMigrationNote` | Deterministically derive the migration note from its parameters. |
 | `matchesMigrationNote` | Check whether an on-chain commitment corresponds to a derived migration note. |
-| `defaultNoteCommitment` | Default note-commitment hasher used when one is not supplied. |
+| `defaultNoteCommitment` | Deterministic placeholder hasher for tests. Production wallets must inject the chain's Poseidon note-commitment hasher. |
 
 ```ts
 import { planMigration, confirmMigration } from '@mersennet/sdk';
 
-// 1. Plan and show the user what will happen
+// 1. Pre-fork: plan and show the user what the fork will mint
 const plan = planMigration(accounts); // accounts: MigrationNoteParams[]
 // plan.notes → derived notes + expected commitments
 // plan.totalsByAsset → per-asset totals for user review
 
-// 2. Shield via RPC (mersennet_submitShield) using each planned note ...
+// 2. The hard fork mints the notes automatically at the activation height.
 
-// 3. Confirm the result deterministically against the scanned notes
+// 3. Post-fork: confirm the result deterministically against the scanned notes
 const result = confirmMigration(accounts, scannedNotes);
 if (!result.complete) {
   // surface a clear error; do not assume success
@@ -5738,11 +5917,11 @@ The randomness labels (`MIGRATION_RHO_LABEL`, `MIGRATION_PSI_LABEL`) are exporte
 
 ## UX recommendations
 
-- **Always plan before signing.** Show the amount and the derived commitment so the user can verify before funds move.
+- **Plan ahead of the fork.** Show the amount and the derived commitment so the user knows exactly what note they will receive.
 - **Confirm deterministically.** Treat a failed `confirmMigration` as a hard error, not a warning.
-- **Batch carefully.** Each shielded note is independent; large balances may be split into multiple notes for better privacy and future spend flexibility.
+- **Shielding new funds later** uses `mersennet_submitShield`; large balances may be split into multiple notes for better privacy and future spend flexibility.
 
-After migrating, the wallet reconstructs the new shielded balance via [note scanning](/privacy/note-scanning/). To later reveal a balance to a third party, use [selective disclosure](/privacy/selective-disclosure/).
+After the fork, the wallet reconstructs the new shielded balance via [note scanning](/privacy/note-scanning/). To later reveal a balance to a third party, use [selective disclosure](/privacy/selective-disclosure/).
 
 
 ---
@@ -5750,13 +5929,17 @@ source: https://docs.mersennet.com/privacy/note-scanning/
 ---
 
 
+:::note[Activation]
+The viewing-grant methods used here are gated by the privacy hard fork and currently return error `-32605` on the public testnet.
+:::
+
 Because Mersennet never stores a plaintext balance for you, your wallet rebuilds private state **locally**. It scans the encrypted notes it is allowed to decrypt, drops the ones it has already spent, and sums what remains. There is no central indexer of your funds.
 
 ## The scan-and-reconstruct workflow
 
 ```mermaid
 flowchart TD
-  Fetch["Fetch encrypted notes (mersennet_viewNotes / mersennet_getShieldedNotes)"] --> Decrypt["Decrypt with viewing material"]
+  Fetch["Fetch encrypted notes (mersennet_viewNotes / mersennet_viewBalances, grant-gated)"] --> Decrypt["Decrypt with viewing material"]
   Decrypt --> Derive["Derive each note's nullifier"]
   Derive --> Filter["Drop notes whose nullifier is in the spent set"]
   Filter --> Sum["Sum remaining notes per asset"]
@@ -5776,7 +5959,7 @@ The TypeScript SDK ships the full pipeline so a wallet does not implement crypto
 | Helper | Purpose |
 |---|---|
 | `scanGrantedNotes` | Decrypt the notes a viewing grant authorizes. |
-| `defaultNullifierDeriver` | Derive a note's nullifier deterministically. |
+| `defaultNullifierDeriver` | Deterministic test/mock nullifier deriver. Production wallets must supply a deriver matching the chain's Poseidon nullifier scheme. |
 | `reconstructPortfolio` | Sum unspent notes into per-asset balances. |
 | `scanAndReconstructBalances` | End-to-end: scan, derive, filter spent, and reconstruct in one call. |
 
@@ -5811,6 +5994,8 @@ source: https://docs.mersennet.com/privacy/overview/
 ---
 
 
+![Abstract illustration of a shielded account: a glowing orb wrapped in a translucent hexagonal shield](/img/privacy.webp)
+
 Mersennet is a zero-knowledge Layer 1 where **privacy and verifiability are the defaults**. Instead of bolting a mixer onto a transparent chain, Mersennet provides *account-level* privacy across both the EVM and the native central limit order book (CLOB), Aztec-style, while keeping the chain publicly verifiable through succinct proofs.
 
 ## What "account-level privacy" means
@@ -5829,7 +6014,7 @@ On a transparent chain, anyone can read your balances, positions, and order flow
 - **[Shielded accounts](/privacy/shielded-accounts/)**: balances, transfers, positions, and order flow are concealed using notes, commitments, and nullifiers.
 - **[Risk checks in zero knowledge](/privacy/zk-risk-checks/)**: leverage without open liquidations, where solvency and margin are proven with ZK proofs instead of public liquidation auctions.
 - **[Selective disclosure](/privacy/selective-disclosure/)**: grant a scoped viewing key to an auditor, exchange, or counterparty and reveal exactly what you choose.
-- **[Verifiable state](/privacy/state-proofs/)**: every block's state transition is proven with SP1 (live today in development-prover mode), with a Groth16 bridge designed to verify Mersennet state on Ethereum for trustless light clients.
+- **[Verifiable state](/privacy/state-proofs/)**: every block's state transition runs through the SP1 proof pipeline. The testnet currently emits **development proofs** (deterministic hash commitments over the block program's outputs — not yet zero-knowledge proofs); real SP1 zkVM proving is enabled by the `sp1` build feature. A Groth16 bridge is designed to verify Mersennet state on Ethereum for trustless light clients.
 
 ## How it fits together
 
@@ -5851,7 +6036,7 @@ flowchart TD
 - Moving funds from transparent to shielded? See **[Migrating to shielded accounts](/privacy/migration/)**.
 
 :::note[Activation]
-Shielded features are gated by the privacy hard fork. Before activation, mutation methods return error `-32605` ("method disabled in current chain mode") and read methods return empty values. See [Verifiable state](/privacy/state-proofs/) and the [activation runbook](/whitepaper/) for details.
+Shielded features are gated by the privacy hard fork. Before activation, mutation methods **and all viewing-grant methods** return error `-32605` ("shielded methods are disabled until the privacy hard fork activates"). The ungated read methods (`mersennet_getShieldedRoot`, `mersennet_getShieldedBalance`, `mersennet_getShieldedNotes`, and the state-proof methods) return structured responses describing the initial empty state. See [Verifiable state](/privacy/state-proofs/) for details.
 :::
 
 
@@ -5860,26 +6045,31 @@ source: https://docs.mersennet.com/privacy/selective-disclosure/
 ---
 
 
+:::note[Activation]
+Viewing-grant methods are gated by the privacy hard fork and currently return error `-32605` on the public testnet.
+:::
+
 Privacy by default does not mean opacity. Mersennet lets an account holder **grant a scoped viewing key** to an auditor, exchange, or counterparty that reveals exactly the data they need, and nothing else. The rest of the account stays shielded.
 
 ## Viewing grants
 
 A viewing grant is a capability you mint and hand to a grantee. It is **scoped**, **time-bounded**, and **revocable**.
 
-- **Scoped**: each grant authorizes one or more read scopes: `balances:read`, `positions:read`, `orders:read`.
-- **Time-bounded**: grants carry an expiry; reads fail once expired.
+- **Scoped**: each grant authorizes one or more read scopes: `notes:read`, `balances:read`, `positions:read`, `orders:read`, `liquidations:read`, `exports:portfolio_digest`.
+- **Time-bounded**: grants are valid for a **block-height window** (`startBlock` to `endBlock`); reads fail outside it.
 - **Revocable**: the grantor can revoke at any time, immediately invalidating future reads.
 
 ```ts
-// Grant a scoped, expiring viewing key
-const grant = await wallet.createGrant({
-  scope: ['balances:read', 'positions:read'],
+// Illustrative flow over mersennet_viewGrantToken
+const grant = await rpc.viewGrantToken({
+  scopes: ['balances:read', 'positions:read'],
   grantee: auditorPubKey,
-  expiresAt: '2026-12-31',
+  startBlock: currentBlock,
+  endBlock: currentBlock + 1_296_000, // ~30 days at 2s blocks
 });
 
 // The grantee reconstructs only what was shared
-const view = await rpc.viewBalances(grant.id);
+const view = await rpc.viewBalances(grant.token);
 ```
 
 ## Lifecycle
@@ -5889,7 +6079,7 @@ flowchart LR
   Mint["mersennet_viewGrantToken (mint)"] --> Active["Active grant"]
   Active -->|"mersennet_viewBalances / Positions / Orders"| Read["Grant-gated reads"]
   Active -->|"mersennet_viewRevokeToken"| Revoked["Revoked"]
-  Active -->|"expiresAt reached"| Expired["Expired"]
+  Active -->|"endBlock reached"| Expired["Expired"]
   Read -->|"mersennet_viewGrantStatus"| Active
 ```
 
@@ -5918,6 +6108,10 @@ source: https://docs.mersennet.com/privacy/shielded-accounts/
 ---
 
 
+:::note[Activation]
+The operations on this page are gated by the privacy hard fork and currently return error `-32605` on the public testnet.
+:::
+
 A shielded account is not an address with a public balance. It is a set of **notes**, encrypted records of value, that only the owner (and anyone they explicitly authorize) can read. The chain tracks notes through cryptographic commitments and spends them through nullifiers, so it can guarantee correctness without learning ownership.
 
 ## Notes, commitments, nullifiers
@@ -5935,6 +6129,10 @@ When you spend value, your wallet:
 3. Creates new output **commitments** for the recipient and any change.
 
 The node verifies the proof, checks the nullifier is not already in the **nullifier set**, and appends the new commitments. Balances, parties, and amounts never appear in the clear.
+
+:::caution[Verifier status]
+Noir circuit proofs (Spend, Output, JoinSplit, OrderPlace, LiquidateClaim, LiquidateExecute) are cryptographically verified by the Barretenberg UltraPlonk verifier only in nodes built with the `prover` feature and a configured verify adapter. Default builds use a deterministic development verifier that checks proof/public-input consistency but is **not cryptographically sound**. Production activation of privacy mode requires prover-enabled validator builds.
+:::
 
 ```mermaid
 flowchart LR
@@ -5972,7 +6170,7 @@ source: https://docs.mersennet.com/privacy/state-proofs/
 ---
 
 
-Privacy is only half of the design. The other half is **verifiability**: anyone should be able to confirm that Mersennet's state evolved correctly, from a succinct proof, without trusting a full node. Mersennet does this by proving each block's state transition with **SP1** (live on the testnet today, in development-prover mode) and, in the production design, verifying it on Ethereum through a **Groth16** bridge (the Ethereum verifier contract is not yet deployed).
+Privacy is only half of the design. The other half is **verifiability**: anyone should be able to confirm that Mersennet's state evolved correctly, from a succinct proof, without trusting a full node. Every block's state transition runs through the **SP1** proof pipeline. The testnet currently emits **development proofs** — deterministic hash commitments over the block program's outputs, not yet zero-knowledge proofs — while real SP1 zkVM proving is enabled by the `sp1` build feature. In the production design, proofs are verified on Ethereum through a **Groth16** bridge (the Ethereum verifier contract is not yet deployed).
 
 ## State transition proofs (SP1)
 
@@ -6002,9 +6200,12 @@ curl -s https://rpc.mersennet.com \
   "newMarketStateHash": "0x…",
   "txCount": 12,
   "proofBincodeHex": "0x…",
-  "proofType": "SP1"
+  "proofType": "SP1",
+  "proverMode": "development"
 }
 ```
+
+Note that `proofType` is `"SP1"` in both modes; `proverMode` is the authoritative field distinguishing real SP1 proofs from development ones.
 
 A stateless verifier is available as `mersennet_verifyStateProof`, and `mersennet_getStateProof` fetches the proof for any specific block.
 
@@ -6033,6 +6234,8 @@ A light client does not need to re-execute Mersennet or trust a specific RPC pro
 
 This is the foundation for trustless bridges, cross-chain messaging, and independent verification of the chain's privacy invariants.
 
+Note: trustless verification requires `proverMode: "sp1"`. Development proofs verify pipeline integrity end to end, but anyone can regenerate them from public outputs, so they still require trusting the proving node.
+
 ## Current Status on Testnet
 
 The testnet generates, gossips, and verifies a state proof for **every block** — this is live today, ahead of the privacy hard fork. Proof responses include a `proverMode` field:
@@ -6048,6 +6251,10 @@ source: https://docs.mersennet.com/privacy/zk-risk-checks/
 ---
 
 
+:::note[Activation]
+The shielded order and liquidation methods on this page are gated by the privacy hard fork and currently return error `-32605` on the public testnet.
+:::
+
 Leverage trading normally requires the chain (and the whole market) to *see* every position so that under-collateralized accounts can be liquidated. Mersennet keeps positions private and instead proves the risk properties that matter in **zero knowledge**.
 
 ## The problem with open liquidations
@@ -6062,7 +6269,7 @@ This leaks strategy and creates predatory dynamics. Mersennet removes the public
 
 ## Solvency as a proof, not a disclosure
 
-When a trader opens or modifies a leveraged position in the shielded CLOB, the wallet submits a proof that the position satisfies the margin rules at the current oracle price, **without revealing the position itself**. The chain learns only "this position is adequately margined," not its size or direction.
+When a trader opens or modifies a leveraged position in the shielded CLOB, the wallet submits a proof that the position satisfies the margin rules at the current oracle price, **without revealing the position itself**. The chain publicly learns only the target market, a bucketed price band, a bucketed maximum-size band, and that the position meets the margin requirement — never the exact size, price, or direction. Exact order details are threshold-encrypted and revealed only to the k-of-n validator committee at the batch-auction tick.
 
 ```mermaid
 flowchart TD
@@ -6077,14 +6284,14 @@ flowchart TD
 Liquidations are handled by **bonded liquidators** through a threshold-encrypted auction, not an open mempool race:
 
 1. A liquidator registers once with a Pedersen bond commitment (`mersennet_registerLiquidator`), posting at least the minimum bond (10,000 MRSN).
-2. When a position becomes liquidatable at the oracle price, a registered liquidator submits an encrypted claim (`mersennet_submitLiquidationClaim`).
+2. When a position becomes liquidatable at the oracle price, a registered liquidator submits a claim (`mersennet_submitLiquidationClaim`) carrying a ZK proof that *some* position in the tree is liquidatable — without revealing which one — together with a threshold-encrypted sealed bid.
 3. The auction winner submits the execution (`mersennet_submitLiquidationExecute`), which settles the victim's nullifier and mints the bounty and insurance commitments.
 
-Because claims and bids are threshold-encrypted, the target position is never broadcast in the clear, and liquidators cannot front-run one another from the public mempool.
+Because the target position is identified only inside the ZK proof and bids are threshold-encrypted sealed bids, the victim is never broadcast in the clear and liquidators cannot front-run one another from the public mempool.
 
 ## Why this is safe
 
-- **Solvency is enforced**: the margin proof is checked by the chain; an invalid position cannot be admitted.
+- **Solvency is enforced**: the margin proof is checked by the chain's configured verifier (see the [verifier status note](/privacy/shielded-accounts/) — cryptographic soundness requires prover-enabled builds); an invalid position cannot be admitted.
 - **No double-spend**: liquidation settles the position's nullifier, the same primitive that protects [shielded accounts](/privacy/shielded-accounts/).
 - **Verifiable end to end**: the resulting state transition is captured in the block's [SP1 state proof](/privacy/state-proofs/).
 
@@ -6109,14 +6316,14 @@ phosphor green (`#7dff9b`) on black.
 
 Download: [logo.svg](/logo.svg) · [favicon.svg](/favicon.svg) · [social card](/mersennet-social.svg)
 
-A complete kit lives in
-[`brand/` in the monorepo](https://github.com/mersennet/mersennet/tree/main/brand):
-avatars, banners for every platform (X, LinkedIn, YouTube,
-Discord, Facebook, GitHub), post templates, and transparent renders.
+A complete kit lives in the monorepo's `brand/` directory (repository
+currently private — contact the team for the full kit): avatars, banners for
+every platform (X, LinkedIn, YouTube, Discord, Facebook, GitHub), post
+templates, and transparent renders.
 
 ### Guidelines
 
-- The five bars are always **top-anchored and symmetric** (heights 5·2·3·2·5). Never bottom-anchor them: that reads as an audio equalizer, not the M.
+- The five bars are always **top-anchored and symmetric** (relative heights 68·30·46·30·68 at a bar width of 12 — use the SVG masters rather than redrawing). Never bottom-anchor them: that reads as an audio equalizer, not the M.
 - Use phosphor green `#7dff9b` on dark backgrounds and deep green `#0c8f43` on light backgrounds.
 - Maintain clear space around the mark equal to one bar width.
 - Do not stretch, rotate, re-space, or re-proportion the bars.
@@ -6177,7 +6384,7 @@ The **wordmark** is always JetBrains Mono Bold, all caps, with 0.14em tracking.
 - **Font:** JetBrains Mono
 - **Source:** [Google Fonts](https://fonts.google.com/specimen/JetBrains+Mono)
 - **Usage:** Code blocks, addresses, chain IDs, technical content
-- **Weight:** 400 (regular), 500 (medium), 600 (semibold)
+- **Weights:** 400 (regular), 500 (medium), 700 (bold — wordmark)
 
 ### CSS Variables
 
@@ -6205,7 +6412,7 @@ The **wordmark** is always JetBrains Mono Bold, all caps, with 0.14em tracking.
 | Social Card | SVG/PNG | Open Graph / Twitter share image (1200×630) |
 
 :::tip
-The full media kit (vector masters, transparent PNG renders, and platform-exact social sizes) lives in [`brand/` in the monorepo](https://github.com/mersennet/mersennet/tree/main/brand).
+The full media kit (vector masters, transparent PNG renders, and platform-exact social sizes) lives in the monorepo's `brand/` directory (repository currently private — contact the team for access).
 :::
 
 ## Integration Guide
@@ -6219,12 +6426,12 @@ When building dApps or documentation for Mersennet:
 5. Import fonts via Google Fonts:
 
 ```html
-<link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 ```
 
 ## Contact
 
-For custom brand requests, partnerships, or asset access, reach out via the [Mersennet GitHub](https://github.com/mersennet/mersennet) or community channels.
+For custom brand requests, partnerships, or asset access, reach out via the [Mersennet GitHub organization](https://github.com/mersennet) or community channels.
 
 
 ---
@@ -6235,6 +6442,21 @@ source: https://docs.mersennet.com/resources/changelog/
 Notable milestones and updates for the Mersennet ecosystem.
 
 ---
+
+## August 2026
+
+### Fresh Genesis + Feature Release (testnet reset)
+
+A coordinated testnet re-genesis shipping the largest feature batch since the consensus overhaul:
+
+- **Delegated staking live** via the native staking precompile (`0x…0400`): `delegate`, `undelegate`, `claimRewards`, `withdrawUnbonded`, with per-validator commission and F1 reward accounting
+- **Permissionless market listing**: anyone can call `createMarket(symbol, tickSize, lotSize)` on the CLOB precompile for a 100 MRSN listing fee
+- **New order flags**: post-only and good-till-date (on-chain expiry) time-in-force, alongside GTC/IOC/FOK
+- **Multi-collateral margin**: registered tokens (USDC live) accepted as margin collateral alongside native MRSN, with per-asset collateral weights
+- **New RPC read methods**: `mersennet_orders_getMarkets`, `mersennet_orders_getAccount`, `mersennet_orders_getCollateralAssets`, `mersennet_orders_getTokenCollateral`, and the `mersennet_staking_*` family
+- **Node hosting release**: canonical `networks/testnet` artifacts (genesis config, one-command install script, systemd unit), public bootnodes, and a full [Run a Node](/validators/run-a-node/) guide
+- **Sync performance fix**: initial block sync improved from ~3 to ~450 blocks/s
+- Foundation contracts redeployed at the **same addresses** (same deployer nonces)
 
 ## July 2026
 
@@ -6305,7 +6527,7 @@ source: https://docs.mersennet.com/resources/contracts/
 ---
 
 
-Reference of contracts deployed on Mersennet testnet (Chain ID 131071). All addresses below are live on the current chain (deployed 2026-07-06 after the consensus-overhaul reset).
+Reference of contracts deployed on Mersennet testnet (Chain ID 131071). All addresses below are live on the current chain (redeployed August 2026 after the fresh-genesis reset; addresses are unchanged from the previous chain).
 
 :::caution[Testnet resets]
 Testnet chain state may be wiped during protocol upgrades. When that happens, contracts are redeployed and this page is updated — always treat this page (or `deployments.json` in the contracts repository) as the source of truth for addresses.
@@ -6315,7 +6537,8 @@ Testnet chain state may be wiped during protocol upgrades. When that happens, co
 
 | Contract | Address | Description |
 |----------|---------|-------------|
-| **MersennetOrders** | `0x0000000000000000000000000000000000000100` | Native CLOB matching engine. `placeOrder`, `cancelOrder`, `depositCollateral`, `withdrawCollateral`, `getPosition`, `getCollateral`, `getBestBidAsk`. Collateral is escrowed 1:1 in native MRSN at this address. |
+| **MersennetOrders** | `0x0000000000000000000000000000000000000100` | Native CLOB matching engine. `placeOrder`, `placeOrderExt`, `cancelOrder`, `createMarket` (permissionless listing, 100 MRSN fee), `depositCollateral`, `withdrawCollateral`, `depositTokenCollateral`, `withdrawTokenCollateral`, `getPosition`, `getCollateral`, `getTokenCollateral`, `getBestBidAsk`. Collateral (native MRSN and registered tokens like USDC) is fully escrowed at this address. |
+| **MersennetStaking** | `0x0000000000000000000000000000000000000400` | Delegated staking. `delegate`, `undelegate`, `claimRewards`, `withdrawUnbonded`. |
 
 ## Foundation
 
@@ -6382,6 +6605,8 @@ interface IMersennetOrders {
     function depositCollateral(uint256 amount) external returns (bool);
     function placeOrder(uint64 marketId, bool isBuy, uint256 price, uint256 size, uint8 tif)
         external returns (uint256 orderId, uint256 filled, uint256 remaining);
+    function createMarket(bytes32 symbol, uint256 tickSize, uint256 lotSize)
+        external returns (uint64 marketId); // permissionless, 100 MRSN listing fee
 }
 
 IMersennetOrders constant CLOB = IMersennetOrders(0x0000000000000000000000000000000000000100);
@@ -6454,7 +6679,7 @@ A cross-chain bridge is planned (Tier 3 in the roadmap). For now, testnet assets
 ### Where is the RPC endpoint?
 
 - **HTTP:** `https://rpc.mersennet.com`
-- **WebSocket:** `wss://rpc.mersennet.com` (may not be enabled on all nodes)
+- **WebSocket:** not yet publicly exposed — use HTTP polling
 
 ### What is the block time?
 
@@ -6468,7 +6693,7 @@ Mersennet Trade is the native perpetuals and spot trading terminal, built on the
 
 ---
 
-Have more questions? Check the [Getting Started](/getting-started/overview) guides or open an issue on [GitHub](https://github.com/mersennet/mersennet).
+Have more questions? Check the [Getting Started](/getting-started/overview) guides or reach out via the [Mersennet GitHub organization](https://github.com/mersennet).
 
 
 ---
@@ -6515,7 +6740,7 @@ once, linked everywhere.
 
 **SP1**: The RISC-V zkVM that re-executes each block's state transition and produces a proof of it. Public outputs bind the previous and new state roots, so proofs chain.
 
-**Groth16 wrapper**: SP1 proofs are designed to be wrapped into Groth16 (small and cheap to verify in the EVM) so an Ethereum contract ([MersennetBridge](https://github.com/mersennet/contracts)) can verify Mersennet state; the Ethereum verifier is not yet deployed.
+**Groth16 wrapper**: SP1 proofs are designed to be wrapped into Groth16 (small and cheap to verify in the EVM) so an Ethereum contract (MersennetBridge) can verify Mersennet state; the Ethereum verifier is not yet deployed.
 
 **State root continuity**: Each block proof's public inputs include the previous roots; the bridge rejects any proof that doesn't extend the chain it has already accepted.
 
@@ -6525,7 +6750,7 @@ once, linked everywhere.
 
 **HotStuff-2**: Mersennet's BFT consensus: two-phase, stake-weighted voting with rotating proposers; finality when >2/3 of stake commits (~2s blocks).
 
-**Direct staking**: Validators bond MRSN directly; delegation is not yet implemented. See [Staking](/validators/staking/).
+**Staking**: Validators bond MRSN directly; anyone else can delegate MRSN to a validator through the native staking precompile (`0x…0400`) and earn a share of its block rewards, minus commission. Undelegating starts an unbonding period. Runtime validator registration is not yet open — the set is currently the 4 genesis validators. See [Staking](/validators/staking/).
 
 **Halving schedule**: Block rewards start at 2⁶¹ − 1 wei (≈2.3 MRSN) and halve every 33,550,336 blocks (the 5th perfect number); total emission converges to ≈154.72M MRSN, well below the 2⁸⁹ − 1 wei (≈618.97M MRSN) supply cap. See [Tokenomics](/architecture/tokenomics/).
 
@@ -6735,7 +6960,7 @@ Validators are the backbone of Mersennet. They run full nodes, participate in co
 
 Validators perform three critical functions:
 
-1. **Block Production**: Validators take turns proposing new blocks containing transactions, order submissions, and state updates. The proposer is selected via a round-robin algorithm weighted by stake.
+1. **Block Production**: Validators take turns proposing new blocks containing transactions, order submissions, and state updates. The proposer is selected by deterministic round-robin over the sorted validator set: `validators[(height + round) mod count]`, where `round` advances only on leader timeout.
 
 2. **Consensus Participation**: All validators participate in BFT (Byzantine Fault Tolerant) consensus. Each validator re-executes every proposed block and gossips a signed finality vote for its hash; a block is finalized when votes covering more than 2/3 of total stake have been observed.
 
@@ -6747,14 +6972,17 @@ Mersennet uses stake-weighted BFT consensus with the following characteristics:
 
 | Aspect | Description |
 |--------|-------------|
-| **Proposer Selection** | Round-robin with priority-based weighting. Validators with higher stake are selected more frequently to propose blocks. |
+| **Proposer Selection** | Deterministic round-robin over the validator set, with round-based failover if the leader misses its slot. |
 | **Voting Power** | Proportional to staked MRSN. One validator with 2M MRSN has twice the voting power of a validator with 1M MRSN. |
 | **Finality Threshold** | >2/3 of total stake must sign a finality vote for a block to be finalized. |
 | **Block Time** | ~2 seconds per block. |
 
 :::note
-Delegation is not yet implemented; all stake is currently bonded directly
-by validators. See the [Staking Guide](/validators/staking/) for details.
+Delegated staking is live via the MersennetStaking precompile at
+`0x0000000000000000000000000000000000000400`: any MRSN holder can `delegate`
+to a validator, earn a share of its rewards (minus commission), and
+`undelegate` / `withdrawUnbonded` after the unbonding period. See the
+[Staking Guide](/validators/staking/) for details.
 :::
 
 ## Block Production
@@ -6778,7 +7006,7 @@ validator_reward = (block_reward × validator_stake) / total_stake
 
 - **Initial reward**: ≈2.3 MRSN per block (2⁶¹ − 1 wei)
 - **Halving**: Every 33,550,336 blocks (~2.1 years at ~2 s blocks), the reward halves
-- **Distribution**: Rewards are credited directly to validator addresses, with no claiming required
+- **Distribution**: The validator's share is credited directly each block, with no claiming required; delegator rewards accrue in the staking precompile and are collected via `claimRewards`
 
 The more stake you have (your own + delegations), the larger your share of each block's reward.
 
@@ -6805,7 +7033,7 @@ Before running a validator, ensure you meet:
 |----------|-------------|
 | **Hardware** | 4 CPU cores, 8 GB RAM, 100 GB SSD, 100 Mbps network |
 | **Software** | Rust 1.85+ (for building from source) |
-| **Stake** | Minimum stake to register (governance may set higher minimums) |
+| **Stake** | Validator set is currently fixed at genesis; permissionless registration (with a minimum stake) is planned |
 | **Operational** | 24/7 uptime, monitoring, key management, backup procedures |
 
 See [Run a Validator Node](/validators/run-a-node) for the complete setup guide.
@@ -7684,7 +7912,7 @@ Implementing a full-featured order matching engine purely in EVM bytecode is pos
 
 Mersennet addresses this tension by architecting a **single blockchain** with **multiple execution domains**:
 
-1. **MersennetEVM**: Full EVM compatibility (Shanghai spec) for general computation
+1. **MersennetEVM**: Full EVM compatibility (Prague spec) for general computation
 2. **MersennetOrders**: A native, deterministic order matching engine with price-time priority
 3. **Bridge**: Ordered message queues enabling MersennetOrders and MersennetEVM to interoperate atomically
 
@@ -7825,7 +8053,7 @@ Mersennet consists of four primary execution domains unified under a single cons
 ### 2.2 Component Breakdown
 
 #### 2.2.1 Execution Engine
-- **EVM Runtime**: Full EVM compatibility using revm (Shanghai spec)
+- **EVM Runtime**: Full EVM compatibility using revm (Prague spec)
 - **Parallel Execution** *(v6.0)*: Block-STM optimistic concurrency with dependency analysis, multi-version memory, and automatic fallback
 - **CLOB Precompile** *(v6.0)*: Native EVM precompile at `0x0100` for atomic order book interaction from Solidity
 - **Transaction Processing**: Multi-pool mempool (pending/queued/base_fee), validation pipeline, receipt generation
@@ -8308,7 +8536,7 @@ On first invocation, the HotStuff-2 state machine is initialized from the curren
 
 Mersennet maintains full EVM compatibility using **revm** (Rust EVM):
 
-- **Spec ID**: Shanghai (latest EVM specification)
+- **Spec ID**: Prague (`PRAGUE_EOF`)
 - **Opcodes**: All standard EVM opcodes supported
 - **Precompiles**: Standard Ethereum precompiles (ecrecover, sha256, etc.)
 - **Gas Metering**: Accurate gas accounting per opcode
@@ -8349,10 +8577,10 @@ The mempool maintains pending transactions with fee-based prioritization:
 
 #### 5.3.1 Structure
 
-Mempool is organized by sender:
-$$Mempool = \{sender \rightarrow \{nonce \rightarrow Tx\}\}$$
+The mempool maintains three pools — **pending** (executable), **queued** (future-nonce), and **base-fee** (priced below the current base fee) — each organized by sender:
+$$Pool = \{sender \rightarrow \{nonce \rightarrow Tx\}\}$$
 
-Each sender's transactions are ordered by nonce.
+Each sender's transactions are ordered by nonce, and transactions are promoted or demoted between pools as nonces and the base fee move.
 
 #### 5.3.2 Limits
 
@@ -9344,7 +9572,7 @@ $$Packet = (topic, data, ttl, id)$$
 **JSON-serialized wire format** (current implementation):
 ```
 {
-  "topic": string,    // e.g., "block", "tx", "vote", "peer_discovery"
+  "topic": string,    // e.g., "block", "tx", "vote", "peer"
   "data": base64,     // Message payload
   "id": string,       // Unique packet ID (hex hash of topic+data+nonce)
   "ttl": u8           // Time-to-live (hop count)
@@ -9372,7 +9600,12 @@ BlockHashInput = concat(
   gas_used (8 bytes BE),
   base_fee (32 bytes BE),
   coinbase (20 bytes),
-  tx_count (8 bytes BE)
+  tx_count (8 bytes BE),
+  parent_hash (32 bytes),
+  timestamp (8 bytes BE),
+  tx_root (32 bytes),
+  state_root (32 bytes),
+  receipts_root (32 bytes)
 )
 block_hash = keccak256(BlockHashInput)
 ```
@@ -9388,8 +9621,8 @@ block_hash = keccak256(BlockHashInput)
 
 - **Peer Discovery**: Maintain peer list from bootstrap nodes
 - **Peer TTL**: Remove stale peers after timeout
-- **Fanout**: Number of peers to forward to (default: 1)
-- **Max Peers**: Maximum peer connections (default: 8)
+- **Fanout**: Number of peers to forward to (default: 3)
+- **Max Peers**: Maximum peer connections (default: 50)
 
 ### 10.3 TCP State Sync
 
@@ -9930,7 +10163,7 @@ The following benchmarks are from the Mersennet reference implementation (Rust, 
 - CLOB precompile: **3-4x cheaper** than Uniswap V3 swaps
 - End-to-end block: **~200ms finality** in the HotStuff-2 benchmark; the live public testnet finalizes at its configured **~2s** block interval
 
-**Gas cost reference** (EVM, Shanghai): Transfer = 21,000; SSTORE (cold) = 22,100; SLOAD = 2,100; CALL = 2,600 + 100/byte calldata; CREATE2 = 32,000; **CLOB placeOrder = 50,000** (precompile).
+**Gas cost reference** (EVM, Prague): Transfer = 21,000; SSTORE (cold) = 22,100; SLOAD = 2,100; CALL = 2,600 + 100/byte calldata; CREATE2 = 32,000; **CLOB placeOrder = 50,000** (precompile).
 
 **Comprehensive competitive comparison (v6.0):**
 

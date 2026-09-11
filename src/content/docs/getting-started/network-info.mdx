@@ -13,14 +13,14 @@ Use the following configuration to connect to Mersennet testnet.
 | **Chain ID** | 131071 (Mersenne prime 2¹⁷−1) |
 | **Network Name** | Mersennet Testnet |
 | **RPC URL** | `https://rpc.mersennet.com` |
-| **WebSocket URL** | `wss://rpc.mersennet.com` |
+| **WebSocket URL** | `wss://rpc.mersennet.com` (subscriptions only) |
 | **Block Explorer** | https://explorer.mersennet.com |
 | **Faucet** | https://faucet.mersennet.com |
 | **Currency Symbol** | MRSN |
 | **Block Time** | ~2 seconds |
 
 :::tip
-The WebSocket endpoint may not be enabled on all nodes. If subscriptions fail, use HTTP RPC for polling.
+The public WebSocket endpoint serves `eth_subscribe` streams (new heads, logs, pending transactions) only — send regular JSON-RPC calls over HTTPS. Nodes you run yourself serve WebSocket subscriptions on port 8546.
 :::
 
 ## Node Operators: P2P Bootnodes
@@ -139,7 +139,6 @@ export const mersennetTestnet = defineChain({
   rpcUrls: {
     default: {
       http: ['https://rpc.mersennet.com'],
-      webSocket: ['wss://rpc.mersennet.com'],
     },
   },
   blockExplorers: {

@@ -3,26 +3,31 @@ title: "Selective disclosure & viewing grants"
 description: "Grant a scoped viewing key to reveal exactly what you choose (a balance, a position, a single order) without exposing the rest of your account."
 ---
 
+:::note[Activation]
+Viewing-grant methods are gated by the privacy hard fork and currently return error `-32605` on the public testnet.
+:::
+
 Privacy by default does not mean opacity. Mersennet lets an account holder **grant a scoped viewing key** to an auditor, exchange, or counterparty that reveals exactly the data they need, and nothing else. The rest of the account stays shielded.
 
 ## Viewing grants
 
 A viewing grant is a capability you mint and hand to a grantee. It is **scoped**, **time-bounded**, and **revocable**.
 
-- **Scoped**: each grant authorizes one or more read scopes: `balances:read`, `positions:read`, `orders:read`.
-- **Time-bounded**: grants carry an expiry; reads fail once expired.
+- **Scoped**: each grant authorizes one or more read scopes: `notes:read`, `balances:read`, `positions:read`, `orders:read`, `liquidations:read`, `exports:portfolio_digest`.
+- **Time-bounded**: grants are valid for a **block-height window** (`startBlock` to `endBlock`); reads fail outside it.
 - **Revocable**: the grantor can revoke at any time, immediately invalidating future reads.
 
 ```ts
-// Grant a scoped, expiring viewing key
-const grant = await wallet.createGrant({
-  scope: ['balances:read', 'positions:read'],
+// Illustrative flow over mersennet_viewGrantToken
+const grant = await rpc.viewGrantToken({
+  scopes: ['balances:read', 'positions:read'],
   grantee: auditorPubKey,
-  expiresAt: '2026-12-31',
+  startBlock: currentBlock,
+  endBlock: currentBlock + 1_296_000, // ~30 days at 2s blocks
 });
 
 // The grantee reconstructs only what was shared
-const view = await rpc.viewBalances(grant.id);
+const view = await rpc.viewBalances(grant.token);
 ```
 
 ## Lifecycle
@@ -32,7 +37,7 @@ flowchart LR
   Mint["mersennet_viewGrantToken (mint)"] --> Active["Active grant"]
   Active -->|"mersennet_viewBalances / Positions / Orders"| Read["Grant-gated reads"]
   Active -->|"mersennet_viewRevokeToken"| Revoked["Revoked"]
-  Active -->|"expiresAt reached"| Expired["Expired"]
+  Active -->|"endBlock reached"| Expired["Expired"]
   Read -->|"mersennet_viewGrantStatus"| Active
 ```
 

@@ -6,6 +6,21 @@ Notable milestones and updates for the Mersennet ecosystem.
 
 ---
 
+## August 2026
+
+### Fresh Genesis + Feature Release (testnet reset)
+
+A coordinated testnet re-genesis shipping the largest feature batch since the consensus overhaul:
+
+- **Delegated staking live** via the native staking precompile (`0x…0400`): `delegate`, `undelegate`, `claimRewards`, `withdrawUnbonded`, with per-validator commission and F1 reward accounting
+- **Permissionless market listing**: anyone can call `createMarket(symbol, tickSize, lotSize)` on the CLOB precompile for a 100 MRSN listing fee
+- **New order flags**: post-only and good-till-date (on-chain expiry) time-in-force, alongside GTC/IOC/FOK
+- **Multi-collateral margin**: registered tokens (USDC live) accepted as margin collateral alongside native MRSN, with per-asset collateral weights
+- **New RPC read methods**: `mersennet_orders_getMarkets`, `mersennet_orders_getAccount`, `mersennet_orders_getCollateralAssets`, `mersennet_orders_getTokenCollateral`, and the `mersennet_staking_*` family
+- **Node hosting release**: canonical `networks/testnet` artifacts (genesis config, one-command install script, systemd unit), public bootnodes, and a full [Run a Node](/validators/run-a-node/) guide
+- **Sync performance fix**: initial block sync improved from ~3 to ~450 blocks/s
+- Foundation contracts redeployed at the **same addresses** (same deployer nonces)
+
 ## July 2026
 
 ### Consensus & Correctness Overhaul (testnet reset)

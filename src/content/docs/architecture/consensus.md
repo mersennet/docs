@@ -16,13 +16,13 @@ Mersennet uses **leader-gated Proof-of-Stake BFT** (HotStuff-2 style): one elect
 
 ## Validator Selection
 
-Validators are nodes that have **staked** MRSN tokens and registered in the validator set. Voting power is proportional to stake:
+Validators are nodes with MRSN staked in the genesis validator set. Voting power is proportional to stake:
 
 ```
 voting_power(validator) ∝ staked_amount
 ```
 
-Token holders can **delegate** their MRSN to validators, increasing that validator's voting power. The validator set is dynamic: new validators can join by staking, and existing validators can leave by unbonding.
+Token holders can **delegate** their MRSN to validators via the staking precompile, increasing that validator's voting power. Permissionless runtime validator registration is planned (precompile selectors are reserved) but not yet enabled; the current set is fixed at genesis.
 
 ## Leader Election
 
@@ -88,15 +88,9 @@ finalized ⟺ Σ stake(voters for block_hash) ≥ T
 
 Votes are ECDSA signatures over a domain-separated digest of `(height, block_hash)`; each receiving node recovers the signer, checks it against the validator set, and accumulates stake until quorum. Finalized blocks are **irreversible** — there are no chain reorganizations.
 
-## Epoch Transitions
+## Validator-Set Updates
 
-Mersennet may use **epochs** for validator set updates (e.g. applying pending stake changes, unbonding completions). At epoch boundaries:
-
-- Pending validator additions/removals are applied
-- Unbonding queues are processed
-- Validator set is updated for the next epoch
-
-The exact epoch length is configurable. Validator set changes take effect at the start of the next epoch to ensure consensus continuity.
+Validator-set changes (stake changes, unbonding completions, slashes) are queued and applied at each block boundary; there is no separate epoch schedule. Unbonded stake becomes withdrawable `unbonding_period` blocks after the unbond.
 
 ## Slashing Mechanism
 
@@ -112,7 +106,8 @@ The exact epoch length is configurable. Validator set changes take effect at the
 Penalties **escalate** with repeated offenses:
 
 ```
-actual_penalty = base_bps + (escalation_step × offense_count) + (escalation_step × rounds_missed)
+actual_penalty = base_bps + (escalation_step × offense_count) + (escalation_step × (rounds_missed − 1))
+# rounds_missed is floored at 1, so the first missed round adds no escalation
 actual_penalty = min(actual_penalty, max_escalation_bps)
 ```
 
@@ -394,7 +389,7 @@ Complete reference of all configuration parameters with their default values.
 | `escalation_step_bps` | `u64` | `25` | Penalty increase per repeated offense (0.25%) |
 | `escalation_max_bps` | `u64` | `1000` | Maximum escalated penalty (10%) |
 | `round_timeout_ms` | `u64` | `500` | Consensus round timeout in milliseconds |
-| `unbonding_period` | `u64` | `2` | Epochs before unbonded stake is withdrawable |
+| `unbonding_period` | `u64` | `2` | Blocks before unbonded stake is withdrawable (code default; the public testnet configs use 100) |
 
 ### `token_economics`: Reward & Supply
 

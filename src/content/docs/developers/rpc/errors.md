@@ -15,7 +15,7 @@ JSON-RPC 2.0 envelope:
 | Code | Meaning | Typical cause & fix |
 |------|---------|---------------------|
 | `-32700` | Parse error | Request body is not valid JSON. Check `Content-Type: application/json` and quoting. |
-| `-32601` | Method not found | Typo in the method name, or calling a `mersennet_*` shielded method on a pre-privacy node. See [Methods](/developers/rpc/methods/). |
+| `-32601` | Method not found | Typo in the method name, or the method is disabled on this node (e.g. `eth_sendTransaction`). See [Methods](/developers/rpc/methods/). |
 | `-32602` | Invalid params | Wrong type, missing field, or malformed hex (addresses are 20 bytes `0x…`, hashes 32 bytes). The message names the offending parameter. |
 | `-32000` | Execution error | Generic server-side failure while executing the request: the message carries the underlying reason. |
 
@@ -23,19 +23,15 @@ JSON-RPC 2.0 envelope:
 
 | Code | Meaning | Typical cause & fix |
 |------|---------|---------------------|
-| `-32005` | Transaction rejected | The mempool refused the transaction. The `data` field carries the rejection reason: nonce too low, insufficient balance, fee below floor, wrong chain ID (testnet `131071`, mainnet `8191`), invalid signature, or a full queue. |
+| `-32005` | Transaction rejected | The mempool refused the transaction. The `data` field carries the rejection reason: nonce too low, insufficient balance, fee below floor, wrong chain ID (testnet `131071`, mainnet `8191`), invalid signature, or a full queue. Also returned (with HTTP 429) when the per-IP rate limit of 100 requests/second is exceeded — back off and retry. |
 
 ## Order book (`mersennet_orders_*`)
 
 | Code | Error | Fix |
 |------|-------|-----|
-| `-32010` | Unknown market | Market ID doesn't exist; list markets first. |
-| `-32011` | Invalid size | Size violates the market's lot size or is zero. |
-| `-32012` | FOK not fillable | A fill-or-kill order couldn't be fully matched. Retry as `GTC`/`IOC` or adjust price. |
-| `-32013` | Insufficient collateral | Deposit collateral before placing the order. |
-| `-32014` | Insufficient equity | Position equity can't support the new order's margin requirement. |
-| `-32015` | Market halted | The market is paused by governance. |
-| `-32016` | Withdrawal exceeds equity | Withdraw less, or close positions first. |
+| `-32604` | Unsigned mutation disabled | Unsigned `mersennet_orders_*` mutations are disabled on this node; submit a signed transaction to the precompile at `0x…0100`. |
+
+CLOB business errors (unknown market, bad tick/lot size, insufficient collateral, withdrawal exceeds equity, …) surface as transaction reverts with a reason string when using the precompile path.
 
 ## Privacy / shielded
 
@@ -47,5 +43,5 @@ JSON-RPC 2.0 envelope:
 :::tip[Debugging checklist]
 1. Wrong network? `eth_chainId` should return `0x1ffff` (testnet) or `0x1fff` (mainnet).
 2. Stale nonce? `eth_getTransactionCount(addr, "pending")`.
-3. Shielded call failing? Confirm privacy is active: `mersennet_getLatestStateProof` returns a proof only post-activation.
+3. Shielded call failing? Confirm privacy activation by checking whether shielded mutations return `-32605` ("shielded methods are disabled until the privacy hard fork activates") — that indicates the fork has not activated.
 :::

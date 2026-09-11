@@ -2,7 +2,7 @@
 title: "Deployed Contracts"
 ---
 
-Reference of contracts deployed on Mersennet testnet (Chain ID 131071). All addresses below are live on the current chain (deployed 2026-07-06 after the consensus-overhaul reset).
+Reference of contracts deployed on Mersennet testnet (Chain ID 131071). All addresses below are live on the current chain (redeployed August 2026 after the fresh-genesis reset; addresses are unchanged from the previous chain).
 
 :::caution[Testnet resets]
 Testnet chain state may be wiped during protocol upgrades. When that happens, contracts are redeployed and this page is updated — always treat this page (or `deployments.json` in the contracts repository) as the source of truth for addresses.
@@ -12,7 +12,8 @@ Testnet chain state may be wiped during protocol upgrades. When that happens, co
 
 | Contract | Address | Description |
 |----------|---------|-------------|
-| **MersennetOrders** | `0x0000000000000000000000000000000000000100` | Native CLOB matching engine. `placeOrder`, `cancelOrder`, `depositCollateral`, `withdrawCollateral`, `getPosition`, `getCollateral`, `getBestBidAsk`. Collateral is escrowed 1:1 in native MRSN at this address. |
+| **MersennetOrders** | `0x0000000000000000000000000000000000000100` | Native CLOB matching engine. `placeOrder`, `placeOrderExt`, `cancelOrder`, `createMarket` (permissionless listing, 100 MRSN fee), `depositCollateral`, `withdrawCollateral`, `depositTokenCollateral`, `withdrawTokenCollateral`, `getPosition`, `getCollateral`, `getTokenCollateral`, `getBestBidAsk`. Collateral (native MRSN and registered tokens like USDC) is fully escrowed at this address. |
+| **MersennetStaking** | `0x0000000000000000000000000000000000000400` | Delegated staking. `delegate`, `undelegate`, `claimRewards`, `withdrawUnbonded`. |
 
 ## Foundation
 
@@ -79,6 +80,8 @@ interface IMersennetOrders {
     function depositCollateral(uint256 amount) external returns (bool);
     function placeOrder(uint64 marketId, bool isBuy, uint256 price, uint256 size, uint8 tif)
         external returns (uint256 orderId, uint256 filled, uint256 remaining);
+    function createMarket(bytes32 symbol, uint256 tickSize, uint256 lotSize)
+        external returns (uint64 marketId); // permissionless, 100 MRSN listing fee
 }
 
 IMersennetOrders constant CLOB = IMersennetOrders(0x0000000000000000000000000000000000000100);

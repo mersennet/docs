@@ -45,11 +45,6 @@ forge create src/MyToken.sol:MyToken \
 
 The `--legacy` flag is recommended: Mersennet implements an EIP-1559 base fee but no priority tip (`eth_maxPriorityFeePerGas` returns `0x0`), so legacy gas-price transactions are the simplest fit.
 
-**Other deployment methods:**
-
-- `eth_sendTransaction`: Requires the RPC node to have the deployer account unlocked
-- `mersennet_sendTransaction`: Mersennet–specific method for sending transactions
-
 ## Node.js Deployment Helper
 
 Alternatively, use a Node.js script with ethers.js, which signs locally and submits via `eth_sendRawTransaction`.
@@ -65,8 +60,7 @@ const RPC_URL = "https://rpc.mersennet.com";
 const CHAIN_ID = 131071;
 
 async function main() {
-  // Option A: Use private key (ethers signs, but we use eth_sendTransaction via a custom provider)
-  // Option B: Use a node with unlocked account
+  // Sign locally with the private key; ethers submits via eth_sendRawTransaction
   const provider = new ethers.JsonRpcProvider(RPC_URL, CHAIN_ID);
   const wallet = new ethers.Wallet(process.env.PRIVATE_KEY, provider);
 
@@ -163,5 +157,5 @@ cast send 0xRecipient --value 1ether --legacy \
 | `forge create` | ✅ | Use `--legacy` |
 | `cast call` | ✅ | Read-only |
 | `cast send` | ✅ | Use `--legacy` |
-| `eth_sendTransaction` | ✅ | Alternative when the node has an unlocked account |
+| `eth_sendTransaction` | ❌ | Disabled — returns `-32601`; use `eth_sendRawTransaction` |
 | `eth_feeHistory` | ✅ | Supported (priority fee rewards are always 0) |

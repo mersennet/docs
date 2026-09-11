@@ -61,7 +61,7 @@ A cross-chain bridge is planned (Tier 3 in the roadmap). For now, testnet assets
 ### Where is the RPC endpoint?
 
 - **HTTP:** `https://rpc.mersennet.com`
-- **WebSocket:** `wss://rpc.mersennet.com` (may not be enabled on all nodes)
+- **WebSocket:** not yet publicly exposed — use HTTP polling
 
 ### What is the block time?
 
@@ -75,4 +75,4 @@ Mersennet Trade is the native perpetuals and spot trading terminal, built on the
 
 ---
 
-Have more questions? Check the [Getting Started](/getting-started/overview) guides or open an issue on [GitHub](https://github.com/mersennet/mersennet).
+Have more questions? Check the [Getting Started](/getting-started/overview) guides or reach out via the [Mersennet GitHub organization](https://github.com/mersennet).

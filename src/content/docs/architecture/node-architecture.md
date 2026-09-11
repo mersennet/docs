@@ -143,10 +143,10 @@ When the block timer fires, the following sequence executes:
       │
       ▼
   ┌─────────────────────────┐
-  │  1. PROPOSER SELECTION  │  Consensus selects the validator with the
-  │                         │  highest accumulated priority (stake-weighted
-  │                         │  round-robin). If this node is not the
-  │                         │  proposer, it waits for an incoming block.
+  │  1. PROPOSER SELECTION  │  Consensus selects the leader by deterministic
+  │                         │  round-robin over the validator set
+  │                         │  ((height + round) mod count). If this node is
+  │                         │  not the proposer, it waits for an incoming block.
   └────────────┬────────────┘
                │
                ▼
@@ -259,7 +259,7 @@ The state backend supports snapshots for:
 
 ## EVM Integration
 
-Mersennet uses [revm](https://github.com/bluealloy/revm) (Rust EVM) for transaction execution with the Shanghai specification.
+Mersennet uses [revm](https://github.com/bluealloy/revm) (Rust EVM) for transaction execution with the Prague specification (`SpecId::PRAGUE_EOF`).
 
 ### Execution Flow
 

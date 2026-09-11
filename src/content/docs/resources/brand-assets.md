@@ -15,14 +15,14 @@ phosphor green (`#7dff9b`) on black.
 
 Download: [logo.svg](/logo.svg) · [favicon.svg](/favicon.svg) · [social card](/mersennet-social.svg)
 
-A complete kit lives in
-[`brand/` in the monorepo](https://github.com/mersennet/mersennet/tree/main/brand):
-avatars, banners for every platform (X, LinkedIn, YouTube,
-Discord, Facebook, GitHub), post templates, and transparent renders.
+A complete kit lives in the monorepo's `brand/` directory (repository
+currently private — contact the team for the full kit): avatars, banners for
+every platform (X, LinkedIn, YouTube, Discord, Facebook, GitHub), post
+templates, and transparent renders.
 
 ### Guidelines
 
-- The five bars are always **top-anchored and symmetric** (heights 5·2·3·2·5). Never bottom-anchor them: that reads as an audio equalizer, not the M.
+- The five bars are always **top-anchored and symmetric** (relative heights 68·30·46·30·68 at a bar width of 12 — use the SVG masters rather than redrawing). Never bottom-anchor them: that reads as an audio equalizer, not the M.
 - Use phosphor green `#7dff9b` on dark backgrounds and deep green `#0c8f43` on light backgrounds.
 - Maintain clear space around the mark equal to one bar width.
 - Do not stretch, rotate, re-space, or re-proportion the bars.
@@ -83,7 +83,7 @@ The **wordmark** is always JetBrains Mono Bold, all caps, with 0.14em tracking.
 - **Font:** JetBrains Mono
 - **Source:** [Google Fonts](https://fonts.google.com/specimen/JetBrains+Mono)
 - **Usage:** Code blocks, addresses, chain IDs, technical content
-- **Weight:** 400 (regular), 500 (medium), 600 (semibold)
+- **Weights:** 400 (regular), 500 (medium), 700 (bold — wordmark)
 
 ### CSS Variables
 
@@ -111,7 +111,7 @@ The **wordmark** is always JetBrains Mono Bold, all caps, with 0.14em tracking.
 | Social Card | SVG/PNG | Open Graph / Twitter share image (1200×630) |
 
 :::tip
-The full media kit (vector masters, transparent PNG renders, and platform-exact social sizes) lives in [`brand/` in the monorepo](https://github.com/mersennet/mersennet/tree/main/brand).
+The full media kit (vector masters, transparent PNG renders, and platform-exact social sizes) lives in the monorepo's `brand/` directory (repository currently private — contact the team for access).
 :::
 
 ## Integration Guide
@@ -125,9 +125,9 @@ When building dApps or documentation for Mersennet:
 5. Import fonts via Google Fonts:
 
 ```html
-<link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 ```
 
 ## Contact
 
-For custom brand requests, partnerships, or asset access, reach out via the [Mersennet GitHub](https://github.com/mersennet/mersennet) or community channels.
+For custom brand requests, partnerships, or asset access, reach out via the [Mersennet GitHub organization](https://github.com/mersennet) or community channels.

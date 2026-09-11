@@ -3,13 +3,17 @@ title: "Note scanning & wallet reconstruction"
 description: "How wallets rebuild private state by scanning notes and tracking nullifiers, with no central indexer of your funds."
 ---
 
+:::note[Activation]
+The viewing-grant methods used here are gated by the privacy hard fork and currently return error `-32605` on the public testnet.
+:::
+
 Because Mersennet never stores a plaintext balance for you, your wallet rebuilds private state **locally**. It scans the encrypted notes it is allowed to decrypt, drops the ones it has already spent, and sums what remains. There is no central indexer of your funds.
 
 ## The scan-and-reconstruct workflow
 
 ```mermaid
 flowchart TD
-  Fetch["Fetch encrypted notes (mersennet_viewNotes / mersennet_getShieldedNotes)"] --> Decrypt["Decrypt with viewing material"]
+  Fetch["Fetch encrypted notes (mersennet_viewNotes / mersennet_viewBalances, grant-gated)"] --> Decrypt["Decrypt with viewing material"]
   Decrypt --> Derive["Derive each note's nullifier"]
   Derive --> Filter["Drop notes whose nullifier is in the spent set"]
   Filter --> Sum["Sum remaining notes per asset"]
@@ -29,7 +33,7 @@ The TypeScript SDK ships the full pipeline so a wallet does not implement crypto
 | Helper | Purpose |
 |---|---|
 | `scanGrantedNotes` | Decrypt the notes a viewing grant authorizes. |
-| `defaultNullifierDeriver` | Derive a note's nullifier deterministically. |
+| `defaultNullifierDeriver` | Deterministic test/mock nullifier deriver. Production wallets must supply a deriver matching the chain's Poseidon nullifier scheme. |
 | `reconstructPortfolio` | Sum unspent notes into per-asset balances. |
 | `scanAndReconstructBalances` | End-to-end: scan, derive, filter spent, and reconstruct in one call. |
 
