@@ -5544,7 +5544,8 @@ Running your own node? These are the canonical seed peers for the testnet
 | Validator 2 | `49.13.54.79:30303` |
 
 The canonical node configuration (including the genesis section every node
-must share) ships in the repository at `networks/testnet/config.json`. See
+must share) ships in the [release bundle](https://mersennet.com/downloads/)
+alongside the node binary and installer — no source access required. See
 [Run a Node](/validators/run-a-node/) for the full guide.
 
 ## Add Mersennet to MetaMask
@@ -7032,7 +7033,7 @@ Before running a validator, ensure you meet:
 | Category | Requirement |
 |----------|-------------|
 | **Hardware** | 4 CPU cores, 8 GB RAM, 100 GB SSD, 100 Mbps network |
-| **Software** | Rust 1.85+ (for building from source) |
+| **Software** | 64-bit Linux, glibc 2.34+ (Ubuntu 22.04+ / Debian 12+) for the [release bundle](https://mersennet.com/downloads/); Rust 1.85+ only if building from source |
 | **Stake** | Validator set is currently fixed at genesis; permissionless registration (with a minimum stake) is planned |
 | **Operational** | 24/7 uptime, monitoring, key management, backup procedures |
 
@@ -7066,6 +7067,8 @@ Running on HDD (spinning disk) is not recommended. The sled storage backend perf
 
 ### Software Requirements
 
+Running the [release bundle](#option-a--download-the-release-bundle-recommended) needs only a 64-bit Linux with glibc 2.34+ (Ubuntu 22.04+, Debian 12+) and `curl`/`tar`. The toolchain below is required **only if you build from source**:
+
 | Requirement | Version | Purpose |
 |-------------|---------|---------|
 | **Rust** | 1.85 or later | Compiler for building from source (the workspace uses Rust edition 2024) |
@@ -7074,7 +7077,7 @@ Running on HDD (spinning disk) is not recommended. The sled storage backend perf
 | **pkg-config** | Latest | Library discovery for native dependencies |
 | **libssl-dev** | Latest | TLS support for networking |
 
-Install all dependencies on Ubuntu/Debian:
+Install all build dependencies on Ubuntu/Debian:
 
 ```bash
 sudo apt update && sudo apt install -y build-essential pkg-config libssl-dev git
@@ -7088,42 +7091,56 @@ source $HOME/.cargo/env
 rustc --version  # Should be 1.85+
 ```
 
-## Build from Source
+## Get the Node Binary
 
-Clone the Mersennet repository and build the release binary:
+### Option A — download the release bundle (recommended)
+
+No source access is needed. Every release bundle at [mersennet.com/downloads](https://mersennet.com/downloads/) contains the node binary (the exact build running on the testnet validators), the canonical testnet `config.json`, the systemd unit and a one-command installer. Linux x86-64, glibc 2.34+ (Ubuntu 22.04+, Debian 12+).
+
+```bash
+cd ~
+curl -fLO https://mersennet.com/downloads/mersennet-node-linux-x86_64-latest.tar.gz
+curl -fLO https://mersennet.com/downloads/SHA256SUMS
+sha256sum -c SHA256SUMS --ignore-missing     # must print: ... OK
+tar xzf mersennet-node-linux-x86_64-latest.tar.gz
+cd mersennet-node-linux-x86_64-*/
+sha256sum -c SHA256SUMS                      # verifies every file in the bundle
+```
+
+The bundle's `README.md` lists the binary's sha256; it should match `sha256sum /opt/mersennet/bin/mersennet` on the validators, so you can confirm you are running the same build as the network.
+
+### Option B — build from source
 
 :::note[Repository access]
-The `mersennet/mersennet` repository is private during the current testnet phase. If the clone below fails with "Repository not found", request access from the team via [GitHub](https://github.com/mersennet) or the community channels listed in the [FAQ](/resources/faq/); source access is granted to prospective validators.
+The `mersennet/mersennet` repository is private during the current testnet phase. If `git clone` fails with "Repository not found" or "Authentication failed", use the release bundle above, or request source access from the team via [GitHub](https://github.com/mersennet) or the community channels listed in the [FAQ](/resources/faq/).
 :::
 
 ```bash
 git clone https://github.com/mersennet/mersennet.git
 cd mersennet
-cargo build --release
+cargo build --release --bin mersennet
 ```
 
-The binary will be at `target/release/mersennet` (built from the `mersennet-node` crate).
+The binary will be at `target/release/mersennet`; the canonical config and installer are under `networks/testnet/`.
 
 ## Join the Testnet (Full Node)
 
 ### The canonical config
 
-Every node on the network must share the exact same `genesis`, `engine.chain_id`, and `token_economics` configuration — the genesis state is derived deterministically from it. The canonical testnet configuration ships in the repository:
-
-```
-networks/testnet/config.json
-```
+Every node on the network must share the exact same `genesis`, `engine.chain_id`, and `token_economics` configuration — the genesis state is derived deterministically from it. The canonical testnet configuration is `config.json` in the release bundle (or `networks/testnet/config.json` in the repository).
 
 :::danger[Do not hand-write the genesis section]
-A node started with a different `genesis` section computes a different genesis state and will reject (or diverge from) every block it receives. Always start from `networks/testnet/config.json` and only adjust the runtime sections: `rpc`, `ws`, `p2p.listen`, and file paths.
+A node started with a different `genesis` section computes a different genesis state and will reject (or diverge from) every block it receives. Always start from the canonical `config.json` and only adjust the runtime sections: `rpc`, `ws`, `p2p.listen`, and file paths.
 :::
 
 ### Quick start (foreground)
 
+From the extracted bundle directory (for a source build, substitute `target/release/mersennet` and `networks/testnet/config.json`):
+
 ```bash
-mkdir -p ~/mersennet-node && cd ~/mersennet-node
-cp <repo>/networks/testnet/config.json .
-<repo>/target/release/mersennet --config config.json --mode full --rpc
+sudo install -m 0755 mersennet /usr/local/bin/mersennet
+mkdir -p ~/mersennet-node && cp config.json ~/mersennet-node/ && cd ~/mersennet-node
+RUST_LOG=info mersennet --config config.json --mode full --rpc
 ```
 
 On first start the node:
@@ -7147,12 +7164,14 @@ Outbound-only connectivity is enough to sync and follow the chain — block sync
 
 ### One-command install (systemd)
 
-For a production deployment, the repository ships an installer that sets up the binary, config, dedicated user, and a hardened systemd service (see [Systemd Service](#systemd-service-production) below for what it installs):
+For a production deployment, the installer sets up the binary, config, dedicated user, and a hardened systemd service (see [Systemd Service](#systemd-service-production) below for what it installs). From the extracted bundle directory:
 
 ```bash
-cargo build --release --bin mersennet
-sudo bash networks/testnet/install.sh
+sudo bash install.sh
+journalctl -u mersennet -f
 ```
+
+From a source checkout the equivalent is `cargo build --release --bin mersennet && sudo bash networks/testnet/install.sh`. Re-running the installer on an existing node upgrades the binary in place and restarts the service; data and keys are kept.
 
 ### Bootnodes
 
@@ -7288,7 +7307,7 @@ Check the [Network Information](/getting-started/network-info) page for current 
 
 Genesis is not a separate file: it is the `genesis` section of your `config.json`, defining initial accounts, validators, CLOB markets, and collateral assets. Every node derives the identical genesis state from it, which is why the section must be byte-for-byte compatible across the network.
 
-- **Testnet (chain ID 131071)**: use `networks/testnet/config.json` from the repository — never edit its `genesis`, `engine.chain_id`, or `token_economics` sections.
+- **Testnet (chain ID 131071)**: use the `config.json` from the [release bundle](https://mersennet.com/downloads/) (or `networks/testnet/config.json` in the repository) — never edit its `genesis`, `engine.chain_id`, or `token_economics` sections.
 - **Mainnet (chain ID 8191)**: see `mainnet/genesis.json` in the repository for the canonical parameters (not yet launched).
 
 ## Node Modes
