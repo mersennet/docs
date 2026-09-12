@@ -551,7 +551,7 @@ Returns the network ID as a string (`"131071"`).
 
 ### net_peerCount
 
-Returns the number of connected peers.
+Returns the number of connected peers — peers the node has actually received gossip from within the last minute.
 
 **Parameters:** None
 
@@ -559,6 +559,33 @@ Returns the number of connected peers.
 curl -X POST https://rpc.mersennet.com \
   -H "Content-Type: application/json" \
   -d '{"jsonrpc":"2.0","method":"net_peerCount","params":[],"id":1}'
+```
+
+---
+
+### mersennet_peers
+
+Returns the node's live gossip peers. Used by the [explorer's Network page](https://explorer.mersennet.com/#/network) and by `mersennet-check` to confirm a node is visible to the network. Refreshed every 30 seconds.
+
+**Parameters:** None
+
+**Returns:** array of `{ addr, firstSeenSecs, lastSeenSecs, heard }` — `heard` is `false` for addresses only learned from another node's peer list and not yet heard from directly.
+
+```bash
+curl -X POST https://rpc.mersennet.com \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","method":"mersennet_peers","params":[],"id":1}'
+```
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": [
+    { "addr": "46.225.183.192:30303", "firstSeenSecs": 3120, "lastSeenSecs": 1, "heard": true },
+    { "addr": "108.61.194.61:30303", "firstSeenSecs": 2980, "lastSeenSecs": 0, "heard": true }
+  ]
+}
 ```
 
 ---
