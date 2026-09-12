@@ -6694,7 +6694,7 @@ Mersennet Trade is the native perpetuals and spot trading terminal, built on the
 
 ---
 
-Have more questions? Check the [Getting Started](/getting-started/overview) guides or reach out via the [Mersennet GitHub organization](https://github.com/mersennet).
+Have more questions? Check the [Getting Started](/getting-started/overview) guides. Node operators and prospective validators: the [Run a Node](/validators/run-a-node/#becoming-a-validator) page has a registration form the team reads directly. Bug reports and product feedback go through the [feedback page in the trade terminal](https://trade.mersennet.com/feedback).
 
 
 ---
@@ -7146,7 +7146,53 @@ What you can do today:
 
 1. **Run a full node** (this page). It is the same software, a real contribution to network resilience, and the operational dry-run for validating later — operators with a stable, synced node will be onboarded first.
 2. **Delegate MRSN to a validator** and earn a share of block rewards: [Staking Guide](/validators/staking), or the [staking page in the trade terminal](https://trade.mersennet.com/staking). Get MRSN from the [faucet](https://faucet.mersennet.com).
-3. **Register interest** through the community channels in the [FAQ](/resources/faq/) — tell us your node's public IP (or peer id) and how to reach you.
+3. **Register as a prospective validator** with the form below. Operators with a synced node are contacted first when the set opens.
+
+<form id="validator-interest" style="border:1px solid var(--sl-color-gray-5);padding:1rem 1.25rem;margin:1rem 0;display:grid;gap:.75rem;max-width:40rem">
+  <label style="display:grid;gap:.25rem;font-size:.9rem">How can we reach you? (email or Telegram handle)
+    <input name="contact" required maxlength="200" placeholder="you@example.com or @handle" style="padding:.5rem;border:1px solid var(--sl-color-gray-4);background:var(--sl-color-bg);color:var(--sl-color-text)">
+  </label>
+  <label style="display:grid;gap:.25rem;font-size:.9rem">Your node's public IP or peer id (optional)
+    <input name="node" maxlength="120" placeholder="203.0.113.10" style="padding:.5rem;border:1px solid var(--sl-color-gray-4);background:var(--sl-color-bg);color:var(--sl-color-text)">
+  </label>
+  <label style="display:grid;gap:.25rem;font-size:.9rem">Anything else — who you are, validator experience, hardware (optional)
+    <textarea name="notes" maxlength="2000" rows="3" style="padding:.5rem;border:1px solid var(--sl-color-gray-4);background:var(--sl-color-bg);color:var(--sl-color-text)"></textarea>
+  </label>
+  <input name="website" tabindex="-1" autocomplete="off" style="position:absolute;left:-9999px" aria-hidden="true">
+  <div style="display:flex;gap:1rem;align-items:center">
+    <button type="submit" style="padding:.55rem 1rem;background:var(--sl-color-accent);color:var(--sl-color-black);border:0;font-weight:600;cursor:pointer">Register interest</button>
+    <span id="validator-interest-status" style="font-size:.9rem"></span>
+  </div>
+</form>
+<script>
+(() => {
+  const f = document.getElementById('validator-interest');
+  const s = document.getElementById('validator-interest-status');
+  if (!f || !s) return;
+  f.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const d = new FormData(f);
+    if (d.get('website')) return;
+    s.textContent = 'Sending…';
+    try {
+      const r = await fetch('/api/v1/feedback', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          category: 'validator',
+          contact: d.get('contact'),
+          message: `Prospective validator\nNode: ${d.get('node') || 'n/a'}\n${d.get('notes') || ''}`.trim(),
+          page: 'docs/validators/run-a-node',
+          userAgent: navigator.userAgent,
+        }),
+      });
+      const j = await r.json().catch(() => ({}));
+      if (r.ok && j.ok) { s.textContent = `Registered (#${j.id}). We will reach out when validator onboarding opens.`; f.reset(); }
+      else s.textContent = j.error || 'Could not submit right now — please try again later.';
+    } catch { s.textContent = 'Could not submit right now — please try again later.'; }
+  });
+})();
+</script>
 
 When onboarding opens, the flow will be: sync a full node, stake MRSN from the address matching your node identity, and the node starts participating in consensus once the set change takes effect.
 
