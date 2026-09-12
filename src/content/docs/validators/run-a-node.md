@@ -1,134 +1,163 @@
 ---
 title: "Run a Node"
+description: "Install a Mersennet testnet full node in one command, check that it is syncing, and understand what it can and cannot do today."
 ---
 
-This guide walks you through building, configuring, and running a Mersennet node from source — first as a **full node** (syncs the chain, serves RPC, relays transactions), then what it takes to run a **validator**.
+Four steps, about 30 minutes, no source code required. You end up with a **full node**: it verifies every block, serves JSON-RPC locally and helps other peers sync.
 
-Anyone can run a full node against the public testnet today. The node ships with a canonical testnet configuration, syncs historical blocks from the bootnodes at several hundred blocks per second, and then follows live gossip.
-
-## Prerequisites
-
-### Hardware Requirements
-
-| Resource | Minimum | Recommended | Notes |
-|----------|---------|-------------|-------|
-| **CPU** | 2 cores | 4+ cores | EVM execution and initial sync are CPU-bound (the testnet validators run 2 vCPU) |
-| **RAM** | 4 GB | 8 GB | State and mempool reside in memory |
-| **Storage** | 40 GB SSD | 200 GB NVMe SSD | State grows over time; NVMe recommended for I/O |
-| **Network** | 100 Mbps | 1 Gbps | Low latency matters for consensus round-trips |
-| **OS** | Ubuntu 22.04+ | Ubuntu 24.04 LTS | Any modern Linux; macOS for development only |
-
-:::caution
-Running on HDD (spinning disk) is not recommended. The sled storage backend performs frequent random reads/writes that require SSD-class IOPS.
+:::note[What a node is — and is not — today]
+A full node is **not a validator**. The testnet validator set is fixed at genesis (4 validators, 1,000,000 MRSN each, allocated in the genesis file — nobody "earned" or bought that stake). Running this node will **not** add you to the validator list; opening the set requires a chain upgrade that is on the roadmap. See [Becoming a validator](#becoming-a-validator) for what you can do now.
 :::
 
-### Software Requirements
+## Step 1 — Get a server
 
-Running the [release bundle](#option-a--download-the-release-bundle-recommended) needs only a 64-bit Linux with glibc 2.34+ (Ubuntu 22.04+, Debian 12+) and `curl`/`tar`. The toolchain below is required **only if you build from source**:
+| | Minimum | Recommended |
+|---|---|---|
+| OS | Ubuntu 22.04+ or Debian 12+ (x86-64) | Ubuntu 24.04 LTS |
+| CPU / RAM | 2 cores / 4 GB | 4 cores / 8 GB |
+| Disk | 40 GB SSD | 100 GB SSD (chain data grows ~0.5 GB/day) |
+| Network | 10 Mbps, outbound UDP+TCP 30303 allowed | Inbound 30303 open too |
 
-| Requirement | Version | Purpose |
-|-------------|---------|---------|
-| **Rust** | 1.85 or later | Compiler for building from source (the workspace uses Rust edition 2024) |
-| **Git** | Latest | Clone the repository |
-| **build-essential** | Latest | C linker and system libraries |
-| **pkg-config** | Latest | Library discovery for native dependencies |
-| **libssl-dev** | Latest | TLS support for networking |
+You need `sudo` (root) on the machine. That is the whole list — no Rust, no Git, no build tools.
 
-Install all build dependencies on Ubuntu/Debian:
+:::tip[Using a separate disk or block volume]
+Mount it first (e.g. at `/mnt/blockstorage`) and pass `--data-dir` in Step 2. The chain data and your node key go there; nothing else about the install changes.
+:::
+
+## Step 2 — Install (one command)
+
+Run from **any directory** — it downloads the latest release, verifies its checksum, installs the binary and config, creates a `mersennet` system user, and starts a hardened systemd service:
+
+```bash
+curl -fsSL https://mersennet.com/downloads/install.sh | sudo bash
+```
+
+Chain data on a mounted volume instead of the OS disk:
+
+```bash
+curl -fsSL https://mersennet.com/downloads/install.sh | sudo bash -s -- --data-dir /mnt/blockstorage/mersennet
+```
+
+Other option: `--rpc-public` listens for JSON-RPC on `0.0.0.0:8545` instead of localhost (only if you know you want that).
+
+The installer ends with `Done. Your node is running as a systemd service.` If it prints an error instead, copy the last log lines it shows when you ask for help.
+
+<details>
+<summary>What the installer puts where</summary>
+
+| Path | Contents |
+|------|----------|
+| `/usr/local/bin/mersennet` | Node binary — the same build the validators run (its sha256 is listed in the bundle README) |
+| `/usr/local/bin/mersennet-check` | Health check command (Step 3) |
+| `/etc/mersennet/config.json` | Canonical testnet config. Never edit `genesis`, `engine.chain_id` or `token_economics` |
+| `/var/lib/mersennet` (or your `--data-dir`) | `data/` chain state and `keys/node_key.json` (your peer identity — back it up) |
+| `/etc/systemd/system/mersennet.service` | The service (auto-restart, sandboxed) |
+
+Everything it downloads is listed with checksums at [mersennet.com/downloads](https://mersennet.com/downloads/). To inspect before running, download the tarball from that page, extract it, and run `sudo bash install.sh` yourself — the one-liner does exactly that.
+</details>
+
+## Step 3 — Check that it is syncing
+
+```bash
+mersennet-check
+```
+
+```text
+Service      running since 2026-09-12 15:02:25
+Block height 21248 / 1281813 network — syncing (1% done, 1260565 blocks behind)
+Peers        18
+Chain ID     131071 (Mersennet testnet)
+Data dir     /mnt/blockstorage/mersennet — 189M used, 281G free
+Node key     /mnt/blockstorage/mersennet/keys/node_key.json (back this up to keep your peer identity)
+```
+
+- **syncing → catching up → in sync** is the normal sequence. The first sync replays the whole chain from the bootnodes and typically takes 20–40 minutes; run `mersennet-check` again later.
+- **Peers 0** for more than a minute means outbound UDP+TCP 30303 is blocked on your host or provider firewall.
+- **Local RPC not answering** right after install is normal for a few seconds; if it persists, read the logs: `journalctl -u mersennet -n 50 --no-pager`.
+
+When it says **in sync**, you are done. Your node is verifying the same blocks you see on the [explorer](https://explorer.mersennet.com) and can answer JSON-RPC on `http://127.0.0.1:8545`:
+
+```bash
+curl -s http://127.0.0.1:8545 -H 'Content-Type: application/json' \
+  -d '{"jsonrpc":"2.0","id":1,"method":"eth_blockNumber","params":[]}'
+```
+
+## Step 4 — Keep it running
+
+| Task | Command |
+|------|---------|
+| Status | `mersennet-check` · `systemctl status mersennet` |
+| Logs | `journalctl -u mersennet -f` |
+| Restart | `sudo systemctl restart mersennet` |
+| **Upgrade** to a new release | Re-run the Step 2 command — it replaces the binary, restarts the service, keeps data and keys |
+| Back up your identity | Copy `keys/node_key.json` from your data dir somewhere safe |
+| Let others sync from you | Open **UDP+TCP 30303** inbound (`sudo ufw allow 30303` — the installer does this if ufw is active) |
+| Uninstall | `sudo systemctl disable --now mersennet && sudo rm -f /etc/systemd/system/mersennet.service /usr/local/bin/mersennet /usr/local/bin/mersennet-check && sudo rm -rf /etc/mersennet` — then delete the data dir if you want the chain data gone |
+
+That is the complete guide for running a node. Everything below is background, the validator question, and reference material for operators who want to go deeper.
+
+## Becoming a validator
+
+**The validator set is not open yet.** The four active validators were defined in the genesis configuration with 1,000,000 MRSN of stake each; that stake was allocated at genesis, not acquired — there is no way to obtain 1,000,000 MRSN on the testnet, and the faucet's 1,000 MRSN per hour is meant for testing and delegation. Adding validators at runtime requires a chain upgrade (the staking precompile reserves the selectors for it) that is on the roadmap.
+
+What you can do today:
+
+1. **Run a full node** (this page). It is the same software, a real contribution to network resilience, and the operational dry-run for validating later — operators with a stable, synced node will be onboarded first.
+2. **Delegate MRSN to a validator** and earn a share of block rewards: [Staking Guide](/validators/staking), or the [staking page in the trade terminal](https://trade.mersennet.com/staking). Get MRSN from the [faucet](https://faucet.mersennet.com).
+3. **Register interest** through the community channels in the [FAQ](/resources/faq/) — tell us your node's public IP (or peer id) and how to reach you.
+
+When onboarding opens, the flow will be: sync a full node, stake MRSN from the address matching your node identity, and the node starts participating in consensus once the set change takes effect.
+
+## Frequently asked
+
+**My node is running but does not appear in the validator list.** Correct — see above. `mersennet-check` saying *in sync* with peers is what success looks like today.
+
+**Do I need to do everything on this page?** No. Steps 1–4 are the whole thing. The sections below are reference material.
+
+**Where do I run the commands? Does `cd ~` matter?** Anywhere. The one-line installer downloads into a temporary directory and cleans up; your current directory is irrelevant. Chain data always goes to `/var/lib/mersennet` unless you pass `--data-dir`.
+
+**How do I keep the chain on my block storage instead of the OS disk?** `--data-dir /mnt/<your-volume>/mersennet` in Step 2. Re-running the installer with a new `--data-dir` moves an existing node's data there. Do not use `/tmp` paths — they are wiped on reboot and hidden from the service.
+
+**Where does the 1,000,000 MRSN come from and how do I get it?** It is the genesis stake of the four founding validators, written into the genesis config before the chain started. You cannot obtain it; it is not required to run a node, and validator onboarding will publish its own (much lower) minimum stake when it opens.
+
+**How long does the first sync take?** Typically 20–40 minutes; the chain grows about 43,000 blocks a day, and the node replays it at several hundred to a few thousand blocks per second depending on hardware.
+
+**Can I run it without systemd, or on another distro / architecture?** Yes — download the bundle from [mersennet.com/downloads](https://mersennet.com/downloads/), extract it and run `./mersennet --config config.json --mode full --rpc` from a directory of your choice (data lands in `./data`, key in `./keys`). Non-x86-64 or glibc < 2.34 systems need a source build (below).
+
+---
+
+## Advanced: manual install and source build
+
+### Manual install from the bundle
+
+```bash
+curl -fsSLO https://mersennet.com/downloads/SHA256SUMS
+curl -fsSLO "https://mersennet.com/downloads/$(awk 'NR==1{print $2}' SHA256SUMS)"
+sha256sum -c SHA256SUMS --ignore-missing          # must print: ... OK
+tar xzf mersennet-node-linux-x86_64-*.tar.gz && cd mersennet-node-linux-x86_64-*/
+sha256sum -c SHA256SUMS                            # verifies every file in the bundle
+sudo bash install.sh [--data-dir DIR] [--rpc-public]
+```
+
+The bundle README lists the binary's sha256; it matches `sha256sum /opt/mersennet/bin/mersennet` on the validators, so you can confirm you run the same build as the network.
+
+### Build from source
+
+:::note[Repository access]
+The `mersennet/mersennet` repository is private during the current testnet phase. You do not need it to run a node — use the release bundle. If you want the source, request access via [GitHub](https://github.com/mersennet) or the community channels in the [FAQ](/resources/faq/).
+:::
+
+Requires Rust 1.85+ (edition 2024), `build-essential`, `pkg-config`, `libssl-dev`, Git:
 
 ```bash
 sudo apt update && sudo apt install -y build-essential pkg-config libssl-dev git
-```
-
-Install Rust via [rustup](https://rustup.rs/):
-
-```bash
-curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-source $HOME/.cargo/env
-rustc --version  # Should be 1.85+
-```
-
-## Get the Node Binary
-
-### Option A — download the release bundle (recommended)
-
-No source access is needed. Every release bundle at [mersennet.com/downloads](https://mersennet.com/downloads/) contains the node binary (the exact build running on the testnet validators), the canonical testnet `config.json`, the systemd unit and a one-command installer. Linux x86-64, glibc 2.34+ (Ubuntu 22.04+, Debian 12+).
-
-```bash
-cd ~
-curl -fLO https://mersennet.com/downloads/mersennet-node-linux-x86_64-latest.tar.gz
-curl -fLO https://mersennet.com/downloads/SHA256SUMS
-sha256sum -c SHA256SUMS --ignore-missing     # must print: ... OK
-tar xzf mersennet-node-linux-x86_64-latest.tar.gz
-cd mersennet-node-linux-x86_64-*/
-sha256sum -c SHA256SUMS                      # verifies every file in the bundle
-```
-
-The bundle's `README.md` lists the binary's sha256; it should match `sha256sum /opt/mersennet/bin/mersennet` on the validators, so you can confirm you are running the same build as the network.
-
-### Option B — build from source
-
-:::note[Repository access]
-The `mersennet/mersennet` repository is private during the current testnet phase. If `git clone` fails with "Repository not found" or "Authentication failed", use the release bundle above, or request source access from the team via [GitHub](https://github.com/mersennet) or the community channels listed in the [FAQ](/resources/faq/).
-:::
-
-```bash
-git clone https://github.com/mersennet/mersennet.git
-cd mersennet
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh && source $HOME/.cargo/env
+git clone https://github.com/mersennet/mersennet.git && cd mersennet
 cargo build --release --bin mersennet
+sudo bash networks/testnet/install.sh              # same installer, repo layout
 ```
 
-The binary will be at `target/release/mersennet`; the canonical config and installer are under `networks/testnet/`.
-
-## Join the Testnet (Full Node)
-
-### The canonical config
-
-Every node on the network must share the exact same `genesis`, `engine.chain_id`, and `token_economics` configuration — the genesis state is derived deterministically from it. The canonical testnet configuration is `config.json` in the release bundle (or `networks/testnet/config.json` in the repository).
-
-:::danger[Do not hand-write the genesis section]
-A node started with a different `genesis` section computes a different genesis state and will reject (or diverge from) every block it receives. Always start from the canonical `config.json` and only adjust the runtime sections: `rpc`, `ws`, `p2p.listen`, and file paths.
-:::
-
-### Quick start (foreground)
-
-From the extracted bundle directory (for a source build, substitute `target/release/mersennet` and `networks/testnet/config.json`):
-
-```bash
-sudo install -m 0755 mersennet /usr/local/bin/mersennet
-mkdir -p ~/mersennet-node && cp config.json ~/mersennet-node/ && cd ~/mersennet-node
-RUST_LOG=info mersennet --config config.json --mode full --rpc
-```
-
-On first start the node:
-
-1. Generates a P2P identity at `keys/node_key.json` (keep this file to retain your peer identity).
-2. Builds the genesis state from the config and logs `registered genesis validator ...` and `seeded genesis market ...` lines.
-3. Pulls historical blocks from the bootnodes in 256-block batches over TCP 30303 (`synced blocks from peer ...` log lines) at several hundred blocks per second.
-4. Switches to following live gossip once caught up (`received block from network ...` followed by `block finalized by 2/3 stake quorum ...`).
-
-Check sync progress against the [explorer](https://explorer.mersennet.com):
-
-```bash
-curl -s http://127.0.0.1:8545 -X POST \
-  -H "Content-Type: application/json" \
-  -d '{"jsonrpc":"2.0","method":"eth_blockNumber","params":[],"id":1}'
-```
-
-:::note[NAT and firewalls]
-Outbound-only connectivity is enough to sync and follow the chain — block sync and gossip both work from behind NAT. Opening UDP+TCP 30303 to the world additionally lets other peers discover and sync from your node, which strengthens the network.
-:::
-
-### One-command install (systemd)
-
-For a production deployment, the installer sets up the binary, config, dedicated user, and a hardened systemd service (see [Systemd Service](#systemd-service-production) below for what it installs). From the extracted bundle directory:
-
-```bash
-sudo bash install.sh
-journalctl -u mersennet -f
-```
-
-From a source checkout the equivalent is `cargo build --release --bin mersennet && sudo bash networks/testnet/install.sh`. Re-running the installer on an existing node upgrades the binary in place and restarts the service; data and keys are kept.
+The canonical config, unit file, installer and `mersennet-check` live under `networks/testnet/`; `networks/testnet/package-release.sh` builds the public bundle.
 
 ### Bootnodes
 
@@ -139,6 +168,13 @@ The canonical config already lists these seed peers (UDP 30303 gossip, TCP 30303
 | Public RPC node | `46.225.30.187:30303` |
 | Validator 1 | `46.225.183.192:30303` |
 | Validator 2 | `49.13.54.79:30303` |
+
+Outbound-only connectivity is enough to sync and follow the chain. Opening 30303 inbound additionally lets other peers discover and sync from your node.
+
+:::danger[Do not hand-write the genesis section]
+A node started with a different `genesis` section computes a different genesis state and will reject (or diverge from) every block it receives. Always start from the canonical `config.json` and only adjust the runtime sections: `rpc`, `ws`, `p2p.listen`, and file paths.
+:::
+
 
 ## Configuration
 
@@ -284,16 +320,6 @@ The `--mode` flag accepts `full`, `validator`, or `devnet`:
 # Validator
 ./target/release/mersennet --config config.json --mode validator
 ```
-
-## Becoming a Validator
-
-The active validator set currently consists of the four genesis validators. **Runtime validator registration is not yet open**: staking your own node into the active set requires a chain upgrade that is on the roadmap (the precompile selectors are reserved). What you can do today:
-
-1. **Run a full node** — identical software, real contribution to network resilience, and the operational dry-run for validating later.
-2. **Delegate MRSN to an existing validator** via the staking precompile and earn a share of block rewards. See the [Staking Guide](/validators/staking) and the [explorer's Validators page](https://explorer.mersennet.com/validators).
-3. **Register interest in validating** through the community channels in the [FAQ](/resources/faq/) — prospective validators for the next validator-set expansion are onboarded from there.
-
-When validator onboarding opens, the flow will be: sync a full node, stake MRSN from the address matching your `p2p.node_key_path` identity, and the node begins participating in consensus once the set change takes effect. The node logs its validator address at startup (`validator_addr=0x...`).
 
 ## Systemd Service (Production)
 
