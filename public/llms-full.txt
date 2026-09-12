@@ -7249,8 +7249,15 @@ When onboarding opens, the flow will be: sync a full node, stake MRSN from the a
 
 ### Manual install from the bundle
 
+Releases are signed. `SHA256SUMS.sig` is an ed25519 signature over `SHA256SUMS` by the Mersennet release key; the one-line installer pins this key and refuses to install if the signature does not verify. To check it yourself:
+
 ```bash
 curl -fsSLO https://mersennet.com/downloads/SHA256SUMS
+curl -fsSLO https://mersennet.com/downloads/SHA256SUMS.sig
+printf -- '-----BEGIN PUBLIC KEY-----\n%s\n-----END PUBLIC KEY-----\n' \
+  'MCowBQYDK2VwAyEAGhjx5fsplcdLhVLXX9JEQLeajDFpUEmiylFXO0VoLBc=' > mersennet-release.pub
+openssl pkeyutl -verify -pubin -inkey mersennet-release.pub -rawin -in SHA256SUMS -sigfile SHA256SUMS.sig
+#   -> Signature Verified Successfully
 curl -fsSLO "https://mersennet.com/downloads/$(awk 'NR==1{print $2}' SHA256SUMS)"
 sha256sum -c SHA256SUMS --ignore-missing          # must print: ... OK
 tar xzf mersennet-node-linux-x86_64-*.tar.gz && cd mersennet-node-linux-x86_64-*/
