@@ -64,15 +64,19 @@ mersennet-check
 
 ```text
 Service      running since 2026-09-12 15:02:25
-Block height 21248 / 1281813 network — syncing (1% done, 1260565 blocks behind)
+Block height 21248 / 1281813 network — syncing (1% done, 512 blocks/s, ~41 min left)
 Peers        18
 Chain ID     131071 (Mersennet testnet)
+Visibility   visible — the network hears this node as 203.0.113.10 · id 3f9a2c (explorer → Network → Network nodes)
+Binary       87e1c0bb2c44 — up to date (release 806f3c6)
 Data dir     /mnt/blockstorage/mersennet — 189M used, 281G free
 Node key     /mnt/blockstorage/mersennet/keys/node_key.json (back this up to keep your peer identity)
 ```
 
-- **syncing → catching up → in sync** is the normal sequence. The first sync replays the whole chain from the bootnodes and typically takes 20–40 minutes; run `mersennet-check` again later.
+- **syncing → catching up → in sync** is the normal sequence. The first sync replays the whole chain from the bootnodes; the line shows the measured rate and an ETA. Run `mersennet-check` again later.
+- **Visibility: visible** means the public RPC node is receiving your gossip. Your node is then listed on the [explorer's Network page](https://explorer.mersennet.com/#/network) under *Network nodes* as a community node — by network prefix plus the id printed here, so you can recognise it without your full IP being published.
 - **Peers 0** for more than a minute means outbound UDP+TCP 30303 is blocked on your host or provider firewall.
+- **Binary: update available** means a new release is out — re-run the Step 2 command to upgrade in place.
 - **Local RPC not answering** right after install is normal for a few seconds; if it persists, read the logs: `journalctl -u mersennet -n 50 --no-pager`.
 
 When it says **in sync**, you are done. Your node is verifying the same blocks you see on the [explorer](https://explorer.mersennet.com) and can answer JSON-RPC on `http://127.0.0.1:8545`:
@@ -156,7 +160,7 @@ When onboarding opens, the flow will be: sync a full node, stake MRSN from the a
 
 ## Frequently asked
 
-**My node is running but does not appear in the validator list.** Correct — see above. `mersennet-check` saying *in sync* with peers is what success looks like today.
+**My node is running but does not appear in the validator list.** Correct — see above. `mersennet-check` saying *in sync* and *visible* is what success looks like today; the explorer's Network page lists it as a community node.
 
 **Do I need to do everything on this page?** No. Steps 1–4 are the whole thing. The sections below are reference material.
 
