@@ -81,7 +81,7 @@ Before running a validator, ensure you meet:
 |----------|-------------|
 | **Hardware** | 4 CPU cores, 8 GB RAM, 100 GB SSD, 100 Mbps network |
 | **Software** | 64-bit Linux, glibc 2.34+ (Ubuntu 22.04+ / Debian 12+) for the [release bundle](https://mersennet.com/downloads/); Rust 1.85+ only if building from source |
-| **Stake** | Validator set is currently fixed at genesis; permissionless registration (with a minimum stake) is planned |
+| **Stake** | Open set since block 1,348,200: register with 1,000 MRSN self-stake, top 12 by stake are active, epochs of 1 hour — see [Run a node → Becoming a validator](/validators/run-a-node#becoming-a-validator) |
 | **Operational** | 24/7 uptime, monitoring, key management, backup procedures |
 
 See [Run a Validator Node](/validators/run-a-node) for the complete setup guide.
