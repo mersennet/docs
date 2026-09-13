@@ -68,7 +68,10 @@ See [RPC Methods Reference](/developers/rpc/methods) for full details.
 | Method | Description |
 |--------|-------------|
 | `mersennet_sendTransaction` | **Disabled** — returns `-32601`; sign locally and submit via `eth_sendRawTransaction` |
-| `mersennet_validators` | Get list of validators |
+| `mersennet_validators` | Current consensus set with voting stake |
+| `mersennet_validatorSet` | Open validator set: parameters, epoch, registrations and statuses |
+| `mersennet_nodeIdentity` | This node's identity, operator and registration proof (local RPC) |
+| `mersennet_peers` | Gossip peers of this node (address, first/last seen, heard) |
 | `mersennet_getDomainEvents` | Get domain events for a block range |
 | `mersennet_getCodeAttestation` / `mersennet_getCodeHash` | On-chain contract code-publication registry lookups |
 | `mersennet_orders_*` | MersennetOrders trading methods (submitOrder, cancelOrder, depositCollateral, getOrderBook, getOpenOrders). Writes route through consensus and return `{accepted, txHash}` (unsigned write RPCs are disabled on public endpoints — submit signed precompile transactions instead). |

@@ -13,7 +13,7 @@ Testnet chain state may be wiped during protocol upgrades. When that happens, co
 | Contract | Address | Description |
 |----------|---------|-------------|
 | **MersennetOrders** | `0x0000000000000000000000000000000000000100` | Native CLOB matching engine. `placeOrder`, `placeOrderExt`, `cancelOrder`, `createMarket` (permissionless listing, 100 MRSN fee), `depositCollateral`, `withdrawCollateral`, `depositTokenCollateral`, `withdrawTokenCollateral`, `getPosition`, `getCollateral`, `getTokenCollateral`, `getBestBidAsk`. Collateral (native MRSN and registered tokens like USDC) is fully escrowed at this address. |
-| **MersennetStaking** | `0x0000000000000000000000000000000000000400` | Delegated staking. `delegate`, `undelegate`, `claimRewards`, `withdrawUnbonded`. |
+| **MersennetStaking** | `0x0000000000000000000000000000000000000400` | Delegated staking and the open validator set. `delegate`, `undelegate`, `claimRewards`, `withdrawUnbonded`; `registerValidator`, `addSelfStake`, `unregisterValidator`, `rotateValidatorKey`. |
 
 ## Foundation
 

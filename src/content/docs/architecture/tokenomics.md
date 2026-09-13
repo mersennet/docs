@@ -119,7 +119,7 @@ validator_reward = (effective_reward × validator_stake) / total_stake
 
 ### Example: Equal Stake
 
-With 4 validators each staking 1,000,000 MRSN, in era 0 (reward ≈ 2.3058 MRSN/block):
+Illustration with the four genesis validators (1,000,000 MRSN each; registered validators join the same pro-rata split with their own stake) in era 0 (reward ≈ 2.3058 MRSN/block):
 
 - Total stake = 4,000,000 MRSN
 - Block reward ≈ 2.3058 MRSN

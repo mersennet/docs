@@ -6,6 +6,16 @@ Notable milestones and updates for the Mersennet ecosystem.
 
 ---
 
+## September 2026
+
+### Open Validator Set, Snapshot Sync, Verified Node Runners
+
+- **Permissionless validator registration** from block 1,348,200: `registerValidator` on the staking precompile with 1,000 MRSN self-stake and a node-key proof; the top 12 by self + delegated stake form the active set at every hourly epoch; jailing for missed slots (no slashing), exits with ~4 h unbonding, key rotation. One-click registration on the terminal's staking page. New RPCs `mersennet_validatorSet`, `mersennet_nodeIdentity`.
+- **Fork choice by finality**: a node that applied a block finality later overruled rolls back and follows the canonical chain automatically. Large blocks are delivered over TCP (UDP gossip could not carry blocks above ~25 transactions), and block-sync rotates peers.
+- **Snapshot bootstrap**: fresh installs restore a signed, SHA-256-verified state snapshot and are in sync in about a minute instead of replaying the chain. Signed release bundles (ed25519) and the `mersennet-check` health tool.
+- **Verified node runners**: a node signs its operator's wallet; verification is automatic within ~10 minutes; 500 points a day; verified nodes appear on the explorer's Network page.
+- Second public RPC node with automatic failover; state snapshots every 6 hours with snapshot-based auto-heal on the fleet.
+
 ## August 2026
 
 ### Fresh Genesis + Feature Release (testnet reset)

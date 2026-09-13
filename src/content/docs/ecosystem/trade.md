@@ -60,6 +60,13 @@ Additional user-created markets appear alongside the genesis five — query `mer
 4. Deposit collateral (escrowed 1:1 from your native MRSN)
 5. Place limit or market orders — long or short, up to the market's max leverage
 
+## Points, staking and validators
+
+The terminal is also where testnet participation is tracked and where the validator set is managed:
+
+- **Points** ([/points](https://trade.mersennet.com/points)): 1 point per $1 traded; **500 points a day** for running a verified node (automatic once your node has an operator address — see [Run a Node](/validators/run-a-node/#get-recognised-verified-node-runner)).
+- **Staking** ([/staking](https://trade.mersennet.com/staking)): delegate MRSN to any validator, claim rewards, and — with a verified node — **register as a validator** in one click (1,000 MRSN self-stake; [Become a Validator](/validators/become-a-validator/)).
+
 ## Related Resources
 
 - [MersennetOrders Architecture](/architecture/order-book): How the native CLOB precompile works

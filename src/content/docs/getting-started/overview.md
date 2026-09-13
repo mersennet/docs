@@ -41,4 +41,6 @@ Mersennet is designed for builders. Whether you're deploying a simple ERC-20, bu
 | 4. Deploy a smart contract | [Hardhat Quick Start](/developers/quick-start/hardhat) |
 | 5. Explore the architecture | [Consensus](/architecture/consensus) · [Tokenomics](/architecture/tokenomics) |
 | 6. Learn about privacy | [Privacy on Mersennet](/privacy/overview/) |
-| 7. Read the whitepaper | [Whitepaper](/whitepaper) |
+| 7. Run a node (one command, in sync in a minute) and earn points | [Run a Node](/validators/run-a-node/) |
+| 8. Become a validator with 1,000 MRSN | [Become a Validator](/validators/become-a-validator/) |
+| 9. Read the whitepaper | [Whitepaper](/whitepaper) |
