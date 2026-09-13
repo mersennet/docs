@@ -6,7 +6,7 @@ description: "Install a Mersennet testnet full node in one command, check that i
 Four steps, about 30 minutes, no source code required. You end up with a **full node**: it verifies every block, serves JSON-RPC locally and helps other peers sync.
 
 :::note[What a node is — and is not — today]
-A full node is **not a validator**. The testnet validator set is fixed at genesis (4 validators, 1,000,000 MRSN each, allocated in the genesis file — nobody "earned" or bought that stake). Running this node will **not** add you to the validator list; opening the set requires a chain upgrade that is on the roadmap. See [Becoming a validator](#becoming-a-validator) for what you can do now.
+A full node follows the chain and serves RPC; a **validator** additionally signs blocks. Since block 1,348,200 the set is open: any full node whose operator bonds 1,000 MRSN can register and join at the next epoch. See [Becoming a validator](#becoming-a-validator).
 :::
 
 ## Step 1 — Get a server
@@ -119,61 +119,49 @@ If verification fails, the message says why: port 30303/tcp not reachable from t
 
 ## Becoming a validator
 
-**The validator set is not open yet.** The four active validators were defined in the genesis configuration with 1,000,000 MRSN of stake each; that stake was allocated at genesis, not acquired — there is no way to obtain 1,000,000 MRSN on the testnet, and the faucet's 1,000 MRSN per hour is meant for testing and delegation. Adding validators at runtime requires a chain upgrade (the staking precompile reserves the selectors for it) that is on the roadmap.
+**The validator set is open** (from block 1,348,200). Any node can register and, from the next epoch, produce blocks and earn block rewards. Parameters on this testnet:
 
-What you can do today:
+| | |
+|---|---|
+| Minimum self-stake | **1,000 MRSN** (one faucet claim) |
+| Active set | top **12** validators by self-stake + delegations, recomputed every **epoch (1 hour)** |
+| Joining | register in one epoch, active from the next |
+| Jailing | miss more than 20% of your leader slots in an epoch (at least 5 slots) → you sit out the following epoch, no stake lost |
+| Leaving | `unregister` → removed at the next epoch, self-stake unbonds over ~3 hours, then `withdrawUnbonded()` |
+| Key rotation | `rotateValidatorKey` with a proof from the new node key, effective next epoch |
+| Rewards | block rewards go to the node identity; delegators receive their share minus your commission |
 
-1. **Run a full node** (this page). It is the same software, a real contribution to network resilience, and the operational dry-run for validating later — operators with a stable, synced node will be onboarded first.
-2. **Delegate MRSN to a validator** and earn a share of block rewards: [Staking Guide](/validators/staking), or the [staking page in the trade terminal](https://trade.mersennet.com/staking). Get MRSN from the [faucet](https://faucet.mersennet.com).
-3. **Register as a prospective validator** with the form below. Operators with a synced node are contacted first when the set opens.
+### Register from the terminal (one click)
 
-<form id="validator-interest" style="border:1px solid var(--sl-color-gray-5);padding:1rem 1.25rem;margin:1rem 0;display:grid;gap:.75rem;max-width:40rem">
-  <label style="display:grid;gap:.25rem;font-size:.9rem">How can we reach you? (email or Telegram handle)
-    <input name="contact" required maxlength="200" placeholder="you@example.com or @handle" style="padding:.5rem;border:1px solid var(--sl-color-gray-4);background:var(--sl-color-bg);color:var(--sl-color-text)">
-  </label>
-  <label style="display:grid;gap:.25rem;font-size:.9rem">Your node's public IP or peer id (optional)
-    <input name="node" maxlength="120" placeholder="203.0.113.10" style="padding:.5rem;border:1px solid var(--sl-color-gray-4);background:var(--sl-color-bg);color:var(--sl-color-text)">
-  </label>
-  <label style="display:grid;gap:.25rem;font-size:.9rem">Anything else — who you are, validator experience, hardware (optional)
-    <textarea name="notes" maxlength="2000" rows="3" style="padding:.5rem;border:1px solid var(--sl-color-gray-4);background:var(--sl-color-bg);color:var(--sl-color-text)"></textarea>
-  </label>
-  <input name="website" tabindex="-1" autocomplete="off" style="position:absolute;left:-9999px" aria-hidden="true">
-  <div style="display:flex;gap:1rem;align-items:center">
-    <button type="submit" style="padding:.55rem 1rem;background:var(--sl-color-accent);color:var(--sl-color-black);border:0;font-weight:600;cursor:pointer">Register interest</button>
-    <span id="validator-interest-status" style="font-size:.9rem"></span>
-  </div>
-</form>
-<script>
-(() => {
-  const f = document.getElementById('validator-interest');
-  const s = document.getElementById('validator-interest-status');
-  if (!f || !s) return;
-  f.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const d = new FormData(f);
-    if (d.get('website')) return;
-    s.textContent = 'Sending…';
-    try {
-      const r = await fetch('/api/v1/feedback', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          category: 'validator',
-          contact: d.get('contact'),
-          message: `Prospective validator\nNode: ${d.get('node') || 'n/a'}\n${d.get('notes') || ''}`.trim(),
-          page: 'docs/validators/run-a-node',
-          userAgent: navigator.userAgent,
-        }),
-      });
-      const j = await r.json().catch(() => ({}));
-      if (r.ok && j.ok) { s.textContent = `Registered (#${j.id}). We will reach out when validator onboarding opens.`; f.reset(); }
-      else s.textContent = j.error || 'Could not submit right now — please try again later.';
-    } catch { s.textContent = 'Could not submit right now — please try again later.'; }
-  });
-})();
-</script>
+1. Run your node with your wallet as operator (Step 2 above with `--operator 0xYOUR_WALLET`) and let it get verified (about ten minutes).
+2. Open [trade.mersennet.com/staking](https://trade.mersennet.com/staking) with that wallet. Under **Validator set → Register a node** your verified node is listed; choose the self-stake (≥ 1,000 MRSN) and a commission for delegators, and press **Bond & register**. One transaction: the terminal already holds the node's signed proof, so nothing to copy.
+3. The table shows your status: **pending** until the next epoch boundary, then **active** (producing) or **standby** (ranked below the top 12 — add stake or attract delegations). Missed and proposed slots for the current epoch are shown live.
 
-When onboarding opens, the flow will be: sync a full node, stake MRSN from the address matching your node identity, and the node starts participating in consensus once the set change takes effect.
+### Register without the terminal
+
+The staking precompile at `0x0000000000000000000000000000000000000400` exposes:
+
+```text
+registerValidator(address identity, uint256 selfStakeWei, uint256 commissionBps, bytes proof)
+addSelfStake(address identity, uint256 amountWei)
+unregisterValidator(address identity)
+rotateValidatorKey(address identity, address newIdentity, bytes proof)
+withdrawUnbonded()
+```
+
+`identity` is your node's block-signing address and `proof` its signature over the registration message for *your* wallet — both printed by your node:
+
+```bash
+curl -s localhost:8545 -X POST -H 'Content-Type: application/json' \
+  -d '{"jsonrpc":"2.0","id":1,"method":"mersennet_nodeIdentity","params":[]}'
+# → {"identity":"0x…","operator":"0x…","registrationProof":"0x…"}
+```
+
+The proof only binds identity → operator; it authorises nothing else, so it is safe to share. `mersennet_validatorSet` returns the parameters, the current epoch and every registration with its status.
+
+### What the network does with your node
+
+Your node signs blocks when the schedule makes it leader. Keep it online: a validator that is down burns 19 seconds per missed slot for everyone until it is jailed at the epoch boundary. `mersennet-check` shows your identity, operator and whether the network hears you.
 
 ## Frequently asked
 
@@ -185,7 +173,7 @@ When onboarding opens, the flow will be: sync a full node, stake MRSN from the a
 
 **How do I keep the chain on my block storage instead of the OS disk?** `--data-dir /mnt/<your-volume>/mersennet` in Step 2. Re-running the installer with a new `--data-dir` moves an existing node's data there. Do not use `/tmp` paths — they are wiped on reboot and hidden from the service.
 
-**Where does the 1,000,000 MRSN come from and how do I get it?** It is the genesis stake of the four founding validators, written into the genesis config before the chain started. You cannot obtain it; it is not required to run a node, and validator onboarding will publish its own (much lower) minimum stake when it opens.
+**Where does the 1,000,000 MRSN come from and how do I get it?** It is the genesis stake of the four founding validators, written into the genesis config before the chain started. You do not need it: the minimum self-stake for a new validator is 1,000 MRSN.
 
 **How long does the first sync take?** About a minute: the installer restores the latest published state snapshot (taken every six hours on the public node, ~1 GB compressed, SHA-256 verified) and the node then replays only the blocks since. Replaying the whole chain from genesis (`--from-genesis`) takes most of a day at current transaction density and is only useful if you want to verify every block yourself. The node verifies every block it imports on top of the snapshot either way.
 
