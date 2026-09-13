@@ -35,6 +35,7 @@ Mersennet is designed for builders. Whether you're deploying a simple ERC-20, bu
 
 | Step | Link |
 |------|------|
+| 0. The one-page map of everything you can test | [Test the Network](/getting-started/test-the-network/) |
 | 1. Add the network to your wallet | [Wallet Setup](/getting-started/wallet-setup) |
 | 2. Get testnet MRSN from the faucet | [Faucet](/getting-started/faucet) |
 | 3. Send your first transaction | [First Transaction](/getting-started/first-transaction) |
