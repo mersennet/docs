@@ -26,7 +26,7 @@ Mount it first (e.g. at `/mnt/blockstorage`) and pass `--data-dir` in Step 2. Th
 
 ## Step 2 — Install (one command)
 
-Run from **any directory** — it downloads the latest release, verifies its checksum, installs the binary and config, creates a `mersennet` system user, and starts a hardened systemd service:
+Run from **any directory** — it downloads the latest release, verifies its signature and checksum, installs the binary and config, creates a `mersennet` system user, restores the latest **state snapshot** (about 1 GB, SHA-256 verified) so the node only has to sync the last few hours instead of replaying the whole chain, and starts a hardened systemd service:
 
 ```bash
 curl -fsSL https://mersennet.com/downloads/install.sh | sudo bash
@@ -73,7 +73,7 @@ Data dir     /mnt/blockstorage/mersennet — 189M used, 281G free
 Node key     /mnt/blockstorage/mersennet/keys/node_key.json (back this up to keep your peer identity)
 ```
 
-- **syncing → catching up → in sync** is the normal sequence. The first sync replays the whole chain from the bootnodes; the line shows the measured rate and an ETA. Run `mersennet-check` again later.
+- **syncing → catching up → in sync** is the normal sequence. A fresh install starts from a snapshot taken within the last six hours, so it is usually in sync within a minute or two; the line shows the measured rate and an ETA. Run `mersennet-check` again later.
 - **Visibility: visible** means the public RPC node is receiving your gossip. Your node is then listed on the [explorer's Network page](https://explorer.mersennet.com/#/network) under *Network nodes* as a community node — by network prefix plus the id printed here, so you can recognise it without your full IP being published.
 - **Peers 0** for more than a minute means outbound UDP+TCP 30303 is blocked on your host or provider firewall.
 - **Binary: update available** means a new release is out — re-run the Step 2 command to upgrade in place.
@@ -170,7 +170,7 @@ When onboarding opens, the flow will be: sync a full node, stake MRSN from the a
 
 **Where does the 1,000,000 MRSN come from and how do I get it?** It is the genesis stake of the four founding validators, written into the genesis config before the chain started. You cannot obtain it; it is not required to run a node, and validator onboarding will publish its own (much lower) minimum stake when it opens.
 
-**How long does the first sync take?** Typically 20–40 minutes; the chain grows about 43,000 blocks a day, and the node replays it at several hundred to a few thousand blocks per second depending on hardware.
+**How long does the first sync take?** About a minute: the installer restores the latest published state snapshot (taken every six hours on the public node, ~1 GB compressed, SHA-256 verified) and the node then replays only the blocks since. Replaying the whole chain from genesis (`--from-genesis`) takes most of a day at current transaction density and is only useful if you want to verify every block yourself. The node verifies every block it imports on top of the snapshot either way.
 
 **Can I run it without systemd, or on another distro / architecture?** Yes — download the bundle from [mersennet.com/downloads](https://mersennet.com/downloads/), extract it and run `./mersennet --config config.json --mode full --rpc` from a directory of your choice (data lands in `./data`, key in `./keys`). Non-x86-64 or glibc < 2.34 systems need a source build (below).
 
@@ -193,8 +193,10 @@ curl -fsSLO "https://mersennet.com/downloads/$(awk 'NR==1{print $2}' SHA256SUMS)
 sha256sum -c SHA256SUMS --ignore-missing          # must print: ... OK
 tar xzf mersennet-node-linux-x86_64-*.tar.gz && cd mersennet-node-linux-x86_64-*/
 sha256sum -c SHA256SUMS                            # verifies every file in the bundle
-sudo bash install.sh [--data-dir DIR] [--rpc-public]
+sudo bash install.sh [--data-dir DIR] [--rpc-public] [--from-genesis]
 ```
+
+The bundle's `install.sh` performs the same snapshot bootstrap as the one-liner. The snapshot manifest is `http://46.225.30.187:8088/latest.json` (served from the public node over plain HTTP because Cloudflare limits proxied downloads to 100 MB; the tarball's SHA-256 is in the manifest and is checked before extraction).
 
 The bundle README lists the binary's sha256; it matches `sha256sum /opt/mersennet/bin/mersennet` on the validators, so you can confirm you run the same build as the network.
 
