@@ -111,8 +111,9 @@ Your node can earn **500 points a day** on [trade.mersennet.com/points](https://
    ```
 
    or afterwards by adding `"operator_address": "0xyour_wallet"` to the `p2p` section of `/etc/mersennet/config.json` and running `sudo systemctl restart mersennet`.
-2. Open [trade.mersennet.com/points](https://trade.mersennet.com/points) with that wallet, enter your node's public IP or hostname under **Verified node runner**, and click **Sign & verify**. The check takes a second; you will see the node's identity, height and build.
-3. That is all. The terminal re-checks the node every six hours; points are credited once per day while it answers. Several nodes under one wallet earn as one.
+2. Wait. Within about ten minutes of the network hearing your node, the terminal probes it, sees the operator address it signs, and marks it **verified** — on [trade.mersennet.com/points](https://trade.mersennet.com/points) (connect with that wallet) and on the explorer's Network page next to your node's id. Nothing to click.
+3. Optional: on the Points page you can also enter your node's public IP and press **Sign & verify** for an immediate check, or if your node runs behind NAT and is not directly reachable.
+4. The terminal re-checks the node every six hours; points are credited once per day while it answers. Several nodes under one wallet earn as one.
 
 If verification fails, the message says why: port 30303/tcp not reachable from the internet, the node still on a build older than this feature (re-run the installer to upgrade), or the node naming a different operator.
 
