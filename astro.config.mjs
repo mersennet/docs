@@ -51,6 +51,7 @@ export default defineConfig({
           label: 'Getting Started',
           items: [
             { slug: 'getting-started/overview' },
+            { slug: 'getting-started/test-the-network' },
             { slug: 'getting-started/network-info' },
             { slug: 'getting-started/wallet-setup' },
             { slug: 'getting-started/faucet' },
