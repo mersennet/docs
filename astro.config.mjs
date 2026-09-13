@@ -123,6 +123,7 @@ export default defineConfig({
           items: [
             { slug: 'validators/overview' },
             { slug: 'validators/run-a-node' },
+            { slug: 'validators/become-a-validator' },
             { slug: 'validators/staking' },
             { slug: 'validators/monitoring' },
           ],

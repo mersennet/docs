@@ -722,7 +722,7 @@ Same as `eth_getLogs`.
 
 ### mersennet_validators
 
-Returns the list of active validators and their stake.
+Returns the current **consensus set** — the validators producing blocks this epoch — with their voting stake (self-stake + delegations). Since the validator set opened, this is the top-12 active set recomputed at every hourly epoch; use `mersennet_validatorSet` for registrations, statuses and parameters.
 
 **Parameters:** None
 
@@ -731,6 +731,98 @@ curl -X POST https://rpc.mersennet.com \
   -H "Content-Type: application/json" \
   -d '{"jsonrpc":"2.0","method":"mersennet_validators","params":[],"id":1}'
 ```
+
+---
+
+### mersennet_validatorSet
+
+Everything about the open validator set: parameters, current epoch, next boundary, the active set and every registration with its live status.
+
+**Parameters:** None
+
+```bash
+curl -X POST https://rpc.mersennet.com \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","method":"mersennet_validatorSet","params":[],"id":1}'
+```
+
+**Response**
+
+```json
+{
+  "active": true,
+  "params": {
+    "activationHeight": 1348200,
+    "epochBlocks": 1800,
+    "minSelfStake": "0x3635c9adc5dea00000",
+    "maxValidators": 12,
+    "unbondingBlocks": 7200,
+    "jailMissBps": 2000,
+    "jailMinSlots": 5
+  },
+  "height": 1350412,
+  "epoch": 750,
+  "nextEpochAt": 1351800,
+  "activeSet": ["0x728b…", "0x9d39…", "0xc16b…", "0xe4c6…"],
+  "consensusValidators": ["0x728b…", "0x9d39…", "0xc16b…", "0xe4c6…"],
+  "validators": [
+    {
+      "identity": "0x728b…",
+      "operator": "0x728b…",
+      "selfStake": "0xd3c21bcecceda1000000",
+      "delegated": "0x0",
+      "votingStake": "0xd3c21bcecceda1000000",
+      "commissionBps": 1000,
+      "status": "active",
+      "genesis": true,
+      "registeredAt": 1348200,
+      "jailedUntilEpoch": 0,
+      "exiting": false,
+      "pendingIdentity": null,
+      "proposedSlots": 112,
+      "missedSlots": 0,
+      "totalProposed": 812,
+      "timesJailed": 0
+    }
+  ]
+}
+```
+
+| Field | Meaning |
+|-------|---------|
+| `active` | `false` before `activationHeight`; the genesis set applies until then |
+| `epoch`, `nextEpochAt` | Current epoch index and the height of the next boundary (`epochBlocks` multiples) |
+| `activeSet` | Identities producing blocks this epoch (sorted); `consensusValidators` is the engine's view and should match |
+| `status` | `pending` (registered this epoch), `active`, `standby` (eligible, ranked below `maxValidators`), `jailed`, `exiting` |
+| `proposedSlots` / `missedSlots` | Leader-slot accounting for the **current** epoch; a miss share above `jailMissBps` with at least `jailMinSlots` slots jails the validator for the next epoch |
+| `selfStake`, `delegated`, `votingStake` | Wei, hex-encoded; ranking uses `votingStake` |
+
+---
+
+### mersennet_nodeIdentity
+
+This node's block-signing identity, its configured operator and the proof the operator needs for `registerValidator`. Meaningful on **your own node's local RPC** (it describes the node you are talking to).
+
+**Parameters:** None
+
+```bash
+curl -X POST http://127.0.0.1:8545 \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","method":"mersennet_nodeIdentity","params":[],"id":1}'
+```
+
+**Response**
+
+```json
+{
+  "identity": "0x47a51113b276a74a624b1a245e07663a5af73e5c",
+  "operator": "0x6dd9bb44ddfaba76d8868915d6fe80c3f8a932ec",
+  "registrationProof": "0x…65 bytes…",
+  "version": "Mersennet/0.7.0-ecba1ee"
+}
+```
+
+`registrationProof` is the node key's EIP-191 signature over `Mersennet validator registration v1\noperator: 0x<operator>\nidentity: 0x<identity>`; it only binds identity to operator and is safe to publish. `operator` and the proof are `null` when `p2p.operator_address` is not configured.
 
 ---
 
@@ -1039,9 +1131,12 @@ transactions: `depositTokenCollateral(address token, uint256 amount)` and
 ## MersennetStaking Methods
 
 Delegated proof-of-stake reads. The staking precompile is at address
-`0x0000000000000000000000000000000000000400`; writes (`delegate(address,uint256)`,
-`undelegate(address,uint256)`, `claimRewards(address)`, `withdrawUnbonded()`)
-are wallet-signed precompile transactions.
+`0x0000000000000000000000000000000000000400`; writes are wallet-signed precompile
+transactions: `delegate(address,uint256)`, `undelegate(address,uint256)`,
+`claimRewards(address)`, `withdrawUnbonded()`, and for the open validator set
+`registerValidator(address,uint256,uint256,bytes)`, `addSelfStake(address,uint256)`,
+`unregisterValidator(address)`, `rotateValidatorKey(address,address,bytes)`
+(see [Become a Validator](/validators/become-a-validator/)).
 
 ### mersennet_staking_getValidators
 

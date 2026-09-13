@@ -119,53 +119,11 @@ If verification fails, the message says why: port 30303/tcp not reachable from t
 
 ## Becoming a validator
 
-**The validator set is open** (from block 1,348,200). Any node can register and, from the next epoch, produce blocks and earn block rewards. Parameters on this testnet:
-
-| | |
-|---|---|
-| Minimum self-stake | **1,000 MRSN** (one faucet claim) |
-| Active set | top **12** validators by self-stake + delegations, recomputed every **epoch (1 hour)** |
-| Joining | register in one epoch, active from the next |
-| Jailing | miss more than 20% of your leader slots in an epoch (at least 5 slots) → you sit out the following epoch, no stake lost |
-| Leaving | `unregister` → removed at the next epoch, self-stake unbonds over ~3 hours, then `withdrawUnbonded()` |
-| Key rotation | `rotateValidatorKey` with a proof from the new node key, effective next epoch |
-| Rewards | block rewards go to the node identity; delegators receive their share minus your commission |
-
-### Register from the terminal (one click)
-
-1. Run your node with your wallet as operator (Step 2 above with `--operator 0xYOUR_WALLET`) and let it get verified (about ten minutes).
-2. Open [trade.mersennet.com/staking](https://trade.mersennet.com/staking) with that wallet. Under **Validator set → Register a node** your verified node is listed; choose the self-stake (≥ 1,000 MRSN) and a commission for delegators, and press **Bond & register**. One transaction: the terminal already holds the node's signed proof, so nothing to copy.
-3. The table shows your status: **pending** until the next epoch boundary, then **active** (producing) or **standby** (ranked below the top 12 — add stake or attract delegations). Missed and proposed slots for the current epoch are shown live.
-
-### Register without the terminal
-
-The staking precompile at `0x0000000000000000000000000000000000000400` exposes:
-
-```text
-registerValidator(address identity, uint256 selfStakeWei, uint256 commissionBps, bytes proof)
-addSelfStake(address identity, uint256 amountWei)
-unregisterValidator(address identity)
-rotateValidatorKey(address identity, address newIdentity, bytes proof)
-withdrawUnbonded()
-```
-
-`identity` is your node's block-signing address and `proof` its signature over the registration message for *your* wallet — both printed by your node:
-
-```bash
-curl -s localhost:8545 -X POST -H 'Content-Type: application/json' \
-  -d '{"jsonrpc":"2.0","id":1,"method":"mersennet_nodeIdentity","params":[]}'
-# → {"identity":"0x…","operator":"0x…","registrationProof":"0x…"}
-```
-
-The proof only binds identity → operator; it authorises nothing else, so it is safe to share. `mersennet_validatorSet` returns the parameters, the current epoch and every registration with its status.
-
-### What the network does with your node
-
-Your node signs blocks when the schedule makes it leader. Keep it online: a validator that is down burns 19 seconds per missed slot for everyone until it is jailed at the epoch boundary. `mersennet-check` shows your identity, operator and whether the network hears you.
+The set is open since block 1,348,200. With your node verified (above), open [trade.mersennet.com/staking](https://trade.mersennet.com/staking) with the operator wallet, choose a self-stake of at least **1,000 MRSN** and press **Bond & register** — you produce blocks from the next hourly epoch. Parameters, lifecycle (pending, active, standby, jailed, exiting), raw precompile calls and operating advice are on [Become a Validator](/validators/become-a-validator).
 
 ## Frequently asked
 
-**My node is running but does not appear in the validator list.** Correct — see above. `mersennet-check` saying *in sync* and *visible* is what success looks like today; the explorer's Network page lists it as a community node.
+**My node is running but does not appear in the validator list.** A full node is not a validator until you register it. Verified nodes show on the explorer's *Network* page (with your operator badge); validators show on its *Validators* page after you register on [trade.mersennet.com/staking](https://trade.mersennet.com/staking) — see [Become a Validator](/validators/become-a-validator). `mersennet-check` saying *in sync* and *visible* is what success looks like today; the explorer's Network page lists it as a community node.
 
 **Do I need to do everything on this page?** No. Steps 1–4 are the whole thing. The sections below are reference material.
 
@@ -322,11 +280,25 @@ Relative paths resolve against the node's working directory. The RPC defaults to
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
 | `double_sign_bps` | `u64` | `500` | Double-sign penalty (5%) |
-| `timeout_bps` | `u64` | `100` | Timeout penalty (1%) |
+| `timeout_bps` | `u64` | `100` | Timeout penalty (1%) — only from precommit-timeout evidence; downtime on the testnet is handled by epoch jailing, not slashing |
 | `escalation_step_bps` | `u64` | `25` | Penalty increase per offense (0.25%) |
 | `escalation_max_bps` | `u64` | `1000` | Maximum penalty cap (10%) |
 | `round_timeout_ms` | `u64` | `500` | Consensus round timeout (ms) |
-| `unbonding_period` | `u64` | `2` | Blocks before unbonded stake is withdrawable (code default; the public testnet configs use 100) |
+| `unbonding_period` | `u64` | `2` | Legacy consensus-level unbonding delay (code default). Staking unbonding on the testnet is governed by `validator_set.unbonding_blocks` (7,200 blocks, ~4 h) for both delegations and validator self-stake |
+
+#### `validator_set`: Open Validator Set
+
+Consensus-critical — identical on every node; the installer refreshes it from the canonical config on upgrade. Details on [Become a Validator](/validators/become-a-validator).
+
+| Parameter | Type | Testnet value | Description |
+|-----------|------|---------------|-------------|
+| `activation_height` | `u64` | `1348200` | Height from which registrations and epoch transitions apply (`0` = closed set) |
+| `epoch_blocks` | `u64` | `1800` | Epoch length; the active set is recomputed at multiples of it |
+| `min_self_stake_mrsn` | `u64` | `1000` | Minimum self-stake to be eligible, in whole MRSN |
+| `max_validators` | `usize` | `12` | Size of the active set (top by self + delegated stake) |
+| `unbonding_blocks` | `u64` | `7200` | Blocks before an exiting validator's self-stake is withdrawable |
+| `jail_miss_bps` | `u64` | `2000` | Missed-slot share (basis points) above which a validator is jailed for the next epoch |
+| `jail_min_slots` | `u64` | `5` | Minimum leader slots in the epoch before the miss share is judged |
 
 #### `token_economics`: Rewards & Supply
 

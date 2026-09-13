@@ -177,7 +177,7 @@ To send alerts to email, Slack, or PagerDuty:
 
 | Practice | Recommendation |
 |----------|----------------|
-| **Uptime** | Aim for 99.9%+ to avoid downtime slashing |
+| **Uptime** | Aim for 99.9%+: missing more than 20% of your leader slots in an epoch jails you for the next one (no stake penalty, but no rewards either) |
 | **Disk** | Monitor and expand before hitting 10% free |
 | **Peers** | Maintain at least 5–10 stable peers |
 | **Backups** | Backup validator key and config; never expose the key |

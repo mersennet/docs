@@ -54,9 +54,9 @@ validator_reward = (block_reward × validator_stake) / total_stake
 
 - **Initial reward**: ≈2.3 MRSN per block (2⁶¹ − 1 wei)
 - **Halving**: Every 33,550,336 blocks (~2.1 years at ~2 s blocks), the reward halves
-- **Distribution**: The validator's share is credited directly each block, with no claiming required; delegator rewards accrue in the staking precompile and are collected via `claimRewards`
+- **Distribution**: The validator's share is credited directly each block to the **node identity address** (the node key), with no claiming required; delegator rewards accrue in the staking precompile and are collected via `claimRewards`
 
-The more stake you have (your own + delegations), the larger your share of each block's reward.
+The more stake you have (your own + delegations), the larger your share of each block's reward — and the higher your ranking in the active set (top 12 at each hourly epoch).
 
 ## Slashing Risks
 
@@ -65,9 +65,9 @@ Validators can lose stake through **slashing** for consensus violations:
 | Offense | Penalty | Consequence |
 |---------|---------|-------------|
 | **Double-signing** | 5% of stake (base) | **Tombstoned**, permanently banned from the validator set |
-| **Downtime / Missed slot** | 1% of stake (base) | **Jailed**, temporarily excluded; can unjail after period |
+| **Downtime (>20% of leader slots missed in an epoch)** | none | **Jailed for the next epoch**, then back automatically |
 
-Penalties **escalate** with repeated offenses (up to 10% max). Double-signing is the most severe: a tombstoned validator cannot rejoin the network.
+Double-signing is the only offense that costs stake; a tombstoned validator cannot rejoin the network. Downtime costs an epoch out of the set (one hour) and the rewards not earned — see [Become a Validator](/validators/become-a-validator/#parameters-testnet).
 
 :::caution
 Never run the same validator key on multiple nodes. Double-signing occurs when two nodes with the same key sign different blocks at the same height: this will get you tombstoned.
@@ -81,7 +81,7 @@ Before running a validator, ensure you meet:
 |----------|-------------|
 | **Hardware** | 4 CPU cores, 8 GB RAM, 100 GB SSD, 100 Mbps network |
 | **Software** | 64-bit Linux, glibc 2.34+ (Ubuntu 22.04+ / Debian 12+) for the [release bundle](https://mersennet.com/downloads/); Rust 1.85+ only if building from source |
-| **Stake** | Open set since block 1,348,200: register with 1,000 MRSN self-stake, top 12 by stake are active, epochs of 1 hour — see [Run a node → Becoming a validator](/validators/run-a-node#becoming-a-validator) |
+| **Stake** | 1,000 MRSN self-stake to register (open set since block 1,348,200); the top 12 by self + delegated stake are active, recomputed every hour — see [Become a Validator](/validators/become-a-validator/) |
 | **Operational** | 24/7 uptime, monitoring, key management, backup procedures |
 
-See [Run a Validator Node](/validators/run-a-node) for the complete setup guide.
+See [Run a Node](/validators/run-a-node) for the install and [Become a Validator](/validators/become-a-validator/) for registration.

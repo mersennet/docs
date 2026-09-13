@@ -67,6 +67,18 @@ A cross-chain bridge is planned (Tier 3 in the roadmap). For now, testnet assets
 
 Approximately **2 seconds** per block on the current testnet. Blocks are final as soon as a 2/3-stake vote quorum lands — there is no confirmation depth to wait for.
 
+### Can I run a node?
+
+Yes, in one command on any Ubuntu 22.04+/Debian 12+ server: `curl -fsSL https://mersennet.com/downloads/install.sh | sudo bash`. Fresh nodes start from a signed state snapshot and are in sync in about a minute. See [Run a Node](/validators/run-a-node/).
+
+### Can I become a validator?
+
+Yes. The set is open since block 1,348,200: run a node with `--operator 0xYOUR_WALLET`, then bond at least 1,000 MRSN on the [staking page](https://trade.mersennet.com/staking) — one click. You produce blocks from the next hourly epoch. Details on [Become a Validator](/validators/become-a-validator/).
+
+### What are points and how do node runners earn them?
+
+Points track testnet participation on [trade.mersennet.com/points](https://trade.mersennet.com/points): 1 point per $1 traded, and **500 points a day** for running a verified node. Verification is automatic within about ten minutes of your node being online with an operator address configured.
+
 ## Ecosystem
 
 ### What is Mersennet Trade?
@@ -75,4 +87,4 @@ Mersennet Trade is the native perpetuals and spot trading terminal, built on the
 
 ---
 
-Have more questions? Check the [Getting Started](/getting-started/overview) guides. Node operators and prospective validators: the [Run a Node](/validators/run-a-node/#becoming-a-validator) page has a registration form the team reads directly. Bug reports and product feedback go through the [feedback page in the trade terminal](https://trade.mersennet.com/feedback).
+Have more questions? Check the [Getting Started](/getting-started/overview) guides. Node operators: [Run a Node](/validators/run-a-node/) installs a node in one command and [Become a Validator](/validators/become-a-validator/) explains registration — no application needed. Bug reports and product feedback go through the [feedback page in the trade terminal](https://trade.mersennet.com/feedback).

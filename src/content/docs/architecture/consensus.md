@@ -16,13 +16,13 @@ Mersennet uses **leader-gated Proof-of-Stake BFT** (HotStuff-2 style): one elect
 
 ## Validator Selection
 
-Validators are nodes with MRSN staked in the genesis validator set. Voting power is proportional to stake:
+Validators are nodes registered in the **open validator set** (permissionless since block 1,348,200) plus the four genesis validators. Voting power is proportional to stake:
 
 ```
-voting_power(validator) ∝ staked_amount
+voting_power(validator) ∝ self_stake + delegated_stake
 ```
 
-Token holders can **delegate** their MRSN to validators via the staking precompile, increasing that validator's voting power. Permissionless runtime validator registration is planned (precompile selectors are reserved) but not yet enabled; the current set is fixed at genesis.
+Token holders can **delegate** MRSN to any validator via the staking precompile (`0x…0400`), increasing its voting power and its ranking. Registration (`registerValidator`, minimum self-stake 1,000 MRSN on the testnet), exits and key rotations go through the same precompile; see [Become a Validator](/validators/become-a-validator/).
 
 ## Leader Election
 
@@ -90,7 +90,13 @@ Votes are ECDSA signatures over a domain-separated digest of `(height, block_has
 
 ## Validator-Set Updates
 
-Validator-set changes (stake changes, unbonding completions, slashes) are queued and applied at each block boundary; there is no separate epoch schedule. Unbonded stake becomes withdrawable `unbonding_period` blocks after the unbond.
+The active set is recomputed at every **epoch boundary** (heights divisible by `validator_set.epoch_blocks`, 1,800 blocks ≈ 1 hour on the testnet), identically on every node from committed chain state:
+
+1. Judge the ending epoch: a validator that missed more than `jail_miss_bps` (20%) of its leader slots — with at least `jail_min_slots` (5) slots — is **jailed for the next epoch**; exits requested during the epoch are applied and the self-stake starts unbonding (`unbonding_blocks`, 7,200 ≈ 4 h); pending key rotations take effect.
+2. Rank eligible validators (registered in an earlier epoch, not jailed, self-stake ≥ minimum) by self-stake + delegations.
+3. The top `max_validators` (12) become the consensus set for the epoch; the leader schedule and the 2/3-stake finality threshold use exactly this set.
+
+Genesis validators are seeded into the registry at activation and are never jailed. Missed slots are counted deterministically from each block: the proposer took the height at the smallest round where it leads, so every leader of an earlier round for that height missed its slot. Unbonded stake becomes withdrawable `unbonding_period` blocks after the unbond.
 
 ## Slashing Mechanism
 
@@ -99,7 +105,7 @@ Validator-set changes (stake changes, unbonding completions, slashes) are queued
 | Type | Trigger | Base Penalty | Consequence |
 |------|---------|--------------|-------------|
 | **Double-sign** | Signing two different blocks at same height | 5% of stake | **Tombstoned** (permanent ban) |
-| **Timeout** | Missing your production slot as elected leader | 1% of stake | **Jailed** (temporary exclusion) |
+| **Timeout** | Precommit-timeout evidence (`timeout_bps`, 1%) | 1% of stake | Configured but not produced on the testnet; downtime is handled by **epoch jailing** with no stake penalty (see Validator-Set Updates) |
 
 ### Escalation
 
