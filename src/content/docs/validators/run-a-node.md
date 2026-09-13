@@ -100,6 +100,22 @@ curl -s http://127.0.0.1:8545 -H 'Content-Type: application/json' \
 
 That is the complete guide for running a node. Everything below is background, the validator question, and reference material for operators who want to go deeper.
 
+## Get recognised: verified node runner
+
+Your node can earn **500 points a day** on [trade.mersennet.com/points](https://trade.mersennet.com/points) while it is online. The node proves it is yours: it signs an attestation with its node key that names your wallet as operator, and the terminal checks it against the node directly (port 30303).
+
+1. Tell the node who operates it — either at install time:
+
+   ```bash
+   curl -fsSL https://mersennet.com/downloads/install.sh | sudo bash -s -- --operator 0xYOUR_WALLET
+   ```
+
+   or afterwards by adding `"operator_address": "0xyour_wallet"` to the `p2p` section of `/etc/mersennet/config.json` and running `sudo systemctl restart mersennet`.
+2. Open [trade.mersennet.com/points](https://trade.mersennet.com/points) with that wallet, enter your node's public IP or hostname under **Verified node runner**, and click **Sign & verify**. The check takes a second; you will see the node's identity, height and build.
+3. That is all. The terminal re-checks the node every six hours; points are credited once per day while it answers. Several nodes under one wallet earn as one.
+
+If verification fails, the message says why: port 30303/tcp not reachable from the internet, the node still on a build older than this feature (re-run the installer to upgrade), or the node naming a different operator.
+
 ## Becoming a validator
 
 **The validator set is not open yet.** The four active validators were defined in the genesis configuration with 1,000,000 MRSN of stake each; that stake was allocated at genesis, not acquired — there is no way to obtain 1,000,000 MRSN on the testnet, and the faucet's 1,000 MRSN per hour is meant for testing and delegation. Adding validators at runtime requires a chain upgrade (the staking precompile reserves the selectors for it) that is on the roadmap.
@@ -193,7 +209,7 @@ curl -fsSLO "https://mersennet.com/downloads/$(awk 'NR==1{print $2}' SHA256SUMS)
 sha256sum -c SHA256SUMS --ignore-missing          # must print: ... OK
 tar xzf mersennet-node-linux-x86_64-*.tar.gz && cd mersennet-node-linux-x86_64-*/
 sha256sum -c SHA256SUMS                            # verifies every file in the bundle
-sudo bash install.sh [--data-dir DIR] [--rpc-public] [--from-genesis]
+sudo bash install.sh [--data-dir DIR] [--rpc-public] [--from-genesis] [--operator 0xWALLET]
 ```
 
 The bundle's `install.sh` performs the same snapshot bootstrap as the one-liner. The snapshot manifest is `http://46.225.30.187:8088/latest.json` (served from the public node over plain HTTP because Cloudflare limits proxied downloads to 100 MB; the tarball's SHA-256 is in the manifest and is checked before extraction).
