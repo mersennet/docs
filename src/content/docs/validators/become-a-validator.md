@@ -110,7 +110,7 @@ The [explorer's Validators page](https://explorer.mersennet.com/#/validators) re
 
 ## Running well
 
-- **Stay online.** A validator that is down costs everyone 19 seconds per missed slot until the epoch boundary jails it. Your node starts proposing and voting by itself at the boundary where it becomes active — the log says `this node is in the active validator set: proposing blocks when leader`. Restart quickly after upgrades (`sudo systemctl restart mersennet` is graceful; the node finishes its in-flight block).
+- **Stay online.** A validator that is down costs everyone a failover round per missed slot (8 seconds from block 1,440,000; 19 before) until the epoch boundary jails it. Your node starts proposing and voting by itself at the boundary where it becomes active — the log says `this node is in the active validator set: proposing blocks when leader`. Restart quickly after upgrades (`sudo systemctl restart mersennet` is graceful; the node finishes its in-flight block).
 - **Upgrade when `mersennet-check` says so.** Re-running the installer keeps your keys, data and operator setting and refreshes the consensus sections of the config from the canonical one.
 - **Back up `keys/node_key.json`.** It *is* your validator identity. If it leaks, rotate with `rotateValidatorKey` from a fresh node.
 - **Watch your slots** on the staking page or the explorer: `proposed / missed` for the current epoch tells you whether the network hears you.
