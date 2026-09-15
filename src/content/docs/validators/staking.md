@@ -54,7 +54,7 @@ Illustration with four validators of 1M MRSN each (the genesis set; a registered
 - Block reward ≈ 2.3058 MRSN
 - Each validator receives 2.3058 × (1M / 4M) = **≈0.5765 MRSN per block**
 
-Block rewards are credited to the validator's **node identity address** (the node key) on this testnet; delegators receive their share minus the validator's commission.
+Block rewards are credited to the validator's **operator wallet** from block 1,440,000 (~2026-09-16 13:15 UTC; before that to the node identity); delegators receive their share minus the validator's commission.
 
 ## Unbonding Period
 
@@ -106,7 +106,7 @@ Downtime is not slashed on the testnet — the cost is one epoch (one hour) out 
 |-------|---------|
 | **Minimum stake** | 1,000 MRSN self-stake to register as a validator; any amount to delegate |
 | **Delegation** | Stake with validators to earn rewards without running a node; counts toward their ranking |
-| **Rewards** | Proportional to stake; credited automatically (to the node identity for validators) |
+| **Rewards** | Proportional to stake; credited automatically to the validator's operator wallet (from block 1,440,000) |
 | **Unbonding** | 7,200 blocks (~4 h) on testnet; tokens locked until the period ends |
 | **Slashing** | Double-sign (equivocation) → slashed; downtime → jailed one epoch, no penalty |
 

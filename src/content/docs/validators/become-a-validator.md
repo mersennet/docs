@@ -23,7 +23,7 @@ You need a running node with your wallet configured as operator. That is [Step 2
 | Key rotation | `rotateValidatorKey` with a proof from the new node key | Effective at the next epoch; delegations follow the validator. |
 | Commission | 0–100% in basis points, set at registration | Share of block rewards kept from delegators. |
 | Slashing | **only for equivocation** (voting for two blocks at one height), 5% | Downtime is never slashed on this testnet — it is jailed. |
-| Rewards | block rewards accrue to the **node identity address** | On this testnet that is the node key's address, not the operator wallet. |
+| Rewards | block rewards accrue to the **operator wallet** from block **1,440,000** (~2026-09-16 13:15 UTC) | Until then they accrue to the node identity (the node key). The switch is a consensus parameter (`validator_set.rewards_to_operator_height`); nothing to do on your side. |
 
 Unbonding of *delegated* stake also takes 7,200 blocks, so one number applies everywhere: about four hours.
 

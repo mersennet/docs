@@ -54,7 +54,7 @@ validator_reward = (block_reward × validator_stake) / total_stake
 
 - **Initial reward**: ≈2.3 MRSN per block (2⁶¹ − 1 wei)
 - **Halving**: Every 33,550,336 blocks (~2.1 years at ~2 s blocks), the reward halves
-- **Distribution**: The validator's share is credited directly each block to the **node identity address** (the node key), with no claiming required; delegator rewards accrue in the staking precompile and are collected via `claimRewards`
+- **Distribution**: The validator's share is credited directly each block to the **operator wallet** (from block 1,440,000; the node identity before that), with no claiming required; delegator rewards accrue in the staking precompile and are collected via `claimRewards`
 
 The more stake you have (your own + delegations), the larger your share of each block's reward — and the higher your ranking in the active set (top 12 at each hourly epoch).
 

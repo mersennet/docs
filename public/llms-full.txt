@@ -3476,7 +3476,8 @@ curl -X POST https://rpc.mersennet.com \
     "maxValidators": 12,
     "unbondingBlocks": 7200,
     "jailMissBps": 2000,
-    "jailMinSlots": 5
+    "jailMinSlots": 5,
+    "rewardsToOperatorHeight": 1440000
   },
   "height": 1350412,
   "epoch": 750,
@@ -6659,6 +6660,7 @@ Notable milestones and updates for the Mersennet ecosystem.
 - **Snapshot bootstrap**: fresh installs restore a signed, SHA-256-verified state snapshot and are in sync in about a minute instead of replaying the chain. Signed release bundles (ed25519) and the `mersennet-check` health tool.
 - **Verified node runners**: a node signs its operator's wallet; verification is automatic within ~10 minutes; 500 points a day; verified nodes appear on the explorer's Network page.
 - Second public RPC node with automatic failover; state snapshots every 6 hours with snapshot-based auto-heal on the fleet.
+- **Rewards to the operator wallet** from block 1,440,000 (~2026-09-16 13:15 UTC): a validator's block reward is credited to the wallet that registered it instead of the node key. **Large transactions over TCP**: transactions that do not fit a UDP datagram (contract deployments near the 24 KB code limit) are delivered peer-to-peer like large blocks. Node builds report their git sha (`Mersennet/0.7.0-3e4874e`).
 
 ## August 2026
 
@@ -7011,7 +7013,7 @@ You need a running node with your wallet configured as operator. That is [Step 2
 | Key rotation | `rotateValidatorKey` with a proof from the new node key | Effective at the next epoch; delegations follow the validator. |
 | Commission | 0–100% in basis points, set at registration | Share of block rewards kept from delegators. |
 | Slashing | **only for equivocation** (voting for two blocks at one height), 5% | Downtime is never slashed on this testnet — it is jailed. |
-| Rewards | block rewards accrue to the **node identity address** | On this testnet that is the node key's address, not the operator wallet. |
+| Rewards | block rewards accrue to the **operator wallet** from block **1,440,000** (~2026-09-16 13:15 UTC) | Until then they accrue to the node identity (the node key). The switch is a consensus parameter (`validator_set.rewards_to_operator_height`); nothing to do on your side. |
 
 Unbonding of *delegated* stake also takes 7,200 blocks, so one number applies everywhere: about four hours.
 
@@ -7363,7 +7365,7 @@ validator_reward = (block_reward × validator_stake) / total_stake
 
 - **Initial reward**: ≈2.3 MRSN per block (2⁶¹ − 1 wei)
 - **Halving**: Every 33,550,336 blocks (~2.1 years at ~2 s blocks), the reward halves
-- **Distribution**: The validator's share is credited directly each block to the **node identity address** (the node key), with no claiming required; delegator rewards accrue in the staking precompile and are collected via `claimRewards`
+- **Distribution**: The validator's share is credited directly each block to the **operator wallet** (from block 1,440,000; the node identity before that), with no claiming required; delegator rewards accrue in the staking precompile and are collected via `claimRewards`
 
 The more stake you have (your own + delegations), the larger your share of each block's reward — and the higher your ranking in the active set (top 12 at each hourly epoch).
 
@@ -7697,6 +7699,7 @@ Consensus-critical — identical on every node; the installer refreshes it from 
 | `unbonding_blocks` | `u64` | `7200` | Blocks before an exiting validator's self-stake is withdrawable |
 | `jail_miss_bps` | `u64` | `2000` | Missed-slot share (basis points) above which a validator is jailed for the next epoch |
 | `jail_min_slots` | `u64` | `5` | Minimum leader slots in the epoch before the miss share is judged |
+| `rewards_to_operator_height` | `u64` | `1440000` | Height from which a validator's block reward is credited to its operator wallet instead of the node identity (`0` = never) |
 
 #### `token_economics`: Rewards & Supply
 
@@ -8180,7 +8183,7 @@ Illustration with four validators of 1M MRSN each (the genesis set; a registered
 - Block reward ≈ 2.3058 MRSN
 - Each validator receives 2.3058 × (1M / 4M) = **≈0.5765 MRSN per block**
 
-Block rewards are credited to the validator's **node identity address** (the node key) on this testnet; delegators receive their share minus the validator's commission.
+Block rewards are credited to the validator's **operator wallet** from block 1,440,000 (~2026-09-16 13:15 UTC; before that to the node identity); delegators receive their share minus the validator's commission.
 
 ## Unbonding Period
 
@@ -8232,7 +8235,7 @@ Downtime is not slashed on the testnet — the cost is one epoch (one hour) out 
 |-------|---------|
 | **Minimum stake** | 1,000 MRSN self-stake to register as a validator; any amount to delegate |
 | **Delegation** | Stake with validators to earn rewards without running a node; counts toward their ranking |
-| **Rewards** | Proportional to stake; credited automatically (to the node identity for validators) |
+| **Rewards** | Proportional to stake; credited automatically to the validator's operator wallet (from block 1,440,000) |
 | **Unbonding** | 7,200 blocks (~4 h) on testnet; tokens locked until the period ends |
 | **Slashing** | Double-sign (equivocation) → slashed; downtime → jailed one epoch, no penalty |
 

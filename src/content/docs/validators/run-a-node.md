@@ -299,6 +299,7 @@ Consensus-critical — identical on every node; the installer refreshes it from 
 | `unbonding_blocks` | `u64` | `7200` | Blocks before an exiting validator's self-stake is withdrawable |
 | `jail_miss_bps` | `u64` | `2000` | Missed-slot share (basis points) above which a validator is jailed for the next epoch |
 | `jail_min_slots` | `u64` | `5` | Minimum leader slots in the epoch before the miss share is judged |
+| `rewards_to_operator_height` | `u64` | `1440000` | Height from which a validator's block reward is credited to its operator wallet instead of the node identity (`0` = never) |
 
 #### `token_economics`: Rewards & Supply
 
