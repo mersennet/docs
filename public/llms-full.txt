@@ -3477,7 +3477,8 @@ curl -X POST https://rpc.mersennet.com \
     "unbondingBlocks": 7200,
     "jailMissBps": 2000,
     "jailMinSlots": 5,
-    "rewardsToOperatorHeight": 1440000
+    "rewardsToOperatorHeight": 1440000,
+    "jailEscalationHeight": 1483200
   },
   "height": 1350412,
   "epoch": 750,
@@ -3513,7 +3514,7 @@ curl -X POST https://rpc.mersennet.com \
 | `epoch`, `nextEpochAt` | Current epoch index and the height of the next boundary (`epochBlocks` multiples) |
 | `activeSet` | Identities producing blocks this epoch (sorted); `consensusValidators` is the engine's view and should match |
 | `status` | `pending` (registered this epoch), `active`, `standby` (eligible, ranked below `maxValidators`), `jailed`, `exiting` |
-| `proposedSlots` / `missedSlots` | Leader-slot accounting for the **current** epoch; a miss share above `jailMissBps` with at least `jailMinSlots` slots jails the validator for the next epoch |
+| `proposedSlots` / `missedSlots` | Leader-slot accounting for the **current** epoch; a miss share above `jailMissBps` with at least `jailMinSlots` slots jails the validator for the next epoch (consecutive jails escalate 1, 2, 4… epochs from `jailEscalationHeight`; `timesJailed` is then the consecutive count) |
 | `selfStake`, `delegated`, `votingStake` | Wei, hex-encoded; ranking uses `votingStake` |
 
 ---
@@ -6660,6 +6661,7 @@ Notable milestones and updates for the Mersennet ecosystem.
 - **Snapshot bootstrap**: fresh installs restore a signed, SHA-256-verified state snapshot and are in sync in about a minute instead of replaying the chain. Signed release bundles (ed25519) and the `mersennet-check` health tool.
 - **Verified node runners**: a node signs its operator's wallet; verification is automatic within ~10 minutes; 500 points a day; verified nodes appear on the explorer's Network page.
 - Second public RPC node with automatic failover; state snapshots every 6 hours with snapshot-based auto-heal on the fleet.
+- **First outside validator** registered and produced its first epochs on 15 Sep; the incident it exposed (a restarted node forgot the open set until the next boundary) is fixed: the active set is restored on startup. **Every block is also pushed over TCP** (UDP fragments can be dropped by some providers). **Leader failover round 8 s** (was 19 s). **Escalating jail** for consecutive offences from block 1,483,200 (~17 Sep 13:15 UTC): 1, 2, 4, 8, 16, 24 epochs.
 - **Rewards to the operator wallet** from block 1,440,000 (~2026-09-16 13:15 UTC): a validator's block reward is credited to the wallet that registered it instead of the node key. **Large transactions over TCP**: transactions that do not fit a UDP datagram (contract deployments near the 24 KB code limit) are delivered peer-to-peer like large blocks. Node builds report their git sha (`Mersennet/0.7.0-3e4874e`). **Every node proposes and votes while it is in the active set** — a registered community node joins at the epoch boundary without a restart or mode switch. **Compact gossip encoding** from block 1,440,000 (base64 payloads, ~2.8× less bandwidth; nodes older than release `9e3a508` cannot follow past that height — re-run the installer).
 
 ## August 2026
@@ -7008,7 +7010,7 @@ You need a running node with your wallet configured as operator. That is [Step 2
 | Active set size | **12** | Ranked by self-stake + delegated stake at each epoch boundary. |
 | Epoch | **1,800 blocks (1 hour)** | Boundaries at heights divisible by 1,800 (every :00 at 2-second blocks). |
 | Joining | register in one epoch → **active from the next** | A registration at 10:20 is active from 11:00. |
-| Jailing | miss **>20%** of your leader slots in an epoch (judged only if you had **≥5** slots) | You sit out the **following epoch**; eligible again after that. **No stake is lost.** |
+| Jailing | miss **>20%** of your leader slots in an epoch (judged only if you had **≥5** slots) | You sit out the **following epoch**; eligible again after that. **No stake is lost.** From block **1,483,200** (~2026-09-17 13:15 UTC) repeat offences escalate: consecutive jails last 1, 2, 4, 8, 16, then 24 epochs; one clean epoch as an active validator resets the count. |
 | Leaving | `unregisterValidator` → removed at the next epoch boundary | Self-stake unbonds for **7,200 blocks (~4 hours)**, then `withdrawUnbonded()` returns it. |
 | Key rotation | `rotateValidatorKey` with a proof from the new node key | Effective at the next epoch; delegations follow the validator. |
 | Commission | 0–100% in basis points, set at registration | Share of block rewards kept from delegators. |
@@ -7026,8 +7028,8 @@ Unbonding of *delegated* stake also takes 7,200 blocks, so one number applies ev
 | pending | next epoch boundary, ranked below the top 12 | **standby** |
 | standby | more self-stake or delegations at a boundary | **active** |
 | active | outranked at a boundary | **standby** |
-| active | missed > 20% of ≥ 5 slots in the epoch | **jailed** (one epoch) |
-| jailed | one epoch later | **active** or **standby** by rank |
+| active | missed > 20% of ≥ 5 slots in the epoch | **jailed** (one epoch; 2, 4, 8… for consecutive offences from block 1,483,200) |
+| jailed | when the jail ends | **active** or **standby** by rank |
 | active / standby | `unregisterValidator` | **exiting** |
 | exiting | next epoch boundary | removed; self-stake unbonds 7,200 blocks |
 
@@ -7718,6 +7720,7 @@ Consensus-critical — identical on every node; the installer refreshes it from 
 | `jail_miss_bps` | `u64` | `2000` | Missed-slot share (basis points) above which a validator is jailed for the next epoch |
 | `jail_min_slots` | `u64` | `5` | Minimum leader slots in the epoch before the miss share is judged |
 | `rewards_to_operator_height` | `u64` | `1440000` | Height from which a validator's block reward is credited to its operator wallet instead of the node identity (`0` = never) |
+| `jail_escalation_height` | `u64` | `1483200` | Height from which consecutive jails last 1, 2, 4, 8, 16, 24 epochs instead of always one (`0` = never) |
 
 #### `token_economics`: Rewards & Supply
 

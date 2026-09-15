@@ -759,7 +759,8 @@ curl -X POST https://rpc.mersennet.com \
     "unbondingBlocks": 7200,
     "jailMissBps": 2000,
     "jailMinSlots": 5,
-    "rewardsToOperatorHeight": 1440000
+    "rewardsToOperatorHeight": 1440000,
+    "jailEscalationHeight": 1483200
   },
   "height": 1350412,
   "epoch": 750,
@@ -795,7 +796,7 @@ curl -X POST https://rpc.mersennet.com \
 | `epoch`, `nextEpochAt` | Current epoch index and the height of the next boundary (`epochBlocks` multiples) |
 | `activeSet` | Identities producing blocks this epoch (sorted); `consensusValidators` is the engine's view and should match |
 | `status` | `pending` (registered this epoch), `active`, `standby` (eligible, ranked below `maxValidators`), `jailed`, `exiting` |
-| `proposedSlots` / `missedSlots` | Leader-slot accounting for the **current** epoch; a miss share above `jailMissBps` with at least `jailMinSlots` slots jails the validator for the next epoch |
+| `proposedSlots` / `missedSlots` | Leader-slot accounting for the **current** epoch; a miss share above `jailMissBps` with at least `jailMinSlots` slots jails the validator for the next epoch (consecutive jails escalate 1, 2, 4… epochs from `jailEscalationHeight`; `timesJailed` is then the consecutive count) |
 | `selfStake`, `delegated`, `votingStake` | Wei, hex-encoded; ranking uses `votingStake` |
 
 ---

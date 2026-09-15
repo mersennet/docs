@@ -18,7 +18,7 @@ You need a running node with your wallet configured as operator. That is [Step 2
 | Active set size | **12** | Ranked by self-stake + delegated stake at each epoch boundary. |
 | Epoch | **1,800 blocks (1 hour)** | Boundaries at heights divisible by 1,800 (every :00 at 2-second blocks). |
 | Joining | register in one epoch → **active from the next** | A registration at 10:20 is active from 11:00. |
-| Jailing | miss **>20%** of your leader slots in an epoch (judged only if you had **≥5** slots) | You sit out the **following epoch**; eligible again after that. **No stake is lost.** |
+| Jailing | miss **>20%** of your leader slots in an epoch (judged only if you had **≥5** slots) | You sit out the **following epoch**; eligible again after that. **No stake is lost.** From block **1,483,200** (~2026-09-17 13:15 UTC) repeat offences escalate: consecutive jails last 1, 2, 4, 8, 16, then 24 epochs; one clean epoch as an active validator resets the count. |
 | Leaving | `unregisterValidator` → removed at the next epoch boundary | Self-stake unbonds for **7,200 blocks (~4 hours)**, then `withdrawUnbonded()` returns it. |
 | Key rotation | `rotateValidatorKey` with a proof from the new node key | Effective at the next epoch; delegations follow the validator. |
 | Commission | 0–100% in basis points, set at registration | Share of block rewards kept from delegators. |
@@ -36,8 +36,8 @@ Unbonding of *delegated* stake also takes 7,200 blocks, so one number applies ev
 | pending | next epoch boundary, ranked below the top 12 | **standby** |
 | standby | more self-stake or delegations at a boundary | **active** |
 | active | outranked at a boundary | **standby** |
-| active | missed > 20% of ≥ 5 slots in the epoch | **jailed** (one epoch) |
-| jailed | one epoch later | **active** or **standby** by rank |
+| active | missed > 20% of ≥ 5 slots in the epoch | **jailed** (one epoch; 2, 4, 8… for consecutive offences from block 1,483,200) |
+| jailed | when the jail ends | **active** or **standby** by rank |
 | active / standby | `unregisterValidator` | **exiting** |
 | exiting | next epoch boundary | removed; self-stake unbonds 7,200 blocks |
 
