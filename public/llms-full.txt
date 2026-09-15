@@ -7405,6 +7405,16 @@ source: https://docs.mersennet.com/validators/run-a-node/
 
 Four steps, about 30 minutes, no source code required. You end up with a **full node**: it verifies every block, serves JSON-RPC locally and helps other peers sync.
 
+:::tip[The short version]
+On any Ubuntu 22.04+ / Debian 12+ server, with your wallet address in place of `0xYOUR_WALLET`:
+
+```bash
+curl -fsSL https://mersennet.com/downloads/install.sh | sudo bash -s -- --operator 0xYOUR_WALLET
+```
+
+Then `mersennet-check`: you want **in sync** and **visible**. That is the whole install — the node is verified automatically within about ten minutes and earns 500 points a day. Everything below is the same thing, step by step.
+:::
+
 :::note[What a node is — and is not — today]
 A full node follows the chain and serves RPC; a **validator** additionally signs blocks. Since block 1,348,200 the set is open: any full node whose operator bonds 1,000 MRSN can register and join at the next epoch. See [Becoming a validator](#becoming-a-validator).
 :::
