@@ -8,7 +8,7 @@ The Mersennet faucet sends free testnet MRSN — the native token you'll use for
 
 1. Open the faucet: **[https://faucet.mersennet.com](https://faucet.mersennet.com)**
 2. Paste your wallet address — or click **Connect** to fill it from MetaMask.
-3. Click **Claim 1,000 MRSN**. The drip usually lands within a few seconds; the faucet links you straight to the transaction in the explorer.
+3. Click **Claim 1,000 MRSN** (the faucet adds 1 MRSN for gas, so a single claim covers the validator bond). The drip usually lands within a few seconds; the faucet links you straight to the transaction in the explorer.
 
 Below the main claim you can also grab **10,000 each of MockUSDC, MockUSDT, and MockDAI** with one click per token.
 
@@ -20,7 +20,7 @@ One click on **＋ Add Mersennet to wallet** configures MetaMask with the right 
 
 | Claim | Amount | Cooldown |
 |-------|--------|----------|
-| MRSN (native) | 1,000 MRSN | 1 claim per address per hour |
+| MRSN (native) | 1,000 MRSN + 1 MRSN for gas | 1 claim per address per hour |
 | MockUSDC / MockUSDT / MockDAI | 10,000 per token | 1 claim per token per address per hour |
 
 The mock tokens also have a public `faucet()` function on-chain, so contracts and scripts can mint them directly — see [Deployed Contracts](/resources/contracts) for addresses.
