@@ -318,6 +318,7 @@ Consensus-critical — identical on every node; the installer refreshes it from 
 | `jail_miss_bps` | `u64` | `2000` | Missed-slot share (basis points) above which a validator is jailed for the next epoch |
 | `jail_min_slots` | `u64` | `5` | Minimum leader slots in the epoch before the miss share is judged |
 | `rewards_to_operator_height` | `u64` | `1440000` | Height from which a validator's block reward is credited to its operator wallet instead of the node identity (`0` = never) |
+| `jail_escalation_height` | `u64` | `1483200` | Height from which consecutive jails last 1, 2, 4, 8, 16, 24 epochs instead of always one (`0` = never) |
 
 #### `token_economics`: Rewards & Supply
 
