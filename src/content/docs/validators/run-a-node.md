@@ -125,6 +125,12 @@ The set is open since block 1,348,200. With your node verified (above), open [tr
 
 **My node is running but does not appear in the validator list.** A full node is not a validator until you register it. Verified nodes show on the explorer's *Network* page (with your operator badge); validators show on its *Validators* page after you register on [trade.mersennet.com/staking](https://trade.mersennet.com/staking) — see [Become a Validator](/validators/become-a-validator). `mersennet-check` saying *in sync* and *visible* is what success looks like today; the explorer's Network page lists it as a community node.
 
+**`mersennet-check` says my node is forked, or the log shows "state root" differences.** Your node ran an older build through a consensus upgrade and its state diverged. Re-run the installer with `--reset-state` (add the same `--data-dir` / `--operator` flags you used before): it keeps your keys and identity, discards the chain state and restores the latest snapshot — back in sync in about a minute.
+
+```bash
+curl -fsSL https://mersennet.com/downloads/install.sh | sudo bash -s -- --reset-state --operator 0xYOUR_WALLET
+```
+
 **Do I need to do everything on this page?** No. Steps 1–4 are the whole thing. The sections below are reference material.
 
 **Where do I run the commands? Does `cd ~` matter?** Anywhere. The one-line installer downloads into a temporary directory and cleans up; your current directory is irrelevant. Chain data always goes to `/var/lib/mersennet` unless you pass `--data-dir`.
