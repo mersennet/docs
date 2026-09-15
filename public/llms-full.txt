@@ -7675,6 +7675,8 @@ Relative paths resolve against the node's working directory. The RPC defaults to
 | `listen` | `string` | `"0.0.0.0:30303"` | P2P listen address |
 | `peers` | `string[]` | `[]` | Seed peers for bootstrap |
 | `block_time_ms` | `u64` | `1000` | Block production interval (ms). Code default is 1000; the public testnet runs 2000 (~2s blocks) — match the network you join |
+| `operator_address` | `string` | none | Your wallet; the node signs it into its identity attestation (verified node runner, validator registration). Set by `--operator` |
+| `compact_wire_height` | `u64` | `0` (testnet config: `1440000`) | Height from which gossip payloads are sent base64-encoded (~2.8× fewer bytes). Every build since 2026-09-15 decodes both forms |
 | `noise_enabled` | `bool` | `false` | Encrypt P2P with Noise Protocol |
 
 #### `rpc`: JSON-RPC Server
