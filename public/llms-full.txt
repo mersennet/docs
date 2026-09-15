@@ -6660,7 +6660,7 @@ Notable milestones and updates for the Mersennet ecosystem.
 - **Snapshot bootstrap**: fresh installs restore a signed, SHA-256-verified state snapshot and are in sync in about a minute instead of replaying the chain. Signed release bundles (ed25519) and the `mersennet-check` health tool.
 - **Verified node runners**: a node signs its operator's wallet; verification is automatic within ~10 minutes; 500 points a day; verified nodes appear on the explorer's Network page.
 - Second public RPC node with automatic failover; state snapshots every 6 hours with snapshot-based auto-heal on the fleet.
-- **Rewards to the operator wallet** from block 1,440,000 (~2026-09-16 13:15 UTC): a validator's block reward is credited to the wallet that registered it instead of the node key. **Large transactions over TCP**: transactions that do not fit a UDP datagram (contract deployments near the 24 KB code limit) are delivered peer-to-peer like large blocks. Node builds report their git sha (`Mersennet/0.7.0-3e4874e`).
+- **Rewards to the operator wallet** from block 1,440,000 (~2026-09-16 13:15 UTC): a validator's block reward is credited to the wallet that registered it instead of the node key. **Large transactions over TCP**: transactions that do not fit a UDP datagram (contract deployments near the 24 KB code limit) are delivered peer-to-peer like large blocks. Node builds report their git sha (`Mersennet/0.7.0-3e4874e`). **Every node proposes and votes while it is in the active set** — a registered community node joins at the epoch boundary without a restart or mode switch. **Compact gossip encoding** from block 1,440,000 (base64 payloads, ~2.8× less bandwidth; nodes older than release `9e3a508` cannot follow past that height — re-run the installer).
 
 ## August 2026
 
@@ -7100,7 +7100,7 @@ The [explorer's Validators page](https://explorer.mersennet.com/#/validators) re
 
 ## Running well
 
-- **Stay online.** A validator that is down costs everyone 19 seconds per missed slot until the epoch boundary jails it. Restart quickly after upgrades (`sudo systemctl restart mersennet` is graceful; the node finishes its in-flight block).
+- **Stay online.** A validator that is down costs everyone 19 seconds per missed slot until the epoch boundary jails it. Your node starts proposing and voting by itself at the boundary where it becomes active — the log says `this node is in the active validator set: proposing blocks when leader`. Restart quickly after upgrades (`sudo systemctl restart mersennet` is graceful; the node finishes its in-flight block).
 - **Upgrade when `mersennet-check` says so.** Re-running the installer keeps your keys, data and operator setting and refreshes the consensus sections of the config from the canonical one.
 - **Back up `keys/node_key.json`.** It *is* your validator identity. If it leaks, rotate with `rotateValidatorKey` from a fresh node.
 - **Watch your slots** on the staking page or the explorer: `proposed / missed` for the current epoch tells you whether the network hears you.
