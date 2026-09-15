@@ -14,7 +14,7 @@ You need a running node with your wallet configured as operator. That is [Step 2
 | Parameter | Value | Meaning |
 |---|---|---|
 | Activation | block **1,348,200** (~2026-09-14 08:35 UTC) | Registration and epoch transitions start here. Before that the four genesis validators are the set. |
-| Minimum self-stake | **1,000 MRSN** | One faucet claim. Escrowed by the staking precompile when you register. |
+| Minimum self-stake | **1,000 MRSN** | One faucet claim (1,000 + 1 MRSN for gas). Escrowed by the staking precompile when you register; the bond is taken from your balance after gas, so keep a little above the bond. |
 | Active set size | **12** | Ranked by self-stake + delegated stake at each epoch boundary. |
 | Epoch | **1,800 blocks (1 hour)** | Boundaries at heights divisible by 1,800 (every :00 at 2-second blocks). |
 | Joining | register in one epoch → **active from the next** | A registration at 10:20 is active from 11:00. |
