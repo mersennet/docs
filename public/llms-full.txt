@@ -5693,6 +5693,17 @@ alongside the node binary and installer — no source access required. See
 
 **Validator set**: open since block 1,348,200 — 1,000 MRSN minimum self-stake, top 12 by stake active, hourly epochs; register on the [staking page](https://trade.mersennet.com/staking) or via the staking precompile ([Become a Validator](/validators/become-a-validator/)). Node runners earn 500 points a day once their node is verified ([Run a Node](/validators/run-a-node/#get-recognised-verified-node-runner)).
 
+## Scheduled protocol switches
+
+Consensus rules change at announced block heights, written into the canonical node config. Every node must run a release that implements the rule before the height; the staking page and `mersennet-check` warn when yours is behind. Heights come from `mersennet_validatorSet` (`params`); ETAs assume ~2.2 s blocks.
+
+| Height | ETA (UTC) | What changes | Minimum release |
+|---|---|---|---|
+| 1,440,000 | 2026-09-16 ~16:00 | Block rewards credited to the operator wallet; compact (base64) gossip encoding | `9e3a508` (15 Sep) |
+| 1,569,600 | 2026-09-19 ~16:00 | **Benching**: 3 missed leader slots → out of the leader rotation until the epoch boundary. **Escalating jail**: consecutive jails last 1, 2, 4, 8, 16, 24 epochs | `e6eb772` (16 Sep) |
+
+Current release: [mersennet.com/downloads/latest.json](https://mersennet.com/downloads/latest.json) (`build_sha`). Upgrading is the [install command](/validators/run-a-node/#step-2--install-one-command) again.
+
 ## Add Mersennet to MetaMask
 
 import AddToMetaMask from '../../../components/AddToMetaMask.astro';
@@ -7006,7 +7017,7 @@ You need a running node with your wallet configured as operator. That is [Step 2
 :::
 
 :::caution[Protocol switch at block 1,569,600 (~2026-09-19 16:00 UTC) — upgrade your validator before it]
-Two rules activate at that height: **benching** (a validator that misses 3 leader slots leaves the leader rotation until the epoch boundary) and **escalating jail** (consecutive jails last 1, 2, 4, 8, 16, 24 epochs). Both change how every node computes the leader schedule and the active set, so a validator on a build from before 16 Sep forks off at the first bench or repeat jail after the switch. Upgrading is the install command again (`curl -fsSL https://mersennet.com/downloads/install.sh | sudo bash -s -- --operator 0xYOUR_WALLET`); the staking page shows *upgrade required* next to your node until it runs the current release.
+Two rules activate at that height: **benching** (a validator that misses 3 leader slots leaves the leader rotation until the epoch boundary) and **escalating jail** (consecutive jails last 1, 2, 4, 8, 16, 24 epochs). Both change how every node computes the leader schedule and the active set, so a validator on a build from before 16 Sep forks off at the first bench or repeat jail after the switch. Upgrading is the install command again (`curl -fsSL https://mersennet.com/downloads/install.sh | sudo bash -s -- --operator 0xYOUR_WALLET`); the staking page shows *upgrade required* next to your node until it runs the current release. All scheduled switches: [Network Info](/getting-started/network-info/#scheduled-protocol-switches).
 :::
 
 ## Parameters (testnet)
@@ -7556,7 +7567,7 @@ curl -fsSL https://mersennet.com/downloads/install.sh | sudo bash -s -- --reset-
 
 **My node stopped advancing (the explorer moves, `mersennet-check` shows the same height).** Since build `0.7.0` of 16 Sep the node notices this itself: when its head has not moved for five minutes while the network is at least 60 blocks ahead, it exits and systemd restarts it (log line *"head has not advanced while the network moved on"*). On an older build, `sudo systemctl restart mersennet` does the same by hand. If it happens repeatedly, send us `journalctl -u mersennet -n 300 --no-pager` through the terminal's [feedback form](https://trade.mersennet.com/feedback) — that is exactly the kind of report the testnet is for.
 
-**Do I have to upgrade when a new release comes out?** For a full node: whenever convenient — `mersennet-check` says *update available*. For a **validator: yes, before the next protocol switch height** (announced on [Become a Validator](/validators/become-a-validator), the staking page and the [changelog](/resources/changelog); the staking page warns when your node is behind the current release). A validator on an old build applies the old rules from the switch height on, disagrees with the network about the next leader or the validator set, and forks off — it then needs `--reset-state`. Upgrading is the same one-line command as installing; it keeps your keys and data and takes under a minute.
+**Do I have to upgrade when a new release comes out?** For a full node: whenever convenient — `mersennet-check` says *update available*. For a **validator: yes, before the next protocol switch height** (listed on [Network Info](/getting-started/network-info/#scheduled-protocol-switches) and announced on [Become a Validator](/validators/become-a-validator) and the [changelog](/resources/changelog); the staking page warns when your node is behind the current release). A validator on an old build applies the old rules from the switch height on, disagrees with the network about the next leader or the validator set, and forks off — it then needs `--reset-state`. Upgrading is the same one-line command as installing; it keeps your keys and data and takes under a minute.
 
 **Do I need to do everything on this page?** No. Steps 1–4 are the whole thing. The sections below are reference material.
 
