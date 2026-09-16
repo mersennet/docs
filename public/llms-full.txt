@@ -7710,6 +7710,18 @@ Relative paths resolve against the node's working directory. The RPC defaults to
 | `enabled` | `bool` | `false` | Enable the WebSocket server |
 | `addr` | `string` | `"127.0.0.1:9945"` | WebSocket listen address |
 
+#### `watchdog`: Liveness Watchdog
+
+Node-local (not consensus). A node whose head stops advancing while the network moves on is wedged; the node exits and systemd restarts it (`Restart=always` in the installed unit). It never fires on a network-wide halt, because nothing is ahead to compare against.
+
+| Parameter | Type | Testnet value | Description |
+|-----------|------|---------------|-------------|
+| `enabled` | `bool` | `true` | Run the watchdog thread |
+| `stall_secs` | `u64` | `300` | Seconds the head may stay unchanged, with the network known to be ahead, before the node exits (code 3) |
+| `min_gap_blocks` | `u64` | `60` | How far ahead the network must be for the stall to count |
+| `lock_secs` | `u64` | `90` | Seconds the engine lock may be unobtainable before the node exits (code 4) |
+| `reference_rpc` | `string` | `"https://rpc.mersennet.com"` | Second opinion on the network head besides gossip (gossip cannot report a height when the listener itself died); empty = gossip only |
+
 #### `slashing`: Slashing Parameters
 
 | Parameter | Type | Default | Description |
@@ -7922,6 +7934,8 @@ Understanding node log messages helps diagnose issues quickly.
 | `mempool full, rejecting tx` | Mempool at capacity (10K default) | Increase `mempool.max_total` or reduce load |
 | `peer disconnected addr=...` | Lost connection to a peer | Check network; peer may restart automatically |
 | `slashing evidence kind=timeout` | This node missed a consensus round | Ensure clock sync and network stability |
+| `head not advancing, but no evidence the network is ahead` | Either the whole network is paused or this node has no peers and no reference RPC | Check `Peers` in `mersennet-check` and the explorer |
+| `head has not advanced while the network moved on — exiting` | The watchdog restarted the node (`systemctl show mersennet -p NRestarts`) | Nothing, unless it repeats — then send the log through the feedback form |
 
 ### Error Messages
 
