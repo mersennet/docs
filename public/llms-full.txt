@@ -5941,6 +5941,7 @@ The validator set is **permissionless** from block 1,348,200 (2026-09-14, ~08:35
 - Top **12** by self-stake + delegations are active; the rest are on standby.
 - Miss more than **20%** of your leader slots in an epoch and you sit out the next one. Nothing is slashed for downtime.
 - Leave with one click; self-stake unbonds in **7,200 blocks (~4 h)**.
+- **Keep the node on the current release.** Consensus rules change at announced heights ([schedule](/getting-started/network-info/#scheduled-protocol-switches)); the staking page shows *upgrade required* next to your node when it is behind, and the upgrade is the install command again.
 
 Full parameters, lifecycle and the raw precompile calls: [Become a Validator](/validators/become-a-validator/).
 
