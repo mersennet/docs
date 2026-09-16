@@ -260,7 +260,8 @@ Relative paths resolve against the node's working directory. The RPC defaults to
 | `gas_limit_per_block` | `u64` | `30000000` | Maximum gas per block (30M) |
 | `fee_elasticity_multiplier` | `u64` | `2` | EIP-1559 elasticity (target = limit / multiplier) |
 | `fee_max_change_denominator` | `u64` | `8` | Max base fee change per block (1/8 = 12.5%) |
-| `storage_backend` | `string` | `"sled"` | `"sled"`, `"redb"`, or `"memory"` |
+| `storage_backend` | `string` | `"sled"` | `"sled"`, `"redb"`, or `"memory"` (both persistent backends keep the validator registry) |
+| `resume_root_check` | `string` | `"warn"` | At startup the restored state's root is compared with the head block's: `"warn"` logs `RESTORED STATE ROOT MISMATCH` and continues; `"fatal"` exits (code 5) so the node is never run on state that does not match the chain — the fix is `--reset-state`. The testnet flips to `"fatal"` on 2026-09-20; builds up to `e6eb772` ignore the setting and keep warning |
 
 #### `mempool`: Transaction Pool
 
