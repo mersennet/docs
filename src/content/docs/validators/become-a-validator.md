@@ -9,6 +9,10 @@ The validator set is **permissionless** from block **1,348,200** (2026-09-14, ab
 You need a running node with your wallet configured as operator. That is [Step 2 of Run a Node](/validators/run-a-node#step-2--install-one-command) with `--operator 0xYOUR_WALLET`; the node is verified automatically within about ten minutes of being online.
 :::
 
+:::caution[Protocol switch at block 1,569,600 (~2026-09-19 16:00 UTC) — upgrade your validator before it]
+Two rules activate at that height: **benching** (a validator that misses 3 leader slots leaves the leader rotation until the epoch boundary) and **escalating jail** (consecutive jails last 1, 2, 4, 8, 16, 24 epochs). Both change how every node computes the leader schedule and the active set, so a validator on a build from before 16 Sep forks off at the first bench or repeat jail after the switch. Upgrading is the install command again (`curl -fsSL https://mersennet.com/downloads/install.sh | sudo bash -s -- --operator 0xYOUR_WALLET`); the staking page shows *upgrade required* next to your node until it runs the current release.
+:::
+
 ## Parameters (testnet)
 
 | Parameter | Value | Meaning |
@@ -18,7 +22,8 @@ You need a running node with your wallet configured as operator. That is [Step 2
 | Active set size | **12** | Ranked by self-stake + delegated stake at each epoch boundary. |
 | Epoch | **1,800 blocks (1 hour)** | Boundaries at heights divisible by 1,800 (every :00 at 2-second blocks). |
 | Joining | register in one epoch → **active from the next** | A registration at 10:20 is active from 11:00. |
-| Jailing | miss **>20%** of your leader slots in an epoch (judged only if you had **≥5** slots) | You sit out the **following epoch**; eligible again after that. **No stake is lost.** From block **1,483,200** (~2026-09-17 13:15 UTC) repeat offences escalate: consecutive jails last 1, 2, 4, 8, 16, then 24 epochs; one clean epoch as an active validator resets the count. |
+| Benching | miss **3** leader slots in an epoch (and your misses are at least a tenth of what you proposed) | From block **1,569,600** (~2026-09-19 16:00 UTC): you are taken out of the **leader rotation for the rest of the epoch** — you keep voting and your stake, and the network stops spending failover rounds on you. Cleared at the boundary, where the jail rule below judges the epoch. A live validator that drops a slot now and then is never benched: three misses out of forty proposed is 7.5%, below the tenth. |
+| Jailing | miss **>20%** of your leader slots in an epoch (judged only if you had **≥5** slots, or were benched) | You sit out the **following epoch**; eligible again after that. **No stake is lost.** From block **1,569,600** repeat offences escalate: consecutive jails last 1, 2, 4, 8, 16, then 24 epochs; one clean epoch as an active validator resets the count. |
 | Leaving | `unregisterValidator` → removed at the next epoch boundary | Self-stake unbonds for **7,200 blocks (~4 hours)**, then `withdrawUnbonded()` returns it. |
 | Key rotation | `rotateValidatorKey` with a proof from the new node key | Effective at the next epoch; delegations follow the validator. |
 | Commission | 0–100% in basis points, set at registration | Share of block rewards kept from delegators. |
@@ -36,7 +41,8 @@ Unbonding of *delegated* stake also takes 7,200 blocks, so one number applies ev
 | pending | next epoch boundary, ranked below the top 12 | **standby** |
 | standby | more self-stake or delegations at a boundary | **active** |
 | active | outranked at a boundary | **standby** |
-| active | missed > 20% of ≥ 5 slots in the epoch | **jailed** (one epoch; 2, 4, 8… for consecutive offences from block 1,483,200) |
+| active | missed 3 leader slots (from block 1,569,600) | **benched** for the rest of the epoch — still active, still voting, not in the leader rotation |
+| active | missed > 20% of ≥ 5 slots in the epoch (or was benched) | **jailed** (one epoch; 2, 4, 8… for consecutive offences from block 1,569,600) |
 | jailed | when the jail ends | **active** or **standby** by rank |
 | active / standby | `unregisterValidator` | **exiting** |
 | exiting | next epoch boundary | removed; self-stake unbonds 7,200 blocks |
@@ -110,8 +116,9 @@ The [explorer's Validators page](https://explorer.mersennet.com/#/validators) re
 
 ## Running well
 
-- **Stay online.** A validator that is down costs everyone a failover round per missed slot (8 seconds from block 1,440,000; 19 before) until the epoch boundary jails it. Your node starts proposing and voting by itself at the boundary where it becomes active — the log says `this node is in the active validator set: proposing blocks when leader`. Restart quickly after upgrades (`sudo systemctl restart mersennet` is graceful; the node finishes its in-flight block).
-- **Upgrade when `mersennet-check` says so.** Re-running the installer keeps your keys, data and operator setting and refreshes the consensus sections of the config from the canonical one.
+- **Stay online.** A validator that is down costs everyone a failover round per missed slot (8 seconds from block 1,440,000; 19 before) — until it is benched after three misses (from block 1,569,600) and jailed at the epoch boundary. Your node starts proposing and voting by itself at the boundary where it becomes active — the log says `this node is in the active validator set: proposing blocks when leader`. Restart quickly after upgrades (`sudo systemctl restart mersennet` is graceful; the node finishes its in-flight block).
+- **Upgrade when `mersennet-check` or the staking page says so — always before an announced switch height.** Re-running the installer keeps your keys, data and operator setting and refreshes the consensus sections of the config from the canonical one.
+- **If it wedges, it restarts itself.** Since the 16 Sep build the node exits when its head has not moved for five minutes while the network is 60+ blocks ahead, and systemd restarts it; the watchdog never fires on a network-wide halt (nothing is ahead).
 - **Back up `keys/node_key.json`.** It *is* your validator identity. If it leaks, rotate with `rotateValidatorKey` from a fresh node.
 - **Watch your slots** on the staking page or the explorer: `proposed / missed` for the current epoch tells you whether the network hears you.
 

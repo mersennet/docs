@@ -141,6 +141,10 @@ The set is open since block 1,348,200. With your node verified (above), open [tr
 curl -fsSL https://mersennet.com/downloads/install.sh | sudo bash -s -- --reset-state --operator 0xYOUR_WALLET
 ```
 
+**My node stopped advancing (the explorer moves, `mersennet-check` shows the same height).** Since build `0.7.0` of 16 Sep the node notices this itself: when its head has not moved for five minutes while the network is at least 60 blocks ahead, it exits and systemd restarts it (log line *"head has not advanced while the network moved on"*). On an older build, `sudo systemctl restart mersennet` does the same by hand. If it happens repeatedly, send us `journalctl -u mersennet -n 300 --no-pager` (Discord or hello@mersennet.com) — that is exactly the kind of report the testnet is for.
+
+**Do I have to upgrade when a new release comes out?** For a full node: whenever convenient — `mersennet-check` says *update available*. For a **validator: yes, before the next protocol switch height** (announced on [Become a Validator](/validators/become-a-validator), the staking page and the [changelog](/resources/changelog); the staking page warns when your node is behind the current release). A validator on an old build applies the old rules from the switch height on, disagrees with the network about the next leader or the validator set, and forks off — it then needs `--reset-state`. Upgrading is the same one-line command as installing; it keeps your keys and data and takes under a minute.
+
 **Do I need to do everything on this page?** No. Steps 1–4 are the whole thing. The sections below are reference material.
 
 **Where do I run the commands? Does `cd ~` matter?** Anywhere. The one-line installer downloads into a temporary directory and cleans up; your current directory is irrelevant. Chain data always goes to `/var/lib/mersennet` unless you pass `--data-dir`.
@@ -318,7 +322,8 @@ Consensus-critical — identical on every node; the installer refreshes it from 
 | `jail_miss_bps` | `u64` | `2000` | Missed-slot share (basis points) above which a validator is jailed for the next epoch |
 | `jail_min_slots` | `u64` | `5` | Minimum leader slots in the epoch before the miss share is judged |
 | `rewards_to_operator_height` | `u64` | `1440000` | Height from which a validator's block reward is credited to its operator wallet instead of the node identity (`0` = never) |
-| `jail_escalation_height` | `u64` | `1483200` | Height from which consecutive jails last 1, 2, 4, 8, 16, 24 epochs instead of always one (`0` = never) |
+| `jail_escalation_height` | `u64` | `1569600` | Height from which consecutive jails last 1, 2, 4, 8, 16, 24 epochs instead of always one (`0` = never) |
+| `bench_height` | `u64` | `1569600` | Height from which a validator that missed 3 leader slots in an epoch (misses ≥ a tenth of its proposals) leaves the leader rotation until the epoch boundary (`0` = never) |
 
 #### `token_economics`: Rewards & Supply
 
