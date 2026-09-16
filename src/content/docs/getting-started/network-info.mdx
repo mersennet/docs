@@ -41,6 +41,17 @@ alongside the node binary and installer — no source access required. See
 
 **Validator set**: open since block 1,348,200 — 1,000 MRSN minimum self-stake, top 12 by stake active, hourly epochs; register on the [staking page](https://trade.mersennet.com/staking) or via the staking precompile ([Become a Validator](/validators/become-a-validator/)). Node runners earn 500 points a day once their node is verified ([Run a Node](/validators/run-a-node/#get-recognised-verified-node-runner)).
 
+## Scheduled protocol switches
+
+Consensus rules change at announced block heights, written into the canonical node config. Every node must run a release that implements the rule before the height; the staking page and `mersennet-check` warn when yours is behind. Heights come from `mersennet_validatorSet` (`params`); ETAs assume ~2.2 s blocks.
+
+| Height | ETA (UTC) | What changes | Minimum release |
+|---|---|---|---|
+| 1,440,000 | 2026-09-16 ~16:00 | Block rewards credited to the operator wallet; compact (base64) gossip encoding | `9e3a508` (15 Sep) |
+| 1,569,600 | 2026-09-19 ~16:00 | **Benching**: 3 missed leader slots → out of the leader rotation until the epoch boundary. **Escalating jail**: consecutive jails last 1, 2, 4, 8, 16, 24 epochs | `e6eb772` (16 Sep) |
+
+Current release: [mersennet.com/downloads/latest.json](https://mersennet.com/downloads/latest.json) (`build_sha`). Upgrading is the [install command](/validators/run-a-node/#step-2--install-one-command) again.
+
 ## Add Mersennet to MetaMask
 
 import AddToMetaMask from '../../../components/AddToMetaMask.astro';
