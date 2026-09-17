@@ -7450,8 +7450,8 @@ A full node follows the chain and serves RPC; a **validator** additionally signs
 |---|---|---|
 | OS | Ubuntu 22.04+ or Debian 12+ (x86-64) | Ubuntu 24.04 LTS |
 | CPU / RAM | 2 cores / 4 GB | 4 cores / 8 GB |
-| Disk | 40 GB SSD | 100 GB SSD (chain data grows ~0.5 GB/day) |
-| Network | 10 Mbps, outbound UDP+TCP 30303 allowed | Inbound 30303 open too |
+| Disk | 40 GB SSD (state is ~15 GB in Sep 2026) | 100 GB SSD (chain data grows ~0.6 GB/day) |
+| Network | 10 Mbps, outbound UDP+TCP 30303 allowed; expect ~10 GB/day of traffic (mostly relayed transactions) | Inbound 30303 open too |
 
 You need `sudo` (root) on the machine. That is the whole list — no Rust, no Git, no build tools.
 
