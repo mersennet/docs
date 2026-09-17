@@ -14,7 +14,8 @@ Mersennet Trade is live at **[https://trade.mersennet.com](https://trade.mersenn
 |---------|---------|
 | **Type** | Perpetual futures on a native on-chain order book |
 | **Order Engine** | MersennetOrders native precompile (`0x…0100`) |
-| **Order Types** | Limit, Market, Stop, Trailing, TWAP, Scale, Chase — with GTC/IOC/FOK time-in-force, post-only, and on-chain good-till-date expiry |
+| **Order Types** | Limit and Market (GTC/IOC/FOK, post-only, on-chain good-till-date expiry) placed directly on the precompile. **Stop, Stop-limit, Trailing stop, TWAP** are armed in your browser and executed as wallet-signed orders when they trigger — silently with one-click trading, otherwise with a wallet popup at trigger time; they fire while a Mersennet Trade tab is open. **Scale** places a ladder of limit orders at once; **Chase** re-pegs a post-only order to the top of the book (needs one-click). |
+| **Fees** | The testnet charges **no trading fee**; the planned schedule shown in the terminal starts at 0% maker / 0.035% taker and falls with 30-day volume |
 | **Funding** | Every 8 hours (typical rates ±0.01% per interval) |
 | **Collateral** | Native MRSN plus registered tokens (e.g. USDC), fully escrowed on-chain by the precompile |
 | **Chain** | Mersennet Testnet (Chain ID 131071) |
@@ -64,7 +65,7 @@ Additional user-created markets appear alongside the genesis five — query `mer
 
 The terminal is also where testnet participation is tracked and where the validator set is managed:
 
-- **Points** ([/points](https://trade.mersennet.com/points)): 1 point per $1 traded; **500 points a day** for running a verified node (automatic once your node has an operator address — see [Run a Node](/validators/run-a-node/#get-recognised-verified-node-runner)).
+- **Points** ([/points](https://trade.mersennet.com/points)): 1 point per $1 traded; **500 points a day** for running a verified node (automatic once your node has an operator address — see [Run a Node](/validators/run-a-node/#get-recognised-verified-node-runner)); **referrals** pay the referrer 10% of each referee's trading points (the referee confirms the link with one signature; nothing is deducted from them); the **weekly sprint** awards the top three traders by volume 3,000 / 2,000 / 1,000 bonus points every Monday 00:00 UTC ([leaderboard](https://trade.mersennet.com/leaderboard)).
 - **Staking** ([/staking](https://trade.mersennet.com/staking)): delegate MRSN to any validator, claim rewards, and — with a verified node — **register as a validator** in one click (1,000 MRSN self-stake; [Become a Validator](/validators/become-a-validator/)).
 
 ## Related Resources
