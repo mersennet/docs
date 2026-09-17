@@ -39,6 +39,7 @@ export default defineConfig({
         { tag: 'meta', attrs: { name: 'twitter:image', content: 'https://docs.mersennet.com/og.jpg' } },
       ],
       social: [
+        { icon: 'telegram', label: 'Telegram chat', href: 'https://t.me/Mersennet' },
         { icon: 'github', label: 'GitHub', href: 'https://github.com/mersennet/mersennet' },
       ],
       lastUpdated: true,

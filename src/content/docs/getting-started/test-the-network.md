@@ -58,4 +58,4 @@ Season 1 points on [trade.mersennet.com/points](https://trade.mersennet.com/poin
 
 ## Is it up?
 
-[status.mersennet.com](https://status.mersennet.com/status/mersennet) shows live uptime of the RPC (two public nodes with automatic failover), explorer, faucet, terminal and the snapshot server. Something wrong or confusing? The terminal's [feedback form](https://trade.mersennet.com/feedback) goes straight to the team.
+[status.mersennet.com](https://status.mersennet.com/status/mersennet) shows live uptime of the RPC (two public nodes with automatic failover), explorer, faucet, terminal and the snapshot server. Something wrong or confusing? Ask in the official Telegram chat [t.me/Mersennet](https://t.me/Mersennet), or use the terminal's [feedback form](https://trade.mersennet.com/feedback) — both go straight to the team.

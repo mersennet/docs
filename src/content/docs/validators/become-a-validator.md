@@ -121,6 +121,7 @@ The [explorer's Validators page](https://explorer.mersennet.com/#/validators) re
 - **If it wedges, it restarts itself.** Since the 16 Sep build the node exits when its head has not moved for five minutes while the network is 60+ blocks ahead, and systemd restarts it; the watchdog never fires on a network-wide halt (nothing is ahead).
 - **Back up `keys/node_key.json`.** It *is* your validator identity. If it leaks, rotate with `rotateValidatorKey` from a fresh node.
 - **Watch your slots** on the staking page or the explorer: `proposed / missed` for the current epoch tells you whether the network hears you.
+- **Talk to other operators** in the official Telegram chat, [t.me/Mersennet](https://t.me/Mersennet) — release announcements and switch heights are posted there first.
 
 ## Frequently asked
 
