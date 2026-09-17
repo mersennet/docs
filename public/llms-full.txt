@@ -6997,7 +6997,7 @@ once, linked everywhere.
 
 ## Consensus & economics
 
-**HotStuff-2**: Mersennet's BFT consensus: two-phase, stake-weighted voting with rotating proposers; finality when >2/3 of stake commits (~2s blocks).
+**Leader-gated BFT**: Mersennet's consensus: one deterministic leader per height with timeout failover; every validator re-executes the block and gossips a signed finality vote; final when >2/3 of stake commits (~2 s blocks). A HotStuff-2 pipeline exists in the node as the benchmarked upgrade path, not yet live.
 
 **Staking**: Validators bond MRSN directly; anyone else can delegate MRSN to a validator through the native staking precompile (`0x…0400`) and earn a share of its block rewards, minus commission. Undelegating starts an unbonding period. The validator set is open: any node can register with 1,000 MRSN self-stake and joins the active set (top 12 by self + delegated stake) at the next hourly epoch. See [Staking](/validators/staking/) and [Become a Validator](/validators/become-a-validator/).
 
@@ -7350,7 +7350,7 @@ Validators perform three critical functions:
 
 3. **Network Security**: By staking MRSN tokens, validators have economic skin in the game. Malicious or negligent behavior is penalized through slashing, which protects the network from attacks and downtime.
 
-## Proof-of-Stake (HotStuff-2 BFT)
+## Proof-of-Stake (leader-gated BFT)
 
 Mersennet uses stake-weighted BFT consensus with the following characteristics:
 
@@ -8199,7 +8199,7 @@ Staking is how you participate in Mersennet consensus and earn rewards. This gui
 
 ## How Staking Works
 
-In Mersennet's Proof-of-Stake model (HotStuff-2 BFT):
+In Mersennet's Proof-of-Stake model (leader-gated BFT):
 
 1. **Validators** stake MRSN to join the validator set and produce blocks.
 2. **Voting power** is proportional to stake.

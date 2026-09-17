@@ -50,7 +50,7 @@ once, linked everywhere.
 
 ## Consensus & economics
 
-**HotStuff-2**: Mersennet's BFT consensus: two-phase, stake-weighted voting with rotating proposers; finality when >2/3 of stake commits (~2s blocks).
+**Leader-gated BFT**: Mersennet's consensus: one deterministic leader per height with timeout failover; every validator re-executes the block and gossips a signed finality vote; final when >2/3 of stake commits (~2 s blocks). A HotStuff-2 pipeline exists in the node as the benchmarked upgrade path, not yet live.
 
 **Staking**: Validators bond MRSN directly; anyone else can delegate MRSN to a validator through the native staking precompile (`0x…0400`) and earn a share of its block rewards, minus commission. Undelegating starts an unbonding period. The validator set is open: any node can register with 1,000 MRSN self-stake and joins the active set (top 12 by self + delegated stake) at the next hourly epoch. See [Staking](/validators/staking/) and [Become a Validator](/validators/become-a-validator/).
 
