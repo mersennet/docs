@@ -6,7 +6,7 @@ Staking is how you participate in Mersennet consensus and earn rewards. This gui
 
 ## How Staking Works
 
-In Mersennet's Proof-of-Stake model (HotStuff-2 BFT):
+In Mersennet's Proof-of-Stake model (leader-gated BFT):
 
 1. **Validators** stake MRSN to join the validator set and produce blocks.
 2. **Voting power** is proportional to stake.

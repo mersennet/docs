@@ -14,7 +14,7 @@ Validators perform three critical functions:
 
 3. **Network Security**: By staking MRSN tokens, validators have economic skin in the game. Malicious or negligent behavior is penalized through slashing, which protects the network from attacks and downtime.
 
-## Proof-of-Stake (HotStuff-2 BFT)
+## Proof-of-Stake (leader-gated BFT)
 
 Mersennet uses stake-weighted BFT consensus with the following characteristics:
 
