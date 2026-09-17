@@ -900,10 +900,12 @@ List every CLOB market (genesis-seeded and permissionlessly created), sorted by 
   "jsonrpc": "2.0",
   "id": 1,
   "result": [
-    { "id": 1, "symbol": "MRSN", "tickSize": "0x1", "lotSize": "0x1", "lastPrice": "0xfde8", "status": "active" }
+    { "id": 1, "symbol": "MRSN", "tickSize": "0x1", "lotSize": "0x1", "lastPrice": "0xfde8", "priceScale": 1, "status": "active" }
   ]
 }
 ```
+
+`priceScale`: on-chain prices for the market are **human price × priceScale** (1 = integer prices). From block 1,569,600 MRSN, SOL and ARB carry `priceScale = 100`, so a price of `11500` means $115.00 and the finest tick is $0.01; sizes are unchanged and notional = price × size ÷ priceScale. Read it from this method rather than assuming integers.
 
 ---
 
@@ -1034,6 +1036,28 @@ Get all open orders for a specific address.
 **Parameters:**
 
 1. `address`: Trader address (hex)
+
+---
+
+### mersennet_orders_getAgents
+
+Agent delegation (one-click trading): the agent keys an account has granted, and whether the feature is active on the network.
+
+An account grants a second key permission to trade for it with `setAgent(address agent, uint64 expiresAtBlock)` on the CLOB precompile (`0x…0100`); `revokeAgent(address agent)` ends it; `agentOf(address agent)` returns `(owner, expiresAtBlock)`. Transactions signed by an agent place and cancel orders **as the owner** — orders, positions and fills stay on the owner's account — while `depositCollateral` / `withdrawCollateral` and `setAgent` itself are never delegated. One agent key acts for one owner; an agent cannot grant agents; `expiresAtBlock = 0` means no expiry, otherwise at most ~90 days ahead. The trade terminal's one-click trading is built on this (Settings → One-Click Trading).
+
+**Parameters:**
+
+1. `address`: Owner address (hex)
+
+```json
+{
+  "owner": "0x…",
+  "agentDelegationHeight": 1650000,
+  "active": true,
+  "height": 1651234,
+  "agents": [{ "agent": "0x…", "expiresAtBlock": 1710400, "expired": false }]
+}
+```
 
 ---
 

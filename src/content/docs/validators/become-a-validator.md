@@ -10,7 +10,7 @@ You need a running node with your wallet configured as operator. That is [Step 2
 :::
 
 :::caution[Protocol switch at block 1,569,600 (~2026-09-19 16:00 UTC) — upgrade your validator before it]
-Two rules activate at that height: **benching** (a validator that misses 3 leader slots leaves the leader rotation until the epoch boundary) and **escalating jail** (consecutive jails last 1, 2, 4, 8, 16, 24 epochs). Both change how every node computes the leader schedule and the active set, so a validator on a build from before 16 Sep forks off at the first bench or repeat jail after the switch. Upgrading is the install command again (`curl -fsSL https://mersennet.com/downloads/install.sh | sudo bash -s -- --operator 0xYOUR_WALLET`); the staking page shows *upgrade required* next to your node until it runs the current release. All scheduled switches: [Network Info](/getting-started/network-info/#scheduled-protocol-switches).
+Four rules activate at that height: **benching** (a validator that misses 3 leader slots leaves the leader rotation until the epoch boundary), **escalating jail** (consecutive jails last 1, 2, 4, 8, 16, 24 epochs), **agent delegation** on the CLOB precompile, and the **price rescale** of MRSN, SOL and ARB to $0.01 ticks. All of them change how every node executes blocks, so a validator on a build from before 17 Sep forks off at the switch. Upgrading is the install command again (`curl -fsSL https://mersennet.com/downloads/install.sh | sudo bash -s -- --operator 0xYOUR_WALLET`); the staking page shows *upgrade required* next to your node until it runs the current release. All scheduled switches: [Network Info](/getting-started/network-info/#scheduled-protocol-switches).
 :::
 
 ## Parameters (testnet)
