@@ -15,6 +15,8 @@ Mersennet Trade is live at **[https://trade.mersennet.com](https://trade.mersenn
 | **Type** | Perpetual futures on a native on-chain order book |
 | **Order Engine** | MersennetOrders native precompile (`0x…0100`) |
 | **Order Types** | Limit and Market (GTC/IOC/FOK, post-only, on-chain good-till-date expiry) placed directly on the precompile. **Stop, Stop-limit, Trailing stop, TWAP** are armed in your browser and executed as wallet-signed orders when they trigger — silently with one-click trading, otherwise with a wallet popup at trigger time; they fire while a Mersennet Trade tab is open. **Scale** places a ladder of limit orders at once; **Chase** re-pegs a post-only order to the top of the book (needs one-click). |
+| **Ticks** | BTC and ETH trade on $1 / $10 integer ticks; from block 1,569,600 MRSN, SOL and ARB trade on **$0.01 ticks** (`priceScale` 100 on chain — the terminal shows human prices everywhere). |
+| **One-click trading** | An **agent key** kept in your browser, granted on-chain by your wallet (`setAgent` on the precompile, ~7 days, two confirmations to set up: the grant and 3 MRSN of gas). It signs orders, TP/SL and conditional orders without popups; orders, positions and collateral stay on your main wallet; the key can never withdraw. Revoke any time from Settings. Activates at the agent-delegation switch height (see Network Info). |
 | **Fees** | The testnet charges **no trading fee**; the planned schedule shown in the terminal starts at 0% maker / 0.035% taker and falls with 30-day volume |
 | **Funding** | Every 8 hours (typical rates ±0.01% per interval) |
 | **Collateral** | Native MRSN plus registered tokens (e.g. USDC), fully escrowed on-chain by the precompile |
