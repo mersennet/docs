@@ -5959,7 +5959,7 @@ Season 1 points on [trade.mersennet.com/points](https://trade.mersennet.com/poin
 
 ## Is it up?
 
-[status.mersennet.com](https://status.mersennet.com/status/mersennet) shows live uptime of the RPC (two public nodes with automatic failover), explorer, faucet, terminal and the snapshot server. Something wrong or confusing? The terminal's [feedback form](https://trade.mersennet.com/feedback) goes straight to the team.
+[status.mersennet.com](https://status.mersennet.com/status/mersennet) shows live uptime of the RPC (two public nodes with automatic failover), explorer, faucet, terminal and the snapshot server. Something wrong or confusing? Ask in the official Telegram chat [t.me/Mersennet](https://t.me/Mersennet), or use the terminal's [feedback form](https://trade.mersennet.com/feedback) — both go straight to the team.
 
 
 ---
@@ -6942,7 +6942,7 @@ Mersennet Trade is the native perpetuals and spot trading terminal, built on the
 
 ---
 
-Have more questions? Check the [Getting Started](/getting-started/overview) guides. Node operators: [Run a Node](/validators/run-a-node/) installs a node in one command and [Become a Validator](/validators/become-a-validator/) explains registration — no application needed. Bug reports and product feedback go through the [feedback page in the trade terminal](https://trade.mersennet.com/feedback).
+Have more questions? Check the [Getting Started](/getting-started/overview) guides. Node operators: [Run a Node](/validators/run-a-node/) installs a node in one command and [Become a Validator](/validators/become-a-validator/) explains registration — no application needed. Questions and discussion: the official Telegram chat [t.me/Mersennet](https://t.me/Mersennet). Bug reports and product feedback go through the [feedback page in the trade terminal](https://trade.mersennet.com/feedback).
 
 
 ---
@@ -7129,6 +7129,7 @@ The [explorer's Validators page](https://explorer.mersennet.com/#/validators) re
 - **If it wedges, it restarts itself.** Since the 16 Sep build the node exits when its head has not moved for five minutes while the network is 60+ blocks ahead, and systemd restarts it; the watchdog never fires on a network-wide halt (nothing is ahead).
 - **Back up `keys/node_key.json`.** It *is* your validator identity. If it leaks, rotate with `rotateValidatorKey` from a fresh node.
 - **Watch your slots** on the staking page or the explorer: `proposed / missed` for the current epoch tells you whether the network hears you.
+- **Talk to other operators** in the official Telegram chat, [t.me/Mersennet](https://t.me/Mersennet) — release announcements and switch heights are posted there first.
 
 ## Frequently asked
 
@@ -7566,7 +7567,7 @@ The set is open since block 1,348,200. With your node verified (above), open [tr
 curl -fsSL https://mersennet.com/downloads/install.sh | sudo bash -s -- --reset-state --operator 0xYOUR_WALLET
 ```
 
-**My node stopped advancing (the explorer moves, `mersennet-check` shows the same height).** Since build `0.7.0` of 16 Sep the node notices this itself: when its head has not moved for five minutes while the network is at least 60 blocks ahead, it exits and systemd restarts it (log line *"head has not advanced while the network moved on"*). On an older build, `sudo systemctl restart mersennet` does the same by hand. If it happens repeatedly, send us `journalctl -u mersennet -n 300 --no-pager` through the terminal's [feedback form](https://trade.mersennet.com/feedback) — that is exactly the kind of report the testnet is for.
+**My node stopped advancing (the explorer moves, `mersennet-check` shows the same height).** Since build `0.7.0` of 16 Sep the node notices this itself: when its head has not moved for five minutes while the network is at least 60 blocks ahead, it exits and systemd restarts it (log line *"head has not advanced while the network moved on"*). On an older build, `sudo systemctl restart mersennet` does the same by hand. If it happens repeatedly, send us `journalctl -u mersennet -n 300 --no-pager` in the [Telegram chat](https://t.me/Mersennet) or through the terminal's [feedback form](https://trade.mersennet.com/feedback) — that is exactly the kind of report the testnet is for.
 
 **Do I have to upgrade when a new release comes out?** For a full node: whenever convenient — `mersennet-check` says *update available*. For a **validator: yes, before the next protocol switch height** (listed on [Network Info](/getting-started/network-info/#scheduled-protocol-switches) and announced on [Become a Validator](/validators/become-a-validator) and the [changelog](/resources/changelog); the staking page warns when your node is behind the current release). A validator on an old build applies the old rules from the switch height on, disagrees with the network about the next leader or the validator set, and forks off — it then needs `--reset-state`. Upgrading is the same one-line command as installing; it keeps your keys and data and takes under a minute.
 

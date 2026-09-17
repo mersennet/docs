@@ -87,4 +87,4 @@ Mersennet Trade is the native perpetuals and spot trading terminal, built on the
 
 ---
 
-Have more questions? Check the [Getting Started](/getting-started/overview) guides. Node operators: [Run a Node](/validators/run-a-node/) installs a node in one command and [Become a Validator](/validators/become-a-validator/) explains registration — no application needed. Bug reports and product feedback go through the [feedback page in the trade terminal](https://trade.mersennet.com/feedback).
+Have more questions? Check the [Getting Started](/getting-started/overview) guides. Node operators: [Run a Node](/validators/run-a-node/) installs a node in one command and [Become a Validator](/validators/become-a-validator/) explains registration — no application needed. Questions and discussion: the official Telegram chat [t.me/Mersennet](https://t.me/Mersennet). Bug reports and product feedback go through the [feedback page in the trade terminal](https://trade.mersennet.com/feedback).
