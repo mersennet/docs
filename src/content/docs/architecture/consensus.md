@@ -11,7 +11,7 @@ Mersennet uses **leader-gated Proof-of-Stake BFT** (HotStuff-2 style): one elect
 | **Consensus** | Proof-of-Stake BFT, single elected leader per height |
 | **Block Time** | ~2 seconds on the current testnet (configurable per network) |
 | **Finality** | ≥ 2/3 of total stake, signed votes gossiped per block |
-| **Failover** | Timeout-based round rotation to the next leader |
+| **Failover** | Timeout-based round rotation to the next leader (8 s per round since block 1,440,000); from block 1,569,600 a leader that missed 3 slots in an epoch is benched until the epoch boundary |
 | **Implementation** | Rust |
 
 ## Validator Selection
