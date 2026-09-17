@@ -17,7 +17,7 @@ Everything on the Mersennet testnet is open to anyone: trading, staking, the val
 
 ## 1. Get testnet MRSN
 
-Add the network to your wallet ([Wallet Setup](/getting-started/wallet-setup/) — chain ID `131071`, RPC `https://rpc.mersennet.com`) and claim **1,000 MRSN per hour** at [faucet.mersennet.com](https://faucet.mersennet.com). Mock stablecoins for contract testing are on the same page. Details: [Get Testnet MRSN](/getting-started/faucet/).
+Add the network to your wallet ([Wallet Setup](/getting-started/wallet-setup/) — chain ID `131071`, RPC `https://rpc.mersennet.com`) and claim **1,000 MRSN per hour** (+1 for gas, so one claim covers a validator bond) at [faucet.mersennet.com](https://faucet.mersennet.com). Mock stablecoins for contract testing are on the same page. Details: [Get Testnet MRSN](/getting-started/faucet/).
 
 ## 2. Trade
 
