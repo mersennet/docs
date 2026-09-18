@@ -75,4 +75,4 @@
 - WebSocket: wss://rpc.mersennet.com
 - Block Explorer: https://explorer.mersennet.com
 - Faucet: https://faucet.mersennet.com
-- GitHub: https://github.com/mersennet/mersennet
+- GitHub: https://github.com/mersennet (node repository is private during the testnet phase; use the release bundles)

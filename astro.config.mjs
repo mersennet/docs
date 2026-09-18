@@ -40,12 +40,10 @@ export default defineConfig({
       ],
       social: [
         { icon: 'telegram', label: 'Telegram chat', href: 'https://t.me/Mersennet' },
-        { icon: 'github', label: 'GitHub', href: 'https://github.com/mersennet/mersennet' },
+        { icon: 'github', label: 'GitHub', href: 'https://github.com/mersennet' },
       ],
       lastUpdated: true,
-      editLink: {
-        baseUrl: 'https://github.com/mersennet/docs/edit/main/',
-      },
+      // No "Edit page" link while the docs repository is private: it would 404 for every reader.
       customCss: ['./src/styles/custom.css', 'katex/dist/katex.min.css'],
       sidebar: [
         {
