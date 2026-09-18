@@ -5947,6 +5947,15 @@ The terminal is also where testnet participation is tracked and where the valida
 - **Maker vault** ([/vault](https://trade.mersennet.com/vault)): pool MRSN behind the market maker that quotes every market. Deposits mint `mvMRSN` shares at the vault's net asset value (free MRSN + collateral on the precompile + unrealized PnL at mid), so maker PnL moves the share price; withdraw any time at NAV from the vault's free reserve (10% of NAV) and, beyond that, from collateral not backing open positions. The bot trades for the vault through **agent delegation** — it can place and cancel orders in the vault's name, never withdraw. Depositors earn **LP points: 0.1 per MRSN per day**. Contract `0xe77F94c4Bf7D6d2E2371aFdE440a0b9b8a567725` (`contracts/src/orders/MakerVault.sol`); testnet MRSN has no monetary value.
 - **Staking** ([/staking](https://trade.mersennet.com/staking)): delegate MRSN to any validator, claim rewards, and — with a verified node — **register as a validator** in one click (1,000 MRSN self-stake; [Become a Validator](/validators/become-a-validator/)).
 
+## REST and WebSocket API
+
+The terminal's own data layer is public at `https://trade.mersennet.com/api/v1` (REST) and `wss://trade.mersennet.com/ws` (WebSocket); the route list lives at [trade.mersennet.com/api](https://trade.mersennet.com/api).
+
+- **Limits**: 600 requests per minute per IP for reads, 60 per minute for writes. Every response carries `RateLimit-Limit`, `RateLimit-Remaining` and `RateLimit-Reset`; a `429` body is `{ "error": "Too many requests…" }`.
+- **Errors**: `400 { "error": "Invalid parameter", "detail"?: string }` for a non-numeric id, malformed timestamp or out-of-range number; `404 { "error": "Not found" }` for an unknown route or market; `500 { "error": "Internal error" }` for a server fault (logged on our side).
+- **Ids**: markets are addressed by numeric id (from `/markets`); `/candles` also accepts a symbol such as `MRSN-USD`.
+- **WebSocket**: subscribe with `{ "action": "subscribe", "channel": "ticker:1" }`; frames are capped at 16 KiB and a connection may hold 64 channels. Close code `1009` means a frame was too large, `1013` that the server is busy — reconnect with backoff.
+
 ## Related Resources
 
 - [MersennetOrders Architecture](/architecture/order-book): How the native CLOB precompile works
