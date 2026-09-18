@@ -19,7 +19,7 @@ hero:
 
 import { Card, CardGrid, LinkCard } from '@astrojs/starlight/components';
 
-<CardGrid stagger>
+<CardGrid>
   <Card title="Deploy in minutes" icon="rocket">
     Hardhat, Foundry, ethers: all unchanged. Chain ID `131071`, ~2s blocks, EVM Prague.
 
@@ -37,6 +37,12 @@ import { Card, CardGrid, LinkCard } from '@astrojs/starlight/components';
 
     [MersennetOrders architecture](/architecture/order-book/) ·
     [DeFi integration](/developers/contracts/defi-integration/)
+  </Card>
+  <Card title="Make your first trade" icon="approve-check">
+    Connect a wallet, claim faucet MRSN, deposit collateral and place a market order on the terminal in a few minutes. Every order is a signed transaction you can find on the explorer; 1 point per $1 traded.
+
+    [Your first trade](/getting-started/first-trade/) ·
+    [Open the terminal](https://trade.mersennet.com)
   </Card>
   <Card title="Stake and run a node" icon="seti:powershell">
     Run a full node in one command (in sync in about a minute), earn 500 points a day as a verified node runner, and register as a validator with 1,000 MRSN — the set is open. Or simply delegate MRSN to a validator for a share of block rewards.

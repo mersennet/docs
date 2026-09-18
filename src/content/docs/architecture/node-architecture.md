@@ -8,7 +8,7 @@ This page describes the internal architecture of a Mersennet node, the Rust bina
 
 A running Mersennet node is composed of five cooperating subsystems:
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────────────────┐
 │                          MERSENNET NODE                               │
 │                                                                         │
@@ -134,7 +134,7 @@ Peer-to-peer communication layer:
 
 When the block timer fires, the following sequence executes:
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────────────────┐
 │                     BLOCK PRODUCTION PIPELINE                           │
 └─────────────────────────────────────────────────────────────────────────┘
@@ -212,7 +212,7 @@ When the block timer fires, the following sequence executes:
 
 State persistence is abstracted behind the `StateBackend` trait, allowing pluggable storage engines:
 
-```
+```text
          ┌─────────────────────┐
          │    StateBackend      │  (trait)
          │  ─────────────────   │
@@ -238,7 +238,7 @@ State persistence is abstracted behind the `StateBackend` trait, allowing plugga
 
 The default `sled` backend persists all state to disk at the configured `state_path`:
 
-```
+```text
 state/
 ├── node_key.json      # Node identity (secp256k1 keypair)
 ├── peers.json         # Known peer addresses
@@ -303,7 +303,7 @@ Gas follows standard EVM rules:
 
 Mersennet implements EIP-1559 dynamic base fee:
 
-```
+```text
 if gas_used > target_gas (gas_limit / elasticity):
     base_fee increases (up to 12.5% per block)
 if gas_used < target_gas:
@@ -324,7 +324,7 @@ A legacy custom binary format is also still accepted for internal tooling:
 
 The signing hash is `keccak256` of the following concatenated big-endian fields:
 
-```
+```text
 ┌──────────────────────────────────────────────────────────────┐
 │  Field        │ Size    │ Encoding        │ Description      │
 ├───────────────┼─────────┼─────────────────┼──────────────────┤
@@ -345,7 +345,7 @@ signing_hash = keccak256(chain_id || nonce || gas_price || gas_limit || to || va
 
 After signing, the complete transaction includes the original fields plus the ECDSA signature:
 
-```
+```text
 ┌──────────────────────────────────────────────────────────────┐
 │  Signing payload (as above)                                   │
 │  chain_id(8) || nonce(8) || gas_price(32) || gas_limit(8)    │
@@ -371,7 +371,7 @@ To recover the signer:
 
 When the `mersennet` binary starts:
 
-```
+```text
 1. Initialize tracing (structured logging from RUST_LOG env)
 2. Initialize Prometheus metrics exporter
 3. Parse CLI arguments and load config.json

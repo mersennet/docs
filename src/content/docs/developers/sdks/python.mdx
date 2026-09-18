@@ -41,7 +41,7 @@ signed = acct.sign_transaction({
     "value": 0,
     "gas": 300_000,
     "gasPrice": int(provider.gas_price(), 16),
-    "nonce": int(provider.get_nonce(acct.address), 16),
+    "nonce": provider.get_nonce(acct.address),  # already an int
     "chainId": 131071,
 })
 tx_hash = provider.send_raw_transaction(signed.raw_transaction.hex())
@@ -200,8 +200,38 @@ mrsn = next(m for m in markets if m["symbol"] == "MRSN")
 chain_price = orders.to_chain_price(115.37, mrsn["price_scale"])   # 11537 at scale 100
 human = orders.to_human_price(11537, mrsn["price_scale"])           # 115.37
 protocol = orders.get_protocol()        # switches, margin bps, wei per collateral unit, insurance fund, bad debt
-agents = orders.get_agents(owner)       # agent keys granted by `owner`
-underwater = orders.get_liquidatable()  # keeper feed
+agents = orders.get_agents(owner)       # agent keys granted by `owner` (setAgent; one-click trading keys)
+underwater = orders.get_liquidatable()  # keeper feed: accounts below maintenance margin (empty before the settlement switch)
+```
+
+### Collateral units and deposits
+
+`depositCollateral` / `withdrawCollateral` take an amount in **collateral units**, and the unit changes at the settlement switch (block 1,605,600): one unit is one wei before it (10¹⁸ units per MRSN) and one MRSN from it. `to_collateral_units()` converts a human MRSN amount for the current era by reading `weiPerCollateralUnit` from `get_protocol()`, so the same code works before and after the switch; never hard-code `10**18`.
+
+```python
+units_per_mrsn = orders.collateral_units_per_mrsn()   # 10**18 before the switch, 1 from it
+units = orders.to_collateral_units("10.5")            # int, for depositCollateral / withdrawCollateral
+
+# Deposit: depositCollateral(uint256 amount), selector 0xbad4a01f — a signed tx like placeOrder
+# (`acct` and `PRECOMPILE` as in the quick reference above).
+def encode_deposit_collateral(units: int) -> str:
+    return "0xbad4a01f" + format(units, "064x")
+
+signed = acct.sign_transaction({
+    "to": PRECOMPILE,
+    "data": encode_deposit_collateral(units),
+    "value": 0,
+    "gas": 200_000,
+    "gasPrice": int(provider.gas_price(), 16),
+    "nonce": provider.get_nonce(acct.address),
+    "chainId": 131071,
+})
+tx_hash = provider.send_raw_transaction(signed.raw_transaction.hex())
+
+# Read it back: getCollateral() (selector 0x5c1548fb) returns the caller's balance in collateral units.
+raw = provider.call({"from": acct.address, "to": PRECOMPILE, "data": "0x5c1548fb"})
+collateral_units = int(raw, 16) if raw not in ("", "0x") else 0
+print("collateral (MRSN):", collateral_units / units_per_mrsn)
 ```
 
 ### Get Order Book
@@ -243,7 +273,7 @@ signed = acct.sign_transaction({
     "value": 0,
     "gas": 300_000,
     "gasPrice": int(provider.gas_price(), 16),
-    "nonce": int(provider.get_nonce(acct.address), 16),
+    "nonce": provider.get_nonce(acct.address),  # already an int
     "chainId": 131071,
 })
 tx_hash = provider.send_raw_transaction(signed.raw_transaction.hex())
@@ -282,6 +312,24 @@ call (100 MRSN listing fee), submitted as a signed transaction like
 `placeOrder` above — see [Deployed Contracts](/resources/contracts/) for the
 Solidity interface.
 
+### MersennetOrders reference
+
+| Method | Description |
+|--------|-------------|
+| `get_order_book(market)` | Order book (`bids` / `asks`, both sorted by ascending price) |
+| `get_trades(market)` | Recent trade events for a market (`mersennet_getDomainEvents`) |
+| `get_positions(address, market=None)` | Raw `eth_call` result of the position read for one market |
+| `get_markets()` | Listed markets with `tick_size`, `lot_size`, `last_price`, `price_scale`, `status` |
+| `to_chain_price(human, price_scale)` / `to_human_price(chain, price_scale)` | Static: human ↔ on-chain price (on-chain = human × `price_scale`) |
+| `get_protocol()` | Every CLOB consensus switch and live parameter (`mersennet_orders_getProtocol`) |
+| `collateral_units_per_mrsn()` | Collateral units per MRSN in the current era (`10**18` before the settlement switch, `1` from it) |
+| `to_collateral_units(mrsn)` | Human MRSN amount (`"10.5"`, `10`, `Decimal`) → integer collateral units for the current era (floor) |
+| `get_agents(owner)` | Agent keys granted by `owner` and whether delegation is active (`mersennet_orders_getAgents`) |
+| `get_liquidatable()` | Accounts below maintenance margin at the head (keeper feed; empty before the settlement switch) |
+| `place_order(...)` / `cancel_order(order_id)` | **Deprecated** — raise `NotImplementedError`; submit signed precompile transactions as shown above |
+
+There are no Python signing helpers yet: build the calldata, sign with `eth-account`, and submit via `provider.send_raw_transaction()`. The same applies to `setAgent` / `revokeAgent` (`setAgent(address agent, uint64 expiresAtBlock)`, selector `0xb845309c`; `revokeAgent(address agent)`, selector `0x7da6ac0d`) and the keeper call `liquidate(address account)` (selector `0x2f865568`).
+
 ## WebSocket Subscriptions
 
 ```python
@@ -317,7 +365,7 @@ subscriber.disconnect()
 ```
 
 :::tip
-WebSocket support may vary by node configuration. If subscriptions fail, use HTTP polling.
+The public WebSocket endpoint `wss://rpc.mersennet.com` is enabled for `eth_subscribe` subscriptions (`newHeads`, `logs`); send regular JSON-RPC calls over HTTPS. A node you run yourself needs `ws.enabled = true`.
 :::
 
 ## Error Handling

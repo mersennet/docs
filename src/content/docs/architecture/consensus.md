@@ -2,13 +2,13 @@
 title: "Consensus Mechanism"
 ---
 
-Mersennet uses **leader-gated Proof-of-Stake BFT** (HotStuff-2 style): one elected validator produces each block, every validator re-executes it, and signed finality votes gossip across the network until a 2/3-stake quorum finalizes the height. This document is a deep dive into how consensus works, from leader election to finalization and slashing.
+Mersennet uses **leader-gated BFT proof-of-stake**: one elected validator produces each block, every validator re-executes it, and signed finality votes gossip across the network until a 2/3-stake quorum finalizes the height. A two-phase **HotStuff-2** pipeline is implemented in the node and benchmarked as the roadmap upgrade path; it is not live on the testnet. This document is a deep dive into how the live consensus works, from leader election to finalization and slashing.
 
 ## Overview
 
 | Parameter | Value |
 |-----------|-------|
-| **Consensus** | Proof-of-Stake BFT, single elected leader per height |
+| **Consensus** | Leader-gated BFT proof-of-stake, single elected leader per height (HotStuff-2 pipeline: roadmap, not live) |
 | **Block Time** | ~2 seconds on the current testnet (configurable per network) |
 | **Finality** | ≥ 2/3 of total stake, signed votes gossiped per block |
 | **Failover** | Timeout-based round rotation to the next leader (8 s per round since block 1,440,000); from block 1,569,600 a leader that missed 3 slots in an epoch is benched until the epoch boundary |
@@ -18,7 +18,7 @@ Mersennet uses **leader-gated Proof-of-Stake BFT** (HotStuff-2 style): one elect
 
 Validators are nodes registered in the **open validator set** (permissionless since block 1,348,200) plus the four genesis validators. Voting power is proportional to stake:
 
-```
+```text
 voting_power(validator) ∝ self_stake + delegated_stake
 ```
 
@@ -28,7 +28,7 @@ Token holders can **delegate** MRSN to any validator via the staking precompile 
 
 Exactly one validator is elected to produce each block. Election is deterministic round-robin over the validator set:
 
-```
+```text
 leader(height, round) = validators[(height + round) mod validator_count]
 ```
 
@@ -43,7 +43,7 @@ This gives:
 
 ## Block Production Cycle
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────────────────┐
 │                     BLOCK PRODUCTION CYCLE                              │
 └─────────────────────────────────────────────────────────────────────────┘
@@ -81,7 +81,7 @@ The block hash commits to the block's actual content — `parent_hash`, `timesta
 
 A block is **finalized** when signed votes from validators representing more than 2/3 of total stake have been observed for its hash:
 
-```
+```text
 T = 2/3 × total_stake + 1
 finalized ⟺ Σ stake(voters for block_hash) ≥ T
 ```
@@ -92,7 +92,7 @@ Votes are ECDSA signatures over a domain-separated digest of `(height, block_has
 
 The active set is recomputed at every **epoch boundary** (heights divisible by `validator_set.epoch_blocks`, 1,800 blocks ≈ 1 hour on the testnet), identically on every node from committed chain state:
 
-1. Judge the ending epoch: a validator that missed more than `jail_miss_bps` (20%) of its leader slots — with at least `jail_min_slots` (5) slots — is **jailed for the next epoch**; exits requested during the epoch are applied and the self-stake starts unbonding (`unbonding_blocks`, 7,200 ≈ 4 h); pending key rotations take effect.
+1. Judge the ending epoch: a validator that missed more than `jail_miss_bps` (20%) of its leader slots — with at least `jail_min_slots` (5) slots, or that was benched — is **jailed for the next epoch** (from block 1,569,600 consecutive jails escalate 1, 2, 4, 8, 16, 24 epochs); exits requested during the epoch are applied and the self-stake starts unbonding (`unbonding_blocks`, 7,200 ≈ 4 h); pending key rotations take effect. Within an epoch, from the same height, a leader that misses 3 slots is **benched**: out of the leader rotation until the boundary, still voting. No stake is lost for downtime.
 2. Rank eligible validators (registered in an earlier epoch, not jailed, self-stake ≥ minimum) by self-stake + delegations.
 3. The top `max_validators` (12) become the consensus set for the epoch; the leader schedule and the 2/3-stake finality threshold use exactly this set.
 
@@ -111,7 +111,7 @@ Genesis validators are seeded into the registry at activation and are never jail
 
 Penalties **escalate** with repeated offenses:
 
-```
+```text
 actual_penalty = base_bps + (escalation_step × offense_count) + (escalation_step × (rounds_missed − 1))
 # rounds_missed is floored at 1, so the first missed round adds no escalation
 actual_penalty = min(actual_penalty, max_escalation_bps)
@@ -179,7 +179,7 @@ Each transaction produces a `Receipt`:
 
 A transaction moves through the following stages from submission to finalization:
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────────────┐
 │                     TRANSACTION LIFECYCLE                            │
 └─────────────────────────────────────────────────────────────────────┘
@@ -240,7 +240,7 @@ Mersennet maintains EVM-compatible world state using a Merkle trie structure.
 
 The world state is a mapping from addresses to account objects:
 
-```
+```text
 State Root (B256)
     │
     ├── Account 0x1234...
@@ -307,7 +307,7 @@ Nodes discover peers through:
 
 ### Block Propagation
 
-```
+```text
    Leader Node                    Validator Node A              Validator Node B
        │                                │                              │
        │  1. Produce block              │                              │
