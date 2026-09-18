@@ -1043,7 +1043,7 @@ Get all open orders for a specific address.
 
 Agent delegation (one-click trading): the agent keys an account has granted, and whether the feature is active on the network.
 
-An account grants a second key permission to trade for it with `setAgent(address agent, uint64 expiresAtBlock)` on the CLOB precompile (`0x…0100`); `revokeAgent(address agent)` ends it; `agentOf(address agent)` returns `(owner, expiresAtBlock)`. Transactions signed by an agent place and cancel orders **as the owner** — orders, positions and fills stay on the owner's account — while `depositCollateral` / `withdrawCollateral` and `setAgent` itself are never delegated. One agent key acts for one owner; an agent cannot grant agents; `expiresAtBlock = 0` means no expiry, otherwise at most ~90 days ahead. The trade terminal's one-click trading is built on this (Settings → One-Click Trading).
+An account grants a second key permission to trade for it with `setAgent(address agent, uint64 expiresAtBlock)` on the CLOB precompile (`0x…0100`); `revokeAgent(address agent)` ends it; `agentOf(address agent)` returns `(owner, expiresAtBlock)`. Transactions signed by an agent place and cancel orders **as the owner** — orders, positions and fills stay on the owner's account — while `depositCollateral` / `withdrawCollateral` and `setAgent` itself are never delegated. One agent key acts for one owner; an agent cannot grant agents; `expiresAtBlock = 0` means no expiry, otherwise at most ~90 days ahead. **Who is the caller?** From block 1,605,600 (`frameCallerHeight`) the precompile authorises on the call frame's `msg.sender`: a transaction sent directly acts as its signer, a contract calling the precompile acts as the contract. Before that height the transaction origin was used everywhere. The trade terminal's one-click trading is built on this (Settings → One-Click Trading).
 
 **Parameters:**
 
@@ -1054,6 +1054,8 @@ An account grants a second key permission to trade for it with `setAgent(address
   "owner": "0x…",
   "agentDelegationHeight": 1650000,
   "active": true,
+  "frameCallerHeight": 1605600,
+  "frameCallerActive": true,
   "height": 1651234,
   "agents": [{ "agent": "0x…", "expiresAtBlock": 1710400, "expired": false }]
 }
