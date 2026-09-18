@@ -1039,6 +1039,22 @@ Get all open orders for a specific address.
 
 ---
 
+### mersennet_orders_getProtocol
+
+Every CLOB consensus switch and live parameter in one call: `switches` (`agentDelegationHeight`, `frameCallerHeight`, `priceScaleHeight`, `settlementHeight`), the `*Active` flags at the head, `initialMarginBps` / `maintenanceMarginBps` as enforced now, `weiPerCollateralUnit` (1 before the settlement switch, 10¹⁸ after), `insuranceFund`, `badDebt`, and each market's `priceScale`. Clients should read this instead of hard-coding heights.
+
+---
+
+### mersennet_orders_getLiquidatable
+
+Accounts below their maintenance margin at the head — the keeper feed. Anyone may call `liquidate(address)` on the CLOB precompile (`0x…0100`) for each: the account's resting orders are cancelled, its positions are closed on the book with IOC sweeps (PnL settles as usual), the insurance fund covers any loss the collateral could not, and a fee of 1% of the closed notional is split between the caller (credited to its collateral) and the fund. Returns `false` without reverting for a healthy account. Empty before the settlement switch.
+
+```json
+{ "height": 1610000, "accounts": ["0x…"] }
+```
+
+---
+
 ### mersennet_orders_getAgents
 
 Agent delegation (one-click trading): the agent keys an account has granted, and whether the feature is active on the network.
