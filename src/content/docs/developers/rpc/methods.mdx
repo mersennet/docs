@@ -1067,7 +1067,9 @@ An account grants a second key permission to trade for it with `setAgent(address
 
 Deposit collateral for margin trading. Routes through consensus as a
 `depositCollateral` precompile transaction from `address` — the amount is
-escrowed 1:1 from the account's native MRSN balance. Returns
+escrowed from the account's native MRSN balance. **Units:** from block 1,605,600
+(`settlementHeight`) one collateral unit is **one MRSN** (`depositCollateral(100)`
+escrows 100 × 10¹⁸ wei); before that a unit was one wei. Returns
 `{ accepted, txHash }` like `submitOrder`. Like `submitOrder`, this is a
 local-dev-node-only unsigned path (public endpoints return `-32604`).
 
