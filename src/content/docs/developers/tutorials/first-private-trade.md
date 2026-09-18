@@ -3,6 +3,10 @@ title: "Your First Private Trade"
 description: "An end-to-end walkthrough: connect to the Mersennet testnet, shield MRSN into a private note, place a shielded order, watch it settle, and verify the chain with an SP1 state proof."
 ---
 
+:::caution[Not active on the public testnet yet]
+Shielded trading activates at the privacy hard fork; the shielded pool is anchored in every block today but private orders are not accepted yet. This tutorial describes the post-fork flow. To trade on the testnet today, see [Your First Trade](/getting-started/first-trade/) (terminal) or [Trade via SDK and RPC](/developers/tutorials/trade-via-sdk/).
+:::
+
 In about fifteen minutes you'll go from an empty wallet to a settled trade that nobody (not the node, not the sequencer, not the order book) could attribute to you, using the real `@mersennet/sdk`.
 
 :::caution[Shielded methods are fork-gated]

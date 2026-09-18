@@ -30,6 +30,14 @@ once, linked everywhere.
 
 **MersennetOrders**: The chain-native central limit order book (CLOB), exposed to Solidity at precompile `0x0100`. Matching is price-time priority and happens in consensus, with no off-chain sequencer.
 
+**Precompile**: A built-in contract at a fixed address, implemented in the node rather than in EVM bytecode. The order book lives at `0x…0100` and staking at `0x…0400`; wallets and contracts call them like any other contract.
+
+**Mersennet Trade (the terminal)**: The trading terminal at [trade.mersennet.com](https://trade.mersennet.com): order books, positions, points, the maker vault and staking, all over the precompiles. Every order it places is a wallet-signed transaction. See [Mersennet Trade](/ecosystem/trade/).
+
+**Agent key**: A second key an account grants on-chain with `setAgent(agent, expiresAtBlock)` on the order-book precompile. It can place and cancel orders as the granting account but never deposit or withdraw; the terminal's one-click trading uses a browser-held agent key. Active from block 1,569,600.
+
+**Maker Vault**: The contract at `0xe77F94c4Bf7D6d2E2371aFdE440a0b9b8a567725` that pools MRSN behind the market maker quoting every market. Deposits mint `mvMRSN` shares at NAV and earn 0.1 LP point per MRSN per day; deposits open at block 1,605,600.
+
 **Atomic composability**: A contract can place an order and read its fill in the *same transaction*, because the order book is a precompile sharing state with the EVM. This is the property asynchronous designs (e.g. message-passing to an external matcher) cannot offer.
 
 **FBA (Frequent Batch Auction)**: Orders accumulate threshold-encrypted during a block and are matched in one batch at a uniform clearing price at the tick. Removes the speed race that makes front-running profitable.
@@ -50,7 +58,9 @@ once, linked everywhere.
 
 ## Consensus & economics
 
-**Leader-gated BFT**: Mersennet's consensus: one deterministic leader per height with timeout failover; every validator re-executes the block and gossips a signed finality vote; final when >2/3 of stake commits (~2 s blocks). A HotStuff-2 pipeline exists in the node as the benchmarked upgrade path, not yet live.
+**Leader-gated BFT proof-of-stake**: Mersennet's live consensus: one deterministic leader per height with timeout failover; every validator re-executes the block and gossips a signed finality vote; final when >2/3 of stake commits (~2 s blocks). Downtime is benched and jailed, never slashed; only equivocation is slashed.
+
+**HotStuff-2**: A two-phase BFT pipeline implemented in the node and benchmarked (~200 ms finality) as the roadmap upgrade path. Not live on the testnet.
 
 **Staking**: Validators bond MRSN directly; anyone else can delegate MRSN to a validator through the native staking precompile (`0x…0400`) and earn a share of its block rewards, minus commission. Undelegating starts an unbonding period. The validator set is open: any node can register with 1,000 MRSN self-stake and joins the active set (top 12 by self + delegated stake) at the next hourly epoch. See [Staking](/validators/staking/) and [Become a Validator](/validators/become-a-validator/).
 

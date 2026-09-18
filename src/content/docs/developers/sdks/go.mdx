@@ -62,12 +62,39 @@ func main() {
 ## Markets, price scale and protocol parameters
 
 ```go
+orders := mersennet.NewOrders(provider)
+
 markets, _ := orders.GetMarkets()            // Market{ID, Symbol, TickSize, LotSize, LastPrice, PriceScale, Status}
 chain := mersennet.ToChainPrice(115.37, 100) // 11537 at scale 100 (on-chain price = human × PriceScale)
 human := mersennet.ToHumanPrice(11537, 100)  // 115.37
 protocol, _ := orders.GetProtocol()          // switches, margin bps, wei per collateral unit, insurance fund, bad debt
-agents, _ := orders.GetAgents(owner)         // agent keys granted by owner
-underwater, _ := orders.GetLiquidatable()    // keeper feed: accounts below maintenance margin
+agents, _ := orders.GetAgents(owner)         // agent keys granted by owner (setAgent; one-click trading keys)
+underwater, _ := orders.GetLiquidatable()    // keeper feed: accounts below maintenance margin (empty before the settlement switch)
+```
+
+### Collateral units and deposits
+
+`depositCollateral` / `withdrawCollateral` take an amount in **collateral units**, and the unit changes at the settlement switch (block 1,605,600): one unit is one wei before it (10¹⁸ units per MRSN) and one MRSN from it. `ToCollateralUnits` converts a human MRSN amount for the current era by reading `weiPerCollateralUnit` from `GetProtocol()`, so the same code works before and after the switch; never hard-code `1e18`.
+
+```go
+perMRSN, _ := orders.CollateralUnitsPerMRSN() // *big.Int: 10^18 before the switch, 1 from it
+units, err := orders.ToCollateralUnits("10.5") // *big.Int, for depositCollateral / withdrawCollateral calldata
+if err != nil {
+    log.Fatal(err)
+}
+
+// depositCollateral(uint256 amount), selector 0xbad4a01f — signed and submitted like placeOrder below
+// (`common` is github.com/ethereum/go-ethereum/common).
+calldata := append(common.FromHex("0xbad4a01f"), common.LeftPadBytes(units.Bytes(), 32)...)
+
+// Read it back: getCollateral() (selector 0x5c1548fb) returns the caller's balance in collateral units.
+raw, _ := provider.Call(map[string]interface{}{
+    "from": owner, // your 0x address
+    "to":   "0x0000000000000000000000000000000000000100",
+    "data": "0x5c1548fb",
+})
+collateral := new(big.Int).SetBytes(common.FromHex(raw))
+fmt.Println("collateral units:", collateral, "per MRSN:", perMRSN)
 ```
 
 ## Order book
@@ -151,7 +178,16 @@ fmt.Println("tx:", txHash) // the order is placed when this transaction mines
 | `PlaceOrder(market, side, price, amount, tif, owner)` | **Deprecated** — returns `ErrSignedOrderRequired` unconditionally; submit a signed `placeOrder` precompile transaction via `SendRawTransaction` |
 | `CancelOrder(orderID)` | **Deprecated** — returns `ErrSignedOrderRequired` unconditionally; submit a signed `cancelOrder` precompile transaction via `SendRawTransaction` |
 | `GetOrderBook(market)` | Full depth for a market |
+| `GetMarkets()` | Listed markets with tick/lot sizes and `PriceScale` (on-chain price = human × `PriceScale`) |
+| `GetProtocol()` | Every CLOB consensus switch and live parameter (`mersennet_orders_getProtocol`) as a map |
+| `CollateralUnitsPerMRSN()` | Collateral units per MRSN in the current era (`10^18` before the settlement switch, `1` from it) |
+| `ToCollateralUnits(mrsn)` | Human MRSN amount (`"10.5"`) → integer collateral units for the current era (floor) |
+| `GetAgents(owner)` | Agent keys granted by `owner` and whether delegation is active (`mersennet_orders_getAgents`) |
+| `GetLiquidatable()` | Accounts below maintenance margin at the head (keeper feed; empty before the settlement switch) |
+| `mersennet.ToChainPrice(human, priceScale)` / `mersennet.ToHumanPrice(chain, priceScale)` | Package functions: human ↔ on-chain price for a market |
 | `AddMarket(base, quote, lot, tick)` | Add a market (admin; disabled on public RPC) |
+
+There are no Go signing helpers yet: build the calldata, sign with go-ethereum, and submit via `SendRawTransaction`. The same applies to `setAgent(address agent, uint64 expiresAtBlock)` (selector `0xb845309c`), `revokeAgent(address agent)` (`0x7da6ac0d`) and the keeper call `liquidate(address account)` (`0x2f865568`).
 
 ## Privacy stack
 

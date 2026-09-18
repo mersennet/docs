@@ -84,7 +84,7 @@ Node key     /mnt/blockstorage/mersennet/keys/node_key.json (back this up to kee
 ```
 
 - **syncing → catching up → in sync** is the normal sequence. A fresh install starts from a snapshot taken within the last six hours, so it is usually in sync within a minute or two; the line shows the measured rate and an ETA. Run `mersennet-check` again later.
-- **Visibility: visible** means the public RPC node is receiving your gossip. Your node is then listed on the [explorer's Network page](https://explorer.mersennet.com/#/network) under *Network nodes* as a community node — by network prefix plus the id printed here, so you can recognise it without your full IP being published.
+- **Visibility: visible** means the public RPC node is receiving your gossip. Your node is then listed on the [explorer's Network page](https://explorer.mersennet.com/network) under *Network nodes* as a community node — by network prefix plus the id printed here, so you can recognise it without your full IP being published.
 - **Peers 0** for more than a minute means outbound UDP+TCP 30303 is blocked on your host or provider firewall.
 - **Binary: update available** means a new release is out — re-run the Step 2 command to upgrade in place.
 - **Local RPC not answering** right after install is normal for a few seconds; if it persists, read the logs: `journalctl -u mersennet -n 50 --no-pager`.

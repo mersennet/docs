@@ -7,13 +7,13 @@ source: https://docs.mersennet.com/architecture/consensus/
 ---
 
 
-Mersennet uses **leader-gated Proof-of-Stake BFT** (HotStuff-2 style): one elected validator produces each block, every validator re-executes it, and signed finality votes gossip across the network until a 2/3-stake quorum finalizes the height. This document is a deep dive into how consensus works, from leader election to finalization and slashing.
+Mersennet uses **leader-gated BFT proof-of-stake**: one elected validator produces each block, every validator re-executes it, and signed finality votes gossip across the network until a 2/3-stake quorum finalizes the height. A two-phase **HotStuff-2** pipeline is implemented in the node and benchmarked as the roadmap upgrade path; it is not live on the testnet. This document is a deep dive into how the live consensus works, from leader election to finalization and slashing.
 
 ## Overview
 
 | Parameter | Value |
 |-----------|-------|
-| **Consensus** | Proof-of-Stake BFT, single elected leader per height |
+| **Consensus** | Leader-gated BFT proof-of-stake, single elected leader per height (HotStuff-2 pipeline: roadmap, not live) |
 | **Block Time** | ~2 seconds on the current testnet (configurable per network) |
 | **Finality** | ≥ 2/3 of total stake, signed votes gossiped per block |
 | **Failover** | Timeout-based round rotation to the next leader (8 s per round since block 1,440,000); from block 1,569,600 a leader that missed 3 slots in an epoch is benched until the epoch boundary |
@@ -23,7 +23,7 @@ Mersennet uses **leader-gated Proof-of-Stake BFT** (HotStuff-2 style): one elect
 
 Validators are nodes registered in the **open validator set** (permissionless since block 1,348,200) plus the four genesis validators. Voting power is proportional to stake:
 
-```
+```text
 voting_power(validator) ∝ self_stake + delegated_stake
 ```
 
@@ -33,7 +33,7 @@ Token holders can **delegate** MRSN to any validator via the staking precompile 
 
 Exactly one validator is elected to produce each block. Election is deterministic round-robin over the validator set:
 
-```
+```text
 leader(height, round) = validators[(height + round) mod validator_count]
 ```
 
@@ -48,7 +48,7 @@ This gives:
 
 ## Block Production Cycle
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────────────────┐
 │                     BLOCK PRODUCTION CYCLE                              │
 └─────────────────────────────────────────────────────────────────────────┘
@@ -86,7 +86,7 @@ The block hash commits to the block's actual content — `parent_hash`, `timesta
 
 A block is **finalized** when signed votes from validators representing more than 2/3 of total stake have been observed for its hash:
 
-```
+```text
 T = 2/3 × total_stake + 1
 finalized ⟺ Σ stake(voters for block_hash) ≥ T
 ```
@@ -97,7 +97,7 @@ Votes are ECDSA signatures over a domain-separated digest of `(height, block_has
 
 The active set is recomputed at every **epoch boundary** (heights divisible by `validator_set.epoch_blocks`, 1,800 blocks ≈ 1 hour on the testnet), identically on every node from committed chain state:
 
-1. Judge the ending epoch: a validator that missed more than `jail_miss_bps` (20%) of its leader slots — with at least `jail_min_slots` (5) slots — is **jailed for the next epoch**; exits requested during the epoch are applied and the self-stake starts unbonding (`unbonding_blocks`, 7,200 ≈ 4 h); pending key rotations take effect.
+1. Judge the ending epoch: a validator that missed more than `jail_miss_bps` (20%) of its leader slots — with at least `jail_min_slots` (5) slots, or that was benched — is **jailed for the next epoch** (from block 1,569,600 consecutive jails escalate 1, 2, 4, 8, 16, 24 epochs); exits requested during the epoch are applied and the self-stake starts unbonding (`unbonding_blocks`, 7,200 ≈ 4 h); pending key rotations take effect. Within an epoch, from the same height, a leader that misses 3 slots is **benched**: out of the leader rotation until the boundary, still voting. No stake is lost for downtime.
 2. Rank eligible validators (registered in an earlier epoch, not jailed, self-stake ≥ minimum) by self-stake + delegations.
 3. The top `max_validators` (12) become the consensus set for the epoch; the leader schedule and the 2/3-stake finality threshold use exactly this set.
 
@@ -116,7 +116,7 @@ Genesis validators are seeded into the registry at activation and are never jail
 
 Penalties **escalate** with repeated offenses:
 
-```
+```text
 actual_penalty = base_bps + (escalation_step × offense_count) + (escalation_step × (rounds_missed − 1))
 # rounds_missed is floored at 1, so the first missed round adds no escalation
 actual_penalty = min(actual_penalty, max_escalation_bps)
@@ -184,7 +184,7 @@ Each transaction produces a `Receipt`:
 
 A transaction moves through the following stages from submission to finalization:
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────────────┐
 │                     TRANSACTION LIFECYCLE                            │
 └─────────────────────────────────────────────────────────────────────┘
@@ -245,7 +245,7 @@ Mersennet maintains EVM-compatible world state using a Merkle trie structure.
 
 The world state is a mapping from addresses to account objects:
 
-```
+```text
 State Root (B256)
     │
     ├── Account 0x1234...
@@ -312,7 +312,7 @@ Nodes discover peers through:
 
 ### Block Propagation
 
-```
+```text
    Leader Node                    Validator Node A              Validator Node B
        │                                │                              │
        │  1. Produce block              │                              │
@@ -645,7 +645,7 @@ This page describes the internal architecture of a Mersennet node, the Rust bina
 
 A running Mersennet node is composed of five cooperating subsystems:
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────────────────┐
 │                          MERSENNET NODE                               │
 │                                                                         │
@@ -771,7 +771,7 @@ Peer-to-peer communication layer:
 
 When the block timer fires, the following sequence executes:
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────────────────┐
 │                     BLOCK PRODUCTION PIPELINE                           │
 └─────────────────────────────────────────────────────────────────────────┘
@@ -849,7 +849,7 @@ When the block timer fires, the following sequence executes:
 
 State persistence is abstracted behind the `StateBackend` trait, allowing pluggable storage engines:
 
-```
+```text
          ┌─────────────────────┐
          │    StateBackend      │  (trait)
          │  ─────────────────   │
@@ -875,7 +875,7 @@ State persistence is abstracted behind the `StateBackend` trait, allowing plugga
 
 The default `sled` backend persists all state to disk at the configured `state_path`:
 
-```
+```text
 state/
 ├── node_key.json      # Node identity (secp256k1 keypair)
 ├── peers.json         # Known peer addresses
@@ -940,7 +940,7 @@ Gas follows standard EVM rules:
 
 Mersennet implements EIP-1559 dynamic base fee:
 
-```
+```text
 if gas_used > target_gas (gas_limit / elasticity):
     base_fee increases (up to 12.5% per block)
 if gas_used < target_gas:
@@ -961,7 +961,7 @@ A legacy custom binary format is also still accepted for internal tooling:
 
 The signing hash is `keccak256` of the following concatenated big-endian fields:
 
-```
+```text
 ┌──────────────────────────────────────────────────────────────┐
 │  Field        │ Size    │ Encoding        │ Description      │
 ├───────────────┼─────────┼─────────────────┼──────────────────┤
@@ -982,7 +982,7 @@ signing_hash = keccak256(chain_id || nonce || gas_price || gas_limit || to || va
 
 After signing, the complete transaction includes the original fields plus the ECDSA signature:
 
-```
+```text
 ┌──────────────────────────────────────────────────────────────┐
 │  Signing payload (as above)                                   │
 │  chain_id(8) || nonce(8) || gas_price(32) || gas_limit(8)    │
@@ -1008,7 +1008,7 @@ To recover the signer:
 
 When the `mersennet` binary starts:
 
-```
+```text
 1. Initialize tracing (structured logging from RUST_LOG env)
 2. Initialize Prometheus metrics exporter
 3. Parse CLI arguments and load config.json
@@ -1057,7 +1057,7 @@ Unlike CLOBs implemented purely in Solidity (gas-intensive, slow) or on separate
 
 ## Architecture
 
-```
+```text
 +-----------------------------------------------------------------+
 |                        Single Transaction                        |
 +------------------------------------------------------------------+
@@ -3285,7 +3285,7 @@ curl -X POST https://rpc.mersennet.com \
 
 ### mersennet_peers
 
-Returns the node's live gossip peers. Used by the [explorer's Network page](https://explorer.mersennet.com/#/network) and by `mersennet-check` to confirm a node is visible to the network. Refreshed every 30 seconds.
+Returns the node's live gossip peers. Used by the [explorer's Network page](https://explorer.mersennet.com/network) and by `mersennet-check` to confirm a node is visible to the network. Refreshed every 30 seconds.
 
 **Parameters:** None
 
@@ -3620,12 +3620,12 @@ List every CLOB market (genesis-seeded and permissionlessly created), sorted by 
   "jsonrpc": "2.0",
   "id": 1,
   "result": [
-    { "id": 1, "symbol": "MRSN", "tickSize": "0x1", "lotSize": "0x1", "lastPrice": "0xfde8", "priceScale": 1, "status": "active" }
+    { "id": 1, "symbol": "MRSN", "tickSize": "0x1", "lotSize": "0x1", "lastPrice": "0x2d11", "priceScale": 100, "status": "active" }
   ]
 }
 ```
 
-`priceScale`: on-chain prices for the market are **human price × priceScale** (1 = integer prices). From block 1,569,600 MRSN, SOL and ARB carry `priceScale = 100`, so a price of `11500` means $115.00 and the finest tick is $0.01; sizes are unchanged and notional = price × size ÷ priceScale. Read it from this method rather than assuming integers.
+`priceScale`: on-chain prices for the market are **human price × priceScale** (1 = integer prices). MRSN, SOL and ARB carry `priceScale = 1` before block 1,569,600 and `100` from it, so the `lastPrice` above (`0x2d11` = 11537) means $115.37 and the finest tick is $0.01; before the switch the same market reported `priceScale: 1` and integer-dollar prices. Sizes are unchanged and notional = price × size ÷ priceScale. Read it from this method rather than assuming integers.
 
 ---
 
@@ -4129,7 +4129,7 @@ Mersennet exposes a JSON-RPC API compatible with the Ethereum JSON-RPC specifica
 | Testnet | `https://rpc.mersennet.com` | `wss://rpc.mersennet.com` |
 
 :::tip
-The WebSocket endpoint may not be enabled on all nodes. If subscriptions fail, use HTTP RPC for polling.
+The public WebSocket endpoint `wss://rpc.mersennet.com` is enabled for `eth_subscribe` subscriptions (`newHeads`, `logs`) — send regular JSON-RPC calls over HTTPS. A node you run yourself needs `ws.enabled = true` in its config.
 :::
 
 ## Authentication
@@ -4201,7 +4201,7 @@ See [RPC Methods Reference](/developers/rpc/methods) for full details.
 
 | Method | Notes |
 |--------|-------|
-| `eth_subscribe` / `eth_unsubscribe` | Available over **WebSocket connections only** (not HTTP). May be disabled on some public nodes; fall back to filters/polling. |
+| `eth_subscribe` / `eth_unsubscribe` | Available over **WebSocket connections only** (not HTTP); enabled on the public endpoint `wss://rpc.mersennet.com` for `newHeads` and `logs`. Filters (`eth_newFilter` + `eth_getFilterChanges`) are the HTTP polling equivalent. |
 | `eth_maxPriorityFeePerGas` | Returns `0x0`: Mersennet uses an EIP-1559 base fee with no separate priority tip. |
 | `debug_*` / `trace_*` / `personal_*` | Not implemented. |
 
@@ -4308,12 +4308,39 @@ func main() {
 ## Markets, price scale and protocol parameters
 
 ```go
+orders := mersennet.NewOrders(provider)
+
 markets, _ := orders.GetMarkets()            // Market{ID, Symbol, TickSize, LotSize, LastPrice, PriceScale, Status}
 chain := mersennet.ToChainPrice(115.37, 100) // 11537 at scale 100 (on-chain price = human × PriceScale)
 human := mersennet.ToHumanPrice(11537, 100)  // 115.37
 protocol, _ := orders.GetProtocol()          // switches, margin bps, wei per collateral unit, insurance fund, bad debt
-agents, _ := orders.GetAgents(owner)         // agent keys granted by owner
-underwater, _ := orders.GetLiquidatable()    // keeper feed: accounts below maintenance margin
+agents, _ := orders.GetAgents(owner)         // agent keys granted by owner (setAgent; one-click trading keys)
+underwater, _ := orders.GetLiquidatable()    // keeper feed: accounts below maintenance margin (empty before the settlement switch)
+```
+
+### Collateral units and deposits
+
+`depositCollateral` / `withdrawCollateral` take an amount in **collateral units**, and the unit changes at the settlement switch (block 1,605,600): one unit is one wei before it (10¹⁸ units per MRSN) and one MRSN from it. `ToCollateralUnits` converts a human MRSN amount for the current era by reading `weiPerCollateralUnit` from `GetProtocol()`, so the same code works before and after the switch; never hard-code `1e18`.
+
+```go
+perMRSN, _ := orders.CollateralUnitsPerMRSN() // *big.Int: 10^18 before the switch, 1 from it
+units, err := orders.ToCollateralUnits("10.5") // *big.Int, for depositCollateral / withdrawCollateral calldata
+if err != nil {
+    log.Fatal(err)
+}
+
+// depositCollateral(uint256 amount), selector 0xbad4a01f — signed and submitted like placeOrder below
+// (`common` is github.com/ethereum/go-ethereum/common).
+calldata := append(common.FromHex("0xbad4a01f"), common.LeftPadBytes(units.Bytes(), 32)...)
+
+// Read it back: getCollateral() (selector 0x5c1548fb) returns the caller's balance in collateral units.
+raw, _ := provider.Call(map[string]interface{}{
+    "from": owner, // your 0x address
+    "to":   "0x0000000000000000000000000000000000000100",
+    "data": "0x5c1548fb",
+})
+collateral := new(big.Int).SetBytes(common.FromHex(raw))
+fmt.Println("collateral units:", collateral, "per MRSN:", perMRSN)
 ```
 
 ## Order book
@@ -4397,7 +4424,16 @@ fmt.Println("tx:", txHash) // the order is placed when this transaction mines
 | `PlaceOrder(market, side, price, amount, tif, owner)` | **Deprecated** — returns `ErrSignedOrderRequired` unconditionally; submit a signed `placeOrder` precompile transaction via `SendRawTransaction` |
 | `CancelOrder(orderID)` | **Deprecated** — returns `ErrSignedOrderRequired` unconditionally; submit a signed `cancelOrder` precompile transaction via `SendRawTransaction` |
 | `GetOrderBook(market)` | Full depth for a market |
+| `GetMarkets()` | Listed markets with tick/lot sizes and `PriceScale` (on-chain price = human × `PriceScale`) |
+| `GetProtocol()` | Every CLOB consensus switch and live parameter (`mersennet_orders_getProtocol`) as a map |
+| `CollateralUnitsPerMRSN()` | Collateral units per MRSN in the current era (`10^18` before the settlement switch, `1` from it) |
+| `ToCollateralUnits(mrsn)` | Human MRSN amount (`"10.5"`) → integer collateral units for the current era (floor) |
+| `GetAgents(owner)` | Agent keys granted by `owner` and whether delegation is active (`mersennet_orders_getAgents`) |
+| `GetLiquidatable()` | Accounts below maintenance margin at the head (keeper feed; empty before the settlement switch) |
+| `mersennet.ToChainPrice(human, priceScale)` / `mersennet.ToHumanPrice(chain, priceScale)` | Package functions: human ↔ on-chain price for a market |
 | `AddMarket(base, quote, lot, tick)` | Add a market (admin; disabled on public RPC) |
+
+There are no Go signing helpers yet: build the calldata, sign with go-ethereum, and submit via `SendRawTransaction`. The same applies to `setAgent(address agent, uint64 expiresAtBlock)` (selector `0xb845309c`), `revokeAgent(address agent)` (`0x7da6ac0d`) and the keeper call `liquidate(address account)` (`0x2f865568`).
 
 ## Privacy stack
 
@@ -4431,7 +4467,7 @@ source: https://docs.mersennet.com/developers/sdks/javascript/
 
 import { Tabs, TabItem } from '@astrojs/starlight/components';
 
-The Mersennet JavaScript SDK (`@mersennet/sdk`) provides a typed interface for the JSON-RPC API, MersennetOrders (on-chain order book), and WebSocket subscriptions.
+The Mersennet JavaScript SDK (`@mersennet/sdk`) provides a typed interface for the JSON-RPC API, MersennetOrders (on-chain order book), and WebSocket subscriptions. For an end-to-end walkthrough (connect, read the protocol, deposit collateral, place a signed order, read it back) in TypeScript, Python and Go, see [Trade via SDK and RPC](/developers/tutorials/trade-via-sdk/).
 
 :::tip[Privacy / shielded features]
 This page covers the **transparent** surface (`eth_*` / `mersennet_*` / `mersennet_orders_*`). For shielded transfers and orders, client-side Noir proving, note scanning, balance/position reconstruction, selective-disclosure reads, and migration, see the dedicated **[Shielded SDK](/developers/privacy/shielded-sdk)**.
@@ -4505,21 +4541,23 @@ curl -X POST https://rpc.mersennet.com \
 
 ## Installation
 
-From the Mersennet monorepo:
+`@mersennet/sdk` is **not published to npm yet**; `npm install @mersennet/sdk` does not work. Install it from a checkout of the Mersennet monorepo — the package lives in `sdk-ts/`:
 
 ```bash
-cd sdk-ts
+# Build the package once
+cd /path/to/mersennet/sdk-ts
 npm install
 npm run build
 ```
 
-For use in another project, link or publish the package:
+Then add it to your project as a local dependency (or `npm link` it):
 
 ```bash
 # From your project
 npm install /path/to/mersennet/sdk-ts
-# Or when published: npm install @mersennet/sdk
 ```
+
+The import name is `@mersennet/sdk` in both cases.
 
 ## Quick Start
 
@@ -4690,8 +4728,12 @@ await orders.cancelOrder(wallet.address, 123, signer);
 
 ### Deposit Collateral
 
+`depositCollateral` and `withdrawCollateral` take an amount in **collateral units**, and the unit changes at the settlement switch (block 1,605,600): before it one unit is one wei (10¹⁸ units per MRSN), from it one unit is one MRSN. Convert human MRSN amounts with `toCollateralUnits()`, which reads `weiPerCollateralUnit` from `getProtocol()` so the same code works in both eras; never hard-code `1e18`.
+
 ```javascript
-await orders.depositCollateral(wallet.address, "1000000000000000000", signer);
+// Escrow 1 MRSN from the signer's native balance.
+const units = await orders.toCollateralUnits("1");
+await orders.depositCollateral(wallet.address, units.toString(), signer);
 ```
 
 ### Withdraw Collateral
@@ -4699,7 +4741,50 @@ await orders.depositCollateral(wallet.address, "1000000000000000000", signer);
 Sends a transaction to the CLOB precompile (the chain validates margin first):
 
 ```javascript
-await orders.withdrawCollateral(wallet.address, "500000000000000000", signer);
+const units = await orders.toCollateralUnits("0.5");
+await orders.withdrawCollateral(wallet.address, units.toString(), signer);
+
+// Units per MRSN in the current era: 10n ** 18n before the settlement switch, 1n after.
+console.log(await orders.collateralUnitsPerMrsn());
+```
+
+### Agent keys and liquidations
+
+`setAgent` lets a second key place and cancel orders **as** your account (it can never deposit or withdraw); the terminal's one-click trading is built on it. `getLiquidatable` and `liquidate` are the keeper surface that activates with the settlement switch. All four are available from block 1,569,600 (agents) and 1,605,600 (liquidations); `getProtocol()` reports whether each is active.
+
+```javascript
+import { Wallet } from "ethers";
+
+const owner = new Wallet(process.env.PRIVATE_KEY);
+const ownerSigner = (tx) => owner.signTransaction(tx);
+
+// Grant a fresh key for ~7 days (≈ 288,000 blocks at 2.1 s); 0 = no expiry.
+// The agent pays gas for its own transactions, so send it a little MRSN first.
+const agent = Wallet.createRandom();
+const head = await provider.getBlockNumber();
+await orders.setAgent(owner.address, agent.address, head + 288_000, ownerSigner);
+
+// The agent sends and signs its own transaction (first argument = the sender,
+// so the SDK fetches the agent's nonce); the precompile books the order on the
+// owner's account — orders, positions and fills stay on the owner.
+const agentSigner = (tx) => agent.signTransaction(tx);
+const mrsn = (await orders.getMarkets()).find((m) => m.symbol === "MRSN");
+await orders.submitOrder(
+  agent.address, 1, "buy",
+  MersennetOrders.toChainPrice("114", mrsn).toString(), "1", "gtc",
+  agentSigner
+);
+
+// Inspect and revoke.
+console.log(await orders.getAgents(owner.address)); // { active, agents: [{ agent, expiresAtBlock, expired }], ... }
+await orders.revokeAgent(owner.address, agent.address, ownerSigner);
+
+// Keeper loop: accounts below maintenance margin, then liquidate them.
+// Anyone may call; the keeper earns half of the 1% fee into its own collateral.
+for (const account of await orders.getLiquidatable()) {
+  const ack = await orders.liquidate(owner.address, account, ownerSigner);
+  console.log("liquidate", account, ack.txHash);
+}
 ```
 
 ### Use Precompile Directly
@@ -4765,7 +4850,7 @@ sub.unsubscribe(blockSubId);
 ```
 
 :::note
-WebSocket may not be enabled on all nodes. If subscriptions fail, use HTTP polling.
+The public WebSocket endpoint `wss://rpc.mersennet.com` is enabled for `eth_subscribe` subscriptions (`newHeads`, `logs`); send regular JSON-RPC calls over HTTPS. A node you run yourself needs `ws.enabled = true`.
 :::
 
 ## Full API Reference
@@ -4790,15 +4875,27 @@ WebSocket may not be enabled on all nodes. If subscriptions fail, use HTTP polli
 | | `viewNotes(grantIdHex, opts?)` | Grant-gated encrypted notes (selective disclosure) |
 | | `viewBalances(grantIdHex, opts?)` | Grant-gated notes + spent nullifiers for reconstruction |
 | | `viewPositions(grantIdHex)` / `viewOrders(grantIdHex)` | Grant-gated trading reconstruction context |
-| `MersennetOrders` | `getOrderBook(marketId)` | Order book |
-| | `getOpenOrders(owner)` | Open orders |
-| | `getPosition(owner, marketId)` | Position |
-| | `getCollateral(owner)` | Collateral |
-| | `submitOrder(owner, marketId, side, price, size, tif, signer)` | Submit order (signed precompile tx) |
-| | `cancelOrder(owner, orderId, signer)` | Cancel order (signed precompile tx) |
-| | `depositCollateral(owner, amount, signer)` | Deposit (signed precompile tx) |
-| | `withdrawCollateral(owner, amount, signer)` | Withdraw (signed precompile tx) |
-| | `isLiquidatable(owner)` | Liquidation check |
+| `MersennetOrders` | `getOrderBook(marketId)` | Order book (`{ bids, asks }`, both sorted by ascending price) |
+| | `getOpenOrders(owner)` | Open orders for an owner |
+| | `getPosition(owner, marketId)` | Position (`{ size, entry_price }`) via `eth_call` on the precompile |
+| | `getCollateral(owner)` | Collateral balance in collateral units, via `eth_call` on the precompile |
+| | `submitOrder(owner, marketId, side, price, size, tif, signer)` | Submit an order (signed precompile tx); `owner` is the transaction sender and must be the signer's address — when the sender is an agent key, the order lands on the granting owner's account |
+| | `submitBatchOrder({ owner, orders }, signer)` | Submit several orders in sequence, each a signed tx |
+| | `cancelOrder(owner, orderId, signer)` | Cancel an order (signed precompile tx; the chain enforces ownership) |
+| | `depositCollateral(owner, amount, signer)` | Deposit (signed tx); `amount` in collateral units — use `toCollateralUnits` |
+| | `withdrawCollateral(owner, amount, signer)` | Withdraw (signed tx; the chain validates margin first); `amount` in collateral units |
+| | `collateralUnitsPerMrsn()` | Collateral units per MRSN in the current era (`10n ** 18n` before the settlement switch, `1n` from it), read from `getProtocol()` |
+| | `toCollateralUnits(mrsn)` | Human MRSN amount (`"10.5"`) → integer collateral units for the current era (floor) |
+| | `isLiquidatable(owner)` | Whether an account is below maintenance margin (`mersennet_orders_isLiquidatable`) |
+| | `getProtocol()` | Every CLOB consensus switch and live parameter: margin bps, `weiPerCollateralUnit`, insurance fund, bad debt, each market's `priceScale` |
+| | `getMarkets()` | Listed markets with tick/lot sizes and `priceScale` (on-chain price = human × `priceScale`) |
+| | `MersennetOrders.toChainPrice(human, market)` | Static: human price → on-chain price for a market (rounds to the nearest unit) |
+| | `MersennetOrders.toHumanPrice(chain, market)` | Static: on-chain price → human price for a market |
+| | `getAgents(owner)` | Agent keys granted by `owner`, plus whether delegation is active on the network |
+| | `setAgent(owner, agent, expiresAtBlock, signer)` | Let `agent` trade for `owner` until `expiresAtBlock` (0 = no expiry); signed by the owner |
+| | `revokeAgent(owner, agent, signer)` | Revoke an agent; signed by the owner that granted it |
+| | `getLiquidatable()` | Accounts below maintenance margin at the head (empty before the settlement switch) |
+| | `liquidate(keeper, account, signer)` | Liquidate `account` (anyone may call; the keeper earns half of the 1% fee into its collateral) |
 
 
 ---
@@ -4845,7 +4942,7 @@ signed = acct.sign_transaction({
     "value": 0,
     "gas": 300_000,
     "gasPrice": int(provider.gas_price(), 16),
-    "nonce": int(provider.get_nonce(acct.address), 16),
+    "nonce": provider.get_nonce(acct.address),  # already an int
     "chainId": 131071,
 })
 tx_hash = provider.send_raw_transaction(signed.raw_transaction.hex())
@@ -5004,8 +5101,38 @@ mrsn = next(m for m in markets if m["symbol"] == "MRSN")
 chain_price = orders.to_chain_price(115.37, mrsn["price_scale"])   # 11537 at scale 100
 human = orders.to_human_price(11537, mrsn["price_scale"])           # 115.37
 protocol = orders.get_protocol()        # switches, margin bps, wei per collateral unit, insurance fund, bad debt
-agents = orders.get_agents(owner)       # agent keys granted by `owner`
-underwater = orders.get_liquidatable()  # keeper feed
+agents = orders.get_agents(owner)       # agent keys granted by `owner` (setAgent; one-click trading keys)
+underwater = orders.get_liquidatable()  # keeper feed: accounts below maintenance margin (empty before the settlement switch)
+```
+
+### Collateral units and deposits
+
+`depositCollateral` / `withdrawCollateral` take an amount in **collateral units**, and the unit changes at the settlement switch (block 1,605,600): one unit is one wei before it (10¹⁸ units per MRSN) and one MRSN from it. `to_collateral_units()` converts a human MRSN amount for the current era by reading `weiPerCollateralUnit` from `get_protocol()`, so the same code works before and after the switch; never hard-code `10**18`.
+
+```python
+units_per_mrsn = orders.collateral_units_per_mrsn()   # 10**18 before the switch, 1 from it
+units = orders.to_collateral_units("10.5")            # int, for depositCollateral / withdrawCollateral
+
+# Deposit: depositCollateral(uint256 amount), selector 0xbad4a01f — a signed tx like placeOrder
+# (`acct` and `PRECOMPILE` as in the quick reference above).
+def encode_deposit_collateral(units: int) -> str:
+    return "0xbad4a01f" + format(units, "064x")
+
+signed = acct.sign_transaction({
+    "to": PRECOMPILE,
+    "data": encode_deposit_collateral(units),
+    "value": 0,
+    "gas": 200_000,
+    "gasPrice": int(provider.gas_price(), 16),
+    "nonce": provider.get_nonce(acct.address),
+    "chainId": 131071,
+})
+tx_hash = provider.send_raw_transaction(signed.raw_transaction.hex())
+
+# Read it back: getCollateral() (selector 0x5c1548fb) returns the caller's balance in collateral units.
+raw = provider.call({"from": acct.address, "to": PRECOMPILE, "data": "0x5c1548fb"})
+collateral_units = int(raw, 16) if raw not in ("", "0x") else 0
+print("collateral (MRSN):", collateral_units / units_per_mrsn)
 ```
 
 ### Get Order Book
@@ -5047,7 +5174,7 @@ signed = acct.sign_transaction({
     "value": 0,
     "gas": 300_000,
     "gasPrice": int(provider.gas_price(), 16),
-    "nonce": int(provider.get_nonce(acct.address), 16),
+    "nonce": provider.get_nonce(acct.address),  # already an int
     "chainId": 131071,
 })
 tx_hash = provider.send_raw_transaction(signed.raw_transaction.hex())
@@ -5086,6 +5213,24 @@ call (100 MRSN listing fee), submitted as a signed transaction like
 `placeOrder` above — see [Deployed Contracts](/resources/contracts/) for the
 Solidity interface.
 
+### MersennetOrders reference
+
+| Method | Description |
+|--------|-------------|
+| `get_order_book(market)` | Order book (`bids` / `asks`, both sorted by ascending price) |
+| `get_trades(market)` | Recent trade events for a market (`mersennet_getDomainEvents`) |
+| `get_positions(address, market=None)` | Raw `eth_call` result of the position read for one market |
+| `get_markets()` | Listed markets with `tick_size`, `lot_size`, `last_price`, `price_scale`, `status` |
+| `to_chain_price(human, price_scale)` / `to_human_price(chain, price_scale)` | Static: human ↔ on-chain price (on-chain = human × `price_scale`) |
+| `get_protocol()` | Every CLOB consensus switch and live parameter (`mersennet_orders_getProtocol`) |
+| `collateral_units_per_mrsn()` | Collateral units per MRSN in the current era (`10**18` before the settlement switch, `1` from it) |
+| `to_collateral_units(mrsn)` | Human MRSN amount (`"10.5"`, `10`, `Decimal`) → integer collateral units for the current era (floor) |
+| `get_agents(owner)` | Agent keys granted by `owner` and whether delegation is active (`mersennet_orders_getAgents`) |
+| `get_liquidatable()` | Accounts below maintenance margin at the head (keeper feed; empty before the settlement switch) |
+| `place_order(...)` / `cancel_order(order_id)` | **Deprecated** — raise `NotImplementedError`; submit signed precompile transactions as shown above |
+
+There are no Python signing helpers yet: build the calldata, sign with `eth-account`, and submit via `provider.send_raw_transaction()`. The same applies to `setAgent` / `revokeAgent` (`setAgent(address agent, uint64 expiresAtBlock)`, selector `0xb845309c`; `revokeAgent(address agent)`, selector `0x7da6ac0d`) and the keeper call `liquidate(address account)` (selector `0x2f865568`).
+
 ## WebSocket Subscriptions
 
 ```python
@@ -5121,7 +5266,7 @@ subscriber.disconnect()
 ```
 
 :::tip
-WebSocket support may vary by node configuration. If subscriptions fail, use HTTP polling.
+The public WebSocket endpoint `wss://rpc.mersennet.com` is enabled for `eth_subscribe` subscriptions (`newHeads`, `logs`); send regular JSON-RPC calls over HTTPS. A node you run yourself needs `ws.enabled = true`.
 :::
 
 ## Error Handling
@@ -5151,6 +5296,10 @@ The SDK can fall back to `urllib` if `requests` is not installed, but `requests`
 source: https://docs.mersennet.com/developers/tutorials/first-private-trade/
 ---
 
+
+:::caution[Not active on the public testnet yet]
+Shielded trading activates at the privacy hard fork; the shielded pool is anchored in every block today but private orders are not accepted yet. This tutorial describes the post-fork flow. To trade on the testnet today, see [Your First Trade](/getting-started/first-trade/) (terminal) or [Trade via SDK and RPC](/developers/tutorials/trade-via-sdk/).
+:::
 
 In about fifteen minutes you'll go from an empty wallet to a settled trade that nobody (not the node, not the sequencer, not the order book) could attribute to you, using the real `@mersennet/sdk`.
 
@@ -5403,6 +5552,324 @@ That's the whole loop: private to everyone, verifiable by anyone.
 
 
 ---
+source: https://docs.mersennet.com/developers/tutorials/trade-via-sdk/
+---
+
+
+This tutorial does from code what [Your First Trade](/getting-started/first-trade/) does in the terminal. The flow is the same in every language:
+
+1. Point the SDK at the public RPC `https://rpc.mersennet.com` (chain ID `131071`).
+2. Read the live protocol parameters with `mersennet_orders_getProtocol`.
+3. Read your collateral with an `eth_call` to the order-book precompile at `0x0000000000000000000000000000000000000100`.
+4. Deposit collateral, converting MRSN to collateral units with the SDK helper.
+5. Place a signed limit order.
+6. Read your open orders and position.
+
+Every write is a **wallet-signed transaction** to the precompile, submitted with `eth_sendRawTransaction`; the node returns a transaction hash and the order takes effect when the transaction mines (one or two blocks). There is no unsigned path on public endpoints. Fund the key you use from the [faucet](/getting-started/faucet/) first (1,001 MRSN per claim per hour).
+
+:::note[Collateral units change at block 1,605,600]
+`depositCollateral` and `withdrawCollateral` take **collateral units**. Before the settlement switch one unit is one wei (10¹⁸ units per MRSN); from block 1,605,600 one unit is one MRSN. Every SDK has a helper that reads `weiPerCollateralUnit` from `getProtocol` and converts for the current era — `toCollateralUnits("100")` in TypeScript, `to_collateral_units("100")` in Python, `ToCollateralUnits("100")` in Go. Use it instead of `1e18` literals, and your code keeps working through the switch.
+:::
+
+:::note[Prices are scaled]
+On-chain prices are `human price × priceScale`. `priceScale` is 1 for every market today; from block 1,569,600 MRSN, SOL and ARB carry `priceScale = 100` ($0.01 ticks). Read the scale from `getMarkets` and convert with `toChainPrice`, as below, rather than assuming integers.
+:::
+
+## TypeScript
+
+The TypeScript SDK is not on npm yet; install it from the monorepo as described in [JavaScript SDK → Installation](/developers/sdks/javascript/#installation). Signing is delegated to you through a `TxSigner` callback — here an ethers `Wallet`.
+
+```typescript title="trade.ts"
+import { Wallet } from 'ethers';
+import { MersennetProvider, MersennetOrders } from '@mersennet/sdk';
+
+// 1. Configure the RPC
+const provider = new MersennetProvider('https://rpc.mersennet.com');
+const orders = new MersennetOrders(provider);
+if ((await provider.getChainId()) !== 131071) throw new Error('not Mersennet testnet');
+
+const wallet = new Wallet(process.env.PRIVATE_KEY!);
+const signer = (tx) => wallet.signTransaction(tx); // TxSigner: signs the TxRequest the SDK builds
+
+async function mined(txHash: string) {
+  while (!(await provider.getTransactionReceipt(txHash))) {
+    await new Promise((r) => setTimeout(r, 2000));
+  }
+}
+
+// 2. Read the protocol: switches, margin, units
+const protocol = await orders.getProtocol();
+console.log('settlement active:', protocol.settlementActive,
+  'initial margin bps:', protocol.initialMarginBps,
+  'wei per collateral unit:', protocol.weiPerCollateralUnit);
+
+// 3. Read collateral (eth_call to getCollateral() on the precompile, from = your address)
+const perMrsn = await orders.collateralUnitsPerMrsn(); // 10n ** 18n before the switch, 1n from it
+const units0 = BigInt(await orders.getCollateral(wallet.address));
+console.log('collateral (MRSN):', Number(units0) / Number(perMrsn));
+
+// 4. Deposit 100 MRSN — the helper converts to the current era's units
+const deposit = await orders.depositCollateral(
+  wallet.address,
+  (await orders.toCollateralUnits('100')).toString(),
+  signer
+);
+await mined(deposit.txHash);
+
+// 5. Place a signed limit order: buy 1 MRSN at $110, good till cancelled
+const mrsn = (await orders.getMarkets()).find((m) => m.symbol === 'MRSN')!;
+const price = MersennetOrders.toChainPrice('110', mrsn); // 110n at priceScale 1, 11000n at 100
+const ack = await orders.submitOrder(
+  wallet.address, // sender — must be the signer's address
+  mrsn.id,        // market id (1 = MRSN)
+  'buy',
+  price.toString(),
+  '1',            // size, in lots
+  'gtc',
+  signer
+);
+console.log('order tx:', ack.txHash);
+await mined(ack.txHash);
+
+// 6. Read back
+console.log('open orders:', await orders.getOpenOrders(wallet.address));
+console.log('position:', await orders.getPosition(wallet.address, mrsn.id)); // { size, entry_price }
+```
+
+`submitOrder` builds the `placeOrder` calldata, fetches the nonce, gas price and chain ID, hands the transaction to your signer and broadcasts the result. To cancel, call `orders.cancelOrder(wallet.address, orderId, signer)` with an `id` from `getOpenOrders`. The full method list, including agent keys and liquidations, is in the [JavaScript SDK reference](/developers/sdks/javascript/#full-api-reference).
+
+## Python
+
+The Python SDK reads everything but has no signing helpers yet: build the calldata, sign it with `eth-account`, and submit it with `provider.send_raw_transaction()`.
+
+```python title="trade.py"
+import os
+import time
+
+import requests
+from eth_account import Account
+from mersennet import MersennetProvider, MersennetOrders
+
+RPC = "https://rpc.mersennet.com"
+PRECOMPILE = "0x0000000000000000000000000000000000000100"
+
+# 1. Configure the RPC
+provider = MersennetProvider(RPC)
+orders = MersennetOrders(provider)
+assert provider.chain_id() == 131071, "not Mersennet testnet"
+acct = Account.from_key(os.environ["PRIVATE_KEY"])
+
+
+def send(calldata: str, gas: int) -> str:
+    """Sign a precompile transaction locally, submit it and wait until it mines."""
+    signed = acct.sign_transaction({
+        "to": PRECOMPILE,
+        "data": calldata,
+        "value": 0,
+        "gas": gas,
+        "gasPrice": int(provider.gas_price(), 16),
+        "nonce": provider.get_nonce(acct.address),
+        "chainId": 131071,
+    })
+    tx_hash = provider.send_raw_transaction(signed.raw_transaction.hex())
+    while provider.get_transaction_receipt(tx_hash) is None:
+        time.sleep(2)
+    return tx_hash
+
+
+# 2. Read the protocol: switches, margin, units
+protocol = orders.get_protocol()
+print("settlement active:", protocol["settlementActive"],
+      "initial margin bps:", protocol["initialMarginBps"],
+      "wei per collateral unit:", protocol["weiPerCollateralUnit"])
+
+# 3. Read collateral: getCollateral() (selector 0x5c1548fb), from = your address
+per_mrsn = orders.collateral_units_per_mrsn()   # 10**18 before the switch, 1 from it
+raw = provider.call({"from": acct.address, "to": PRECOMPILE, "data": "0x5c1548fb"})
+units_now = int(raw, 16) if raw not in ("", "0x") else 0
+print("collateral (MRSN):", units_now / per_mrsn)
+
+# 4. Deposit 100 MRSN: depositCollateral(uint256 amount), selector 0xbad4a01f
+units = orders.to_collateral_units("100")
+send("0xbad4a01f" + format(units, "064x"), 200_000)
+
+# 5. Place a signed limit order: buy 1 MRSN at $110, GTC
+#    placeOrder(uint64 marketId, bool isBuy, uint256 price, uint256 size, uint8 tif), selector 0x4c570d73
+mrsn = next(m for m in orders.get_markets() if m["symbol"] == "MRSN")
+price = orders.to_chain_price(110, mrsn["price_scale"])   # 110 at scale 1, 11000 at 100
+
+
+def encode_place_order(market_id: int, is_buy: bool, price: int, size: int, tif: int) -> str:
+    words = [market_id, 1 if is_buy else 0, price, size, tif]  # tif: 0 = GTC, 1 = IOC, 2 = FOK
+    return "0x4c570d73" + "".join(format(w, "064x") for w in words)
+
+
+tx_hash = send(encode_place_order(mrsn["id"], True, price, 1, 0), 300_000)
+print("order tx:", tx_hash)
+
+# 6. Read back: open orders over plain JSON-RPC, position via getPosition(uint64) (selector 0x0f85fc5a)
+open_orders = requests.post(RPC, json={
+    "jsonrpc": "2.0", "id": 1,
+    "method": "mersennet_orders_getOpenOrders", "params": [acct.address],
+}).json()["result"]
+print("open orders:", open_orders)
+
+raw = provider.call({"from": acct.address, "to": PRECOMPILE,
+                     "data": "0x0f85fc5a" + format(mrsn["id"], "064x")})
+if raw not in ("", "0x"):
+    size, entry_price = int(raw[2:66], 16), int(raw[66:130], 16)
+    print("position size:", size, "entry price:", orders.to_human_price(entry_price, mrsn["price_scale"]))
+```
+
+To cancel, send `"0x514fcac7" + format(order_id, "064x")` (`cancelOrder(uint256)`) the same way. Method reference: [Python SDK](/developers/sdks/python/#mersennetorders).
+
+## Go
+
+The Go SDK reads everything but has no signing helpers yet: build the calldata, sign with go-ethereum, and submit with `Provider.SendRawTransaction`. Add `github.com/ethereum/go-ethereum` to your module alongside the SDK ([installation](/developers/sdks/go/#installation)).
+
+```go title="main.go"
+package main
+
+import (
+	"fmt"
+	"log"
+	"math/big"
+	"os"
+	"strings"
+	"time"
+
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/common/hexutil"
+	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/crypto"
+	mersennet "github.com/mersennet/sdk-go"
+)
+
+const precompile = "0x0000000000000000000000000000000000000100"
+
+// ABI words are 32 bytes, left-padded.
+func word(v *big.Int) []byte { return common.LeftPadBytes(v.Bytes(), 32) }
+
+func main() {
+	// 1. Configure the RPC
+	provider := mersennet.NewProvider("https://rpc.mersennet.com")
+	orders := mersennet.NewOrders(provider)
+	if id, err := provider.ChainID(); err != nil || id != 131071 {
+		log.Fatal("not Mersennet testnet")
+	}
+	key, err := crypto.HexToECDSA(strings.TrimPrefix(os.Getenv("PRIVATE_KEY"), "0x"))
+	if err != nil {
+		log.Fatal(err)
+	}
+	from := crypto.PubkeyToAddress(key.PublicKey)
+
+	// Sign a precompile transaction locally, submit it, and wait until the nonce advances (mined).
+	send := func(calldata []byte, gas uint64) string {
+		nonce, _ := provider.GetNonce(from.Hex())
+		gp, _ := provider.GasPrice()
+		gasPrice, _ := new(big.Int).SetString(strings.TrimPrefix(gp, "0x"), 16)
+		tx := types.NewTransaction(nonce, common.HexToAddress(precompile), big.NewInt(0), gas, gasPrice, calldata)
+		signed, err := types.SignTx(tx, types.NewEIP155Signer(big.NewInt(131071)), key)
+		if err != nil {
+			log.Fatal(err)
+		}
+		raw, _ := signed.MarshalBinary()
+		hash, err := provider.SendRawTransaction(hexutil.Encode(raw))
+		if err != nil {
+			log.Fatal(err)
+		}
+		for n, _ := provider.GetNonce(from.Hex()); n <= nonce; n, _ = provider.GetNonce(from.Hex()) {
+			time.Sleep(2 * time.Second)
+		}
+		return hash
+	}
+
+	// 2. Read the protocol: switches, margin, units
+	protocol, err := orders.GetProtocol()
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println("settlement active:", protocol["settlementActive"],
+		"initial margin bps:", protocol["initialMarginBps"],
+		"wei per collateral unit:", protocol["weiPerCollateralUnit"])
+
+	// 3. Read collateral: getCollateral() (selector 0x5c1548fb), from = your address
+	perMRSN, _ := orders.CollateralUnitsPerMRSN() // 10^18 before the switch, 1 from it
+	raw, _ := provider.Call(map[string]interface{}{"from": from.Hex(), "to": precompile, "data": "0x5c1548fb"})
+	unitsNow := new(big.Int).SetBytes(common.FromHex(raw))
+	fmt.Println("collateral units:", unitsNow, "units per MRSN:", perMRSN)
+
+	// 4. Deposit 100 MRSN: depositCollateral(uint256 amount), selector 0xbad4a01f
+	units, err := orders.ToCollateralUnits("100")
+	if err != nil {
+		log.Fatal(err)
+	}
+	send(append(common.FromHex("0xbad4a01f"), word(units)...), 200_000)
+
+	// 5. Place a signed limit order: buy 1 MRSN at $110, GTC
+	//    placeOrder(uint64 marketId, bool isBuy, uint256 price, uint256 size, uint8 tif), selector 0x4c570d73
+	markets, _ := orders.GetMarkets()
+	var mrsn mersennet.Market
+	for _, m := range markets {
+		if m.Symbol == "MRSN" {
+			mrsn = m
+		}
+	}
+	price := mersennet.ToChainPrice(110, mrsn.PriceScale) // 110 at scale 1, 11000 at 100
+	calldata := common.FromHex("0x4c570d73")
+	for _, w := range []*big.Int{
+		new(big.Int).SetUint64(mrsn.ID), big.NewInt(1), // marketId, isBuy = true
+		new(big.Int).SetUint64(price), big.NewInt(1), // price, size
+		big.NewInt(0), // tif: 0 = GTC, 1 = IOC, 2 = FOK
+	} {
+		calldata = append(calldata, word(w)...)
+	}
+	fmt.Println("order tx:", send(calldata, 300_000))
+
+	// 6. Read back: position via getPosition(uint64) (selector 0x0f85fc5a); open orders via the
+	//    mersennet_orders_getOpenOrders RPC (no typed Go helper yet — see the curl below)
+	raw, _ = provider.Call(map[string]interface{}{
+		"from": from.Hex(), "to": precompile,
+		"data": "0x0f85fc5a" + hexutil.Encode(word(new(big.Int).SetUint64(mrsn.ID)))[2:],
+	})
+	if out := common.FromHex(raw); len(out) >= 64 {
+		size := new(big.Int).SetBytes(out[:32])
+		entry := new(big.Int).SetBytes(out[32:64])
+		fmt.Println("position size:", size, "entry price:", mersennet.ToHumanPrice(entry.Uint64(), mrsn.PriceScale))
+	}
+}
+```
+
+To cancel, send `0x514fcac7` + the 32-byte order id (`cancelOrder(uint256)`) the same way. Method reference: [Go SDK](/developers/sdks/go/#orders-reference).
+
+## Read back over plain JSON-RPC
+
+The read methods are ordinary JSON-RPC calls and work from any language or `curl`:
+
+```bash
+# Your resting orders
+curl -s https://rpc.mersennet.com -X POST -H 'Content-Type: application/json' \
+  -d '{"jsonrpc":"2.0","id":1,"method":"mersennet_orders_getOpenOrders","params":["0xYourAddress"]}'
+
+# Your margin account: collateral, token collateral, open-order count, positions
+curl -s https://rpc.mersennet.com -X POST -H 'Content-Type: application/json' \
+  -d '{"jsonrpc":"2.0","id":2,"method":"mersennet_orders_getAccount","params":["0xYourAddress"]}'
+
+# The book you traded against (market 1 = MRSN)
+curl -s https://rpc.mersennet.com -X POST -H 'Content-Type: application/json' \
+  -d '{"jsonrpc":"2.0","id":3,"method":"mersennet_orders_getOrderBook","params":["0x1"]}'
+```
+
+Fills are on-chain `trade` events: the transaction is on the [explorer](https://explorer.mersennet.com) under your address, and `mersennet_getDomainEvents` or the `MersennetOrdersTrades` WebSocket topic stream them. Full method documentation: [RPC Methods → MersennetOrders](/developers/rpc/methods/#mersennetorders-clob-methods).
+
+## Where to go next
+
+- [Mersennet Trade](/ecosystem/trade/): the terminal over the same precompile — order types, one-click trading with agent keys, points.
+- [MersennetOrders architecture](/architecture/order-book/): how matching runs inside consensus.
+- [Agent keys and liquidations](/developers/sdks/javascript/#agent-keys-and-liquidations): delegate trading to a second key, run a keeper.
+
+
+---
 source: https://docs.mersennet.com/ecosystem/trade/
 ---
 
@@ -5424,15 +5891,15 @@ Mersennet Trade is live at **[https://trade.mersennet.com](https://trade.mersenn
 | **One-click trading** | An **agent key** kept in your browser, granted on-chain by your wallet (`setAgent` on the precompile, ~7 days, two confirmations to set up: the grant and 3 MRSN of gas). It signs orders, TP/SL and conditional orders without popups; orders, positions and collateral stay on your main wallet; the key can never withdraw. Revoke any time from Settings. Activates at the agent-delegation switch height (see Network Info). |
 | **Fees** | The testnet charges **no trading fee**; the planned schedule shown in the terminal starts at 0% maker / 0.035% taker and falls with 30-day volume |
 | **Funding** | Every 8 hours (typical rates ±0.01% per interval) |
-| **Collateral** | Native MRSN plus registered tokens (e.g. USDC), fully escrowed on-chain by the precompile. From block 1,605,600 one collateral unit is **one MRSN**, realized PnL is **settled into collateral at every fill** (a closed trade's profit is withdrawable; a loss beyond your collateral is booked as protocol bad debt), initial margin is **10%** (10× max leverage), **maintenance margin 5%** with **keeper liquidations** (anyone may call `liquidate(address)` on the precompile; an account below maintenance is closed on the book, a 1% fee on the closed notional is split between the keeper and the insurance fund, and the fund covers losses the collateral could not — the network runs a default keeper), and **self-trade prevention** cancels your own resting order instead of filling it. A position can always be *reduced*, however deep under water. Before that height collateral units were wei and PnL was tracked but not settled; balances are divided by 10¹⁸ once at the switch, so a deposit of 100 MRSN made before it is still 100 MRSN after (the terminal, API and SDKs convert for the current era), and a position whose equity is below 5% of its notional in the switch block is closed by the keeper. **Testnet unit convention:** margin and PnL are computed in the markets' quote units, and one MRSN of collateral counts as one quote unit (USDC counts 1:1 at 90% weight) — there is no MRSN/USD conversion in the margin engine yet, so leverage and PnL read as if MRSN were the quote currency. |
+| **Collateral** | Native MRSN plus registered tokens (MockUSDC, the test USDC, at 90% weight), fully escrowed on-chain by the precompile. From block 1,605,600 one collateral unit is **one MRSN**, realized PnL is **settled into collateral at every fill** (a closed trade's profit is withdrawable; a loss beyond your collateral is booked as protocol bad debt), initial margin is **10%** (10× max leverage), **maintenance margin 5%** with **keeper liquidations** (anyone may call `liquidate(address)` on the precompile; an account below maintenance is closed on the book, a 1% fee on the closed notional is split between the keeper and the insurance fund, and the fund covers losses the collateral could not — the network runs a default keeper), and **self-trade prevention** cancels your own resting order instead of filling it. A position can always be *reduced*, however deep under water. Before that height collateral units were wei and PnL was tracked but not settled; balances are divided by 10¹⁸ once at the switch, so a deposit of 100 MRSN made before it is still 100 MRSN after (the terminal, API and SDKs convert for the current era), and a position whose equity is below 5% of its notional in the switch block is closed by the keeper. **Testnet unit convention:** margin and PnL are computed in the markets' quote units, and one MRSN of collateral counts as one quote unit (MockUSDC counts 1:1 at 90% weight) — there is no MRSN/USD conversion in the margin engine yet, so leverage and PnL read as if MRSN were the quote currency. |
 | **Chain** | Mersennet Testnet (Chain ID 131071) |
-| **Wallet** | MetaMask or any EVM-compatible wallet — plus a gasless mode |
+| **Wallet** | MetaMask, Rabby or any EVM-compatible wallet, or WalletConnect. Every order is a wallet-signed transaction; one-click trading replaces the popups with an agent key (above) |
 
 ## How It Works
 
 Mersennet Trade talks to the MersennetOrders precompile, a native order-matching engine embedded at the EVM level. Orders are consensus objects: every order is a transaction that mines in a block, executes deterministically on every validator, and emits on-chain trade events.
 
-```
+```text
 User Wallet ──► Trade UI ──► JSON-RPC ──► mempool ──► block ──► MersennetOrders (0x…0100)
                                                                 │
                                                         ┌───────┴───────┐
@@ -5444,7 +5911,7 @@ User Wallet ──► Trade UI ──► JSON-RPC ──► mempool ──► bl
 - **Limit orders** rest on the book at a specified price until filled or cancelled
 - **Market orders** cross the spread against the best resting orders
 - **Matching** happens inside block execution — fills are on-chain `trade` events, visible in the [explorer](https://explorer.mersennet.com) and streamed over WebSocket
-- **Gasless mode** submits orders through the node's relay so testnet users can trade without holding gas — on mainnet, orders will be wallet-signed precompile transactions only
+- **Orders are wallet-signed transactions** to the precompile; there is no relay and no gasless path, so every order, cancel and deposit costs gas from your MRSN balance. With **one-click trading** the terminal signs them with a browser agent key you grant on-chain (`setAgent`); that key can place and cancel orders for your account but can never deposit or withdraw
 
 ## Markets
 
@@ -5452,11 +5919,13 @@ Five markets are seeded at genesis, and anyone can list a new market permissionl
 
 | Market | Max Leverage |
 |--------|--------------|
-| MRSN | 50× |
-| BTC | 100× |
-| ETH | 50× |
-| SOL | 20× |
-| ARB | 20× |
+| MRSN | 10× |
+| BTC | 10× |
+| ETH | 10× |
+| SOL | 10× |
+| ARB | 10× |
+
+Max leverage is 10× for every market, from the 10% initial margin enforced from block 1,605,600; before that height the chain enforces no margin. Maintenance margin is 5% from the same height.
 
 Additional user-created markets appear alongside the genesis five — query `mersennet_orders_getMarkets` for the live set.
 
@@ -5467,6 +5936,8 @@ Additional user-created markets appear alongside the genesis five — query `mer
 3. Get testnet MRSN from the [Faucet](/getting-started/faucet)
 4. Deposit collateral (escrowed 1:1 from your native MRSN)
 5. Place limit or market orders — long or short, up to the market's max leverage
+
+A step-by-step walkthrough is in [Your First Trade](/getting-started/first-trade/).
 
 ## Points, staking and validators
 
@@ -5546,6 +6017,88 @@ curl -X POST https://faucet.mersennet.com/claim-token \
 | Request fails | Check that your address is a valid 0x-prefixed Ethereum address (40 hex characters). |
 | No MRSN received | Look up the returned `tx_hash` on the [explorer](https://explorer.mersennet.com). Confirm your wallet is on Chain ID 131071. |
 | Tokens not visible in MetaMask | Import the token contract address manually, or claim through the faucet UI, which offers to add the token for you. |
+
+
+---
+source: https://docs.mersennet.com/getting-started/first-trade/
+---
+
+
+This guide takes you from an empty wallet to a closed position on [Mersennet Trade](https://trade.mersennet.com), the terminal over the native on-chain order book. No code is needed; every step is a wallet click. It takes about ten minutes, and nothing on the testnet has monetary value.
+
+:::note[Every order is a transaction]
+Orders, cancels, deposits and withdrawals are wallet-signed transactions to the order-book precompile at `0x…0100`. There is no relay and no gasless path, so each action costs a little gas from your MRSN balance and shows up on the [explorer](https://explorer.mersennet.com) like any other transaction. One-click trading (Settings → One-Click Trading, from block 1,569,600) replaces the wallet popups with a browser agent key you grant on-chain; the key can place and cancel orders for your account but never withdraw.
+:::
+
+## Step 1: Connect a wallet
+
+1. Open [https://trade.mersennet.com](https://trade.mersennet.com).
+2. Press **Connect** and pick MetaMask, Rabby or WalletConnect.
+3. Approve the network prompt: the terminal adds Mersennet Testnet (chain ID `131071`, RPC `https://rpc.mersennet.com`) to your wallet and switches to it. If your wallet does not prompt, add the network by hand with the values in [Wallet Setup](/getting-started/wallet-setup/).
+
+## Step 2: Claim testnet MRSN
+
+1. Open [https://faucet.mersennet.com](https://faucet.mersennet.com) and paste your address, or press **Connect** to fill it in.
+2. Press **Claim 1,000 MRSN**. The faucet sends **1,001 MRSN** (1,000 plus 1 for gas), once per address per hour. The same page hands out 10,000 each of MockUSDC, MockUSDT and MockDAI; you do not need them for this guide.
+3. Back in the terminal, your wallet balance updates within a few seconds.
+
+Details and the HTTP API: [Get Testnet MRSN](/getting-started/faucet/).
+
+## Step 3: Deposit collateral
+
+Trading uses collateral escrowed by the precompile, not your wallet balance directly.
+
+1. In the **Account** panel choose **Deposit**.
+2. Enter an amount, for example **500 MRSN**, and confirm the transaction in your wallet. Keep some MRSN in the wallet for gas.
+3. When the transaction mines (one or two blocks, a few seconds) the Account panel shows the collateral and your available margin.
+
+Withdrawing is the same panel in reverse; the chain checks your margin before releasing collateral.
+
+## Step 4: Place a market order
+
+1. Select the **MRSN/USD** market.
+2. In the order form choose **Market** and **Buy**, enter a size of **1** MRSN, and press **Buy**. Confirm the transaction in your wallet.
+3. The order mines in the next block and fills against the best resting asks. The fill appears in **Positions** (size, entry price, unrealized PnL) and in **Trades**; the transaction is on the explorer under your address (`https://explorer.mersennet.com/address/0x…`).
+
+Two order types cover most trading:
+
+- **Limit**: rests on the book at your price until it fills or you cancel it. Time-in-force options are GTC, IOC, FOK, post-only and good-till-date.
+- **Market**: crosses the spread and fills immediately against the best resting orders.
+
+Stop, stop-limit, trailing-stop and TWAP orders are armed in your browser and sent as signed orders when they trigger; they fire while a terminal tab is open.
+
+## Step 5: Close the position
+
+1. In **Positions**, press **Close** on the MRSN position. The terminal prepares a market order in the opposite direction for the full size.
+2. Or place a sell order yourself with **Reduce-only** ticked, so the order can only shrink the position and never flip it short.
+3. Confirm in your wallet. When it mines, the position disappears and its result is shown in your trade history.
+
+## Step 6: Points
+
+Testnet participation is tracked on the [Points page](https://trade.mersennet.com/points):
+
+- **1 point per $1 traded** (bots are excluded): a 1 MRSN order at a $100 price earns about 100 points.
+- The [leaderboard](https://trade.mersennet.com/leaderboard) ranks traders by points and shows the **weekly sprint**: the top 3 traders by volume each week earn 3,000 / 2,000 / 1,000 bonus points.
+- Other live programs: 500 points a day for a verified node, 0.1 LP point per MRSN per day in the maker vault, and referrals (10% of a referee's trading points).
+
+:::note[Units on testnet]
+Prices are quoted in USD; balances, PnL and equity are shown in MRSN. In the margin engine one MRSN of collateral counts as one dollar of margin — there is no MRSN/USD conversion on the testnet yet — so leverage and PnL read as if MRSN were the quote currency. MockUSDC (the test USDC) is also accepted as collateral at 90% weight.
+:::
+
+:::caution[What changes this weekend]
+Two protocol switches land at announced block heights (about 2.1 s per block; live ETAs at [trade.mersennet.com/api/v1/protocol/switches](https://trade.mersennet.com/api/v1/protocol/switches) and on the [staking page](https://trade.mersennet.com/staking)):
+
+- **Block 1,569,600 (Sat 19 Sep, about 19:00 UTC)**: agent delegation (one-click trading), $0.01 ticks on MRSN, SOL and ARB, validator benching and escalating jail.
+- **Block 1,605,600 (Sun 20 Sep, about 16:00 UTC)**: settlement. One collateral unit becomes one MRSN, realized PnL settles into collateral at every fill, initial margin is 10% (10× maximum leverage) and maintenance margin 5% with keeper liquidations. Before this height the chain enforces no margin. Maker vault deposits open at the same height.
+
+Your collateral and open positions carry over; the terminal converts units for the current era. Full details: [Scheduled protocol switches](/getting-started/network-info/#scheduled-protocol-switches).
+:::
+
+## Next steps
+
+- [Mersennet Trade](/ecosystem/trade/): order types, fees, funding, one-click trading, points, the maker vault and staking.
+- [Trade via SDK and RPC](/developers/tutorials/trade-via-sdk/): the same flow from TypeScript, Python or Go.
+- [Test the Network](/getting-started/test-the-network/): run a node, become a validator, delegate.
 
 
 ---
@@ -5766,7 +6319,7 @@ Use the following configuration to connect to Mersennet testnet.
 | **Block Time** | ~2 seconds |
 
 :::tip
-The public WebSocket endpoint serves `eth_subscribe` streams (new heads, logs, pending transactions) only — send regular JSON-RPC calls over HTTPS. Nodes you run yourself serve WebSocket subscriptions on port 8546.
+The public WebSocket endpoint `wss://rpc.mersennet.com` is enabled for `eth_subscribe` subscriptions (`newHeads`, `logs`) — send regular JSON-RPC calls over HTTPS. Nodes you run yourself serve WebSocket subscriptions on port 8546.
 :::
 
 ## Node Operators: P2P Bootnodes
@@ -5789,13 +6342,13 @@ alongside the node binary and installer — no source access required. See
 
 ## Scheduled protocol switches
 
-Consensus rules change at announced block heights, written into the canonical node config. Every node must run a release that implements the rule before the height; the staking page and `mersennet-check` warn when yours is behind. Heights come from `mersennet_validatorSet` (`params`); ETAs assume ~2.2 s blocks.
+Consensus rules change at announced block heights, written into the canonical node config. Every node must run a release that implements the rule before the height; the staking page and `mersennet-check` warn when yours is behind. Heights come from `mersennet_validatorSet` (`params`) and `mersennet_orders_getProtocol` (`switches`); ETAs assume ~2.1 s blocks.
 
 | Height | ETA (UTC) | What changes | Minimum release |
 |---|---|---|---|
-| 1,440,000 | 2026-09-16 ~16:00 | Block rewards credited to the operator wallet; compact (base64) gossip encoding | `9e3a508` (15 Sep) |
-| 1,605,600 | Sun 2026-09-20 ~16:00 | **Settlement**: one collateral unit = one MRSN (existing balances ÷10¹⁸ once), realized PnL settles into collateral at every fill, 10% initial / 5% maintenance margin with keeper liquidations (`liquidate(address)`, 1% fee split keeper/insurance fund), self-trade prevention. **Contracts act as themselves on the CLOB and staking precompiles**: the precompiles authorise on the call frame's `msg.sender` instead of the transaction origin. A contract that calls `depositCollateral` / `placeOrder` / `setAgent` now owns its own account (the maker vault depends on this), and a contract can no longer act on the account of the user calling it. Direct transactions are unchanged | 18 Sep release (`settlement_height`, `frame_caller_height`) |
-| 1,569,600 | Sat 2026-09-19 ~19:00 | **Benching**: 3 missed leader slots → out of the leader rotation until the epoch boundary. **Escalating jail**: consecutive jails last 1, 2, 4, 8, 16, 24 epochs. **Agent delegation** on the CLOB precompile (`setAgent` / `revokeAgent`; one-click trading in the terminal). **Finer ticks**: MRSN, SOL and ARB switch to `priceScale` 100 — on-chain prices become human × 100 and the markets trade on $0.01 ticks; books, positions and last prices are rescaled in place | 17 Sep release (this bundle) |
+| 1,440,000 | Tue 2026-09-16 (active) | Block rewards credited to the operator wallet; compact (base64) gossip encoding | `9e3a508` (15 Sep) |
+| 1,569,600 | Sat 2026-09-19 ~19:00 | **Benching**: 3 missed leader slots → out of the leader rotation until the epoch boundary. **Escalating jail**: consecutive jails last 1, 2, 4, 8, 16, 24 epochs. **Agent delegation** on the CLOB precompile (`setAgent` / `revokeAgent`; one-click trading in the terminal). **Finer ticks**: MRSN, SOL and ARB switch to `priceScale` 100 — on-chain prices become human × 100 and the markets trade on $0.01 ticks; books, positions and last prices are rescaled in place | 17 Sep release |
+| 1,605,600 | Sun 2026-09-20 ~16:00 | **Settlement**: one collateral unit = one MRSN (existing balances ÷10¹⁸ once), realized PnL settles into collateral at every fill, 10% initial / 5% maintenance margin with keeper liquidations (`liquidate(address)`, 1% fee split keeper/insurance fund), self-trade prevention. **Contracts act as themselves on the CLOB and staking precompiles**: the precompiles authorise on the call frame's `msg.sender` instead of the transaction origin. A contract that calls `depositCollateral` / `placeOrder` / `setAgent` now owns its own account (the maker vault depends on this, and its deposits open at this height), and a contract can no longer act on the account of the user calling it. Direct transactions are unchanged | 18 Sep release (`settlement_height`, `frame_caller_height`) |
 
 ETAs assume the observed block time (~2.1 s: missed leader slots stretch the nominal 2 s) and drift by hours over a weekend — the live countdown is on the terminal's [staking page](https://trade.mersennet.com/staking) and the explorer's [validators page](https://explorer.mersennet.com/validators), or `GET https://trade.mersennet.com/api/v1/protocol/switches`.
 
@@ -6029,14 +6582,14 @@ One command on any Ubuntu 22.04+ / Debian 12+ server (2 vCPU, 4 GB RAM, 40 GB SS
 curl -fsSL https://mersennet.com/downloads/install.sh | sudo bash -s -- --operator 0xYOUR_WALLET
 ```
 
-The installer verifies the signed release, restores the latest state snapshot and starts a hardened systemd service; the node is in sync in about a minute. `--operator` is your wallet: the node signs a statement naming it, the network verifies your node automatically within about ten minutes, and it appears on the [explorer's Network page](https://explorer.mersennet.com/#/network) with your badge. Check it any time with `mersennet-check`. Guide: [Run a Node](/validators/run-a-node/).
+The installer verifies the signed release, restores the latest state snapshot and starts a hardened systemd service; the node is in sync in about a minute. `--operator` is your wallet: the node signs a statement naming it, the network verifies your node automatically within about ten minutes, and it appears on the [explorer's Network page](https://explorer.mersennet.com/network) with your badge. Check it any time with `mersennet-check`. Guide: [Run a Node](/validators/run-a-node/).
 
 ## 4. Become a validator
 
 The validator set is **permissionless** from block 1,348,200 (2026-09-14, ~08:35 UTC). With your node verified, open [trade.mersennet.com/staking](https://trade.mersennet.com/staking) with the operator wallet, choose a self-stake of at least **1,000 MRSN** (one faucet claim) and press **Bond & register**. From the next hourly epoch your node signs blocks and earns block rewards.
 
 - Top **12** by self-stake + delegations are active; the rest are on standby.
-- Miss more than **20%** of your leader slots in an epoch and you sit out the next one. Nothing is slashed for downtime.
+- Miss more than **20%** of your leader slots in an epoch and you sit out the next one (from block 1,569,600: three missed slots bench you for the rest of the epoch, and consecutive jails escalate 1, 2, 4, 8, 16, 24 epochs). Nothing is slashed for downtime; only equivocation is.
 - Leave with one click; self-stake unbonds in **7,200 blocks (~4 h)**.
 - **Keep the node on the current release.** Consensus rules change at announced heights ([schedule](/getting-started/network-info/#scheduled-protocol-switches)); the staking page shows *upgrade required* next to your node when it is behind, and the upgrade is the install command again.
 
@@ -6052,7 +6605,15 @@ Mersennet is EVM-equivalent: Hardhat, Foundry, ethers and viem work unchanged. D
 
 ## 7. Points
 
-Season 1 points on [trade.mersennet.com/points](https://trade.mersennet.com/points) track participation: **1 point per $1 traded** and **500 points a day** for each verified node while it is online. Liquidity and referral points are next. The [leaderboard](https://trade.mersennet.com/leaderboard) ranks traders.
+Season 1 points on [trade.mersennet.com/points](https://trade.mersennet.com/points) track participation. All of these are live:
+
+- **Trading**: 1 point per $1 traded (bots excluded).
+- **Node running**: 500 points a day for each verified node while it is online.
+- **Liquidity**: 0.1 LP point per MRSN per day deposited in the [maker vault](https://trade.mersennet.com/vault).
+- **Referrals**: the referrer earns 10% of each referee's trading points; nothing is deducted from the referee.
+- **Weekly sprint**: the top 3 traders by volume each week earn 3,000 / 2,000 / 1,000 bonus points.
+
+The [leaderboard](https://trade.mersennet.com/leaderboard) ranks traders and shows the sprint standings.
 
 ## Is it up?
 
@@ -6139,7 +6700,7 @@ source: https://docs.mersennet.com/
 
 import { Card, CardGrid, LinkCard } from '@astrojs/starlight/components';
 
-<CardGrid stagger>
+<CardGrid>
   <Card title="Deploy in minutes" icon="rocket">
     Hardhat, Foundry, ethers: all unchanged. Chain ID `131071`, ~2s blocks, EVM Prague.
 
@@ -6157,6 +6718,12 @@ import { Card, CardGrid, LinkCard } from '@astrojs/starlight/components';
 
     [MersennetOrders architecture](/architecture/order-book/) ·
     [DeFi integration](/developers/contracts/defi-integration/)
+  </Card>
+  <Card title="Make your first trade" icon="approve-check">
+    Connect a wallet, claim faucet MRSN, deposit collateral and place a market order on the terminal in a few minutes. Every order is a signed transaction you can find on the explorer; 1 point per $1 traded.
+
+    [Your first trade](/getting-started/first-trade/) ·
+    [Open the terminal](https://trade.mersennet.com)
   </Card>
   <Card title="Stake and run a node" icon="seti:powershell">
     Run a full node in one command (in sync in about a minute), earn 500 points a day as a verified node runner, and register as a validator with 1,000 MRSN — the set is open. Or simply delegate MRSN to a validator for a share of block rewards.
@@ -6774,11 +7341,11 @@ Notable milestones and updates for the Mersennet ecosystem.
 - **Verified node runners**: a node signs its operator's wallet; verification is automatic within ~10 minutes; 500 points a day; verified nodes appear on the explorer's Network page.
 - Second public RPC node with automatic failover; state snapshots every 6 hours with snapshot-based auto-heal on the fleet.
 - **First outside validator** registered and produced its first epochs on 15 Sep; the incident it exposed (a restarted node forgot the open set until the next boundary) is fixed: the active set is restored on startup. **Every block is also pushed over TCP** (UDP fragments can be dropped by some providers). **Leader failover round 8 s** (was 19 s). **Escalating jail** for consecutive offences from block 1,569,600 (~Sat 19 Sep 19:00 UTC): 1, 2, 4, 8, 16, 24 epochs.
-- **Rewards to the operator wallet** from block 1,440,000 (~2026-09-16 13:15 UTC): a validator's block reward is credited to the wallet that registered it instead of the node key. **Large transactions over TCP**: transactions that do not fit a UDP datagram (contract deployments near the 24 KB code limit) are delivered peer-to-peer like large blocks. Node builds report their git sha (`Mersennet/0.7.0-3e4874e`). **Every node proposes and votes while it is in the active set** — a registered community node joins at the epoch boundary without a restart or mode switch. **Compact gossip encoding** from block 1,440,000 (base64 payloads, ~2.8× less bandwidth; nodes older than release `9e3a508` cannot follow past that height — re-run the installer).
+- **Rewards to the operator wallet** from block 1,440,000 (16 Sep): a validator's block reward is credited to the wallet that registered it instead of the node key. **Large transactions over TCP**: transactions that do not fit a UDP datagram (contract deployments near the 24 KB code limit) are delivered peer-to-peer like large blocks. Node builds report their git sha (`Mersennet/0.7.0-3e4874e`). **Every node proposes and votes while it is in the active set** — a registered community node joins at the epoch boundary without a restart or mode switch. **Compact gossip encoding** from block 1,440,000 (base64 payloads, ~2.8× less bandwidth; nodes older than release `9e3a508` cannot follow past that height — re-run the installer).
 - **Trade terminal, 17 Sep**: Stop, Stop-limit, Trailing stop and TWAP orders (armed in the browser, executed as signed orders when triggered), Scale ladders; referral points (10% of referee trading points, wallet-signed attribution) and a weekly sprint (top 3 by volume, 3,000 / 2,000 / 1,000 bonus points); leaderboard Points board; truthful fee display (no trading fees on the testnet); self-hosted fonts, static announcement line, AA-contrast labels, phone-sized touch targets and a full-height mobile order sheet; `/api/v1/stats` aggregates cached (was 0.9–1.9 s per call). Market-maker and taker bots tuned so candles no longer span three ticks; automated test markets hidden from the market list.
 - **Next node release (21 Sep, after the settlement switch)**: **full-history RPC** — `eth_getBlockByNumber`/`ByHash`, `eth_getTransactionByHash`, `eth_getTransactionReceipt` and `eth_getLogs` answer for every block a node holds on disk (before: only the most recent ~2,000 blocks, so a wallet asking for a receipt an hour later got `null`); a persisted hash index is built in the background after upgrade (whole chain in ~5 minutes); `eth_getLogs` spans up to 2,000 blocks per call.
-- **18 Sep release — active from block 1,605,600 (~Sun 20 Sep 16:00 UTC)**: **Settlement.** One collateral unit becomes **one MRSN** (`depositCollateral(100)` escrows 100 MRSN; balances from before the switch are divided by 10¹⁸ once — they were wei-backed units), **realized PnL is settled into collateral at every fill** (previously it was tracked per position but never paid: a profitable close left collateral unchanged), **10% initial margin** (10× max) and **5% maintenance with keeper liquidations** — anyone can call `liquidate(address)`; the account's positions are closed on the book, its PnL settles, a 1% fee on the closed notional is split between the keeper and the insurance fund, and the fund covers what the collateral could not (`mersennet_orders_getLiquidatable` feeds keepers; the network runs one). Reducing a position is always allowed, however deep under water. **Self-trade prevention** (your own resting order is cancelled rather than filled — no printing volume against yourself), and a `badDebt` counter for losses that exceed an account's collateral. New RPC `mersennet_orders_getProtocol` reports every CLOB switch and parameter. The maker vault was redeployed for the new units (`0xe77F…7725`). Also: the CLOB and staking precompiles authorise on the **call frame's caller** (`msg.sender`) instead of the transaction origin. Found while wiring the maker vault: a contract calling the precompile acted as whoever sent the transaction, so contracts could not own order-book accounts — and any contract a user interacted with could have placed orders (or, after 19 Sep, granted an agent) on that user's account. From the switch, contracts hold their own collateral and positions and the vault's deposits open. `mersennet_orders_getAgents` reports `frameCallerHeight`. Same-day app work: order-book grouping follows the market tick, price inputs step by the tick, "Place your first order" prefills a 1-unit market buy, LP points on the Points page and leaderboard, vault position on the portfolio, explorer depth refreshes live, validator tables show node builds, client-side errors are reported to ops.
-- **17 Sep release — active from block 1,569,600 (~Sat 19 Sep 19:00 UTC)**: **Agent delegation** on the CLOB precompile — `setAgent(agent, expiresAtBlock)` lets a second key place and cancel orders *as* the granting account (never deposit or withdraw); the terminal's one-click trading now runs on it, so orders, positions and history stay on your main wallet while a browser key signs silently (`mersennet_orders_getAgents`). **Finer ticks**: MRSN, SOL and ARB move to `priceScale` 100 ($0.01 ticks); resting orders, positions and last prices are rescaled in place at the switch and `mersennet_orders_getMarkets` exposes `priceScale`. **Maker vault** (`0x2ccc…5284`): pool MRSN behind the market maker, shares at NAV, LP points (0.1 per MRSN-day), withdraw any time from the free reserve. **Launch dashboard** endpoint `/api/v1/stats/launch` (humans vs bots per day). Release notes and switch reminders are posted to Telegram automatically.
+- **18 Sep release — active from block 1,605,600 (~Sun 20 Sep 16:00 UTC)**: **Settlement.** One collateral unit becomes **one MRSN** (`depositCollateral(100)` escrows 100 MRSN; balances from before the switch are divided by 10¹⁸ once — they were wei-backed units), **realized PnL is settled into collateral at every fill** (previously it was tracked per position but never paid: a profitable close left collateral unchanged), **10% initial margin** (10× max) and **5% maintenance with keeper liquidations** — anyone can call `liquidate(address)`; the account's positions are closed on the book, its PnL settles, a 1% fee on the closed notional is split between the keeper and the insurance fund, and the fund covers what the collateral could not (`mersennet_orders_getLiquidatable` feeds keepers; the network runs one). Reducing a position is always allowed, however deep under water. **Self-trade prevention** (your own resting order is cancelled rather than filled — no printing volume against yourself), and a `badDebt` counter for losses that exceed an account's collateral. New RPC `mersennet_orders_getProtocol` reports every CLOB switch and parameter. The maker vault was redeployed for the new units at `0xe77F94c4Bf7D6d2E2371aFdE440a0b9b8a567725` (the first deployment was retired before it held a deposit). Also: the CLOB and staking precompiles authorise on the **call frame's caller** (`msg.sender`) instead of the transaction origin. Found while wiring the maker vault: a contract calling the precompile acted as whoever sent the transaction, so contracts could not own order-book accounts — and any contract a user interacted with could have placed orders (or, after 19 Sep, granted an agent) on that user's account. From the switch, contracts hold their own collateral and positions and the vault's deposits open. `mersennet_orders_getAgents` reports `frameCallerHeight`. Same-day app work: order-book grouping follows the market tick, price inputs step by the tick, "Place your first order" prefills a 1-unit market buy, LP points on the Points page and leaderboard, vault position on the portfolio, explorer depth refreshes live, validator tables show node builds, client-side errors are reported to ops.
+- **17 Sep release — active from block 1,569,600 (~Sat 19 Sep 19:00 UTC)**: **Agent delegation** on the CLOB precompile — `setAgent(agent, expiresAtBlock)` lets a second key place and cancel orders *as* the granting account (never deposit or withdraw); the terminal's one-click trading now runs on it, so orders, positions and history stay on your main wallet while a browser key signs silently (`mersennet_orders_getAgents`). **Finer ticks**: MRSN, SOL and ARB move to `priceScale` 100 ($0.01 ticks); resting orders, positions and last prices are rescaled in place at the switch and `mersennet_orders_getMarkets` exposes `priceScale`. **Maker vault** (`0xe77F94c4Bf7D6d2E2371aFdE440a0b9b8a567725`; deposits open at block 1,605,600): pool MRSN behind the market maker, shares at NAV, LP points (0.1 per MRSN-day), withdraw any time from the free reserve. **Launch dashboard** endpoint `/api/v1/stats/launch` (humans vs bots per day). Release notes and switch reminders are posted to Telegram automatically.
 - **Benching (16 Sep build, active from block 1,569,600)**: a validator that misses 3 leader slots in an epoch leaves the leader rotation until the boundary — the network spends three failover rounds on a dead leader instead of an hour of them; it keeps voting and its stake, and the boundary jails it as before. **Self-healing nodes**: a node whose head has not moved for five minutes while the network is 60+ blocks ahead exits and is restarted by systemd (`watchdog` config section; never fires on a network-wide halt). The redb storage backend now persists the validator registry like sled. The staking page and `mersennet-check` flag a node that is behind the current release, with the next protocol switch height.
 
 ## August 2026
@@ -6790,7 +7357,7 @@ A coordinated testnet re-genesis shipping the largest feature batch since the co
 - **Delegated staking live** via the native staking precompile (`0x…0400`): `delegate`, `undelegate`, `claimRewards`, `withdrawUnbonded`, with per-validator commission and F1 reward accounting
 - **Permissionless market listing**: anyone can call `createMarket(symbol, tickSize, lotSize)` on the CLOB precompile for a 100 MRSN listing fee
 - **New order flags**: post-only and good-till-date (on-chain expiry) time-in-force, alongside GTC/IOC/FOK
-- **Multi-collateral margin**: registered tokens (USDC live) accepted as margin collateral alongside native MRSN, with per-asset collateral weights
+- **Multi-collateral margin**: registered tokens (MockUSDC, the test USDC, live) accepted as margin collateral alongside native MRSN, with per-asset collateral weights
 - **New RPC read methods**: `mersennet_orders_getMarkets`, `mersennet_orders_getAccount`, `mersennet_orders_getCollateralAssets`, `mersennet_orders_getTokenCollateral`, and the `mersennet_staking_*` family
 - **Node hosting release**: canonical `networks/testnet` artifacts (genesis config, one-command install script, systemd unit), public bootnodes, and a full [Run a Node](/validators/run-a-node/) guide
 - **Sync performance fix**: initial block sync improved from ~3 to ~450 blocks/s
@@ -7078,6 +7645,14 @@ once, linked everywhere.
 
 **MersennetOrders**: The chain-native central limit order book (CLOB), exposed to Solidity at precompile `0x0100`. Matching is price-time priority and happens in consensus, with no off-chain sequencer.
 
+**Precompile**: A built-in contract at a fixed address, implemented in the node rather than in EVM bytecode. The order book lives at `0x…0100` and staking at `0x…0400`; wallets and contracts call them like any other contract.
+
+**Mersennet Trade (the terminal)**: The trading terminal at [trade.mersennet.com](https://trade.mersennet.com): order books, positions, points, the maker vault and staking, all over the precompiles. Every order it places is a wallet-signed transaction. See [Mersennet Trade](/ecosystem/trade/).
+
+**Agent key**: A second key an account grants on-chain with `setAgent(agent, expiresAtBlock)` on the order-book precompile. It can place and cancel orders as the granting account but never deposit or withdraw; the terminal's one-click trading uses a browser-held agent key. Active from block 1,569,600.
+
+**Maker Vault**: The contract at `0xe77F94c4Bf7D6d2E2371aFdE440a0b9b8a567725` that pools MRSN behind the market maker quoting every market. Deposits mint `mvMRSN` shares at NAV and earn 0.1 LP point per MRSN per day; deposits open at block 1,605,600.
+
 **Atomic composability**: A contract can place an order and read its fill in the *same transaction*, because the order book is a precompile sharing state with the EVM. This is the property asynchronous designs (e.g. message-passing to an external matcher) cannot offer.
 
 **FBA (Frequent Batch Auction)**: Orders accumulate threshold-encrypted during a block and are matched in one batch at a uniform clearing price at the tick. Removes the speed race that makes front-running profitable.
@@ -7098,7 +7673,9 @@ once, linked everywhere.
 
 ## Consensus & economics
 
-**Leader-gated BFT**: Mersennet's consensus: one deterministic leader per height with timeout failover; every validator re-executes the block and gossips a signed finality vote; final when >2/3 of stake commits (~2 s blocks). A HotStuff-2 pipeline exists in the node as the benchmarked upgrade path, not yet live.
+**Leader-gated BFT proof-of-stake**: Mersennet's live consensus: one deterministic leader per height with timeout failover; every validator re-executes the block and gossips a signed finality vote; final when >2/3 of stake commits (~2 s blocks). Downtime is benched and jailed, never slashed; only equivocation is slashed.
+
+**HotStuff-2**: A two-phase BFT pipeline implemented in the node and benchmarked (~200 ms finality) as the roadmap upgrade path. Not live on the testnet.
 
 **Staking**: Validators bond MRSN directly; anyone else can delegate MRSN to a validator through the native staking precompile (`0x…0400`) and earn a share of its block rewards, minus commission. Undelegating starts an unbonding period. The validator set is open: any node can register with 1,000 MRSN self-stake and joins the active set (top 12 by self + delegated stake) at the next hourly epoch. See [Staking](/validators/staking/) and [Become a Validator](/validators/become-a-validator/).
 
@@ -7115,11 +7692,11 @@ source: https://docs.mersennet.com/validators/become-a-validator/
 The validator set is **permissionless** from block **1,348,200** (2026-09-14, about 08:35 UTC). Any full node whose operator bonds the minimum self-stake can register; from the next epoch it signs blocks and earns block rewards like the genesis validators. Nothing to apply for, nobody to ask.
 
 :::tip[Before you start]
-You need a running node with your wallet configured as operator. That is [Step 2 of Run a Node](/validators/run-a-node#step-2--install-one-command) with `--operator 0xYOUR_WALLET`; the node is verified automatically within about ten minutes of being online.
+You need a running node with your wallet configured as operator. That is [Step 2 of Run a Node](/validators/run-a-node/#step-2--install-one-command) with `--operator 0xYOUR_WALLET`; the node is verified automatically within about ten minutes of being online.
 :::
 
-:::caution[Protocol switch at block 1,569,600 (~2026-09-19 19:00 UTC) — upgrade your validator before it]
-Four rules activate at that height: **benching** (a validator that misses 3 leader slots leaves the leader rotation until the epoch boundary), **escalating jail** (consecutive jails last 1, 2, 4, 8, 16, 24 epochs), **agent delegation** on the CLOB precompile, and the **price rescale** of MRSN, SOL and ARB to $0.01 ticks. All of them change how every node executes blocks, so a validator on a build from before 17 Sep forks off at the switch. A further switch follows at **block 1,605,600 (~21 Sep 16:00 UTC)** — contracts calling the CLOB act as themselves — and needs the **18 Sep release**; one upgrade to that release covers both. Upgrading is the install command again (`curl -fsSL https://mersennet.com/downloads/install.sh | sudo bash -s -- --operator 0xYOUR_WALLET`); the staking page shows *upgrade required* next to your node until it runs the current release. All scheduled switches: [Network Info](/getting-started/network-info/#scheduled-protocol-switches).
+:::caution[Protocol switch at block 1,569,600 (~Sat 19 Sep 19:00 UTC) — upgrade your validator before it]
+Four rules activate at that height: **benching** (a validator that misses 3 leader slots leaves the leader rotation until the epoch boundary), **escalating jail** (consecutive jails last 1, 2, 4, 8, 16, 24 epochs), **agent delegation** on the CLOB precompile, and the **price rescale** of MRSN, SOL and ARB to $0.01 ticks. All of them change how every node executes blocks, so a validator on a build from before 17 Sep forks off at the switch. A further switch follows at **block 1,605,600 (~Sun 20 Sep 16:00 UTC)** — settlement (one collateral unit = one MRSN, realized PnL settles, 10% initial / 5% maintenance margin with keeper liquidations) and contracts calling the CLOB act as themselves — and needs the **18 Sep release**; one upgrade to that release covers both. Upgrading is the install command again (`curl -fsSL https://mersennet.com/downloads/install.sh | sudo bash -s -- --operator 0xYOUR_WALLET`); the staking page shows *upgrade required* next to your node until it runs the current release. All scheduled switches: [Network Info](/getting-started/network-info/#scheduled-protocol-switches).
 :::
 
 ## Parameters (testnet)
@@ -7131,13 +7708,13 @@ Four rules activate at that height: **benching** (a validator that misses 3 lead
 | Active set size | **12** | Ranked by self-stake + delegated stake at each epoch boundary. |
 | Epoch | **1,800 blocks (1 hour)** | Boundaries at heights divisible by 1,800 (every :00 at 2-second blocks). |
 | Joining | register in one epoch → **active from the next** | A registration at 10:20 is active from 11:00. |
-| Benching | miss **3** leader slots in an epoch (and your misses are at least a tenth of what you proposed) | From block **1,569,600** (~2026-09-19 19:00 UTC): you are taken out of the **leader rotation for the rest of the epoch** — you keep voting and your stake, and the network stops spending failover rounds on you. Cleared at the boundary, where the jail rule below judges the epoch. A live validator that drops a slot now and then is never benched: three misses out of forty proposed is 7.5%, below the tenth. |
+| Benching | miss **3** leader slots in an epoch (and your misses are at least a tenth of what you proposed) | From block **1,569,600** (~Sat 19 Sep 19:00 UTC): you are taken out of the **leader rotation for the rest of the epoch** — you keep voting and your stake, and the network stops spending failover rounds on you. Cleared at the boundary, where the jail rule below judges the epoch. A live validator that drops a slot now and then is never benched: three misses out of forty proposed is 7.5%, below the tenth. |
 | Jailing | miss **>20%** of your leader slots in an epoch (judged only if you had **≥5** slots, or were benched) | You sit out the **following epoch**; eligible again after that. **No stake is lost.** From block **1,569,600** repeat offences escalate: consecutive jails last 1, 2, 4, 8, 16, then 24 epochs; one clean epoch as an active validator resets the count. |
 | Leaving | `unregisterValidator` → removed at the next epoch boundary | Self-stake unbonds for **7,200 blocks (~4 hours)**, then `withdrawUnbonded()` returns it. |
 | Key rotation | `rotateValidatorKey` with a proof from the new node key | Effective at the next epoch; delegations follow the validator. |
 | Commission | 0–100% in basis points, set at registration | Share of block rewards kept from delegators. |
 | Slashing | **only for equivocation** (voting for two blocks at one height), 5% | Downtime is never slashed on this testnet — it is jailed. |
-| Rewards | block rewards accrue to the **operator wallet** from block **1,440,000** (~2026-09-16 13:15 UTC) | Until then they accrue to the node identity (the node key). The switch is a consensus parameter (`validator_set.rewards_to_operator_height`); nothing to do on your side. |
+| Rewards | block rewards accrue to the **operator wallet** from block **1,440,000** (16 Sep) | Until then they accrued to the node identity (the node key). The switch is a consensus parameter (`validator_set.rewards_to_operator_height`); nothing to do on your side. |
 
 Unbonding of *delegated* stake also takes 7,200 blocks, so one number applies everywhere: about four hours.
 
@@ -7221,7 +7798,7 @@ curl -s https://rpc.mersennet.com -X POST -H 'Content-Type: application/json' \
   -d '{"jsonrpc":"2.0","id":1,"method":"mersennet_validatorSet","params":[]}'
 ```
 
-The [explorer's Validators page](https://explorer.mersennet.com/#/validators) renders the same data; `mersennet-check` on your server prints your node's identity and status.
+The [explorer's Validators page](https://explorer.mersennet.com/validators) renders the same data; `mersennet-check` on your server prints your node's identity and status.
 
 ## Running well
 
@@ -7450,7 +8027,7 @@ Validators perform three critical functions:
 
 2. **Consensus Participation**: All validators participate in BFT (Byzantine Fault Tolerant) consensus. Each validator re-executes every proposed block and gossips a signed finality vote for its hash; a block is finalized when votes covering more than 2/3 of total stake have been observed.
 
-3. **Network Security**: By staking MRSN tokens, validators have economic skin in the game. Malicious or negligent behavior is penalized through slashing, which protects the network from attacks and downtime.
+3. **Network Security**: By staking MRSN tokens, validators have economic skin in the game. Equivocation (signing two blocks at one height) is slashed; downtime is not — a validator that misses its leader slots is benched and then jailed, which keeps the leader rotation live without costing anyone stake.
 
 ## Proof-of-Stake (leader-gated BFT)
 
@@ -7496,16 +8073,17 @@ validator_reward = (block_reward × validator_stake) / total_stake
 
 The more stake you have (your own + delegations), the larger your share of each block's reward — and the higher your ranking in the active set (top 12 at each hourly epoch).
 
-## Slashing Risks
+## Slashing, benching and jailing
 
-Validators can lose stake through **slashing** for consensus violations:
+Only **equivocation** costs stake. Downtime is never slashed; it is handled by benching and jailing:
 
 | Offense | Penalty | Consequence |
 |---------|---------|-------------|
-| **Double-signing** | 5% of stake (base) | **Tombstoned**, permanently banned from the validator set |
-| **Downtime (>20% of leader slots missed in an epoch)** | none | **Jailed for the next epoch**, then back automatically |
+| **Equivocation (double-signing: two blocks at one height)** | 5% of stake (base) | **Tombstoned**, permanently banned from the validator set |
+| **3 missed leader slots in an epoch** (from block 1,569,600) | none | **Benched**: out of the leader rotation for the rest of the epoch; still voting, stake untouched |
+| **Downtime (>20% of leader slots missed in an epoch, or benched)** | none | **Jailed** for the next epoch, then back automatically. From block 1,569,600 consecutive jails escalate: 1, 2, 4, 8, 16, 24 epochs; one clean epoch resets the count |
 
-Double-signing is the only offense that costs stake; a tombstoned validator cannot rejoin the network. Downtime costs an epoch out of the set (one hour) and the rewards not earned — see [Become a Validator](/validators/become-a-validator/#parameters-testnet).
+A tombstoned validator cannot rejoin the network. Downtime costs the epochs out of the set and the rewards not earned — see [Become a Validator](/validators/become-a-validator/#parameters-testnet).
 
 :::caution
 Never run the same validator key on multiple nodes. Double-signing occurs when two nodes with the same key sign different blocks at the same height: this will get you tombstoned.
@@ -7611,7 +8189,7 @@ Node key     /mnt/blockstorage/mersennet/keys/node_key.json (back this up to kee
 ```
 
 - **syncing → catching up → in sync** is the normal sequence. A fresh install starts from a snapshot taken within the last six hours, so it is usually in sync within a minute or two; the line shows the measured rate and an ETA. Run `mersennet-check` again later.
-- **Visibility: visible** means the public RPC node is receiving your gossip. Your node is then listed on the [explorer's Network page](https://explorer.mersennet.com/#/network) under *Network nodes* as a community node — by network prefix plus the id printed here, so you can recognise it without your full IP being published.
+- **Visibility: visible** means the public RPC node is receiving your gossip. Your node is then listed on the [explorer's Network page](https://explorer.mersennet.com/network) under *Network nodes* as a community node — by network prefix plus the id printed here, so you can recognise it without your full IP being published.
 - **Peers 0** for more than a minute means outbound UDP+TCP 30303 is blocked on your host or provider firewall.
 - **Binary: update available** means a new release is out — re-run the Step 2 command to upgrade in place.
 - **Local RPC not answering** right after install is normal for a few seconds; if it persists, read the logs: `journalctl -u mersennet -n 50 --no-pager`.

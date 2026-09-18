@@ -19,15 +19,15 @@ Mersennet Trade is live at **[https://trade.mersennet.com](https://trade.mersenn
 | **One-click trading** | An **agent key** kept in your browser, granted on-chain by your wallet (`setAgent` on the precompile, ~7 days, two confirmations to set up: the grant and 3 MRSN of gas). It signs orders, TP/SL and conditional orders without popups; orders, positions and collateral stay on your main wallet; the key can never withdraw. Revoke any time from Settings. Activates at the agent-delegation switch height (see Network Info). |
 | **Fees** | The testnet charges **no trading fee**; the planned schedule shown in the terminal starts at 0% maker / 0.035% taker and falls with 30-day volume |
 | **Funding** | Every 8 hours (typical rates ±0.01% per interval) |
-| **Collateral** | Native MRSN plus registered tokens (e.g. USDC), fully escrowed on-chain by the precompile. From block 1,605,600 one collateral unit is **one MRSN**, realized PnL is **settled into collateral at every fill** (a closed trade's profit is withdrawable; a loss beyond your collateral is booked as protocol bad debt), initial margin is **10%** (10× max leverage), **maintenance margin 5%** with **keeper liquidations** (anyone may call `liquidate(address)` on the precompile; an account below maintenance is closed on the book, a 1% fee on the closed notional is split between the keeper and the insurance fund, and the fund covers losses the collateral could not — the network runs a default keeper), and **self-trade prevention** cancels your own resting order instead of filling it. A position can always be *reduced*, however deep under water. Before that height collateral units were wei and PnL was tracked but not settled; balances are divided by 10¹⁸ once at the switch, so a deposit of 100 MRSN made before it is still 100 MRSN after (the terminal, API and SDKs convert for the current era), and a position whose equity is below 5% of its notional in the switch block is closed by the keeper. **Testnet unit convention:** margin and PnL are computed in the markets' quote units, and one MRSN of collateral counts as one quote unit (USDC counts 1:1 at 90% weight) — there is no MRSN/USD conversion in the margin engine yet, so leverage and PnL read as if MRSN were the quote currency. |
+| **Collateral** | Native MRSN plus registered tokens (MockUSDC, the test USDC, at 90% weight), fully escrowed on-chain by the precompile. From block 1,605,600 one collateral unit is **one MRSN**, realized PnL is **settled into collateral at every fill** (a closed trade's profit is withdrawable; a loss beyond your collateral is booked as protocol bad debt), initial margin is **10%** (10× max leverage), **maintenance margin 5%** with **keeper liquidations** (anyone may call `liquidate(address)` on the precompile; an account below maintenance is closed on the book, a 1% fee on the closed notional is split between the keeper and the insurance fund, and the fund covers losses the collateral could not — the network runs a default keeper), and **self-trade prevention** cancels your own resting order instead of filling it. A position can always be *reduced*, however deep under water. Before that height collateral units were wei and PnL was tracked but not settled; balances are divided by 10¹⁸ once at the switch, so a deposit of 100 MRSN made before it is still 100 MRSN after (the terminal, API and SDKs convert for the current era), and a position whose equity is below 5% of its notional in the switch block is closed by the keeper. **Testnet unit convention:** margin and PnL are computed in the markets' quote units, and one MRSN of collateral counts as one quote unit (MockUSDC counts 1:1 at 90% weight) — there is no MRSN/USD conversion in the margin engine yet, so leverage and PnL read as if MRSN were the quote currency. |
 | **Chain** | Mersennet Testnet (Chain ID 131071) |
-| **Wallet** | MetaMask or any EVM-compatible wallet — plus a gasless mode |
+| **Wallet** | MetaMask, Rabby or any EVM-compatible wallet, or WalletConnect. Every order is a wallet-signed transaction; one-click trading replaces the popups with an agent key (above) |
 
 ## How It Works
 
 Mersennet Trade talks to the MersennetOrders precompile, a native order-matching engine embedded at the EVM level. Orders are consensus objects: every order is a transaction that mines in a block, executes deterministically on every validator, and emits on-chain trade events.
 
-```
+```text
 User Wallet ──► Trade UI ──► JSON-RPC ──► mempool ──► block ──► MersennetOrders (0x…0100)
                                                                 │
                                                         ┌───────┴───────┐
@@ -39,7 +39,7 @@ User Wallet ──► Trade UI ──► JSON-RPC ──► mempool ──► bl
 - **Limit orders** rest on the book at a specified price until filled or cancelled
 - **Market orders** cross the spread against the best resting orders
 - **Matching** happens inside block execution — fills are on-chain `trade` events, visible in the [explorer](https://explorer.mersennet.com) and streamed over WebSocket
-- **Gasless mode** submits orders through the node's relay so testnet users can trade without holding gas — on mainnet, orders will be wallet-signed precompile transactions only
+- **Orders are wallet-signed transactions** to the precompile; there is no relay and no gasless path, so every order, cancel and deposit costs gas from your MRSN balance. With **one-click trading** the terminal signs them with a browser agent key you grant on-chain (`setAgent`); that key can place and cancel orders for your account but can never deposit or withdraw
 
 ## Markets
 
@@ -47,11 +47,13 @@ Five markets are seeded at genesis, and anyone can list a new market permissionl
 
 | Market | Max Leverage |
 |--------|--------------|
-| MRSN | 50× |
-| BTC | 100× |
-| ETH | 50× |
-| SOL | 20× |
-| ARB | 20× |
+| MRSN | 10× |
+| BTC | 10× |
+| ETH | 10× |
+| SOL | 10× |
+| ARB | 10× |
+
+Max leverage is 10× for every market, from the 10% initial margin enforced from block 1,605,600; before that height the chain enforces no margin. Maintenance margin is 5% from the same height.
 
 Additional user-created markets appear alongside the genesis five — query `mersennet_orders_getMarkets` for the live set.
 
@@ -62,6 +64,8 @@ Additional user-created markets appear alongside the genesis five — query `mer
 3. Get testnet MRSN from the [Faucet](/getting-started/faucet)
 4. Deposit collateral (escrowed 1:1 from your native MRSN)
 5. Place limit or market orders — long or short, up to the market's max leverage
+
+A step-by-step walkthrough is in [Your First Trade](/getting-started/first-trade/).
 
 ## Points, staking and validators
 

@@ -4,7 +4,7 @@ title: "JavaScript SDK"
 
 import { Tabs, TabItem } from '@astrojs/starlight/components';
 
-The Mersennet JavaScript SDK (`@mersennet/sdk`) provides a typed interface for the JSON-RPC API, MersennetOrders (on-chain order book), and WebSocket subscriptions.
+The Mersennet JavaScript SDK (`@mersennet/sdk`) provides a typed interface for the JSON-RPC API, MersennetOrders (on-chain order book), and WebSocket subscriptions. For an end-to-end walkthrough (connect, read the protocol, deposit collateral, place a signed order, read it back) in TypeScript, Python and Go, see [Trade via SDK and RPC](/developers/tutorials/trade-via-sdk/).
 
 :::tip[Privacy / shielded features]
 This page covers the **transparent** surface (`eth_*` / `mersennet_*` / `mersennet_orders_*`). For shielded transfers and orders, client-side Noir proving, note scanning, balance/position reconstruction, selective-disclosure reads, and migration, see the dedicated **[Shielded SDK](/developers/privacy/shielded-sdk)**.
@@ -78,21 +78,23 @@ curl -X POST https://rpc.mersennet.com \
 
 ## Installation
 
-From the Mersennet monorepo:
+`@mersennet/sdk` is **not published to npm yet**; `npm install @mersennet/sdk` does not work. Install it from a checkout of the Mersennet monorepo — the package lives in `sdk-ts/`:
 
 ```bash
-cd sdk-ts
+# Build the package once
+cd /path/to/mersennet/sdk-ts
 npm install
 npm run build
 ```
 
-For use in another project, link or publish the package:
+Then add it to your project as a local dependency (or `npm link` it):
 
 ```bash
 # From your project
 npm install /path/to/mersennet/sdk-ts
-# Or when published: npm install @mersennet/sdk
 ```
+
+The import name is `@mersennet/sdk` in both cases.
 
 ## Quick Start
 
@@ -263,8 +265,12 @@ await orders.cancelOrder(wallet.address, 123, signer);
 
 ### Deposit Collateral
 
+`depositCollateral` and `withdrawCollateral` take an amount in **collateral units**, and the unit changes at the settlement switch (block 1,605,600): before it one unit is one wei (10¹⁸ units per MRSN), from it one unit is one MRSN. Convert human MRSN amounts with `toCollateralUnits()`, which reads `weiPerCollateralUnit` from `getProtocol()` so the same code works in both eras; never hard-code `1e18`.
+
 ```javascript
-await orders.depositCollateral(wallet.address, "1000000000000000000", signer);
+// Escrow 1 MRSN from the signer's native balance.
+const units = await orders.toCollateralUnits("1");
+await orders.depositCollateral(wallet.address, units.toString(), signer);
 ```
 
 ### Withdraw Collateral
@@ -272,7 +278,50 @@ await orders.depositCollateral(wallet.address, "1000000000000000000", signer);
 Sends a transaction to the CLOB precompile (the chain validates margin first):
 
 ```javascript
-await orders.withdrawCollateral(wallet.address, "500000000000000000", signer);
+const units = await orders.toCollateralUnits("0.5");
+await orders.withdrawCollateral(wallet.address, units.toString(), signer);
+
+// Units per MRSN in the current era: 10n ** 18n before the settlement switch, 1n after.
+console.log(await orders.collateralUnitsPerMrsn());
+```
+
+### Agent keys and liquidations
+
+`setAgent` lets a second key place and cancel orders **as** your account (it can never deposit or withdraw); the terminal's one-click trading is built on it. `getLiquidatable` and `liquidate` are the keeper surface that activates with the settlement switch. All four are available from block 1,569,600 (agents) and 1,605,600 (liquidations); `getProtocol()` reports whether each is active.
+
+```javascript
+import { Wallet } from "ethers";
+
+const owner = new Wallet(process.env.PRIVATE_KEY);
+const ownerSigner = (tx) => owner.signTransaction(tx);
+
+// Grant a fresh key for ~7 days (≈ 288,000 blocks at 2.1 s); 0 = no expiry.
+// The agent pays gas for its own transactions, so send it a little MRSN first.
+const agent = Wallet.createRandom();
+const head = await provider.getBlockNumber();
+await orders.setAgent(owner.address, agent.address, head + 288_000, ownerSigner);
+
+// The agent sends and signs its own transaction (first argument = the sender,
+// so the SDK fetches the agent's nonce); the precompile books the order on the
+// owner's account — orders, positions and fills stay on the owner.
+const agentSigner = (tx) => agent.signTransaction(tx);
+const mrsn = (await orders.getMarkets()).find((m) => m.symbol === "MRSN");
+await orders.submitOrder(
+  agent.address, 1, "buy",
+  MersennetOrders.toChainPrice("114", mrsn).toString(), "1", "gtc",
+  agentSigner
+);
+
+// Inspect and revoke.
+console.log(await orders.getAgents(owner.address)); // { active, agents: [{ agent, expiresAtBlock, expired }], ... }
+await orders.revokeAgent(owner.address, agent.address, ownerSigner);
+
+// Keeper loop: accounts below maintenance margin, then liquidate them.
+// Anyone may call; the keeper earns half of the 1% fee into its own collateral.
+for (const account of await orders.getLiquidatable()) {
+  const ack = await orders.liquidate(owner.address, account, ownerSigner);
+  console.log("liquidate", account, ack.txHash);
+}
 ```
 
 ### Use Precompile Directly
@@ -338,7 +387,7 @@ sub.unsubscribe(blockSubId);
 ```
 
 :::note
-WebSocket may not be enabled on all nodes. If subscriptions fail, use HTTP polling.
+The public WebSocket endpoint `wss://rpc.mersennet.com` is enabled for `eth_subscribe` subscriptions (`newHeads`, `logs`); send regular JSON-RPC calls over HTTPS. A node you run yourself needs `ws.enabled = true`.
 :::
 
 ## Full API Reference
@@ -363,12 +412,24 @@ WebSocket may not be enabled on all nodes. If subscriptions fail, use HTTP polli
 | | `viewNotes(grantIdHex, opts?)` | Grant-gated encrypted notes (selective disclosure) |
 | | `viewBalances(grantIdHex, opts?)` | Grant-gated notes + spent nullifiers for reconstruction |
 | | `viewPositions(grantIdHex)` / `viewOrders(grantIdHex)` | Grant-gated trading reconstruction context |
-| `MersennetOrders` | `getOrderBook(marketId)` | Order book |
-| | `getOpenOrders(owner)` | Open orders |
-| | `getPosition(owner, marketId)` | Position |
-| | `getCollateral(owner)` | Collateral |
-| | `submitOrder(owner, marketId, side, price, size, tif, signer)` | Submit order (signed precompile tx) |
-| | `cancelOrder(owner, orderId, signer)` | Cancel order (signed precompile tx) |
-| | `depositCollateral(owner, amount, signer)` | Deposit (signed precompile tx) |
-| | `withdrawCollateral(owner, amount, signer)` | Withdraw (signed precompile tx) |
-| | `isLiquidatable(owner)` | Liquidation check |
+| `MersennetOrders` | `getOrderBook(marketId)` | Order book (`{ bids, asks }`, both sorted by ascending price) |
+| | `getOpenOrders(owner)` | Open orders for an owner |
+| | `getPosition(owner, marketId)` | Position (`{ size, entry_price }`) via `eth_call` on the precompile |
+| | `getCollateral(owner)` | Collateral balance in collateral units, via `eth_call` on the precompile |
+| | `submitOrder(owner, marketId, side, price, size, tif, signer)` | Submit an order (signed precompile tx); `owner` is the transaction sender and must be the signer's address — when the sender is an agent key, the order lands on the granting owner's account |
+| | `submitBatchOrder({ owner, orders }, signer)` | Submit several orders in sequence, each a signed tx |
+| | `cancelOrder(owner, orderId, signer)` | Cancel an order (signed precompile tx; the chain enforces ownership) |
+| | `depositCollateral(owner, amount, signer)` | Deposit (signed tx); `amount` in collateral units — use `toCollateralUnits` |
+| | `withdrawCollateral(owner, amount, signer)` | Withdraw (signed tx; the chain validates margin first); `amount` in collateral units |
+| | `collateralUnitsPerMrsn()` | Collateral units per MRSN in the current era (`10n ** 18n` before the settlement switch, `1n` from it), read from `getProtocol()` |
+| | `toCollateralUnits(mrsn)` | Human MRSN amount (`"10.5"`) → integer collateral units for the current era (floor) |
+| | `isLiquidatable(owner)` | Whether an account is below maintenance margin (`mersennet_orders_isLiquidatable`) |
+| | `getProtocol()` | Every CLOB consensus switch and live parameter: margin bps, `weiPerCollateralUnit`, insurance fund, bad debt, each market's `priceScale` |
+| | `getMarkets()` | Listed markets with tick/lot sizes and `priceScale` (on-chain price = human × `priceScale`) |
+| | `MersennetOrders.toChainPrice(human, market)` | Static: human price → on-chain price for a market (rounds to the nearest unit) |
+| | `MersennetOrders.toHumanPrice(chain, market)` | Static: on-chain price → human price for a market |
+| | `getAgents(owner)` | Agent keys granted by `owner`, plus whether delegation is active on the network |
+| | `setAgent(owner, agent, expiresAtBlock, signer)` | Let `agent` trade for `owner` until `expiresAtBlock` (0 = no expiry); signed by the owner |
+| | `revokeAgent(owner, agent, signer)` | Revoke an agent; signed by the owner that granted it |
+| | `getLiquidatable()` | Accounts below maintenance margin at the head (empty before the settlement switch) |
+| | `liquidate(keeper, account, signer)` | Liquidate `account` (anyone may call; the keeper earns half of the 1% fee into its collateral) |

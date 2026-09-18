@@ -11,7 +11,7 @@ Mersennet exposes a JSON-RPC API compatible with the Ethereum JSON-RPC specifica
 | Testnet | `https://rpc.mersennet.com` | `wss://rpc.mersennet.com` |
 
 :::tip
-The WebSocket endpoint may not be enabled on all nodes. If subscriptions fail, use HTTP RPC for polling.
+The public WebSocket endpoint `wss://rpc.mersennet.com` is enabled for `eth_subscribe` subscriptions (`newHeads`, `logs`) — send regular JSON-RPC calls over HTTPS. A node you run yourself needs `ws.enabled = true` in its config.
 :::
 
 ## Authentication
@@ -83,7 +83,7 @@ See [RPC Methods Reference](/developers/rpc/methods) for full details.
 
 | Method | Notes |
 |--------|-------|
-| `eth_subscribe` / `eth_unsubscribe` | Available over **WebSocket connections only** (not HTTP). May be disabled on some public nodes; fall back to filters/polling. |
+| `eth_subscribe` / `eth_unsubscribe` | Available over **WebSocket connections only** (not HTTP); enabled on the public endpoint `wss://rpc.mersennet.com` for `newHeads` and `logs`. Filters (`eth_newFilter` + `eth_getFilterChanges`) are the HTTP polling equivalent. |
 | `eth_maxPriorityFeePerGas` | Returns `0x0`: Mersennet uses an EIP-1559 base fee with no separate priority tip. |
 | `debug_*` / `trace_*` / `personal_*` | Not implemented. |
 

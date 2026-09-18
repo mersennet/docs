@@ -12,7 +12,7 @@ Validators perform three critical functions:
 
 2. **Consensus Participation**: All validators participate in BFT (Byzantine Fault Tolerant) consensus. Each validator re-executes every proposed block and gossips a signed finality vote for its hash; a block is finalized when votes covering more than 2/3 of total stake have been observed.
 
-3. **Network Security**: By staking MRSN tokens, validators have economic skin in the game. Malicious or negligent behavior is penalized through slashing, which protects the network from attacks and downtime.
+3. **Network Security**: By staking MRSN tokens, validators have economic skin in the game. Equivocation (signing two blocks at one height) is slashed; downtime is not — a validator that misses its leader slots is benched and then jailed, which keeps the leader rotation live without costing anyone stake.
 
 ## Proof-of-Stake (leader-gated BFT)
 
@@ -58,16 +58,17 @@ validator_reward = (block_reward × validator_stake) / total_stake
 
 The more stake you have (your own + delegations), the larger your share of each block's reward — and the higher your ranking in the active set (top 12 at each hourly epoch).
 
-## Slashing Risks
+## Slashing, benching and jailing
 
-Validators can lose stake through **slashing** for consensus violations:
+Only **equivocation** costs stake. Downtime is never slashed; it is handled by benching and jailing:
 
 | Offense | Penalty | Consequence |
 |---------|---------|-------------|
-| **Double-signing** | 5% of stake (base) | **Tombstoned**, permanently banned from the validator set |
-| **Downtime (>20% of leader slots missed in an epoch)** | none | **Jailed for the next epoch**, then back automatically |
+| **Equivocation (double-signing: two blocks at one height)** | 5% of stake (base) | **Tombstoned**, permanently banned from the validator set |
+| **3 missed leader slots in an epoch** (from block 1,569,600) | none | **Benched**: out of the leader rotation for the rest of the epoch; still voting, stake untouched |
+| **Downtime (>20% of leader slots missed in an epoch, or benched)** | none | **Jailed** for the next epoch, then back automatically. From block 1,569,600 consecutive jails escalate: 1, 2, 4, 8, 16, 24 epochs; one clean epoch resets the count |
 
-Double-signing is the only offense that costs stake; a tombstoned validator cannot rejoin the network. Downtime costs an epoch out of the set (one hour) and the rewards not earned — see [Become a Validator](/validators/become-a-validator/#parameters-testnet).
+A tombstoned validator cannot rejoin the network. Downtime costs the epochs out of the set and the rewards not earned — see [Become a Validator](/validators/become-a-validator/#parameters-testnet).
 
 :::caution
 Never run the same validator key on multiple nodes. Double-signing occurs when two nodes with the same key sign different blocks at the same height: this will get you tombstoned.

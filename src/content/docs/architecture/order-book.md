@@ -23,7 +23,7 @@ Unlike CLOBs implemented purely in Solidity (gas-intensive, slow) or on separate
 
 ## Architecture
 
-```
+```text
 +-----------------------------------------------------------------+
 |                        Single Transaction                        |
 +------------------------------------------------------------------+

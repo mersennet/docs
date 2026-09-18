@@ -56,6 +56,7 @@ export default defineConfig({
             { slug: 'getting-started/network-info' },
             { slug: 'getting-started/wallet-setup' },
             { slug: 'getting-started/faucet' },
+            { slug: 'getting-started/first-trade' },
             { slug: 'getting-started/first-transaction' },
           ],
         },
@@ -72,7 +73,8 @@ export default defineConfig({
             {
               label: 'Tutorials',
               items: [
-                { slug: 'developers/tutorials/first-private-trade', badge: { text: 'New', variant: 'success' } },
+                { slug: 'developers/tutorials/trade-via-sdk' },
+                { slug: 'developers/tutorials/first-private-trade' },
               ],
             },
             {

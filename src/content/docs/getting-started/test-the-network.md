@@ -31,14 +31,14 @@ One command on any Ubuntu 22.04+ / Debian 12+ server (2 vCPU, 4 GB RAM, 40 GB SS
 curl -fsSL https://mersennet.com/downloads/install.sh | sudo bash -s -- --operator 0xYOUR_WALLET
 ```
 
-The installer verifies the signed release, restores the latest state snapshot and starts a hardened systemd service; the node is in sync in about a minute. `--operator` is your wallet: the node signs a statement naming it, the network verifies your node automatically within about ten minutes, and it appears on the [explorer's Network page](https://explorer.mersennet.com/#/network) with your badge. Check it any time with `mersennet-check`. Guide: [Run a Node](/validators/run-a-node/).
+The installer verifies the signed release, restores the latest state snapshot and starts a hardened systemd service; the node is in sync in about a minute. `--operator` is your wallet: the node signs a statement naming it, the network verifies your node automatically within about ten minutes, and it appears on the [explorer's Network page](https://explorer.mersennet.com/network) with your badge. Check it any time with `mersennet-check`. Guide: [Run a Node](/validators/run-a-node/).
 
 ## 4. Become a validator
 
 The validator set is **permissionless** from block 1,348,200 (2026-09-14, ~08:35 UTC). With your node verified, open [trade.mersennet.com/staking](https://trade.mersennet.com/staking) with the operator wallet, choose a self-stake of at least **1,000 MRSN** (one faucet claim) and press **Bond & register**. From the next hourly epoch your node signs blocks and earns block rewards.
 
 - Top **12** by self-stake + delegations are active; the rest are on standby.
-- Miss more than **20%** of your leader slots in an epoch and you sit out the next one. Nothing is slashed for downtime.
+- Miss more than **20%** of your leader slots in an epoch and you sit out the next one (from block 1,569,600: three missed slots bench you for the rest of the epoch, and consecutive jails escalate 1, 2, 4, 8, 16, 24 epochs). Nothing is slashed for downtime; only equivocation is.
 - Leave with one click; self-stake unbonds in **7,200 blocks (~4 h)**.
 - **Keep the node on the current release.** Consensus rules change at announced heights ([schedule](/getting-started/network-info/#scheduled-protocol-switches)); the staking page shows *upgrade required* next to your node when it is behind, and the upgrade is the install command again.
 
@@ -54,7 +54,15 @@ Mersennet is EVM-equivalent: Hardhat, Foundry, ethers and viem work unchanged. D
 
 ## 7. Points
 
-Season 1 points on [trade.mersennet.com/points](https://trade.mersennet.com/points) track participation: **1 point per $1 traded** and **500 points a day** for each verified node while it is online. Liquidity and referral points are next. The [leaderboard](https://trade.mersennet.com/leaderboard) ranks traders.
+Season 1 points on [trade.mersennet.com/points](https://trade.mersennet.com/points) track participation. All of these are live:
+
+- **Trading**: 1 point per $1 traded (bots excluded).
+- **Node running**: 500 points a day for each verified node while it is online.
+- **Liquidity**: 0.1 LP point per MRSN per day deposited in the [maker vault](https://trade.mersennet.com/vault).
+- **Referrals**: the referrer earns 10% of each referee's trading points; nothing is deducted from the referee.
+- **Weekly sprint**: the top 3 traders by volume each week earn 3,000 / 2,000 / 1,000 bonus points.
+
+The [leaderboard](https://trade.mersennet.com/leaderboard) ranks traders and shows the sprint standings.
 
 ## Is it up?
 

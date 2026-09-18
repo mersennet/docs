@@ -6,11 +6,11 @@ description: "The Mersennet testnet validator set is open: register a node with 
 The validator set is **permissionless** from block **1,348,200** (2026-09-14, about 08:35 UTC). Any full node whose operator bonds the minimum self-stake can register; from the next epoch it signs blocks and earns block rewards like the genesis validators. Nothing to apply for, nobody to ask.
 
 :::tip[Before you start]
-You need a running node with your wallet configured as operator. That is [Step 2 of Run a Node](/validators/run-a-node#step-2--install-one-command) with `--operator 0xYOUR_WALLET`; the node is verified automatically within about ten minutes of being online.
+You need a running node with your wallet configured as operator. That is [Step 2 of Run a Node](/validators/run-a-node/#step-2--install-one-command) with `--operator 0xYOUR_WALLET`; the node is verified automatically within about ten minutes of being online.
 :::
 
-:::caution[Protocol switch at block 1,569,600 (~2026-09-19 19:00 UTC) — upgrade your validator before it]
-Four rules activate at that height: **benching** (a validator that misses 3 leader slots leaves the leader rotation until the epoch boundary), **escalating jail** (consecutive jails last 1, 2, 4, 8, 16, 24 epochs), **agent delegation** on the CLOB precompile, and the **price rescale** of MRSN, SOL and ARB to $0.01 ticks. All of them change how every node executes blocks, so a validator on a build from before 17 Sep forks off at the switch. A further switch follows at **block 1,605,600 (~21 Sep 16:00 UTC)** — contracts calling the CLOB act as themselves — and needs the **18 Sep release**; one upgrade to that release covers both. Upgrading is the install command again (`curl -fsSL https://mersennet.com/downloads/install.sh | sudo bash -s -- --operator 0xYOUR_WALLET`); the staking page shows *upgrade required* next to your node until it runs the current release. All scheduled switches: [Network Info](/getting-started/network-info/#scheduled-protocol-switches).
+:::caution[Protocol switch at block 1,569,600 (~Sat 19 Sep 19:00 UTC) — upgrade your validator before it]
+Four rules activate at that height: **benching** (a validator that misses 3 leader slots leaves the leader rotation until the epoch boundary), **escalating jail** (consecutive jails last 1, 2, 4, 8, 16, 24 epochs), **agent delegation** on the CLOB precompile, and the **price rescale** of MRSN, SOL and ARB to $0.01 ticks. All of them change how every node executes blocks, so a validator on a build from before 17 Sep forks off at the switch. A further switch follows at **block 1,605,600 (~Sun 20 Sep 16:00 UTC)** — settlement (one collateral unit = one MRSN, realized PnL settles, 10% initial / 5% maintenance margin with keeper liquidations) and contracts calling the CLOB act as themselves — and needs the **18 Sep release**; one upgrade to that release covers both. Upgrading is the install command again (`curl -fsSL https://mersennet.com/downloads/install.sh | sudo bash -s -- --operator 0xYOUR_WALLET`); the staking page shows *upgrade required* next to your node until it runs the current release. All scheduled switches: [Network Info](/getting-started/network-info/#scheduled-protocol-switches).
 :::
 
 ## Parameters (testnet)
@@ -22,13 +22,13 @@ Four rules activate at that height: **benching** (a validator that misses 3 lead
 | Active set size | **12** | Ranked by self-stake + delegated stake at each epoch boundary. |
 | Epoch | **1,800 blocks (1 hour)** | Boundaries at heights divisible by 1,800 (every :00 at 2-second blocks). |
 | Joining | register in one epoch → **active from the next** | A registration at 10:20 is active from 11:00. |
-| Benching | miss **3** leader slots in an epoch (and your misses are at least a tenth of what you proposed) | From block **1,569,600** (~2026-09-19 19:00 UTC): you are taken out of the **leader rotation for the rest of the epoch** — you keep voting and your stake, and the network stops spending failover rounds on you. Cleared at the boundary, where the jail rule below judges the epoch. A live validator that drops a slot now and then is never benched: three misses out of forty proposed is 7.5%, below the tenth. |
+| Benching | miss **3** leader slots in an epoch (and your misses are at least a tenth of what you proposed) | From block **1,569,600** (~Sat 19 Sep 19:00 UTC): you are taken out of the **leader rotation for the rest of the epoch** — you keep voting and your stake, and the network stops spending failover rounds on you. Cleared at the boundary, where the jail rule below judges the epoch. A live validator that drops a slot now and then is never benched: three misses out of forty proposed is 7.5%, below the tenth. |
 | Jailing | miss **>20%** of your leader slots in an epoch (judged only if you had **≥5** slots, or were benched) | You sit out the **following epoch**; eligible again after that. **No stake is lost.** From block **1,569,600** repeat offences escalate: consecutive jails last 1, 2, 4, 8, 16, then 24 epochs; one clean epoch as an active validator resets the count. |
 | Leaving | `unregisterValidator` → removed at the next epoch boundary | Self-stake unbonds for **7,200 blocks (~4 hours)**, then `withdrawUnbonded()` returns it. |
 | Key rotation | `rotateValidatorKey` with a proof from the new node key | Effective at the next epoch; delegations follow the validator. |
 | Commission | 0–100% in basis points, set at registration | Share of block rewards kept from delegators. |
 | Slashing | **only for equivocation** (voting for two blocks at one height), 5% | Downtime is never slashed on this testnet — it is jailed. |
-| Rewards | block rewards accrue to the **operator wallet** from block **1,440,000** (~2026-09-16 13:15 UTC) | Until then they accrue to the node identity (the node key). The switch is a consensus parameter (`validator_set.rewards_to_operator_height`); nothing to do on your side. |
+| Rewards | block rewards accrue to the **operator wallet** from block **1,440,000** (16 Sep) | Until then they accrued to the node identity (the node key). The switch is a consensus parameter (`validator_set.rewards_to_operator_height`); nothing to do on your side. |
 
 Unbonding of *delegated* stake also takes 7,200 blocks, so one number applies everywhere: about four hours.
 
@@ -112,7 +112,7 @@ curl -s https://rpc.mersennet.com -X POST -H 'Content-Type: application/json' \
   -d '{"jsonrpc":"2.0","id":1,"method":"mersennet_validatorSet","params":[]}'
 ```
 
-The [explorer's Validators page](https://explorer.mersennet.com/#/validators) renders the same data; `mersennet-check` on your server prints your node's identity and status.
+The [explorer's Validators page](https://explorer.mersennet.com/validators) renders the same data; `mersennet-check` on your server prints your node's identity and status.
 
 ## Running well
 
