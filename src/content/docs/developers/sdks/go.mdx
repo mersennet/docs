@@ -59,6 +59,17 @@ func main() {
 }
 ```
 
+## Markets, price scale and protocol parameters
+
+```go
+markets, _ := orders.GetMarkets()            // Market{ID, Symbol, TickSize, LotSize, LastPrice, PriceScale, Status}
+chain := mersennet.ToChainPrice(115.37, 100) // 11537 at scale 100 (on-chain price = human × PriceScale)
+human := mersennet.ToHumanPrice(11537, 100)  // 115.37
+protocol, _ := orders.GetProtocol()          // switches, margin bps, wei per collateral unit, insurance fund, bad debt
+agents, _ := orders.GetAgents(owner)         // agent keys granted by owner
+underwater, _ := orders.GetLiquidatable()    // keeper feed: accounts below maintenance margin
+```
+
 ## Order book
 
 Read the live CLOB through the `Orders` client:
