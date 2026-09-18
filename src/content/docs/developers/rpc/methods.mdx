@@ -384,7 +384,7 @@ Returns logs matching a filter.
 
 1. `filterObject`: `{ fromBlock?, toBlock?, address?, topics? }`
 
-`fromBlock..toBlock` may span at most **2,000 blocks** per call (about 70 minutes); page longer histories. A larger span is rejected with `-32602 block range too large`.
+`fromBlock..toBlock` may span at most **2,000 blocks** per call (about 70 minutes); page longer histories. A larger span is rejected with `-32602 block range too large` from the **21 Sep** release; until then the public nodes only hold the most recent ~2,000 blocks of logs, so wider spans simply return what is in that window.
 
 ```bash
 curl -X POST https://rpc.mersennet.com \
