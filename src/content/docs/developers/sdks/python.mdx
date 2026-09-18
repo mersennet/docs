@@ -192,6 +192,18 @@ tx_hash = provider.send_raw_transaction("0xSignedTxHex")
 
 ## MersennetOrders
 
+### Markets, price scale and protocol parameters
+
+```python
+markets = orders.get_markets()          # [{'id', 'symbol', 'tick_size', 'lot_size', 'last_price', 'price_scale', 'status'}]
+mrsn = next(m for m in markets if m["symbol"] == "MRSN")
+chain_price = orders.to_chain_price(115.37, mrsn["price_scale"])   # 11537 at scale 100
+human = orders.to_human_price(11537, mrsn["price_scale"])           # 115.37
+protocol = orders.get_protocol()        # switches, margin bps, wei per collateral unit, insurance fund, bad debt
+agents = orders.get_agents(owner)       # agent keys granted by `owner`
+underwater = orders.get_liquidatable()  # keeper feed
+```
+
 ### Get Order Book
 
 ```python

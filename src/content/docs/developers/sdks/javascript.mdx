@@ -169,6 +169,27 @@ For transactions from a wallet (e.g., browser), use ethers.js or viem with the M
 
 MersennetOrders is Mersennet's on-chain order book (CLOB). Use it for limit orders, positions, and collateral.
 
+### Markets, price scale and protocol parameters
+
+```javascript
+// On-chain prices are human × priceScale (1 = integer prices; 100 on MRSN/SOL/ARB
+// from block 1,569,600 → $0.01 ticks). Never assume integers: read the scale.
+const markets = await orders.getMarkets();
+const mrsn = markets.find((m) => m.symbol === 'MRSN');
+const chainPrice = MersennetOrders.toChainPrice('115.37', mrsn); // 11537n at scale 100
+const human = MersennetOrders.toHumanPrice(11537n, mrsn);         // 115.37
+
+// Every consensus switch and live parameter (margin bps, wei per collateral
+// unit, insurance fund, bad debt, market scales) in one call.
+const protocol = await orders.getProtocol();
+console.log(protocol.settlementActive, protocol.maintenanceMarginBps);
+
+// Agent delegation: grants issued by a wallet (one-click trading keys).
+const agents = await orders.getAgents(owner);
+// Keeper feed: accounts below maintenance margin right now.
+const underwater = await orders.getLiquidatable();
+```
+
 ### Get Order Book
 
 ```javascript
