@@ -255,7 +255,7 @@ Estimates gas for a transaction.
 Returns block by block number.
 
 :::note
-Only a recent window of blocks is served from memory; requests for older heights return `null`. Use an indexer for historical data.
+Public nodes keep every block on disk and serve any height (from the release rolling out on **21 Sep**; until then only the most recent ~2,000 blocks answer and older heights return `null`). `eth_getBlockByHash`, `eth_getTransactionByHash` and `eth_getTransactionReceipt` are backed by a persisted hash index over the same history. Nodes bootstrapped from a state snapshot hold blocks from their snapshot height onwards.
 :::
 
 After privacy activation, this method remains public only for
@@ -383,6 +383,8 @@ Returns logs matching a filter.
 **Parameters:**
 
 1. `filterObject`: `{ fromBlock?, toBlock?, address?, topics? }`
+
+`fromBlock..toBlock` may span at most **2,000 blocks** per call (about 70 minutes); page longer histories. A larger span is rejected with `-32602 block range too large`.
 
 ```bash
 curl -X POST https://rpc.mersennet.com \
