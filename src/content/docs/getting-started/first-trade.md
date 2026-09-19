@@ -70,7 +70,7 @@ Two protocol switches land at announced block heights (about 2.1 s per block; li
 - **Block 1,569,600 (Sat 19 Sep, about 19:00 UTC)**: agent delegation (one-click trading), $0.01 ticks on MRSN, SOL and ARB, validator benching and escalating jail.
 - **Block 1,605,600 (Sun 20 Sep, about 16:00 UTC)**: settlement. One collateral unit becomes one MRSN, realized PnL settles into collateral at every fill, initial margin is 10% (10× maximum leverage) and maintenance margin 5% with keeper liquidations. Before this height the chain enforces no margin. Maker vault deposits open at the same height.
 
-Your collateral and open positions carry over; the terminal converts units for the current era. Full details: [Scheduled protocol switches](/getting-started/network-info/#scheduled-protocol-switches).
+Your collateral and open positions carry over; the terminal converts units for the current era. Full details: [Scheduled protocol switches](/getting-started/network-info/#protocol-upgrades).
 :::
 
 ## Next steps
