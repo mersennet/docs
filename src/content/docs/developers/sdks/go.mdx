@@ -10,19 +10,15 @@ This page covers the **transparent** surface (`eth_*` / `mersennet_*` / `mersenn
 
 ## Installation
 
-While the SDK repository is private, vendor it locally and point Go at your checkout:
+The SDK is public on GitHub ([mersennet/sdk-go](https://github.com/mersennet/sdk-go), MIT):
 
 ```bash
-git clone <your-access-url>/mersennet/sdk-go
+go get github.com/mersennet/sdk-go@main
 ```
 
-```go title="go.mod"
-require github.com/mersennet/sdk-go v0.0.0
-
-replace github.com/mersennet/sdk-go => ../sdk-go
+```go
+import mersennet "github.com/mersennet/sdk-go"
 ```
-
-Once the repository is public, a plain `go get github.com/mersennet/sdk-go` will work.
 
 ## Quick Start
 

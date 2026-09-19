@@ -28,7 +28,7 @@ By the end of this tutorial you will have:
 
 - Node.js 20+ (the SDK targets modern `fetch` and `bigint`).
 - Testnet MRSN from the [faucet](/getting-started/faucet/).
-- The SDK: build from the monorepo (`cd sdk-ts && npm install && npm run build`, then `npm link`). Publication to npm as `@mersennet/sdk` is pending.
+- The SDK: `npm install github:mersennet/sdk-ts` (public, MIT; npm publication as `@mersennet/sdk` is pending).
 
 :::tip[When a call fails]
 Every RPC error code Mersennet returns is catalogued in the [error reference](/developers/rpc/errors/). Keep it open: the codes are specific, and the `data` field usually names the exact problem.
