@@ -28,3 +28,7 @@ The canonical home of this site is
 [mersennet/docs](https://github.com/mersennet/docs); it is mirrored in the
 [mersennet/mersennet](https://github.com/mersennet/mersennet) monorepo under
 `docs-site/`.
+
+## License
+
+MIT — see [LICENSE](LICENSE). Copyright (c) 2026 Mersennet Foundation. Security reports: security@mersennet.com ([SECURITY.md](SECURITY.md)).
