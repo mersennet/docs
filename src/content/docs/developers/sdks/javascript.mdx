@@ -78,23 +78,13 @@ curl -X POST https://rpc.mersennet.com \
 
 ## Installation
 
-`@mersennet/sdk` is **not published to npm yet**; `npm install @mersennet/sdk` does not work. Install it from a checkout of the Mersennet monorepo — the package lives in `sdk-ts/`:
+The SDK is public on GitHub ([mersennet/sdk-ts](https://github.com/mersennet/sdk-ts), MIT). Until it is on npm, install it straight from the repository:
 
 ```bash
-# Build the package once
-cd /path/to/mersennet/sdk-ts
-npm install
-npm run build
+npm install github:mersennet/sdk-ts
 ```
 
-Then add it to your project as a local dependency (or `npm link` it):
-
-```bash
-# From your project
-npm install /path/to/mersennet/sdk-ts
-```
-
-The import name is `@mersennet/sdk` in both cases.
+Or from a checkout (`npm install && npm run build` in `sdk-ts/`, then `npm install /path/to/sdk-ts`). The import name is `@mersennet/sdk` either way.
 
 ## Quick Start
 

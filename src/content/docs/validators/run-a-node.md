@@ -185,8 +185,8 @@ The bundle README lists the binary's sha256; it matches `sha256sum /opt/mersenne
 
 ### Build from source
 
-:::note[Repository access]
-The `mersennet/mersennet` repository is private during the current testnet phase. You do not need it to run a node — use the release bundle. If you want the source, request access via [GitHub](https://github.com/mersennet) or the community channels in the [FAQ](/resources/faq/).
+:::note[Source code]
+The node source (`mersennet/mersennet`) is being published under the Business Source License 1.1: read it, audit it, build it and run it as a Mersennet node freely; other networks need a commercial license (licensing@mersennet.com). Until the repository is public, use the signed release bundle below — it is the same build the fleet runs.
 :::
 
 Requires Rust 1.85+ (edition 2024), `build-essential`, `pkg-config`, `libssl-dev`, Git:

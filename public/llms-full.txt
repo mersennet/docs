@@ -4256,19 +4256,15 @@ This page covers the **transparent** surface (`eth_*` / `mersennet_*` / `mersenn
 
 ## Installation
 
-While the SDK repository is private, vendor it locally and point Go at your checkout:
+The SDK is public on GitHub ([mersennet/sdk-go](https://github.com/mersennet/sdk-go), MIT):
 
 ```bash
-git clone <your-access-url>/mersennet/sdk-go
+go get github.com/mersennet/sdk-go@main
 ```
 
-```go title="go.mod"
-require github.com/mersennet/sdk-go v0.0.0
-
-replace github.com/mersennet/sdk-go => ../sdk-go
+```go
+import mersennet "github.com/mersennet/sdk-go"
 ```
-
-Once the repository is public, a plain `go get github.com/mersennet/sdk-go` will work.
 
 ## Quick Start
 
@@ -4541,23 +4537,13 @@ curl -X POST https://rpc.mersennet.com \
 
 ## Installation
 
-`@mersennet/sdk` is **not published to npm yet**; `npm install @mersennet/sdk` does not work. Install it from a checkout of the Mersennet monorepo — the package lives in `sdk-ts/`:
+The SDK is public on GitHub ([mersennet/sdk-ts](https://github.com/mersennet/sdk-ts), MIT). Until it is on npm, install it straight from the repository:
 
 ```bash
-# Build the package once
-cd /path/to/mersennet/sdk-ts
-npm install
-npm run build
+npm install github:mersennet/sdk-ts
 ```
 
-Then add it to your project as a local dependency (or `npm link` it):
-
-```bash
-# From your project
-npm install /path/to/mersennet/sdk-ts
-```
-
-The import name is `@mersennet/sdk` in both cases.
+Or from a checkout (`npm install && npm run build` in `sdk-ts/`, then `npm install /path/to/sdk-ts`). The import name is `@mersennet/sdk` either way.
 
 ## Quick Start
 
@@ -4981,13 +4967,13 @@ curl -X POST https://rpc.mersennet.com \
 
 ## Installation
 
-From PyPI (when published):
+The SDK is public on GitHub ([mersennet/sdk-python](https://github.com/mersennet/sdk-python), MIT). Until it is on PyPI, install it straight from the repository:
 
 ```bash
-pip install mersennet-sdk
+pip install git+https://github.com/mersennet/sdk-python.git
 ```
 
-From source (Mersennet monorepo):
+From a checkout:
 
 ```bash
 cd sdk-python
@@ -5322,7 +5308,7 @@ By the end of this tutorial you will have:
 
 - Node.js 20+ (the SDK targets modern `fetch` and `bigint`).
 - Testnet MRSN from the [faucet](/getting-started/faucet/).
-- The SDK: build from the monorepo (`cd sdk-ts && npm install && npm run build`, then `npm link`). Publication to npm as `@mersennet/sdk` is pending.
+- The SDK: `npm install github:mersennet/sdk-ts` (public, MIT; npm publication as `@mersennet/sdk` is pending).
 
 :::tip[When a call fails]
 Every RPC error code Mersennet returns is catalogued in the [error reference](/developers/rpc/errors/). Keep it open: the codes are specific, and the `data` field usually names the exact problem.
@@ -5577,7 +5563,7 @@ On-chain prices are `human price × priceScale`. `priceScale` is 1 for every mar
 
 ## TypeScript
 
-The TypeScript SDK is not on npm yet; install it from the monorepo as described in [JavaScript SDK → Installation](/developers/sdks/javascript/#installation). Signing is delegated to you through a `TxSigner` callback — here an ethers `Wallet`.
+The TypeScript SDK is not on npm yet; install it from GitHub (`npm install github:mersennet/sdk-ts`) as described in [JavaScript SDK → Installation](/developers/sdks/javascript/#installation). Signing is delegated to you through a `TxSigner` callback — here an ethers `Wallet`.
 
 ```typescript title="trade.ts"
 import { Wallet } from 'ethers';
@@ -6161,7 +6147,7 @@ console.log('Confirmed!');
 Prefer the official SDKs or raw JSON-RPC? The same transfer in TypeScript (`@mersennet/sdk`), Python (`mersennet-sdk`), Go, and curl:
 
 :::note[SDK availability]
-The Mersennet SDKs are not yet published to npm/PyPI or public GitHub — they currently live in the monorepo (`sdk-ts`, `sdk-python`, `sdk-go`). Until packages are published, use ethers.js/viem or raw JSON-RPC as shown above.
+The Mersennet SDKs are public on GitHub — [sdk-ts](https://github.com/mersennet/sdk-ts), [sdk-python](https://github.com/mersennet/sdk-python), [sdk-go](https://github.com/mersennet/sdk-go) (MIT). They are not on npm/PyPI yet; install from the repositories (see each SDK page). Everything below also works with ethers.js/viem or raw JSON-RPC.
 :::
 
 <Tabs syncKey="lang">
@@ -8313,8 +8299,8 @@ The bundle README lists the binary's sha256; it matches `sha256sum /opt/mersenne
 
 ### Build from source
 
-:::note[Repository access]
-The `mersennet/mersennet` repository is private during the current testnet phase. You do not need it to run a node — use the release bundle. If you want the source, request access via [GitHub](https://github.com/mersennet) or the community channels in the [FAQ](/resources/faq/).
+:::note[Source code]
+The node source (`mersennet/mersennet`) is being published under the Business Source License 1.1: read it, audit it, build it and run it as a Mersennet node freely; other networks need a commercial license (licensing@mersennet.com). Until the repository is public, use the signed release bundle below — it is the same build the fleet runs.
 :::
 
 Requires Rust 1.85+ (edition 2024), `build-essential`, `pkg-config`, `libssl-dev`, Git:
