@@ -85,6 +85,12 @@ Points track testnet participation on [trade.mersennet.com/points](https://trade
 
 Mersennet Trade is the native perpetuals and spot trading terminal, built on the on-chain CLOB precompile (`MersennetOrders`) for explicit bid/ask price discovery and limit/market orders. See [Mersennet Trade](/ecosystem/trade).
 
+## Security
+
+### How do I report a vulnerability? {#security}
+
+Email **security@mersennet.com** (or message an admin in the [Telegram group](https://t.me/Mersennet) and ask for a private channel). Please include steps to reproduce, the affected component (node, precompile, terminal, API, explorer, faucet) and, for chain issues, the block height. We acknowledge within 48 hours and keep you informed until the fix ships; credit in the changelog is yours if you want it. Do not test against other users' funds or run denial-of-service traffic — this is a public testnet, but people are using it. Every public hostname publishes the same contact at `/.well-known/security.txt`.
+
 ---
 
 Have more questions? Check the [Getting Started](/getting-started/overview) guides. Node operators: [Run a Node](/validators/run-a-node/) installs a node in one command and [Become a Validator](/validators/become-a-validator/) explains registration — no application needed. Questions and discussion: the official Telegram chat [t.me/Mersennet](https://t.me/Mersennet). Bug reports and product feedback go through the [feedback page in the trade terminal](https://trade.mersennet.com/feedback).
