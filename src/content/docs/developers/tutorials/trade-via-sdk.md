@@ -24,7 +24,7 @@ On-chain prices are `human price × priceScale`. `priceScale` is 1 for every mar
 
 ## TypeScript
 
-The TypeScript SDK is not on npm yet; install it from GitHub (`npm install github:mersennet/sdk-ts`) as described in [JavaScript SDK → Installation](/developers/sdks/javascript/#installation). Signing is delegated to you through a `TxSigner` callback — here an ethers `Wallet`.
+The TypeScript SDK is not on npm yet; install the release tag from GitHub (`npm install github:mersennet/sdk-ts#semver:^0.1`) as described in [JavaScript SDK → Installation](/developers/sdks/javascript/#installation). Signing is delegated to you through a `TxSigner` callback — here an ethers `Wallet`.
 
 ```typescript title="trade.ts"
 import { Wallet } from 'ethers';
