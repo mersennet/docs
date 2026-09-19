@@ -20,5 +20,6 @@
   },
   "devDependencies": {
     "glob": "^11.0.0"
-  }
+  },
+  "license": "MIT"
 }
