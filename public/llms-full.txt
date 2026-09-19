@@ -7759,7 +7759,15 @@ The active set is recomputed **deterministically from chain state** at every epo
 3. Press **Bond & register**. One transaction: the terminal already holds your node's signed proof, so there is nothing to copy.
 4. The table shows your entry as **pending**, then **active** at the next :00. Missed and proposed slots for the current epoch are live.
 
-From the same panel you can **Add stake** or **Unregister**; delegators use the staking table above it.
+## Manage your node from the terminal
+
+Once registered, opening [/staking](https://trade.mersennet.com/staking) with the operator wallet shows a **Your node** card at the top of the page: status, rank, build, whether the node is in sync, self-stake, delegated stake, voting stake, commission and this epoch's slots.
+
+- **Add self-stake**: enter an amount in the card and press **Add stake** (one transaction from the operator wallet; it counts toward your rank from the next epoch).
+- **Delegate to your node**: delegation comes from the staking table below the card — any wallet, the operator's included. Your validator's row is marked *your node*; enter an amount and press **Delegate**. Delegators earn your block rewards minus your commission.
+- **Unregister**: bottom of the card; your entry leaves the set at the next epoch boundary and the self-stake unbonds over ~4 hours.
+
+Without the terminal, the same calls are on the precompile below (`addSelfStake`, `delegate`, `unregisterValidator`).
 
 ## Register without the terminal
 
