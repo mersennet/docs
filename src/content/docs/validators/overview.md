@@ -8,7 +8,7 @@ Validators are the backbone of Mersennet. They run full nodes, participate in co
 
 Validators perform three critical functions:
 
-1. **Block Production**: Validators take turns proposing new blocks containing transactions, order submissions, and state updates. The proposer is selected by deterministic round-robin over the sorted validator set: `validators[(height + round) mod count]`, where `round` advances only on leader timeout.
+1. **Block Production**: Validators take turns proposing new blocks containing transactions, order submissions, and state updates. The proposer is selected by deterministic round-robin over the sorted active set (minus benched validators, since block 1,569,600): `validators[(height + round) mod count]`, where `round` advances only on leader timeout.
 
 2. **Consensus Participation**: All validators participate in BFT (Byzantine Fault Tolerant) consensus. Each validator re-executes every proposed block and gossips a signed finality vote for its hash; a block is finalized when votes covering more than 2/3 of total stake have been observed.
 
@@ -56,7 +56,7 @@ validator_reward = (block_reward × validator_stake) / total_stake
 - **Halving**: Every 33,550,336 blocks (~2.1 years at ~2 s blocks), the reward halves
 - **Distribution**: The validator's share is credited directly each block to the **operator wallet** (from block 1,440,000; the node identity before that), with no claiming required; delegator rewards accrue in the staking precompile and are collected via `claimRewards`
 
-The more stake you have (your own + delegations), the larger your share of each block's reward — and the higher your ranking in the active set (top 12 at each hourly epoch).
+The more stake you have (your own + delegations), the larger your share of each block's reward — and the higher your ranking in the active set (top 12 at each epoch of 1,800 blocks, ~1 h).
 
 ## Slashing, benching and jailing
 
@@ -80,8 +80,8 @@ Before running a validator, ensure you meet:
 
 | Category | Requirement |
 |----------|-------------|
-| **Hardware** | 4 CPU cores, 8 GB RAM, 100 GB SSD, 100 Mbps network |
-| **Software** | 64-bit Linux, glibc 2.34+ (Ubuntu 22.04+ / Debian 12+) for the [release bundle](https://mersennet.com/downloads/); Rust 1.85+ only if building from source |
+| **Hardware** | Minimum 2 cores / 4 GB RAM / 40 GB SSD; recommended 4 cores / 8 GB / 100 GB SSD; 10 Mbps+ with UDP and TCP 30303 open |
+| **Software** | 64-bit Linux, glibc 2.34+ (Ubuntu 22.04+ / Debian 12+) for the [release bundle](https://mersennet.com/downloads/); Rust 1.88+ only if building from source (once the repository is published) |
 | **Stake** | 1,000 MRSN self-stake to register (open set since block 1,348,200); the top 12 by self + delegated stake are active, recomputed every hour — see [Become a Validator](/validators/become-a-validator/) |
 | **Operational** | 24/7 uptime, monitoring, key management, backup procedures |
 

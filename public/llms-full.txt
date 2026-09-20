@@ -16,7 +16,7 @@ Mersennet uses **leader-gated BFT proof-of-stake**: one elected validator produc
 | **Consensus** | Leader-gated BFT proof-of-stake, single elected leader per height (HotStuff-2 pipeline: roadmap, not live) |
 | **Block Time** | ~2 seconds on the current testnet (configurable per network) |
 | **Finality** | ≥ 2/3 of total stake, signed votes gossiped per block |
-| **Failover** | Timeout-based round rotation to the next leader (8 s per round since block 1,440,000); since block 1,569,600 a leader that missed 3 slots in an epoch is benched until the epoch boundary |
+| **Failover** | Timeout-based round rotation to the next leader (8 s per round since block 1,400,550; 19 s before); since block 1,569,600 a leader that missed 3 slots in an epoch is benched until the epoch boundary |
 | **Implementation** | Rust |
 
 ## Validator Selection
@@ -400,7 +400,7 @@ Complete reference of all configuration parameters with their default values.
 | `escalation_step_bps` | `u64` | `25` | Penalty increase per repeated offense (0.25%) |
 | `escalation_max_bps` | `u64` | `1000` | Maximum escalated penalty (10%) |
 | `round_timeout_ms` | `u64` | `500` | Consensus round timeout in milliseconds |
-| `unbonding_period` | `u64` | `2` | Blocks before unbonded stake is withdrawable (code default; the public testnet configs use 100) |
+| `unbonding_period` | `u64` | `2` | Consensus-engine unbonding in blocks (code default; the canonical testnet config also sets 2). The open validator set's staking unbonding is separate: `validator_set.unbonding_blocks` = 7,200 (~4 h). |
 
 ### `token_economics`: Reward & Supply
 
@@ -7830,7 +7830,7 @@ source: https://docs.mersennet.com/validators/become-a-validator/
 ---
 
 
-The validator set is **permissionless** since block **1,348,200** (Mon 14 Sep 2026, 09:32 UTC). Any full node whose operator bonds the minimum self-stake can register; from the next epoch it signs blocks and earns block rewards like the genesis validators. Nothing to apply for, nobody to ask.
+The validator set is **permissionless** since block **1,348,200** (Mon 14 Sep 2026, 09:32 UTC). Any full node whose operator bonds the minimum self-stake can register; from the next epoch it signs blocks and earns block rewards like the genesis validators. No application or approval is required.
 
 :::tip[Before you start]
 You need a running node with your wallet configured as operator. That is [Step 2 of Run a Node](/validators/run-a-node/#step-2--install-one-command) with `--operator 0xYOUR_WALLET`; the node is verified automatically within about ten minutes of being online.
@@ -7847,9 +7847,9 @@ The previous upgrade activated at block 1,569,600 on Sat 19 Sep 19:23 UTC. Four 
 | Activation | block **1,348,200** (14 Sep 2026, 09:32 UTC) | Registration and epoch transitions start here. Before that the four genesis validators are the set. |
 | Minimum self-stake | **1,000 MRSN** | One faucet claim (1,000 + 1 MRSN for gas). Escrowed by the staking precompile when you register; the bond is taken from your balance after gas, so keep a little above the bond. |
 | Active set size | **12** | Ranked by self-stake + delegated stake at each epoch boundary. |
-| Epoch | **1,800 blocks (1 hour)** | Boundaries at heights divisible by 1,800 (every :00 at 2-second blocks). |
-| Joining | register in one epoch → **active from the next** | A registration at 10:20 is active from 11:00. |
-| Benching | miss **3** leader slots in an epoch (and your misses are at least a tenth of what you proposed) | From block **1,569,600** (~Sat 19 Sep 19:00 UTC): you are taken out of the **leader rotation for the rest of the epoch** — you keep voting and your stake, and the network stops spending failover rounds on you. Cleared at the boundary, where the jail rule below judges the epoch. A live validator that drops a slot now and then is never benched: three misses out of forty proposed is 7.5%, below the tenth. |
+| Epoch | **1,800 blocks (~1 hour; ~63 min at the observed ~2.1 s)** | Boundaries at heights divisible by 1,800 — they drift off the clock hour; the next one is `nextEpochAt` in `mersennet_validatorSet` and on the staking page. |
+| Joining | register in one epoch → **active from the next** | A registration in epoch N is active from the first block of epoch N+1, at most ~63 minutes later. |
+| Benching | miss **3** leader slots in an epoch (and your misses are at least a tenth of what you proposed) | Since block **1,569,600** (Sat 19 Sep 2026, 19:23 UTC): you are taken out of the **leader rotation for the rest of the epoch** — you keep voting and your stake, and the network stops spending failover rounds on you. Cleared at the boundary, where the jail rule below judges the epoch. A live validator that drops a slot now and then is never benched: three misses out of forty proposed is 7.5%, below the tenth. |
 | Jailing | miss **>20%** of your leader slots in an epoch (judged only if you had **≥5** slots, or were benched) | You sit out the **following epoch**; eligible again after that. **No stake is lost.** From block **1,569,600** repeat offences escalate: consecutive jails last 1, 2, 4, 8, 16, then 24 epochs; one clean epoch as an active validator resets the count. |
 | Leaving | `unregisterValidator` → removed at the next epoch boundary | Self-stake unbonds for **7,200 blocks (~4 hours)**, then `withdrawUnbonded()` returns it. |
 | Key rotation | `rotateValidatorKey` with a proof from the new node key | Effective at the next epoch; delegations follow the validator. |
@@ -7868,7 +7868,7 @@ Unbonding of *delegated* stake also takes 7,200 blocks, so one number applies ev
 | pending | next epoch boundary, ranked below the top 12 | **standby** |
 | standby | more self-stake or delegations at a boundary | **active** |
 | active | outranked at a boundary | **standby** |
-| active | missed 3 leader slots (since block 1,569,600) | **benched** for the rest of the epoch — still active, still voting, not in the leader rotation |
+| active | missed 3 leader slots, at least a tenth of what it proposed (since block 1,569,600) | **benched** for the rest of the epoch — still active, still voting, not in the leader rotation |
 | active | missed > 20% of ≥ 5 slots in the epoch (or was benched) | **jailed** (one epoch; 2, 4, 8… for consecutive offences since block 1,569,600) |
 | jailed | when the jail ends | **active** or **standby** by rank |
 | active / standby | `unregisterValidator` | **exiting** |
@@ -7888,8 +7888,8 @@ The active set is recomputed **deterministically from chain state** at every epo
 
 1. Open [trade.mersennet.com/staking](https://trade.mersennet.com/staking) with the operator wallet.
 2. Under **Validator set → Register a node** your verified node is listed (host, identity, build). Choose the self-stake (≥ 1,000 MRSN) and a commission.
-3. Press **Bond & register**. One transaction: the terminal already holds your node's signed proof, so there is nothing to copy.
-4. The table shows your entry as **pending**, then **active** at the next :00. Missed and proposed slots for the current epoch are live.
+3. Press **Bond 1,000 MRSN & register**. One transaction: the terminal already holds your node's signed proof, so there is nothing to copy.
+4. The table shows your entry as **pending**, then **active** at the next epoch boundary. Missed and proposed slots for the current epoch are live.
 
 ## Manage your node from the terminal
 
@@ -7951,7 +7951,7 @@ The [explorer's Validators page](https://explorer.mersennet.com/validators) rend
 
 ## Running well
 
-- **Stay online.** A validator that is down costs everyone a failover round per missed slot (8 seconds from block 1,440,000; 19 before) — until it is benched after three misses (since block 1,569,600) and jailed at the epoch boundary. Your node starts proposing and voting by itself at the boundary where it becomes active — the log says `this node is in the active validator set: proposing blocks when leader`. Restart quickly after upgrades (`sudo systemctl restart mersennet` is graceful; the node finishes its in-flight block).
+- **Stay online.** A validator that is down costs everyone a failover round per missed slot (8 seconds since block 1,400,550; 19 s before) — until it is benched after three misses (since block 1,569,600) and jailed at the epoch boundary. Your node starts proposing and voting by itself at the boundary where it becomes active — the log says `this node is in the active validator set: proposing blocks when leader`. Restart quickly after upgrades (`sudo systemctl restart mersennet` is graceful; the node finishes its in-flight block).
 - **Upgrade when `mersennet-check` or the staking page says so — always before an announced switch height.** Re-running the installer keeps your keys, data and operator setting and refreshes the consensus sections of the config from the canonical one.
 - **If it wedges, it restarts itself.** Since the 16 Sep build the node exits when its head has not moved for five minutes while the network is 60+ blocks ahead, and systemd restarts it; the watchdog never fires on a network-wide halt (nothing is ahead).
 - **Back up `keys/node_key.json`.** It *is* your validator identity. If it leaks, rotate with `rotateValidatorKey` from a fresh node.
@@ -7962,7 +7962,7 @@ The [explorer's Validators page](https://explorer.mersennet.com/validators) rend
 
 **Do I need 1,000,000 MRSN like the genesis validators?** No. Their stake was written into the genesis file; the minimum for everyone else is 1,000 MRSN.
 
-**My node is verified but not in the validator list.** Verification (points, explorer badge) and registration are separate steps. Register on the staking page; you appear as `pending` immediately and `active` at the next hour.
+**My node is verified but not in the validator list.** Verification (points, explorer badge) and registration are separate steps. Register on the staking page; you appear as `pending` immediately and `active` at the next epoch boundary (at most ~63 minutes).
 
 **Can I run several validators?** Yes, one registration per node identity, each with its own self-stake. For node-runner points only one node per operator counts.
 
@@ -8001,7 +8001,7 @@ Traders can link the same bot from the account panel on the [trade page](https:/
 
 ## Overview
 
-A typical monitoring stack includes:
+Beyond the built-in alerts above, the [status page](https://status.mersennet.com/status/mersennet) shows the public infrastructure and `mersennet-check` gives a one-screen local check. For dashboards and your own alert rules, the usual stack is:
 
 | Component | Purpose |
 |-----------|---------|
@@ -8035,8 +8035,7 @@ The full metric list is exposed at the node's `/metrics` endpoint (served on the
 sudo apt update
 sudo apt install prometheus
 
-# Or use the official binary
-wget https://github.com/prometheus/prometheus/releases/download/v2.45.0/prometheus-2.45.0.linux-amd64.tar.gz
+# Or download the current release from https://prometheus.io/download/ and unpack it
 tar xvfz prometheus-*.tar.gz
 cd prometheus-*
 ```
@@ -8057,7 +8056,7 @@ scrape_configs:
       - targets: ['localhost:8545']  # Mersennet RPC port (serves /metrics)
 ```
 
-Mersennet serves Prometheus metrics at `GET /metrics` on the JSON-RPC port (`rpc.addr`, default 8545). The RPC server must be enabled (`rpc.enabled: true`).
+Mersennet serves Prometheus metrics at `GET /metrics` on the JSON-RPC port (`rpc.addr`, default 8545). The installed service already starts RPC on `127.0.0.1:8545` (`--rpc` in the unit), so `/metrics` is available locally out of the box; only manual runs need `rpc.enabled: true` or `--rpc`.
 
 ### 3. Start Prometheus
 
@@ -8071,9 +8070,10 @@ Mersennet serves Prometheus metrics at `GET /metrics` on the JSON-RPC port (`rpc
 
 ```bash
 # Ubuntu/Debian
-sudo apt install -y software-properties-common
-sudo add-apt-repository "deb https://packages.grafana.com/oss/deb stable main"
-wget -q -O - https://packages.grafana.com/gpg.key | sudo apt-key add -
+sudo apt install -y apt-transport-https software-properties-common wget
+sudo mkdir -p /etc/apt/keyrings
+wget -q -O - https://apt.grafana.com/gpg.key | gpg --dearmor | sudo tee /etc/apt/keyrings/grafana.gpg > /dev/null
+echo "deb [signed-by=/etc/apt/keyrings/grafana.gpg] https://apt.grafana.com stable main" | sudo tee /etc/apt/sources.list.d/grafana.list
 sudo apt update
 sudo apt install grafana
 sudo systemctl enable grafana-server
@@ -8095,14 +8095,14 @@ Create panels for:
 
 - **Block height**: Graph of `mersennet_height` over time
 - **Total stake**: Gauge or stat for `mersennet_total_stake`
-- **Blocks produced**: Rate of `mersennet_blocks_produced_total`
+- **Blocks this node proposed**: rate of `mersennet_blocks_produced_total` (stays at 0 on a full node or a validator outside the active set — track `mersennet_height` for liveness)
 - **Pending transactions**: `mersennet_mempool_size`
 - **Active validators**: `mersennet_validators_active`
 - **Slashing events**: `mersennet_slashing_events` (critical for validators)
 
 ## Alert Rules
 
-Configure Prometheus alerting to catch issues before they cause slashing or downtime.
+Configure Prometheus alerting to catch issues before they cost you leader slots (benching, jailing) or — for equivocation only — stake.
 
 ### Prometheus Alert Rules
 
@@ -8130,9 +8130,9 @@ groups:
           severity: warning
         annotations:
           summary: "Validator slashing evidence recorded"
-          description: "Slashing evidence (timeout or double-sign) recorded in the last hour."
+          description: "Slashing evidence (double-sign) recorded in the last hour."
 
-      # Low disk space
+      # Low disk space (needs node_exporter on the host for the node_* metrics)
       - alert: MersennetLowDiskSpace
         expr: (node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"}) < 0.1
         for: 5m
@@ -8172,9 +8172,9 @@ To send alerts to email, Slack, or PagerDuty:
 
 | Practice | Recommendation |
 |----------|----------------|
-| **Uptime** | Aim for 99.9%+: missing more than 20% of your leader slots in an epoch jails you for the next one (no stake penalty, but no rewards either) |
+| **Uptime** | Aim for 99.9%+: three missed leader slots bench you for the rest of the epoch; missing more than 20% of your slots jails you for the next one (1, 2, 4, 8, 16, 24 epochs for consecutive jails). No stake penalty, but no rewards either |
 | **Disk** | Monitor and expand before hitting 10% free |
-| **Peers** | Maintain at least 5–10 stable peers |
+| **Peers** | At least one peer (`mersennet-check` → Peers) — the whole network is a dozen or so reachable nodes; keep UDP and TCP 30303 open inbound to be reachable yourself |
 | **Backups** | Backup validator key and config; never expose the key |
 | **Alerts** | Route critical alerts to a channel you monitor 24/7 |
 
@@ -8195,7 +8195,7 @@ Validators are the backbone of Mersennet. They run full nodes, participate in co
 
 Validators perform three critical functions:
 
-1. **Block Production**: Validators take turns proposing new blocks containing transactions, order submissions, and state updates. The proposer is selected by deterministic round-robin over the sorted validator set: `validators[(height + round) mod count]`, where `round` advances only on leader timeout.
+1. **Block Production**: Validators take turns proposing new blocks containing transactions, order submissions, and state updates. The proposer is selected by deterministic round-robin over the sorted active set (minus benched validators, since block 1,569,600): `validators[(height + round) mod count]`, where `round` advances only on leader timeout.
 
 2. **Consensus Participation**: All validators participate in BFT (Byzantine Fault Tolerant) consensus. Each validator re-executes every proposed block and gossips a signed finality vote for its hash; a block is finalized when votes covering more than 2/3 of total stake have been observed.
 
@@ -8243,7 +8243,7 @@ validator_reward = (block_reward × validator_stake) / total_stake
 - **Halving**: Every 33,550,336 blocks (~2.1 years at ~2 s blocks), the reward halves
 - **Distribution**: The validator's share is credited directly each block to the **operator wallet** (from block 1,440,000; the node identity before that), with no claiming required; delegator rewards accrue in the staking precompile and are collected via `claimRewards`
 
-The more stake you have (your own + delegations), the larger your share of each block's reward — and the higher your ranking in the active set (top 12 at each hourly epoch).
+The more stake you have (your own + delegations), the larger your share of each block's reward — and the higher your ranking in the active set (top 12 at each epoch of 1,800 blocks, ~1 h).
 
 ## Slashing, benching and jailing
 
@@ -8267,8 +8267,8 @@ Before running a validator, ensure you meet:
 
 | Category | Requirement |
 |----------|-------------|
-| **Hardware** | 4 CPU cores, 8 GB RAM, 100 GB SSD, 100 Mbps network |
-| **Software** | 64-bit Linux, glibc 2.34+ (Ubuntu 22.04+ / Debian 12+) for the [release bundle](https://mersennet.com/downloads/); Rust 1.85+ only if building from source |
+| **Hardware** | Minimum 2 cores / 4 GB RAM / 40 GB SSD; recommended 4 cores / 8 GB / 100 GB SSD; 10 Mbps+ with UDP and TCP 30303 open |
+| **Software** | 64-bit Linux, glibc 2.34+ (Ubuntu 22.04+ / Debian 12+) for the [release bundle](https://mersennet.com/downloads/); Rust 1.88+ only if building from source (once the repository is published) |
 | **Stake** | 1,000 MRSN self-stake to register (open set since block 1,348,200); the top 12 by self + delegated stake are active, recomputed every hour — see [Become a Validator](/validators/become-a-validator/) |
 | **Operational** | 24/7 uptime, monitoring, key management, backup procedures |
 
@@ -8305,7 +8305,7 @@ A full node follows the chain and serves RPC; a **validator** additionally signs
 | Disk | 40 GB SSD (state is ~15 GB in Sep 2026) | 100 GB SSD (chain data grows ~0.6 GB/day) |
 | Network | 10 Mbps, outbound UDP+TCP 30303 allowed; expect ~10 GB/day of traffic (mostly relayed transactions) | Inbound 30303 open too |
 
-You need `sudo` (root) on the machine. That is the whole list — no Rust, no Git, no build tools.
+You need `sudo` (root) on the machine. That is the whole list — no Rust, no Git, no build tools (`python3` and `openssl`, present on standard Ubuntu/Debian images, are used for the config merge and the signature check).
 
 :::tip[Using a separate disk or block volume]
 Mount it first (e.g. at `/mnt/blockstorage`) and pass `--data-dir` in Step 2. The chain data and your node key go there; nothing else about the install changes.
@@ -8313,7 +8313,7 @@ Mount it first (e.g. at `/mnt/blockstorage`) and pass `--data-dir` in Step 2. Th
 
 ## Step 2 — Install (one command)
 
-Run from **any directory** — it downloads the latest release, verifies its signature and checksum, installs the binary and config, creates a `mersennet` system user, restores the latest **state snapshot** (about 1 GB, SHA-256 verified) so the node only has to sync the last few hours instead of replaying the whole chain, and starts a hardened systemd service:
+Run from **any directory** — it downloads the latest release, verifies its signature and checksum, installs the binary and config, creates a `mersennet` system user, restores the latest **state snapshot** (about 1.6 GB, SHA-256 verified) so the node only has to sync the last few hours instead of replaying the whole chain, and starts a hardened systemd service:
 
 ```bash
 curl -fsSL https://mersennet.com/downloads/install.sh | sudo bash
@@ -8350,13 +8350,18 @@ mersennet-check
 ```
 
 ```text
-Service      running since 2026-09-12 15:02:25
-Block height 21248 / 1281813 network — syncing (1% done, 512 blocks/s, ~41 min left)
-Peers        18
+Mersennet node check — 2026-09-20 08:40 UTC
+
+Service      running since 2026-09-20 07:58:11
+Block height 1592301 / 1592301 network — in sync
+Peers        7 (P2P connections: validators, public RPC nodes and other full nodes — not the validator count)
 Chain ID     131071 (Mersennet testnet)
 Visibility   visible — the network hears this node as 203.0.113.10 · id 3f9a2c (explorer → Network → Network nodes)
-Binary       87e1c0bb2c44 — up to date (release 806f3c6)
-Data dir     /mnt/blockstorage/mersennet — 189M used, 281G free
+Reachable    yes — tcp/30303 answers from the internet (verification and registration work)
+Operator     0xYourWallet — verified node runner, earning 500 points/day at https://trade.mersennet.com/points
+Validator    0x3f9a…c2e1 — not registered; bond 1,000 MRSN at https://trade.mersennet.com/staking to start producing blocks
+Binary       dbe97a61d989 — up to date (release f67d812)
+Data dir     /mnt/blockstorage/mersennet — 16G used, 264G free on /mnt/blockstorage
 Node key     /mnt/blockstorage/mersennet/keys/node_key.json (back this up to keep your peer identity)
 ```
 
@@ -8383,7 +8388,7 @@ curl -s http://127.0.0.1:8545 -H 'Content-Type: application/json' \
 | **Upgrade** to a new release | Re-run the Step 2 command — it replaces the binary, restarts the service, keeps data and keys |
 | Back up your identity | Copy `keys/node_key.json` from your data dir somewhere safe |
 | Let others sync from you | Open **UDP+TCP 30303** inbound (`sudo ufw allow 30303` — the installer does this if ufw is active) |
-| Uninstall | `sudo systemctl disable --now mersennet && sudo rm -f /etc/systemd/system/mersennet.service /usr/local/bin/mersennet /usr/local/bin/mersennet-check && sudo rm -rf /etc/mersennet` — then delete the data dir if you want the chain data gone |
+| Uninstall | `sudo systemctl disable --now mersennet && sudo rm -f /etc/systemd/system/mersennet.service /usr/local/bin/mersennet /usr/local/bin/mersennet.prev /usr/local/bin/mersennet-check && sudo rm -rf /etc/mersennet && sudo userdel mersennet` — then delete the data dir if you want the chain data gone |
 
 That is the complete guide for running a node. Everything below is background, the validator question, and reference material for operators who want to go deeper.
 
@@ -8400,7 +8405,7 @@ Your node can earn **500 points a day** on [trade.mersennet.com/points](https://
    or afterwards by adding `"operator_address": "0xyour_wallet"` to the `p2p` section of `/etc/mersennet/config.json` and running `sudo systemctl restart mersennet`.
 2. Wait. Within about ten minutes of the network hearing your node, the terminal probes it, sees the operator address it signs, and marks it **verified** — on [trade.mersennet.com/points](https://trade.mersennet.com/points) (connect with that wallet) and on the explorer's Network page next to your node's id. Nothing to click.
 3. Optional: on the Points page you can also enter your node's public IP and press **Sign & verify** for an immediate check, or if your node runs behind NAT and is not directly reachable.
-4. The terminal re-checks the node every six hours; points are credited once per day while it answers. Several nodes under one wallet earn as one.
+4. The terminal re-checks the node every 30 minutes; points are credited once per day while it answers. Several nodes under one wallet earn as one.
 
 If verification fails, the message says why: port 30303/tcp not reachable from the internet, the node still on a build older than this feature (re-run the installer to upgrade), or the node naming a different operator.
 
@@ -8412,13 +8417,13 @@ The set is open since block 1,348,200. With your node verified (above), open [tr
 
 **My node is running but does not appear in the validator list.** A full node is not a validator until you register it. Verified nodes show on the explorer's *Network* page (with your operator badge); validators show on its *Validators* page after you register on [trade.mersennet.com/staking](https://trade.mersennet.com/staking) — see [Become a Validator](/validators/become-a-validator). `mersennet-check` saying *in sync* and *visible* is what success looks like today; the explorer's Network page lists it as a community node.
 
-**`mersennet-check` says my node is forked, or the log shows "state root" differences.** Your node ran an older build through a consensus upgrade and its state diverged. Re-run the installer with `--reset-state` (add the same `--data-dir` / `--operator` flags you used before): it keeps your keys and identity, discards the chain state and restores the latest snapshot — back in sync in about a minute.
+**`mersennet-check` prints `State … does not match the chain`, or the log shows `RESTORED STATE ROOT MISMATCH`.** Your node ran an older build through a consensus upgrade and its state diverged. Re-run the installer with `--reset-state` (add the same `--data-dir` / `--operator` flags you used before): it keeps your keys and identity, discards the chain state and restores the latest snapshot — back in sync in about a minute.
 
 ```bash
 curl -fsSL https://mersennet.com/downloads/install.sh | sudo bash -s -- --reset-state --operator 0xYOUR_WALLET
 ```
 
-**My node stopped advancing (the explorer moves, `mersennet-check` shows the same height).** Since build `0.7.0` of 16 Sep the node notices this itself: when its head has not moved for five minutes while the network is at least 60 blocks ahead, it exits and systemd restarts it (log line *"head has not advanced while the network moved on"*). On an older build, `sudo systemctl restart mersennet` does the same by hand. If it happens repeatedly, send us `journalctl -u mersennet -n 300 --no-pager` in the [Telegram chat](https://t.me/Mersennet) or through the terminal's [feedback form](https://trade.mersennet.com/feedback) — that is exactly the kind of report the testnet is for.
+**My node stopped advancing (the explorer moves, `mersennet-check` shows the same height).** Since the 16 Sep release the node notices this itself: when its head has not moved for five minutes while the network is at least 60 blocks ahead, it exits and systemd restarts it (log line *"head has not advanced while the network moved on"*). On an older build, `sudo systemctl restart mersennet` does the same by hand. If it happens repeatedly, send us `journalctl -u mersennet -n 300 --no-pager` in the [Telegram chat](https://t.me/Mersennet) or through the terminal's [feedback form](https://trade.mersennet.com/feedback) — such reports are exactly what the testnet is for.
 
 **Do I have to upgrade when a new release comes out?** For a full node: whenever convenient — `mersennet-check` says *update available*. For a **validator: yes, before the next protocol switch height** (listed on [Network Info](/getting-started/network-info/#protocol-upgrades) and announced on [Become a Validator](/validators/become-a-validator) and the [changelog](/resources/changelog); the staking page warns when your node is behind the current release). A validator on an old build applies the old rules from the switch height on, disagrees with the network about the next leader or the validator set, and forks off — it then needs `--reset-state`. Upgrading is the same one-line command as installing; it keeps your keys and data and takes under a minute.
 
@@ -8426,11 +8431,11 @@ curl -fsSL https://mersennet.com/downloads/install.sh | sudo bash -s -- --reset-
 
 **Where do I run the commands? Does `cd ~` matter?** Anywhere. The one-line installer downloads into a temporary directory and cleans up; your current directory is irrelevant. Chain data always goes to `/var/lib/mersennet` unless you pass `--data-dir`.
 
-**How do I keep the chain on my block storage instead of the OS disk?** `--data-dir /mnt/<your-volume>/mersennet` in Step 2. Re-running the installer with a new `--data-dir` moves an existing node's data there. Do not use `/tmp` paths — they are wiped on reboot and hidden from the service.
+**How do I keep the chain on my block storage instead of the OS disk?** `--data-dir /mnt/<your-volume>/mersennet` in Step 2. Re-running the installer with a new `--data-dir` moves an existing node's data there. The installer refuses `/tmp`, `/var/tmp` and `/dev/shm` (wiped on reboot and hidden from the service by `PrivateTmp`) and anything under `/home` or `/root` (hidden by `ProtectHome`); use `/var/lib/mersennet`, `/srv/…` or `/mnt/<volume>/…`.
 
 **Where does the 1,000,000 MRSN come from and how do I get it?** It is the genesis stake of the four founding validators, written into the genesis config before the chain started. You do not need it: the minimum self-stake for a new validator is 1,000 MRSN.
 
-**How long does the first sync take?** About a minute: the installer restores the latest published state snapshot (taken every six hours on the public node, ~1 GB compressed, SHA-256 verified) and the node then replays only the blocks since. Replaying the whole chain from genesis (`--from-genesis`) takes most of a day at current transaction density and is only useful if you want to verify every block yourself. The node verifies every block it imports on top of the snapshot either way.
+**How long does the first sync take?** About a minute: the installer restores the latest published state snapshot (taken every six hours on the public node, ~1.6 GB compressed, SHA-256 verified) and the node then replays only the blocks since. Replaying the whole chain from genesis (`--from-genesis`) takes most of a day at current transaction density and is only useful if you want to verify every block yourself. The node verifies every block it imports on top of the snapshot either way.
 
 **Can I run it without systemd, or on another distro / architecture?** Yes — download the bundle from [mersennet.com/downloads](https://mersennet.com/downloads/), extract it and run `./mersennet --config config.json --mode full --rpc` from a directory of your choice (data lands in `./data`, key in `./keys`). Non-x86-64 or glibc < 2.34 systems need a source build (below).
 
@@ -8440,7 +8445,7 @@ curl -fsSL https://mersennet.com/downloads/install.sh | sudo bash -s -- --reset-
 
 ### Manual install from the bundle
 
-Releases are signed. `SHA256SUMS.sig` is an ed25519 signature over `SHA256SUMS` by the Mersennet release key; the one-line installer pins this key and refuses to install if the signature does not verify. To check it yourself:
+Releases are signed. `SHA256SUMS.sig` is an ed25519 signature over `SHA256SUMS` by the Mersennet release key; the one-line installer pins this key and refuses to install if the signature does not verify (when `openssl` is missing it warns and falls back to the SHA-256 checksums alone — install `openssl` to keep the signature check). To check it yourself:
 
 ```bash
 curl -fsSLO https://mersennet.com/downloads/SHA256SUMS
@@ -8453,7 +8458,7 @@ curl -fsSLO "https://mersennet.com/downloads/$(awk 'NR==1{print $2}' SHA256SUMS)
 sha256sum -c SHA256SUMS --ignore-missing          # must print: ... OK
 tar xzf mersennet-node-linux-x86_64-*.tar.gz && cd mersennet-node-linux-x86_64-*/
 sha256sum -c SHA256SUMS                            # verifies every file in the bundle
-sudo bash install.sh [--data-dir DIR] [--rpc-public] [--from-genesis] [--operator 0xWALLET]
+sudo bash install.sh [--data-dir DIR] [--rpc-public] [--from-genesis] [--reset-state] [--operator 0xWALLET]
 ```
 
 The bundle's `install.sh` performs the same snapshot bootstrap as the one-liner. The snapshot manifest is `http://46.225.30.187:8088/latest.json` (served from the public node over plain HTTP because Cloudflare limits proxied downloads to 100 MB; the tarball's SHA-256 is in the manifest and is checked before extraction).
@@ -8466,7 +8471,7 @@ The bundle README lists the binary's sha256; it matches `sha256sum /opt/mersenne
 The node source (`mersennet/mersennet`) is being published under the Business Source License 1.1: read it, audit it, build it and run it as a Mersennet node freely; other networks need a commercial license (licensing@mersennet.com). Until the repository is public, use the signed release bundle below — it is the same build the fleet runs.
 :::
 
-Requires Rust 1.85+ (edition 2024), `build-essential`, `pkg-config`, `libssl-dev`, Git:
+Available once the repository is published (until then Linux x86-64 with glibc ≥ 2.34 — the release bundle — is the only supported path). Requires Rust 1.88+ (edition 2024), `build-essential`, `pkg-config`, `libssl-dev`, Git:
 
 ```bash
 sudo apt update && sudo apt install -y build-essential pkg-config libssl-dev git
@@ -8538,7 +8543,7 @@ Relative paths resolve against the node's working directory. The RPC defaults to
 | `fee_elasticity_multiplier` | `u64` | `2` | EIP-1559 elasticity (target = limit / multiplier) |
 | `fee_max_change_denominator` | `u64` | `8` | Max base fee change per block (1/8 = 12.5%) |
 | `storage_backend` | `string` | `"sled"` | `"sled"`, `"redb"`, or `"memory"` (both persistent backends keep the validator registry) |
-| `resume_root_check` | `string` | `"warn"` | At startup the restored state's root is compared with the head block's: `"warn"` logs `RESTORED STATE ROOT MISMATCH` and continues; `"fatal"` exits (code 5) so the node is never run on state that does not match the chain — the fix is `--reset-state`. The testnet flips to `"fatal"` on 2026-09-20; builds up to `e6eb772` ignore the setting and keep warning |
+| `resume_root_check` | `string` | `"warn"` | At startup the restored state's root is compared with the head block's: `"warn"` logs `RESTORED STATE ROOT MISMATCH` and continues; `"fatal"` exits (code 5) so the node is never run on state that does not match the chain — the fix is `--reset-state`. The canonical testnet config is authoritative (currently `"warn"`; the flip to `"fatal"` is a scheduled ops step); builds up to `e6eb772` ignore the setting and keep warning |
 
 #### `mempool`: Transaction Pool
 
@@ -8559,7 +8564,8 @@ Relative paths resolve against the node's working directory. The RPC defaults to
 | `block_time_ms` | `u64` | `1000` | Block production interval (ms). Code default is 1000; the public testnet runs 2000 (~2s blocks) — match the network you join |
 | `operator_address` | `string` | none | Your wallet; the node signs it into its identity attestation (verified node runner, validator registration). Set by `--operator` |
 | `compact_wire_height` | `u64` | `0` (testnet config: `1440000`) | Height from which gossip payloads are sent base64-encoded (~2.8× fewer bytes). Every build since 2026-09-15 decodes both forms |
-| `noise_enabled` | `bool` | `false` | Encrypt P2P with Noise Protocol |
+| `noise_enabled` | `bool` | `false` | Reserved: the Noise transport is not wired into UDP gossip yet, so this only changes a startup log line. Blocks, transactions and votes are authenticated by signature, not encrypted in transit. |
+| `fast_failover_height` | `u64` | `0` | Testnet: `1400550`. From this height a leader failover round is 3 block-times + 2 s (8 s) instead of 8 block-times + 3 s (19 s). |
 
 #### `rpc`: JSON-RPC Server
 
@@ -8627,8 +8633,14 @@ Consensus-critical — identical on every node; the installer refreshes it from 
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
-| `initial_margin_bps` | `u64` | `0` | Initial margin requirement (bps) |
-| `maintenance_margin_bps` | `u64` | `0` | Maintenance margin (bps) |
+| `initial_margin_bps` | `u64` | `0` | Initial margin requirement (bps) before the settlement switch |
+| `maintenance_margin_bps` | `u64` | `0` | Maintenance margin (bps) before the settlement switch |
+| `agent_delegation_height` | `u64` | `0` | Testnet: `1569600`. Agent keys (`setAgent` / `revokeAgent`) from this height |
+| `price_scale_height` / `price_rescales` | `u64` / `[[market, scale]]` | `0` / `[]` | Testnet: `1569600`, `[[1,100],[4,100],[5,100]]` — MRSN, SOL and ARB rescaled to `priceScale` 100 ($0.01 ticks) in place |
+| `frame_caller_height` | `u64` | `0` | Testnet: `1605600`. Precompiles authorise the calling frame (`msg.sender`) from this height |
+| `settlement_height` | `u64` | `0` | Testnet: `1605600`. One collateral unit = one MRSN, PnL settlement, margin enforcement and keeper liquidations from this height |
+| `settlement_initial_margin_bps` / `settlement_maintenance_margin_bps` | `u64` | `1000` / `500` | Margins that apply from `settlement_height` (10% / 5%) |
+| `allow_unsigned_orders_rpc` | `bool` | `false` | Accept unsigned order mutations over RPC (devnets only; the public testnet requires signed transactions) |
 
 #### `bridge`: Cross-Domain Bridge
 
@@ -8652,7 +8664,7 @@ Check the [Network Information](/getting-started/network-info) page for current 
 Genesis is not a separate file: it is the `genesis` section of your `config.json`, defining initial accounts, validators, CLOB markets, and collateral assets. Every node derives the identical genesis state from it, which is why the section must be byte-for-byte compatible across the network.
 
 - **Testnet (chain ID 131071)**: use the `config.json` from the [release bundle](https://mersennet.com/downloads/) (or `networks/testnet/config.json` in the repository) — never edit its `genesis`, `engine.chain_id`, or `token_economics` sections.
-- **Mainnet (chain ID 8191)**: see `mainnet/genesis.json` in the repository for the canonical parameters (not yet launched).
+- **Mainnet (chain ID 8191)**: `mainnet/genesis.json` in the repository holds the canonical parameters (published with the source; not yet launched).
 
 ## Node Modes
 
@@ -8660,9 +8672,9 @@ The `--mode` flag accepts `full`, `validator`, or `devnet`:
 
 | Mode | Behavior |
 |------|----------|
-| `full` | Syncs, follows consensus, serves RPC/WS, relays transactions. Does not propose blocks. **Use this for the public testnet.** |
-| `validator` | Everything `full` does, plus block production when this node's key is in the active validator set and elected leader. |
-| `devnet` | Local single-node demo chain. This is the default when `--mode` is omitted — always pass `--mode` explicitly for real deployments. |
+| `full` | Follows the chain, serves RPC/WS, relays transactions — and proposes and votes whenever this node's identity is in the active validator set. **Use this for the public testnet**, as the installer does. |
+| `validator` | Identical to `full` (kept for the fleet's service units): there is no separate validator mode since the open validator set — registering your identity is what turns a node into a validator. |
+| `devnet` | Local single-node demo chain. This is the default when `--mode` is omitted or misspelt — always pass `--mode full` explicitly for real deployments. |
 
 ```bash
 # Full node (RPC enabled)
@@ -8694,6 +8706,9 @@ Description=Mersennet Full Node (testnet, chain 131071)
 Documentation=https://docs.mersennet.com
 After=network-online.target
 Wants=network-online.target
+# Wait for the data volume (install.sh --data-dir on a mounted disk) so the
+# node never starts against an empty mountpoint on the root filesystem.
+RequiresMountsFor=/var/lib/mersennet
 
 [Service]
 Type=simple
@@ -8707,7 +8722,7 @@ ExecStart=/usr/local/bin/mersennet \
     --rpc
 
 Restart=always
-RestartSec=10
+RestartSec=5
 StartLimitInterval=200
 StartLimitBurst=5
 
@@ -8726,7 +8741,6 @@ PrivateTmp=yes
 # Resource limits
 LimitNOFILE=65535
 LimitNPROC=4096
-MemoryMax=12G
 
 # Environment
 Environment="RUST_LOG=info"
@@ -8785,20 +8799,18 @@ Understanding node log messages helps diagnose issues quickly.
 |------------|---------|
 | `node identity loaded address=0x...` | Node keypair loaded successfully |
 | `registered genesis validator address=0x...` | Validator registered from genesis config |
-| `RPC server listening on 0.0.0.0:8545` | JSON-RPC server started |
-| `P2P listening on 0.0.0.0:30303` | Peer-to-peer networking active |
-| `block produced number=N txs=M gas_used=G` | Block successfully produced |
-| `block finalized number=N hash=0x...` | Block reached 2/3+ consensus |
-| `peer connected addr=1.2.3.4:30303` | New peer connection established |
+| `RPC listening on http://127.0.0.1:8545` | JSON-RPC server started |
+| `gossip listener started` / `tcp snapshot listener started addr=…` | Peer-to-peer networking active (UDP gossip, TCP sync) |
+| `block produced height=N txs=M gas=G` | This node proposed a block |
+| `block finalized by 2/3 stake quorum height=N block_hash=0x…` | Block reached 2/3+ stake finality |
 
 ### Warning Signs
 
 | Log Message | Meaning | Action |
 |------------|---------|--------|
-| `consensus timeout round=N` | Failed to get 2/3+ votes in time | Check peer connectivity |
-| `mempool full, rejecting tx` | Mempool at capacity (10K default) | Increase `mempool.max_total` or reduce load |
-| `peer disconnected addr=...` | Lost connection to a peer | Check network; peer may restart automatically |
-| `slashing evidence kind=timeout` | This node missed a consensus round | Ensure clock sync and network stability |
+| `RESTORED STATE ROOT MISMATCH` | The restored state does not match the head block | Re-run the installer with `--reset-state` |
+| `slashing evidence detected kind=double_sign …` | A validator signed two blocks at one height | Nothing to do on a full node; the equivocating validator is slashed |
+| `liveness watchdog: head stalled … exiting` | Head unchanged for 5 min while the network is ≥ 60 blocks ahead | The service restarts and re-syncs itself; if it repeats, send `journalctl -u mersennet -n 300` via the feedback form |
 | `head not advancing, but no evidence the network is ahead` | Either the whole network is paused or this node has no peers and no reference RPC | Check `Peers` in `mersennet-check` and the explorer |
 | `head has not advanced while the network moved on — exiting` | The watchdog restarted the node (`systemctl show mersennet -p NRestarts`) | Nothing, unless it repeats — then send the log through the feedback form |
 
@@ -8886,7 +8898,7 @@ groups:
           summary: "Mersennet node is down"
 
       - alert: BlockProductionStalled
-        expr: increase(mersennet_blocks_produced_total[5m]) == 0
+        expr: increase(mersennet_height[5m]) == 0
         for: 5m
         labels:
           severity: critical
@@ -8927,7 +8939,7 @@ Paths below follow the canonical config (relative to the node's working director
 |------|----------|-----------|
 | `keys/node_key.json` | Node identity keypair (validator signing key) | **Yes**, loss means new identity |
 | `data/peers.json` | Known peer addresses | No, peers rediscovered on restart |
-| `data/state/` | Full chain state (accounts, storage, blocks) | Yes, loss requires resync (fast: several hundred blocks/s) |
+| `data/state/` | Full chain state (accounts, storage, blocks) | Yes; loss is fixed by re-running the installer with `--reset-state` (snapshot restore, about a minute) |
 | `config.json` | Node configuration | Yes, keep in version control |
 
 ### Backup Procedure
@@ -8999,9 +9011,9 @@ Never run two nodes with the same `node_key.json` simultaneously: this may trigg
 
 | Symptom | Cause | Solution |
 |---------|-------|----------|
-| Memory >12GB and growing | State trie growth | Normal for long-running nodes; increase RAM or add swap |
+| Memory well above the 8 GB recommendation and growing | State growth or a leak | Restart the service (`systemctl restart mersennet`) and report it via the feedback form with `journalctl -u mersennet -n 300` |
 | CPU constantly at 100% | EVM execution or block production | Check for spam transactions; consider `gas_limit_per_block` adjustment |
-| Disk filling up | State database growth | Increase storage; consider pruning old data |
+| Disk filling up | State database growth (~0.6 GB/day) | Move the data dir to a larger volume: re-run the installer with `--data-dir /mnt/<volume>/mersennet` |
 
 ### Useful Commands
 
@@ -9022,10 +9034,12 @@ curl -s http://localhost:8545 -X POST \
   -H "Content-Type: application/json" \
   -d '{"jsonrpc":"2.0","method":"net_peerCount","params":[],"id":1}' | jq
 
-# Check node sync status
-curl -s http://localhost:8545 -X POST \
-  -H "Content-Type: application/json" \
-  -d '{"jsonrpc":"2.0","method":"eth_syncing","params":[],"id":1}' | jq
+# Compare your height with the network (eth_syncing always returns false on Mersennet)
+curl -s http://localhost:8545 -X POST -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","method":"eth_blockNumber","params":[],"id":1}' | jq -r .result
+curl -s https://rpc.mersennet.com -X POST -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","method":"eth_blockNumber","params":[],"id":1}' | jq -r .result
+# or simply: mersennet-check
 
 # View Prometheus metrics
 curl -s http://localhost:8545/metrics | grep mersennet_height
@@ -9075,7 +9089,7 @@ Delegation — staking MRSN with an existing validator without running a node �
 Delegators earn a share of the validator's block rewards (minus validator commission) under an F1-style accounting model. The [explorer's Validators page](https://explorer.mersennet.com/validators) shows each validator's delegated total and commission, and any address page shows its delegations, pending rewards, and unbonding entries. Read methods: `mersennet_staking_getValidators`, `mersennet_staking_getDelegation`, `mersennet_staking_getUnbonding` (see the [RPC reference](/developers/rpc/methods/)).
 
 :::tip[The validator set is open]
-Since block 1,348,200 anyone can register a node as a validator. Delegated stake counts toward a validator's ranking: the top 12 by self-stake + delegations form the active set at each hourly epoch. See [Become a Validator](/validators/become-a-validator/).
+Since block 1,348,200 anyone can register a node as a validator. Delegated stake counts toward a validator's ranking: the top 12 by self-stake + delegations form the active set at each epoch (1,800 blocks, ~1 h). See [Become a Validator](/validators/become-a-validator/).
 :::
 
 ## Minimum Stake
@@ -9092,20 +9106,20 @@ validator_reward = (block_reward × validator_stake) / total_stake
 
 - **Initial block reward**: ≈2.3 MRSN per block (2⁶¹ − 1 wei)
 - **Halving**: Every 33,550,336 blocks (~2.1 years at ~2 s blocks)
-- **Crediting**: Rewards are applied directly to validator/delegator balances, with no claiming step required
+- **Crediting**: the validator's share is credited to its operator wallet every block; the delegators' share accrues in the staking precompile and is collected with `claimRewards` (one click on the staking page)
 
-Illustration with four validators of 1M MRSN each (the genesis set; a registered validator with 1,000 MRSN self-stake earns in the same proportion):
+Illustration with four validators of 1M MRSN each (today's set has six: the four genesis validators plus two community validators with smaller self-stakes, which earn in the same proportion):
 - Total stake = 4M MRSN
 - Block reward ≈ 2.3058 MRSN
 - Each validator receives 2.3058 × (1M / 4M) = **≈0.5765 MRSN per block**
 
-Block rewards are credited to the validator's **operator wallet** from block 1,440,000 (~2026-09-16 13:15 UTC; before that to the node identity); delegators receive their share minus the validator's commission.
+Block rewards are credited to the validator's **operator wallet** since block 1,440,000 (Wed 16 Sep 2026, 15:45 UTC; before that to the node identity); delegators receive their share minus the validator's commission.
 
 ## Unbonding Period
 
 When you **unbond** (withdraw) staked MRSN:
 
-1. Your stake is **immediately** removed from voting power.
+1. A delegation stops earning and counting immediately; a validator's own self-stake keeps voting until the next epoch boundary after `unregisterValidator`.
 2. Tokens enter an **unbonding queue** for a fixed number of blocks.
 3. After the unbonding period, tokens are returned to your balance.
 
@@ -9115,12 +9129,12 @@ When you **unbond** (withdraw) staked MRSN:
 | **Mainnet** | To be published with the mainnet parameters (expected weeks, not hours) |
 
 :::note
-During unbonding, your tokens can still be slashed if the validator commits an offense. Only after the unbonding period completes are tokens safely returned.
+Unbonding entries are not slashed on the current testnet (equivocation slashing acts on the validator's consensus stake, not on delegations); the period exists so that stake cannot leave the moment a validator misbehaves. Tokens are withdrawable once it completes.
 :::
 
 ## Slashing Conditions
 
-Validators (and their delegators) can lose stake through slashing:
+Only one offence is slashed, and the penalty falls on the validator's consensus stake (delegations are not reduced on the current testnet):
 
 ### Double-Signing
 
@@ -9139,11 +9153,11 @@ Double-signing is permanent. A tombstoned validator cannot rejoin. Never duplica
 
 | Aspect | Detail |
 |--------|--------|
-| **What** | Missing more than **20%** of your leader slots in an epoch (judged only if you had at least 5 slots) |
-| **Penalty** | **None on stake.** The validator is **jailed** for the following epoch and returns automatically |
+| **What** | Missing more than **20%** of your leader slots in an epoch (judged only if you had at least 5 slots, or were benched) |
+| **Penalty** | **None on stake.** The validator is **jailed** for the following epoch and returns automatically; consecutive jails last 1, 2, 4, 8, 16 then 24 epochs (since block 1,569,600). Before that, three missed leader slots in an epoch **bench** it — out of the leader rotation until the boundary, still voting |
 | **Cause** | Node offline, network issues, slow hardware |
 
-Downtime is not slashed on the testnet — the cost is one epoch (one hour) out of the set plus the rewards you did not earn. Keep the node online and upgraded; `mersennet-check` and the staking page show your proposed/missed slots for the current epoch.
+Downtime is not slashed on the testnet — the cost is an epoch (~1 h, escalating for repeat offences) out of the set plus the rewards you did not earn. Keep the node online and upgraded; `mersennet-check` and the staking page show your proposed/missed slots for the current epoch.
 
 ## Summary
 
@@ -9153,7 +9167,7 @@ Downtime is not slashed on the testnet — the cost is one epoch (one hour) out 
 | **Delegation** | Stake with validators to earn rewards without running a node; counts toward their ranking |
 | **Rewards** | Proportional to stake; credited automatically to the validator's operator wallet (from block 1,440,000) |
 | **Unbonding** | 7,200 blocks (~4 h) on testnet; tokens locked until the period ends |
-| **Slashing** | Double-sign (equivocation) → slashed; downtime → jailed one epoch, no penalty |
+| **Slashing** | Double-sign (equivocation) → slashed; downtime → benched after 3 missed slots, jailed an epoch (1, 2, 4, 8, 16, 24 for repeats), no stake penalty |
 
 For operational details, see [Validator Overview](/validators/overview) and [Monitoring & Alerts](/validators/monitoring).
 
@@ -9173,6 +9187,10 @@ source: https://docs.mersennet.com/whitepaper/
 
 ## Preface
 
+:::note[Design versus deployment (updated 20 Sep 2026)]
+This paper describes the protocol design. Where the public testnet differs today, the live behaviour is: **leader-gated BFT PoS** with a deterministic, stake-agnostic round-robin leader per height, one signed finality vote per validator and finality at >2/3 of stake (the two-round prevote/precommit pipeline, stake-weighted proposer election and HotStuff-2 are the roadmap path, not what runs); an **open validator set** through the staking precompile at `0x…0400` since block 1,348,200 (1,000 MRSN minimum self-stake, top 12 by stake, 1,800-block epochs, 7,200-block unbonding, six validators active); **downtime is never slashed** — it is benched and jailed — and only equivocation is; P2P messages are signed but **not encrypted** (Noise is planned); the public testnet runs the `sled` storage backend. Section 22 keeps the implementation record current.
+:::
+
 This document is a technical whitepaper describing the Mersennet protocol, a Layer 1 blockchain that unifies EVM execution with native order matching. It is intended as a specification of the system's design, architecture, and rationale. It is not a formal specification in the sense of the Ethereum Yellow Paper; parameters and mechanisms may evolve based on implementation experience and community feedback. Non-core aspects such as API bindings, client libraries, and operator tooling are documented elsewhere. This whitepaper draws structural inspiration from foundational works including the [Bitcoin whitepaper](https://bitcoin.org/bitcoin.pdf) [1], [Ethereum whitepaper](https://ethereum.org/whitepaper/) [2], [Solana](https://solana.com/solana-whitepaper.pdf) [3], and [Polkadot](https://polkadot.network/PolkaDotPaper.pdf) [4].
 
 **Version History:** v1.0 (initial draft), v2.0 (comprehensive technical), v3.0 (Ethereum-style expansion), v4.0 (incorporates patterns from top blockchain whitepapers), v5.0 (formula fixes, technical depth), v6.0 (parallel EVM execution, HotStuff-2 consensus, CLOB precompile, Frequent Batch Auctions, MEV protection, comprehensive benchmarks), v7.0 (production storage engine, WebSocket subscriptions, block pipeline, Noise P2P encryption, ZK state proofs, Account Abstraction, cross-chain bridges, TypeScript SDK, block explorer), v7.1 (Mersenne-prime tokenomics finalized: 2^89−1 supply cap, 2^61−1 block reward, 33,550,336-block halving; CLOB collateral backed 1:1 by escrowed native MRSN).
@@ -9187,7 +9205,7 @@ We propose Mersennet, a novel Layer 1 blockchain that **decouples the consensus 
 
 1. **Parallel EVM Execution**: Optimistic concurrency control (Block-STM / Grevm pattern) with static dependency analysis, multi-version memory, and conflict detection, enabling multi-core transaction processing while maintaining sequential semantics.
 2. **CLOB Precompile** (`0x0100`): The first EVM precompile that gives Solidity smart contracts direct, atomic access to a native order book, enabling composable DeFi strategies (vault → order → fill → callback) in a single transaction.
-3. **BFT Proof-of-Stake Consensus**: Two-round prevote/precommit finality with stake-weighted proposer rotation and escalating slashing. A two-phase **HotStuff-2** pipeline is implemented as the optimized upgrade path (≈33% lower latency than three-phase CometBFT, with linear message complexity and optimistic responsiveness), exercised in benchmarks.
+3. **BFT Proof-of-Stake Consensus**: Single-round finality votes over a leader-gated proposal today (final at >2/3 of stake), designed to evolve into two-round prevote/precommit finality with stake-weighted proposer rotation. A two-phase **HotStuff-2** pipeline is implemented as the optimized upgrade path (≈33% lower latency than three-phase CometBFT, with linear message complexity and optimistic responsiveness), exercised in benchmarks.
 4. **Frequent Batch Auctions (FBA)**: Uniform-price discrete auctions that eliminate front-running and MEV extraction from order matching. Transactions within a batch window are indistinguishable by arrival time.
 5. **Commit-Reveal MEV Protection**: Two-phase transaction submission for EVM where users commit a hash before revealing the transaction, preventing sandwich attacks and information leakage.
 
@@ -9227,7 +9245,7 @@ By unifying general-purpose smart contracts with institutional-grade order books
 | **BASE** | Optimistic Rollup | EVM (L2) | Contract-based | No | N/A | L2 finality depends on L1 |
 | **XDC Network** | XDPoS | EVM-compatible | Contract-based | No | N/A | Limited DeFi ecosystem |
 | **TRON** | DPoS | TVM (EVM-like) | Contract-based | No | N/A | Centralization concerns |
-| **Mersennet** | **BFT PoS (HotStuff-2 path)** | **Parallel EVM + MersennetOrders + Bridge** | **Native, same state + FBA** | **Yes (Block-STM)** | **Precompile (atomic)** | New architecture, unproven at scale |
+| **Mersennet** | **Leader-gated BFT PoS (HotStuff-2 as upgrade path)** | **Parallel EVM + MersennetOrders + Bridge** | **Native, same state + FBA** | **Yes (Block-STM)** | **Precompile (atomic)** | New architecture, unproven at scale |
 
 **Decoupling insight (Polkadot):** Polkadot separates *canonicality* (which history is valid) from *validity* (whether state transitions are correct). Mersennet adopts a related insight: *execution domains* (EVM, MersennetOrders) can be distinct while sharing a single canonicality layer and state root.
 
@@ -9438,7 +9456,7 @@ Mersennet consists of four primary execution domains unified under a single cons
 #### 2.2.4 Consensus Engine
 - **HotStuff-2 Protocol** *(v6.0)*: Two-phase BFT with Quorum Certificates, linear message complexity, and optimistic responsiveness
 - **Legacy CometBFT**: Three-phase Prevote/Precommit/Commit (retained for backward compatibility)
-- **Validator Set**: Staked validators with weighted proposer selection
+- **Validator Set**: Staked validators; deterministic round-robin proposer selection today (stake-weighted selection is the roadmap design)
 - **Finality**: 2/3 stake-weighted voting with 2-chain commit rule
 - **Slashing**: Economic penalties with escalation, jailing, and tombstoning
 - **Rewards**: Block rewards distributed proportionally to stake with halving schedule
@@ -9490,7 +9508,7 @@ The transition function $\mathcal{T}$ executes in phases:
 4. **Batch Auction Execution** *(v6.0)*: Execute pending Frequent Batch Auctions across all markets; apply fills to MersennetOrders state
 5. **MersennetOrders Matching**: Process remaining order submissions, match orders, update positions
 6. **Bridge Processing**: Dequeue and process bridge messages
-7. **Consensus Finalization**: Run HotStuff-2 round (propose → vote → QC → 2-chain commit); apply slashing
+7. **Consensus Finalization**: Finality votes over the proposed block (>2/3 of stake); HotStuff-2 rounds (propose → vote → QC → 2-chain commit) are the benchmarked upgrade path; apply slashing
 8. **State Commit**: Compute Merkle state root (incremental, dirty accounts only), persist to database
 9. **Event Indexing**: Index domain events for querying
 
@@ -9700,7 +9718,7 @@ Where $S_{prevote}$ and $S_{precommit}$ are the stake-weighted vote counts.
 
 #### 4.5.3 Round Timeout
 
-If a round fails to finalize within $timeout_{ms}$ milliseconds, the next round begins. Validators who fail to precommit after prevoting are subject to timeout slashing.
+If a round fails to finalize within $timeout_{ms}$ milliseconds, the next round begins with the next leader. On the live network a validator that misses its leader slots is **benched and then jailed, never slashed**; the timeout penalty below is a dormant parameter kept for the two-round design.
 
 ### 4.6 Slashing Mechanism
 
@@ -9715,7 +9733,7 @@ Slashing penalizes validators for consensus violations:
 
 Base penalty rates (in basis points):
 - Double-sign: $P_{double} = 500$ bps (5% of stake)
-- Timeout: $P_{timeout} = 100$ bps (1% of stake)
+- Timeout: $P_{timeout} = 100$ bps (1% of stake) — dormant; not applied on the live network (downtime → benching/jail)
 
 #### 4.6.3 Escalation Mechanism
 
@@ -9749,9 +9767,9 @@ Validators must wait through an unbonding period before withdrawing stake:
 
 $$unlockHeight = currentHeight + unbondingPeriod$$
 
-Default unbonding period: 2 blocks (configurable).
+Default unbonding period in the consensus engine: 2 blocks (configurable); the public testnet's open validator set uses `validator_set.unbonding_blocks` = 7,200 (~4 h).
 
-During unbonding, stake is still slashable but cannot be used for voting.
+During unbonding, stake cannot be used for voting. On the current testnet unbonding entries in the staking precompile are not slashed; equivocation slashing acts on the validator's consensus stake.
 
 ### 4.8 Block Rewards
 
@@ -9783,7 +9801,7 @@ Once $S_{minted} \geq S_{max}$, no further rewards are minted (a backstop that t
 
 ### 4.9 Validator Changes
 
-Validator set changes are queued and applied at block boundaries:
+On the public testnet, validator-set changes go through the staking precompile at `0x…0400` (`registerValidator`, `addSelfStake`, `delegate`, `undelegate`, `unregisterValidator`; 1,000 MRSN minimum self-stake; the top 12 by self + delegated stake form the active set at each 1,800-block epoch). At the engine level, changes are queued and applied at block boundaries:
 
 - **Stake**: Add stake to existing validator or create new validator
 - **Unbond**: Begin unbonding process for stake amount
@@ -9872,7 +9890,7 @@ This ensures liveness: even if leaders fail, the protocol eventually progresses.
 
 #### 4.10.7 Leader Election
 
-Leaders are selected deterministically using weighted round-robin based on stake:
+Leaders are selected deterministically. The live network uses a stake-agnostic round-robin over the active set — `leader(height, round) = validators[(height + round) mod n]`, skipping benched validators — while the design target is a weighted round-robin based on stake:
 
 $$leader(round) = validators[\text{weighted\_index}(round)]$$
 
@@ -11324,10 +11342,10 @@ v6.0 introduces layered MEV protection. We analyze residual attack surfaces:
 ### 13.7 Known Limitations
 
 1. ~~**No Signature Verification**~~: ✅ **Resolved in v5.x**: ECDSA secp256k1 transaction signing and verification implemented
-2. **Centralized Initialization**: Genesis validators are manually configured
+2. ~~**Centralized Initialization**~~: ✅ **Resolved (14 Sep 2026)**: the validator set is permissionless through the staking precompile since block 1,348,200; genesis validators only seeded the first epochs
 3. ~~**Limited P2P**~~: ✅ **Resolved in v5.x**: UDP gossip, TCP sync, peer discovery implemented
-4. ~~**No Encryption**~~: ✅ **Resolved in v7.0**: Noise protocol P2P encryption (`Noise_XX_25519_ChaChaPoly_BLAKE2s`) implemented, configurable via `p2p.noise_enabled`
-5. ~~**Storage Engine**~~: ✅ **Resolved in v7.0**: production storage moved to redb (ACID/MVCC) via the pluggable `StateBackend` trait; sled remains available for development
+4. **No Encryption**: P2P messages are signed but not encrypted; a Noise (`Noise_XX_25519_ChaChaPoly_BLAKE2s`) transport exists as a module but is not wired into UDP gossip yet (`p2p.noise_enabled` is reserved)
+5. ~~**Storage Engine**~~: ✅ **Resolved in v7.0**: redb (ACID/MVCC) is available via the pluggable `StateBackend` trait alongside sled; the public testnet runs sled
 6. **Parallel Execution Heuristic**: Static dependency analysis may over-serialize transactions when addresses are not known upfront (e.g., delegate calls). Runtime MVCC validation catches this but triggers sequential fallback.
 
 ---
@@ -11371,7 +11389,7 @@ For workloads with high conflict rates (e.g., all transactions touching the same
 
 **Live public testnet (two-round prevote/precommit BFT — the consensus the network runs today):**
 - **Block time**: 2 seconds (`block_time_ms = 2000` in the network configuration)
-- **Finality**: single-block — a block is final once 2/3+ stake precommits it, so end-to-end finality is **~2 seconds**, set by the block interval rather than by vote latency (the two voting rounds complete well within the interval)
+- **Finality**: single-block — a block is final once signed finality votes from validators holding >2/3 of the stake are seen, so end-to-end finality is **~2 seconds**, set by the block interval rather than by vote latency
 
 **HotStuff-2 pipeline (implemented in the node; benchmarked as the upgrade path, not yet live):**
 - **Block proposal**: ~50–100 ms
@@ -11417,7 +11435,7 @@ Per-block consensus messaging on the live testnet:
 - Prevote phase: ~200ms
 - Precommit phase: ~200ms
 
-The voting rounds themselves complete in ~500ms; end-to-end finality is governed by the configured 2-second block interval, so a transaction is final **~2 seconds** after the block containing it is proposed.
+The finality votes themselves arrive within a few hundred milliseconds; end-to-end finality is governed by the configured 2-second block interval, so a transaction is final **~2 seconds** after the block containing it is proposed.
 
 #### 14.2.2 Transaction Latency
 
@@ -11769,7 +11787,7 @@ Prometheus metrics exposed at `/metrics`:
 The following items from v5.0's roadmap have been implemented:
 
 - ✅ **Parallel EVM Execution**: Block-STM optimistic concurrency control
-- ✅ **HotStuff-2 Consensus**: Two-phase BFT with 33% faster finality
+- 🔬 **HotStuff-2 Consensus**: two-phase BFT pipeline implemented and benchmarked (33% faster finality); the live network runs the leader-gated single-vote protocol
 - ✅ **CLOB Precompile**: EVM-callable order book at `0x0100`
 - ✅ **Frequent Batch Auctions**: MEV-resistant uniform-price auctions
 - ✅ **Commit-Reveal MEV Protection**: Two-phase EVM transaction submission
@@ -11782,10 +11800,10 @@ The following items from v5.0's roadmap have been implemented:
 
 ### 16.2 Completed *(v7.0)*
 
-- ✅ **Production Storage Engine (redb)**: Pure-Rust ACID-compliant MVCC storage via pluggable `StateBackend` trait, replacing dev-grade sled. Runtime-selectable via config (`storage_backend: "redb"` or `"sled"`).
+- ✅ **Storage backends (redb and sled)**: pure-Rust ACID-compliant MVCC storage (redb) via the pluggable `StateBackend` trait, runtime-selectable (`storage_backend: "redb"` or `"sled"`); the public testnet runs sled.
 - ✅ **WebSocket Subscriptions**: Real-time event streaming for `NewHeads`, `NewPendingTransactions`, `Logs`, `MersennetOrdersTrades`, `MersennetOrdersBook`, and `BatchAuctionResults`. Configurable via `ws.enabled` / `ws.addr`.
 - ✅ **Block Pipeline**: Overlapping execution of block N+1 with consensus of block N (Monad-class pipelining). Configurable depth, automatic drain-and-commit.
-- ✅ **Noise Protocol Encryption**: Authenticated P2P using `Noise_XX_25519_ChaChaPoly_BLAKE2s` (same pattern as libp2p and WireGuard). X25519 keypair generation, mutual authentication, encrypted message exchange.
+- 🔬 **Noise Protocol Encryption**: `Noise_XX_25519_ChaChaPoly_BLAKE2s` handshake and transport implemented as a module (same pattern as libp2p and WireGuard); not yet wired into the UDP gossip layer, so P2P traffic is signed but unencrypted.
 - ✅ **ZK State Proofs**: Modular prover framework with `StateProver` trait, `MockProver` implementation, batch aggregation (`BatchProofAggregator`), and checkpoint chain verification (`CheckpointStore`). Wired into block production loop for periodic proof checkpoints.
 - ✅ **Account Abstraction (ERC-4337)**: Full `UserOperation` lifecycle: `EntryPoint` with nonce/gas/signature validation, `UserOpMempool` with sender indexing, `Bundler` for bundle creation, paymaster staking support.
 - 🚧 **Cross-Chain Bridge Infrastructure** *(implemented in the node, not yet live)*: Multi-chain deposit/withdrawal (Ethereum, Arbitrum, Optimism, Base, custom chains), relayer verification, token configuration with min/max/daily limits, Merkle proof generation for withdrawal finalization. The bridge is not wired to public RPC and no bridge contracts are deployed on any external chain yet.
@@ -11819,7 +11837,7 @@ The following items from v5.0's roadmap have been implemented:
 - **Consensus Upgrade Path**: Evaluate Bullshark [11] and Shoal for DAG-based consensus with zero communication overhead, potentially achieving 40-80% latency reduction over HotStuff-2.
 - **State Sharding**: Partition MersennetOrders markets across shards for horizontal throughput scaling. Each shard processes its own order book independently; cross-shard trades use atomic commit protocols.
 - **SDK Expansion**: Python (`sdk-python/`) and Go (`sdk-go/`) client libraries now ship alongside the TypeScript SDK; a Rust client library remains future work.
-- **Public Testnet** *(live)*: A four-validator public testnet has been operating since mid-2026 (chain ID 131071, ~2s blocks) with a public RPC, faucet, explorer, and trading front-end; community validator onboarding and incentivized testing remain future work.
+- **Public Testnet** *(live)*: the public testnet (chain ID 131071, ~2 s blocks) runs with an open validator set — six validators active in September 2026, two of them community-run — a public RPC, faucet, explorer, trading terminal, signed node releases and a points program for traders and node runners; the shielded pool and the bridge remain future work.
 - **Mainnet Launch**: Production deployment with genesis validator ceremony.
 
 ### 16.6 Research Areas
@@ -11977,7 +11995,7 @@ Like Ethereum and Bitcoin, Mersennet requires every full node to process every t
 ### 18.5 Implementation Notes and Limitations
 
 - ~~**No transaction signature verification**~~: ✅ **Resolved**: ECDSA secp256k1 signing and verification implemented with chain ID replay protection.
-- **Genesis validator bootstrap**: Initial validator set is configured manually; decentralized validator onboarding is future work.
+- **Validator onboarding**: permissionless since block 1,348,200 (staking precompile); the genesis set only seeded the first epochs.
 - **Network encryption**: P2P messages are unencrypted; TLS or noise protocol is planned.
 - **Bridge queue limits**: Queues have configurable max length; under high load, oldest messages may be evicted (FIFO). Applications must handle backpressure.
 - **Parallel execution accuracy** *(v6.0)*: Static dependency analysis uses heuristic address extraction. Delegate calls or self-modifying contracts may produce inaccurate access sets. MVCC validation detects these cases and triggers sequential fallback.
@@ -11988,7 +12006,7 @@ Like Ethereum and Bitcoin, Mersennet requires every full node to process every t
 
 | Feature | Bitcoin | Ethereum | Solana | Hyperliquid | dYdX v4 | **Mersennet v7** |
 |--------|---------|----------|--------|------------|---------|-------------|
-| Consensus | PoW | Gasper PoS | PoH+Tower | HyperBFT | CometBFT | **HotStuff-2** |
+| Consensus | PoW | Gasper PoS | PoH+Tower | HyperBFT | CometBFT | **Leader-gated BFT PoS** (HotStuff-2 path) |
 | Execution | Script | Sequential EVM | Parallel BPF | HyperCore + HyperEVM (dual) | EVM-like | **Parallel EVM + Pipeline** |
 | Order Matching | None | Contract | None | Native 200K/s | Native | **Native 1.5M/s** |
 | EVM ↔ CLOB | N/A | N/A | N/A | **Async** (CoreWriter, next-block, delayed) | Bridge | **Precompile (atomic, same-tx)** |
@@ -11998,7 +12016,7 @@ Like Ethereum and Bitcoin, Mersennet requires every full node to process every t
 | State Model | UTXO | Account | Account | Dual (Core+EVM) | Account | **Multi-domain (unified)** |
 | Account Abstraction | No | ERC-4337 | No | No | No | **ERC-4337 native** |
 | Cross-Chain Bridge | No | External | Wormhole | No | IBC | **Multi-chain infrastructure (implemented, not yet live)** |
-| P2P Encryption | None | DevP2P | QUIC | Custom | Tendermint | **Noise XX** |
+| P2P Encryption | None | DevP2P | QUIC | Custom | Tendermint | Signed, unencrypted (**Noise XX** planned) |
 | ZK Proofs | No | No | No | No | No | **State proof framework** |
 | TPS | ~7 | ~15 | ~65K | ~200K ops | ~1K | **~60K EVM + 1.5M CLOB** |
 
@@ -12048,7 +12066,7 @@ We believe Mersennet is well-positioned to capture the intersection of:
 - **On-chain derivatives** ($2.5T+ market): Full EVM DeFi composability + native CLOB performance
 - **Institutional credit** ($2.5T+ market): Transparent price discovery + EVM settlement logic
 
-The implementation comprises ~47,500 lines of Rust across ~106 source files, with comprehensive test coverage (276 tests), a live four-validator public testnet, CI/CD, and Prometheus observability.
+The implementation comprises ~47,500 lines of Rust across ~106 source files, with comprehensive test coverage (330+ tests), a live public testnet with an open validator set, CI/CD, and Prometheus observability.
 
 As Mersennet continues to evolve toward mainnet, we welcome contributions from researchers, developers, and the broader blockchain community.
 
@@ -12224,7 +12242,7 @@ $n$ = mempool/batch size, $k$ = txs per sender or parallel groups, $m$ = selecte
 | $QC = (blockHash, height, round, signers, aggregateStake)$ | Quorum Certificate |
 | $\text{commit}(B) \iff \exists QC_r(B) \land \exists QC_{r+1}(B')$ | 2-chain commit rule |
 | $timeout(r) = base + (r - lastCommit) \cdot delta$ | Progressive timeout |
-| $leader(r) = validators[\text{weighted\_index}(r)]$ | Weighted leader election |
+| $leader(h, r) = validators[(h + r) \bmod n]$ | Leader rotation (live); weighted election is the design target |
 
 ### Slashing
 

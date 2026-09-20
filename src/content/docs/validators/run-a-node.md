@@ -28,7 +28,7 @@ A full node follows the chain and serves RPC; a **validator** additionally signs
 | Disk | 40 GB SSD (state is ~15 GB in Sep 2026) | 100 GB SSD (chain data grows ~0.6 GB/day) |
 | Network | 10 Mbps, outbound UDP+TCP 30303 allowed; expect ~10 GB/day of traffic (mostly relayed transactions) | Inbound 30303 open too |
 
-You need `sudo` (root) on the machine. That is the whole list — no Rust, no Git, no build tools.
+You need `sudo` (root) on the machine. That is the whole list — no Rust, no Git, no build tools (`python3` and `openssl`, present on standard Ubuntu/Debian images, are used for the config merge and the signature check).
 
 :::tip[Using a separate disk or block volume]
 Mount it first (e.g. at `/mnt/blockstorage`) and pass `--data-dir` in Step 2. The chain data and your node key go there; nothing else about the install changes.
@@ -36,7 +36,7 @@ Mount it first (e.g. at `/mnt/blockstorage`) and pass `--data-dir` in Step 2. Th
 
 ## Step 2 — Install (one command)
 
-Run from **any directory** — it downloads the latest release, verifies its signature and checksum, installs the binary and config, creates a `mersennet` system user, restores the latest **state snapshot** (about 1 GB, SHA-256 verified) so the node only has to sync the last few hours instead of replaying the whole chain, and starts a hardened systemd service:
+Run from **any directory** — it downloads the latest release, verifies its signature and checksum, installs the binary and config, creates a `mersennet` system user, restores the latest **state snapshot** (about 1.6 GB, SHA-256 verified) so the node only has to sync the last few hours instead of replaying the whole chain, and starts a hardened systemd service:
 
 ```bash
 curl -fsSL https://mersennet.com/downloads/install.sh | sudo bash
@@ -73,13 +73,18 @@ mersennet-check
 ```
 
 ```text
-Service      running since 2026-09-12 15:02:25
-Block height 21248 / 1281813 network — syncing (1% done, 512 blocks/s, ~41 min left)
-Peers        18
+Mersennet node check — 2026-09-20 08:40 UTC
+
+Service      running since 2026-09-20 07:58:11
+Block height 1592301 / 1592301 network — in sync
+Peers        7 (P2P connections: validators, public RPC nodes and other full nodes — not the validator count)
 Chain ID     131071 (Mersennet testnet)
 Visibility   visible — the network hears this node as 203.0.113.10 · id 3f9a2c (explorer → Network → Network nodes)
-Binary       87e1c0bb2c44 — up to date (release 806f3c6)
-Data dir     /mnt/blockstorage/mersennet — 189M used, 281G free
+Reachable    yes — tcp/30303 answers from the internet (verification and registration work)
+Operator     0xYourWallet — verified node runner, earning 500 points/day at https://trade.mersennet.com/points
+Validator    0x3f9a…c2e1 — not registered; bond 1,000 MRSN at https://trade.mersennet.com/staking to start producing blocks
+Binary       dbe97a61d989 — up to date (release f67d812)
+Data dir     /mnt/blockstorage/mersennet — 16G used, 264G free on /mnt/blockstorage
 Node key     /mnt/blockstorage/mersennet/keys/node_key.json (back this up to keep your peer identity)
 ```
 
@@ -106,7 +111,7 @@ curl -s http://127.0.0.1:8545 -H 'Content-Type: application/json' \
 | **Upgrade** to a new release | Re-run the Step 2 command — it replaces the binary, restarts the service, keeps data and keys |
 | Back up your identity | Copy `keys/node_key.json` from your data dir somewhere safe |
 | Let others sync from you | Open **UDP+TCP 30303** inbound (`sudo ufw allow 30303` — the installer does this if ufw is active) |
-| Uninstall | `sudo systemctl disable --now mersennet && sudo rm -f /etc/systemd/system/mersennet.service /usr/local/bin/mersennet /usr/local/bin/mersennet-check && sudo rm -rf /etc/mersennet` — then delete the data dir if you want the chain data gone |
+| Uninstall | `sudo systemctl disable --now mersennet && sudo rm -f /etc/systemd/system/mersennet.service /usr/local/bin/mersennet /usr/local/bin/mersennet.prev /usr/local/bin/mersennet-check && sudo rm -rf /etc/mersennet && sudo userdel mersennet` — then delete the data dir if you want the chain data gone |
 
 That is the complete guide for running a node. Everything below is background, the validator question, and reference material for operators who want to go deeper.
 
@@ -123,7 +128,7 @@ Your node can earn **500 points a day** on [trade.mersennet.com/points](https://
    or afterwards by adding `"operator_address": "0xyour_wallet"` to the `p2p` section of `/etc/mersennet/config.json` and running `sudo systemctl restart mersennet`.
 2. Wait. Within about ten minutes of the network hearing your node, the terminal probes it, sees the operator address it signs, and marks it **verified** — on [trade.mersennet.com/points](https://trade.mersennet.com/points) (connect with that wallet) and on the explorer's Network page next to your node's id. Nothing to click.
 3. Optional: on the Points page you can also enter your node's public IP and press **Sign & verify** for an immediate check, or if your node runs behind NAT and is not directly reachable.
-4. The terminal re-checks the node every six hours; points are credited once per day while it answers. Several nodes under one wallet earn as one.
+4. The terminal re-checks the node every 30 minutes; points are credited once per day while it answers. Several nodes under one wallet earn as one.
 
 If verification fails, the message says why: port 30303/tcp not reachable from the internet, the node still on a build older than this feature (re-run the installer to upgrade), or the node naming a different operator.
 
@@ -135,13 +140,13 @@ The set is open since block 1,348,200. With your node verified (above), open [tr
 
 **My node is running but does not appear in the validator list.** A full node is not a validator until you register it. Verified nodes show on the explorer's *Network* page (with your operator badge); validators show on its *Validators* page after you register on [trade.mersennet.com/staking](https://trade.mersennet.com/staking) — see [Become a Validator](/validators/become-a-validator). `mersennet-check` saying *in sync* and *visible* is what success looks like today; the explorer's Network page lists it as a community node.
 
-**`mersennet-check` says my node is forked, or the log shows "state root" differences.** Your node ran an older build through a consensus upgrade and its state diverged. Re-run the installer with `--reset-state` (add the same `--data-dir` / `--operator` flags you used before): it keeps your keys and identity, discards the chain state and restores the latest snapshot — back in sync in about a minute.
+**`mersennet-check` prints `State … does not match the chain`, or the log shows `RESTORED STATE ROOT MISMATCH`.** Your node ran an older build through a consensus upgrade and its state diverged. Re-run the installer with `--reset-state` (add the same `--data-dir` / `--operator` flags you used before): it keeps your keys and identity, discards the chain state and restores the latest snapshot — back in sync in about a minute.
 
 ```bash
 curl -fsSL https://mersennet.com/downloads/install.sh | sudo bash -s -- --reset-state --operator 0xYOUR_WALLET
 ```
 
-**My node stopped advancing (the explorer moves, `mersennet-check` shows the same height).** Since build `0.7.0` of 16 Sep the node notices this itself: when its head has not moved for five minutes while the network is at least 60 blocks ahead, it exits and systemd restarts it (log line *"head has not advanced while the network moved on"*). On an older build, `sudo systemctl restart mersennet` does the same by hand. If it happens repeatedly, send us `journalctl -u mersennet -n 300 --no-pager` in the [Telegram chat](https://t.me/Mersennet) or through the terminal's [feedback form](https://trade.mersennet.com/feedback) — that is exactly the kind of report the testnet is for.
+**My node stopped advancing (the explorer moves, `mersennet-check` shows the same height).** Since the 16 Sep release the node notices this itself: when its head has not moved for five minutes while the network is at least 60 blocks ahead, it exits and systemd restarts it (log line *"head has not advanced while the network moved on"*). On an older build, `sudo systemctl restart mersennet` does the same by hand. If it happens repeatedly, send us `journalctl -u mersennet -n 300 --no-pager` in the [Telegram chat](https://t.me/Mersennet) or through the terminal's [feedback form](https://trade.mersennet.com/feedback) — such reports are exactly what the testnet is for.
 
 **Do I have to upgrade when a new release comes out?** For a full node: whenever convenient — `mersennet-check` says *update available*. For a **validator: yes, before the next protocol switch height** (listed on [Network Info](/getting-started/network-info/#protocol-upgrades) and announced on [Become a Validator](/validators/become-a-validator) and the [changelog](/resources/changelog); the staking page warns when your node is behind the current release). A validator on an old build applies the old rules from the switch height on, disagrees with the network about the next leader or the validator set, and forks off — it then needs `--reset-state`. Upgrading is the same one-line command as installing; it keeps your keys and data and takes under a minute.
 
@@ -149,11 +154,11 @@ curl -fsSL https://mersennet.com/downloads/install.sh | sudo bash -s -- --reset-
 
 **Where do I run the commands? Does `cd ~` matter?** Anywhere. The one-line installer downloads into a temporary directory and cleans up; your current directory is irrelevant. Chain data always goes to `/var/lib/mersennet` unless you pass `--data-dir`.
 
-**How do I keep the chain on my block storage instead of the OS disk?** `--data-dir /mnt/<your-volume>/mersennet` in Step 2. Re-running the installer with a new `--data-dir` moves an existing node's data there. Do not use `/tmp` paths — they are wiped on reboot and hidden from the service.
+**How do I keep the chain on my block storage instead of the OS disk?** `--data-dir /mnt/<your-volume>/mersennet` in Step 2. Re-running the installer with a new `--data-dir` moves an existing node's data there. The installer refuses `/tmp`, `/var/tmp` and `/dev/shm` (wiped on reboot and hidden from the service by `PrivateTmp`) and anything under `/home` or `/root` (hidden by `ProtectHome`); use `/var/lib/mersennet`, `/srv/…` or `/mnt/<volume>/…`.
 
 **Where does the 1,000,000 MRSN come from and how do I get it?** It is the genesis stake of the four founding validators, written into the genesis config before the chain started. You do not need it: the minimum self-stake for a new validator is 1,000 MRSN.
 
-**How long does the first sync take?** About a minute: the installer restores the latest published state snapshot (taken every six hours on the public node, ~1 GB compressed, SHA-256 verified) and the node then replays only the blocks since. Replaying the whole chain from genesis (`--from-genesis`) takes most of a day at current transaction density and is only useful if you want to verify every block yourself. The node verifies every block it imports on top of the snapshot either way.
+**How long does the first sync take?** About a minute: the installer restores the latest published state snapshot (taken every six hours on the public node, ~1.6 GB compressed, SHA-256 verified) and the node then replays only the blocks since. Replaying the whole chain from genesis (`--from-genesis`) takes most of a day at current transaction density and is only useful if you want to verify every block yourself. The node verifies every block it imports on top of the snapshot either way.
 
 **Can I run it without systemd, or on another distro / architecture?** Yes — download the bundle from [mersennet.com/downloads](https://mersennet.com/downloads/), extract it and run `./mersennet --config config.json --mode full --rpc` from a directory of your choice (data lands in `./data`, key in `./keys`). Non-x86-64 or glibc < 2.34 systems need a source build (below).
 
@@ -163,7 +168,7 @@ curl -fsSL https://mersennet.com/downloads/install.sh | sudo bash -s -- --reset-
 
 ### Manual install from the bundle
 
-Releases are signed. `SHA256SUMS.sig` is an ed25519 signature over `SHA256SUMS` by the Mersennet release key; the one-line installer pins this key and refuses to install if the signature does not verify. To check it yourself:
+Releases are signed. `SHA256SUMS.sig` is an ed25519 signature over `SHA256SUMS` by the Mersennet release key; the one-line installer pins this key and refuses to install if the signature does not verify (when `openssl` is missing it warns and falls back to the SHA-256 checksums alone — install `openssl` to keep the signature check). To check it yourself:
 
 ```bash
 curl -fsSLO https://mersennet.com/downloads/SHA256SUMS
@@ -176,7 +181,7 @@ curl -fsSLO "https://mersennet.com/downloads/$(awk 'NR==1{print $2}' SHA256SUMS)
 sha256sum -c SHA256SUMS --ignore-missing          # must print: ... OK
 tar xzf mersennet-node-linux-x86_64-*.tar.gz && cd mersennet-node-linux-x86_64-*/
 sha256sum -c SHA256SUMS                            # verifies every file in the bundle
-sudo bash install.sh [--data-dir DIR] [--rpc-public] [--from-genesis] [--operator 0xWALLET]
+sudo bash install.sh [--data-dir DIR] [--rpc-public] [--from-genesis] [--reset-state] [--operator 0xWALLET]
 ```
 
 The bundle's `install.sh` performs the same snapshot bootstrap as the one-liner. The snapshot manifest is `http://46.225.30.187:8088/latest.json` (served from the public node over plain HTTP because Cloudflare limits proxied downloads to 100 MB; the tarball's SHA-256 is in the manifest and is checked before extraction).
@@ -189,7 +194,7 @@ The bundle README lists the binary's sha256; it matches `sha256sum /opt/mersenne
 The node source (`mersennet/mersennet`) is being published under the Business Source License 1.1: read it, audit it, build it and run it as a Mersennet node freely; other networks need a commercial license (licensing@mersennet.com). Until the repository is public, use the signed release bundle below — it is the same build the fleet runs.
 :::
 
-Requires Rust 1.85+ (edition 2024), `build-essential`, `pkg-config`, `libssl-dev`, Git:
+Available once the repository is published (until then Linux x86-64 with glibc ≥ 2.34 — the release bundle — is the only supported path). Requires Rust 1.88+ (edition 2024), `build-essential`, `pkg-config`, `libssl-dev`, Git:
 
 ```bash
 sudo apt update && sudo apt install -y build-essential pkg-config libssl-dev git
@@ -261,7 +266,7 @@ Relative paths resolve against the node's working directory. The RPC defaults to
 | `fee_elasticity_multiplier` | `u64` | `2` | EIP-1559 elasticity (target = limit / multiplier) |
 | `fee_max_change_denominator` | `u64` | `8` | Max base fee change per block (1/8 = 12.5%) |
 | `storage_backend` | `string` | `"sled"` | `"sled"`, `"redb"`, or `"memory"` (both persistent backends keep the validator registry) |
-| `resume_root_check` | `string` | `"warn"` | At startup the restored state's root is compared with the head block's: `"warn"` logs `RESTORED STATE ROOT MISMATCH` and continues; `"fatal"` exits (code 5) so the node is never run on state that does not match the chain — the fix is `--reset-state`. The testnet flips to `"fatal"` on 2026-09-20; builds up to `e6eb772` ignore the setting and keep warning |
+| `resume_root_check` | `string` | `"warn"` | At startup the restored state's root is compared with the head block's: `"warn"` logs `RESTORED STATE ROOT MISMATCH` and continues; `"fatal"` exits (code 5) so the node is never run on state that does not match the chain — the fix is `--reset-state`. The canonical testnet config is authoritative (currently `"warn"`; the flip to `"fatal"` is a scheduled ops step); builds up to `e6eb772` ignore the setting and keep warning |
 
 #### `mempool`: Transaction Pool
 
@@ -282,7 +287,8 @@ Relative paths resolve against the node's working directory. The RPC defaults to
 | `block_time_ms` | `u64` | `1000` | Block production interval (ms). Code default is 1000; the public testnet runs 2000 (~2s blocks) — match the network you join |
 | `operator_address` | `string` | none | Your wallet; the node signs it into its identity attestation (verified node runner, validator registration). Set by `--operator` |
 | `compact_wire_height` | `u64` | `0` (testnet config: `1440000`) | Height from which gossip payloads are sent base64-encoded (~2.8× fewer bytes). Every build since 2026-09-15 decodes both forms |
-| `noise_enabled` | `bool` | `false` | Encrypt P2P with Noise Protocol |
+| `noise_enabled` | `bool` | `false` | Reserved: the Noise transport is not wired into UDP gossip yet, so this only changes a startup log line. Blocks, transactions and votes are authenticated by signature, not encrypted in transit. |
+| `fast_failover_height` | `u64` | `0` | Testnet: `1400550`. From this height a leader failover round is 3 block-times + 2 s (8 s) instead of 8 block-times + 3 s (19 s). |
 
 #### `rpc`: JSON-RPC Server
 
@@ -350,8 +356,14 @@ Consensus-critical — identical on every node; the installer refreshes it from 
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
-| `initial_margin_bps` | `u64` | `0` | Initial margin requirement (bps) |
-| `maintenance_margin_bps` | `u64` | `0` | Maintenance margin (bps) |
+| `initial_margin_bps` | `u64` | `0` | Initial margin requirement (bps) before the settlement switch |
+| `maintenance_margin_bps` | `u64` | `0` | Maintenance margin (bps) before the settlement switch |
+| `agent_delegation_height` | `u64` | `0` | Testnet: `1569600`. Agent keys (`setAgent` / `revokeAgent`) from this height |
+| `price_scale_height` / `price_rescales` | `u64` / `[[market, scale]]` | `0` / `[]` | Testnet: `1569600`, `[[1,100],[4,100],[5,100]]` — MRSN, SOL and ARB rescaled to `priceScale` 100 ($0.01 ticks) in place |
+| `frame_caller_height` | `u64` | `0` | Testnet: `1605600`. Precompiles authorise the calling frame (`msg.sender`) from this height |
+| `settlement_height` | `u64` | `0` | Testnet: `1605600`. One collateral unit = one MRSN, PnL settlement, margin enforcement and keeper liquidations from this height |
+| `settlement_initial_margin_bps` / `settlement_maintenance_margin_bps` | `u64` | `1000` / `500` | Margins that apply from `settlement_height` (10% / 5%) |
+| `allow_unsigned_orders_rpc` | `bool` | `false` | Accept unsigned order mutations over RPC (devnets only; the public testnet requires signed transactions) |
 
 #### `bridge`: Cross-Domain Bridge
 
@@ -375,7 +387,7 @@ Check the [Network Information](/getting-started/network-info) page for current 
 Genesis is not a separate file: it is the `genesis` section of your `config.json`, defining initial accounts, validators, CLOB markets, and collateral assets. Every node derives the identical genesis state from it, which is why the section must be byte-for-byte compatible across the network.
 
 - **Testnet (chain ID 131071)**: use the `config.json` from the [release bundle](https://mersennet.com/downloads/) (or `networks/testnet/config.json` in the repository) — never edit its `genesis`, `engine.chain_id`, or `token_economics` sections.
-- **Mainnet (chain ID 8191)**: see `mainnet/genesis.json` in the repository for the canonical parameters (not yet launched).
+- **Mainnet (chain ID 8191)**: `mainnet/genesis.json` in the repository holds the canonical parameters (published with the source; not yet launched).
 
 ## Node Modes
 
@@ -383,9 +395,9 @@ The `--mode` flag accepts `full`, `validator`, or `devnet`:
 
 | Mode | Behavior |
 |------|----------|
-| `full` | Syncs, follows consensus, serves RPC/WS, relays transactions. Does not propose blocks. **Use this for the public testnet.** |
-| `validator` | Everything `full` does, plus block production when this node's key is in the active validator set and elected leader. |
-| `devnet` | Local single-node demo chain. This is the default when `--mode` is omitted — always pass `--mode` explicitly for real deployments. |
+| `full` | Follows the chain, serves RPC/WS, relays transactions — and proposes and votes whenever this node's identity is in the active validator set. **Use this for the public testnet**, as the installer does. |
+| `validator` | Identical to `full` (kept for the fleet's service units): there is no separate validator mode since the open validator set — registering your identity is what turns a node into a validator. |
+| `devnet` | Local single-node demo chain. This is the default when `--mode` is omitted or misspelt — always pass `--mode full` explicitly for real deployments. |
 
 ```bash
 # Full node (RPC enabled)
@@ -417,6 +429,9 @@ Description=Mersennet Full Node (testnet, chain 131071)
 Documentation=https://docs.mersennet.com
 After=network-online.target
 Wants=network-online.target
+# Wait for the data volume (install.sh --data-dir on a mounted disk) so the
+# node never starts against an empty mountpoint on the root filesystem.
+RequiresMountsFor=/var/lib/mersennet
 
 [Service]
 Type=simple
@@ -430,7 +445,7 @@ ExecStart=/usr/local/bin/mersennet \
     --rpc
 
 Restart=always
-RestartSec=10
+RestartSec=5
 StartLimitInterval=200
 StartLimitBurst=5
 
@@ -449,7 +464,6 @@ PrivateTmp=yes
 # Resource limits
 LimitNOFILE=65535
 LimitNPROC=4096
-MemoryMax=12G
 
 # Environment
 Environment="RUST_LOG=info"
@@ -508,20 +522,18 @@ Understanding node log messages helps diagnose issues quickly.
 |------------|---------|
 | `node identity loaded address=0x...` | Node keypair loaded successfully |
 | `registered genesis validator address=0x...` | Validator registered from genesis config |
-| `RPC server listening on 0.0.0.0:8545` | JSON-RPC server started |
-| `P2P listening on 0.0.0.0:30303` | Peer-to-peer networking active |
-| `block produced number=N txs=M gas_used=G` | Block successfully produced |
-| `block finalized number=N hash=0x...` | Block reached 2/3+ consensus |
-| `peer connected addr=1.2.3.4:30303` | New peer connection established |
+| `RPC listening on http://127.0.0.1:8545` | JSON-RPC server started |
+| `gossip listener started` / `tcp snapshot listener started addr=…` | Peer-to-peer networking active (UDP gossip, TCP sync) |
+| `block produced height=N txs=M gas=G` | This node proposed a block |
+| `block finalized by 2/3 stake quorum height=N block_hash=0x…` | Block reached 2/3+ stake finality |
 
 ### Warning Signs
 
 | Log Message | Meaning | Action |
 |------------|---------|--------|
-| `consensus timeout round=N` | Failed to get 2/3+ votes in time | Check peer connectivity |
-| `mempool full, rejecting tx` | Mempool at capacity (10K default) | Increase `mempool.max_total` or reduce load |
-| `peer disconnected addr=...` | Lost connection to a peer | Check network; peer may restart automatically |
-| `slashing evidence kind=timeout` | This node missed a consensus round | Ensure clock sync and network stability |
+| `RESTORED STATE ROOT MISMATCH` | The restored state does not match the head block | Re-run the installer with `--reset-state` |
+| `slashing evidence detected kind=double_sign …` | A validator signed two blocks at one height | Nothing to do on a full node; the equivocating validator is slashed |
+| `liveness watchdog: head stalled … exiting` | Head unchanged for 5 min while the network is ≥ 60 blocks ahead | The service restarts and re-syncs itself; if it repeats, send `journalctl -u mersennet -n 300` via the feedback form |
 | `head not advancing, but no evidence the network is ahead` | Either the whole network is paused or this node has no peers and no reference RPC | Check `Peers` in `mersennet-check` and the explorer |
 | `head has not advanced while the network moved on — exiting` | The watchdog restarted the node (`systemctl show mersennet -p NRestarts`) | Nothing, unless it repeats — then send the log through the feedback form |
 
@@ -609,7 +621,7 @@ groups:
           summary: "Mersennet node is down"
 
       - alert: BlockProductionStalled
-        expr: increase(mersennet_blocks_produced_total[5m]) == 0
+        expr: increase(mersennet_height[5m]) == 0
         for: 5m
         labels:
           severity: critical
@@ -650,7 +662,7 @@ Paths below follow the canonical config (relative to the node's working director
 |------|----------|-----------|
 | `keys/node_key.json` | Node identity keypair (validator signing key) | **Yes**, loss means new identity |
 | `data/peers.json` | Known peer addresses | No, peers rediscovered on restart |
-| `data/state/` | Full chain state (accounts, storage, blocks) | Yes, loss requires resync (fast: several hundred blocks/s) |
+| `data/state/` | Full chain state (accounts, storage, blocks) | Yes; loss is fixed by re-running the installer with `--reset-state` (snapshot restore, about a minute) |
 | `config.json` | Node configuration | Yes, keep in version control |
 
 ### Backup Procedure
@@ -722,9 +734,9 @@ Never run two nodes with the same `node_key.json` simultaneously: this may trigg
 
 | Symptom | Cause | Solution |
 |---------|-------|----------|
-| Memory >12GB and growing | State trie growth | Normal for long-running nodes; increase RAM or add swap |
+| Memory well above the 8 GB recommendation and growing | State growth or a leak | Restart the service (`systemctl restart mersennet`) and report it via the feedback form with `journalctl -u mersennet -n 300` |
 | CPU constantly at 100% | EVM execution or block production | Check for spam transactions; consider `gas_limit_per_block` adjustment |
-| Disk filling up | State database growth | Increase storage; consider pruning old data |
+| Disk filling up | State database growth (~0.6 GB/day) | Move the data dir to a larger volume: re-run the installer with `--data-dir /mnt/<volume>/mersennet` |
 
 ### Useful Commands
 
@@ -745,10 +757,12 @@ curl -s http://localhost:8545 -X POST \
   -H "Content-Type: application/json" \
   -d '{"jsonrpc":"2.0","method":"net_peerCount","params":[],"id":1}' | jq
 
-# Check node sync status
-curl -s http://localhost:8545 -X POST \
-  -H "Content-Type: application/json" \
-  -d '{"jsonrpc":"2.0","method":"eth_syncing","params":[],"id":1}' | jq
+# Compare your height with the network (eth_syncing always returns false on Mersennet)
+curl -s http://localhost:8545 -X POST -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","method":"eth_blockNumber","params":[],"id":1}' | jq -r .result
+curl -s https://rpc.mersennet.com -X POST -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","method":"eth_blockNumber","params":[],"id":1}' | jq -r .result
+# or simply: mersennet-check
 
 # View Prometheus metrics
 curl -s http://localhost:8545/metrics | grep mersennet_height

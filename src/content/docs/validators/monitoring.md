@@ -29,7 +29,7 @@ Traders can link the same bot from the account panel on the [trade page](https:/
 
 ## Overview
 
-A typical monitoring stack includes:
+Beyond the built-in alerts above, the [status page](https://status.mersennet.com/status/mersennet) shows the public infrastructure and `mersennet-check` gives a one-screen local check. For dashboards and your own alert rules, the usual stack is:
 
 | Component | Purpose |
 |-----------|---------|
@@ -63,8 +63,7 @@ The full metric list is exposed at the node's `/metrics` endpoint (served on the
 sudo apt update
 sudo apt install prometheus
 
-# Or use the official binary
-wget https://github.com/prometheus/prometheus/releases/download/v2.45.0/prometheus-2.45.0.linux-amd64.tar.gz
+# Or download the current release from https://prometheus.io/download/ and unpack it
 tar xvfz prometheus-*.tar.gz
 cd prometheus-*
 ```
@@ -85,7 +84,7 @@ scrape_configs:
       - targets: ['localhost:8545']  # Mersennet RPC port (serves /metrics)
 ```
 
-Mersennet serves Prometheus metrics at `GET /metrics` on the JSON-RPC port (`rpc.addr`, default 8545). The RPC server must be enabled (`rpc.enabled: true`).
+Mersennet serves Prometheus metrics at `GET /metrics` on the JSON-RPC port (`rpc.addr`, default 8545). The installed service already starts RPC on `127.0.0.1:8545` (`--rpc` in the unit), so `/metrics` is available locally out of the box; only manual runs need `rpc.enabled: true` or `--rpc`.
 
 ### 3. Start Prometheus
 
@@ -99,9 +98,10 @@ Mersennet serves Prometheus metrics at `GET /metrics` on the JSON-RPC port (`rpc
 
 ```bash
 # Ubuntu/Debian
-sudo apt install -y software-properties-common
-sudo add-apt-repository "deb https://packages.grafana.com/oss/deb stable main"
-wget -q -O - https://packages.grafana.com/gpg.key | sudo apt-key add -
+sudo apt install -y apt-transport-https software-properties-common wget
+sudo mkdir -p /etc/apt/keyrings
+wget -q -O - https://apt.grafana.com/gpg.key | gpg --dearmor | sudo tee /etc/apt/keyrings/grafana.gpg > /dev/null
+echo "deb [signed-by=/etc/apt/keyrings/grafana.gpg] https://apt.grafana.com stable main" | sudo tee /etc/apt/sources.list.d/grafana.list
 sudo apt update
 sudo apt install grafana
 sudo systemctl enable grafana-server
@@ -123,14 +123,14 @@ Create panels for:
 
 - **Block height**: Graph of `mersennet_height` over time
 - **Total stake**: Gauge or stat for `mersennet_total_stake`
-- **Blocks produced**: Rate of `mersennet_blocks_produced_total`
+- **Blocks this node proposed**: rate of `mersennet_blocks_produced_total` (stays at 0 on a full node or a validator outside the active set — track `mersennet_height` for liveness)
 - **Pending transactions**: `mersennet_mempool_size`
 - **Active validators**: `mersennet_validators_active`
 - **Slashing events**: `mersennet_slashing_events` (critical for validators)
 
 ## Alert Rules
 
-Configure Prometheus alerting to catch issues before they cause slashing or downtime.
+Configure Prometheus alerting to catch issues before they cost you leader slots (benching, jailing) or — for equivocation only — stake.
 
 ### Prometheus Alert Rules
 
@@ -158,9 +158,9 @@ groups:
           severity: warning
         annotations:
           summary: "Validator slashing evidence recorded"
-          description: "Slashing evidence (timeout or double-sign) recorded in the last hour."
+          description: "Slashing evidence (double-sign) recorded in the last hour."
 
-      # Low disk space
+      # Low disk space (needs node_exporter on the host for the node_* metrics)
       - alert: MersennetLowDiskSpace
         expr: (node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"}) < 0.1
         for: 5m
@@ -200,9 +200,9 @@ To send alerts to email, Slack, or PagerDuty:
 
 | Practice | Recommendation |
 |----------|----------------|
-| **Uptime** | Aim for 99.9%+: missing more than 20% of your leader slots in an epoch jails you for the next one (no stake penalty, but no rewards either) |
+| **Uptime** | Aim for 99.9%+: three missed leader slots bench you for the rest of the epoch; missing more than 20% of your slots jails you for the next one (1, 2, 4, 8, 16, 24 epochs for consecutive jails). No stake penalty, but no rewards either |
 | **Disk** | Monitor and expand before hitting 10% free |
-| **Peers** | Maintain at least 5–10 stable peers |
+| **Peers** | At least one peer (`mersennet-check` → Peers) — the whole network is a dozen or so reachable nodes; keep UDP and TCP 30303 open inbound to be reachable yourself |
 | **Backups** | Backup validator key and config; never expose the key |
 | **Alerts** | Route critical alerts to a channel you monitor 24/7 |
 

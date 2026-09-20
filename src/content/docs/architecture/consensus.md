@@ -11,7 +11,7 @@ Mersennet uses **leader-gated BFT proof-of-stake**: one elected validator produc
 | **Consensus** | Leader-gated BFT proof-of-stake, single elected leader per height (HotStuff-2 pipeline: roadmap, not live) |
 | **Block Time** | ~2 seconds on the current testnet (configurable per network) |
 | **Finality** | ≥ 2/3 of total stake, signed votes gossiped per block |
-| **Failover** | Timeout-based round rotation to the next leader (8 s per round since block 1,440,000); since block 1,569,600 a leader that missed 3 slots in an epoch is benched until the epoch boundary |
+| **Failover** | Timeout-based round rotation to the next leader (8 s per round since block 1,400,550; 19 s before); since block 1,569,600 a leader that missed 3 slots in an epoch is benched until the epoch boundary |
 | **Implementation** | Rust |
 
 ## Validator Selection
@@ -395,7 +395,7 @@ Complete reference of all configuration parameters with their default values.
 | `escalation_step_bps` | `u64` | `25` | Penalty increase per repeated offense (0.25%) |
 | `escalation_max_bps` | `u64` | `1000` | Maximum escalated penalty (10%) |
 | `round_timeout_ms` | `u64` | `500` | Consensus round timeout in milliseconds |
-| `unbonding_period` | `u64` | `2` | Blocks before unbonded stake is withdrawable (code default; the public testnet configs use 100) |
+| `unbonding_period` | `u64` | `2` | Consensus-engine unbonding in blocks (code default; the canonical testnet config also sets 2). The open validator set's staking unbonding is separate: `validator_set.unbonding_blocks` = 7,200 (~4 h). |
 
 ### `token_economics`: Reward & Supply
 
