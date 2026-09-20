@@ -38,6 +38,10 @@ The TypeScript SDK exposes the migration surface as typed functions:
 | `matchesMigrationNote` | Check whether an on-chain commitment corresponds to a derived migration note. |
 | `defaultNoteCommitment` | Deterministic placeholder hasher for tests. Production wallets must inject the chain's Poseidon note-commitment hasher. |
 
+:::caution[Derivation is still a placeholder]
+The SDK's `planMigration` / `confirmMigration` derive the note randomness with a `sha256` placeholder; the chain's migration tool derives it as `keccak256("MersennetChain-MigrationRho" ‖ EOA ‖ height)` reduced into the field, with a Poseidon commitment. Until the SDK mirrors that (it will before the fork), the planned note cannot predict or confirm the chain-minted one — treat these helpers as the API shape, not the final math.
+:::
+
 ```ts
 import { planMigration, confirmMigration } from '@mersennet/sdk';
 

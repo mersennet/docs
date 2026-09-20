@@ -152,7 +152,7 @@ These are pre-deployed tokens on Mersennet testnet:
 
 | Token | Address | Use Case |
 |-------|---------|----------|
-| WMRSN | `0x5bBF04528469591280D36D46209c7CCD5a68a798` | Wrapped MRSN for DEX |
+| WMRSN | `0x5bBF04528469591280D36D46209c7CCD5a68a798` | ERC-20 wrapper of the native MRSN |
 | MockUSDC | `0xA44B23d1D0C0133dA71DeCe399d5d5aDE6DD22d1` | Test stablecoin |
 | MockUSDT | `0x3923578a19d0e9B35cef08B7Eba0cb6D4B9c28F6` | Test stablecoin |
 | MockDAI | `0x27942c2cEE3e0e02377d01BFE6E74cefC9a9FD45` | Test stablecoin |

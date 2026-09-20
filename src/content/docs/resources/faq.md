@@ -8,7 +8,7 @@ title: "FAQ"
 
 ### What is Mersennet?
 
-**Mersennet** is a high-performance, EVM-compatible Layer 1 blockchain built for speed, composability, and institutional-grade DeFi. It combines Ethereum's smart contract ecosystem with a **native order matching engine (MersennetOrders)**, enabling atomic cross-domain workflows (EVM + CLOB) in a single transaction. Key features include ~2 second blocks with immediate BFT finality, leader-gated Proof-of-Stake consensus, and a 2⁸⁹ − 1 wei (≈618.97M MRSN) supply cap with halving block rewards.
+**Mersennet** is the private, verifiable network: an EVM-compatible Layer 1 with a **native on-chain order book (MersennetOrders)** that contracts can place and fill orders on atomically in one transaction, every block proven with SP1, and account-level privacy arriving at the privacy hard fork. Key features include ~2 second blocks with immediate BFT finality, leader-gated Proof-of-Stake consensus, and a 2⁸⁹ − 1 wei (≈618.97M MRSN) supply cap with halving block rewards.
 
 ### Is Mersennet EVM compatible?
 
@@ -50,7 +50,7 @@ Any EIP-1193–compatible wallet — MetaMask, Rabby, Frame, Rainbow, and others
 
 ### Is there a bridge?
 
-A cross-chain bridge is planned (Tier 3 in the roadmap). For now, testnet assets exist only on Mersennet. Bridge infrastructure is documented in the whitepaper for future deployment.
+A cross-chain bridge is planned for after the privacy hard fork and is not live; the Groth16 verifying key for the Ethereum side is in progress. For now, testnet assets exist only on Mersennet. The design is in the whitepaper.
 
 ## Network
 
@@ -83,13 +83,13 @@ Points track testnet participation on [trade.mersennet.com/points](https://trade
 
 ### What is Mersennet Trade?
 
-Mersennet Trade is the native perpetuals and spot trading terminal, built on the on-chain CLOB precompile (`MersennetOrders`) for explicit bid/ask price discovery and limit/market orders. See [Mersennet Trade](/ecosystem/trade).
+Mersennet Trade is the perpetuals trading terminal built on the on-chain CLOB precompile (`MersennetOrders`): explicit bid/ask price discovery, limit and market orders, every action a signed transaction. Its spot page is an off-chain preview for UX testing, not on-chain trading. See [Mersennet Trade](/ecosystem/trade).
 
 ## Security
 
 ### How do I report a vulnerability? {#security}
 
-Email **security@mersennet.com** (or message an admin in the [Telegram group](https://t.me/Mersennet) and ask for a private channel). Please include steps to reproduce, the affected component (node, precompile, terminal, API, explorer, faucet) and, for chain issues, the block height. We acknowledge within 48 hours and keep you informed until the fix ships; credit in the changelog is yours if you want it. Do not test against other users' funds or run denial-of-service traffic — this is a public testnet, but people are using it. Every public hostname publishes the same contact at `/.well-known/security.txt`.
+Email **security@mersennet.com** (or message an admin in the [Telegram group](https://t.me/Mersennet) and ask for a private channel). Please include steps to reproduce, the affected component (node, precompile, terminal, API, explorer, faucet) and, for chain issues, the block height. We acknowledge within 48 hours and keep you informed until the fix ships; credit in the changelog is yours if you want it. Do not test against other users' funds or run denial-of-service traffic — this is a public testnet, but people are using it. Every public web hostname (mersennet.com, trade, explorer, faucet, docs, status) publishes the same contact at `/.well-known/security.txt`.
 
 ---
 

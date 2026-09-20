@@ -122,7 +122,7 @@ Always returns an empty array.
 
 ### eth_syncing
 
-Returns `false` when not syncing, or a sync status object.
+Always returns `false` (nodes bootstrap from a snapshot and follow the chain live; there is no sync-status object).
 
 **Parameters:** None
 
@@ -130,7 +130,7 @@ Returns `false` when not syncing, or a sync status object.
 
 ### eth_mining
 
-Returns whether the node is actively mining/producing blocks.
+Always returns `false` — there is no proof-of-work; block production is a validator role, not "mining".
 
 **Parameters:** None
 
@@ -138,7 +138,7 @@ Returns whether the node is actively mining/producing blocks.
 
 ### eth_protocolVersion
 
-Returns the current protocol version.
+Returns the constant `"0x41"`.
 
 **Parameters:** None
 
@@ -151,7 +151,7 @@ Returns account balance in wei.
 **Parameters:**
 
 1. `address`: 20-byte address (hex)
-2. `blockNumber` (optional): Block number or `"latest"`
+2. `blockNumber` (optional): accepted for compatibility but ignored — the node answers with the latest state
 
 <Tabs syncKey="lang">
   <TabItem label="curl">
@@ -196,7 +196,7 @@ Returns nonce (transaction count) for an address.
 **Parameters:**
 
 1. `address`: 20-byte address (hex)
-2. `blockNumber` (optional): `"latest"` or block number
+2. `blockNumber` (optional): accepted for compatibility but ignored — always the latest state
 
 ---
 
@@ -207,7 +207,7 @@ Returns the bytecode at an address.
 **Parameters:**
 
 1. `address`: 20-byte address (hex)
-2. `blockNumber` (optional): Block number or `"latest"`
+2. `blockNumber` (optional): accepted for compatibility but ignored — always the latest state
 
 ---
 
@@ -219,7 +219,7 @@ Returns the value at a storage slot.
 
 1. `address`: 20-byte address (hex)
 2. `slot`: Storage slot (hex)
-3. `blockNumber` (optional): Block number or `"latest"`
+3. `blockNumber` (optional): accepted for compatibility but ignored — always the latest state
 
 ---
 
@@ -230,7 +230,7 @@ Executes a call without creating a transaction (read-only).
 **Parameters:**
 
 1. `callObject`: `{ from?, to, gas?, gasPrice?, value?, data? }`
-2. `blockNumber` (optional): `"latest"` or block number
+2. `blockNumber` (optional): accepted for compatibility but ignored — always the latest state
 
 ```bash
 curl -X POST https://rpc.mersennet.com \
@@ -264,7 +264,7 @@ full transaction metadata is not part of the post-fork public surface.
 
 **Parameters:**
 
-1. `blockNumber`: Block number (hex) or `"latest"`, `"pending"`
+1. `blockNumber`: Block number (hex) or `"latest"` (`"pending"` and `"earliest"` are rejected with `-32602`)
 2. `fullTransactions`: `true` for full tx objects, `false` for hashes only
 
 ```bash
@@ -282,12 +282,15 @@ curl -X POST https://rpc.mersennet.com \
   "result": {
     "number": "0x1234",
     "hash": "0x...",
+    "parentHash": "0x...",
+    "timestamp": "0x...",
+    "miner": "0x...",
     "proposer": "0x...",
     "gasLimit": "0x...",
     "gasUsed": "0x...",
     "baseFeePerGas": "0x...",
     "stateRoot": "0x...",
-    "domainEvents": [],
+    "transactionsRoot": "0x...",
     "transactions": ["0x...", "0x..."]
   }
 }
@@ -366,9 +369,14 @@ surface because receipt metadata and logs remain private.
     "blockNumber": "0x...",
     "transactionIndex": "0x0",
     "status": "0x1",
+    "from": "0x...",
+    "to": "0x...",
     "gasUsed": "0x...",
-    "output": "0x...",
+    "cumulativeGasUsed": "0x...",
+    "effectiveGasPrice": "0x1",
     "logs": [],
+    "logsBloom": "0x...",
+    "type": "0x0",
     "contractAddress": "0x..."
   }
 }
@@ -389,7 +397,7 @@ Returns logs matching a filter.
 ```bash
 curl -X POST https://rpc.mersennet.com \
   -H "Content-Type: application/json" \
-  -d '{"jsonrpc":"2.0","method":"eth_getLogs","params":[{"fromBlock":"0x0","toBlock":"latest","address":"0xA44B23d1D0C0133dA71DeCe399d5d5aDE6DD22d1"}],"id":1}'
+  -d '{"jsonrpc":"2.0","method":"eth_getLogs","params":[{"fromBlock":"0x184b00","toBlock":"latest","address":"0xA44B23d1D0C0133dA71DeCe399d5d5aDE6DD22d1"}],"id":1}'
 ```
 
 ---
@@ -405,7 +413,7 @@ curl -X POST https://rpc.mersennet.com \
 Sends a pre-signed raw transaction.
 
 :::caution
-Mersennet accepts **both** standard Ethereum RLP-encoded transactions (EIP-155) and its own custom binary format. MetaMask-signed transactions work natively.
+Mersennet accepts **both** standard Ethereum RLP-encoded transactions (legacy/EIP-155, EIP-2930 and EIP-1559 envelopes) and its own custom binary format. MetaMask-signed transactions work natively.
 :::
 
 **Parameters:**
@@ -541,6 +549,45 @@ Destroys a filter. Returns `true` if the filter existed.
 
 ---
 
+## WebSocket subscriptions
+
+Subscriptions are the only methods served over `wss://rpc.mersennet.com` (everything else over WebSocket returns `-32601 WS: method not supported`). A node you run yourself needs `ws.enabled = true` and listens on port 8546.
+
+### eth_subscribe
+
+**Parameters:** `subscriptionType` (`"newHeads"`, `"newPendingTransactions"`, `"logs"`) and, for `logs`, an optional filter `{ address?, topics? }`.
+
+**Returns:** a subscription id; events arrive as `eth_subscription` notifications with `{ subscription, result }`.
+
+```json
+{"jsonrpc":"2.0","id":1,"method":"eth_subscribe","params":["newHeads"]}
+{"jsonrpc":"2.0","id":2,"method":"eth_subscribe","params":["logs",{"address":"0xA44B23d1D0C0133dA71DeCe399d5d5aDE6DD22d1"}]}
+```
+
+`eth_unsubscribe` takes the subscription id and returns `true`.
+
+### mersennet_subscribe
+
+Order-book and proof topics. The second parameter is a market id (integer or hex) where shown; where it is optional, omitting it streams every market.
+
+| Topic | Params | Event |
+|-------|--------|-------|
+| `MersennetOrdersTrades` | `[topic, marketId?]` | each fill: `{ taker, maker, market_id, side, price, size }` — price and size as decimal strings in chain units (divide the price by `priceScale`) |
+| `MersennetOrdersBook` | `[topic, marketId]` | reserved — accepted but not emitted by node 0.7.0; poll `mersennet_orders_getOrderBook` |
+| `BatchAuctionResults` | `[topic, marketId?]` | batch-auction clearing results (privacy hard fork mode) |
+| `newShieldedRoot` | `[topic]` | new shielded state root, every block |
+| `newClearingPrice` | `[topic, marketId?]` | uniform clearing price per tick (privacy hard fork mode) |
+| `newAuctionSettled` | `[topic, marketId?]` | auction settlement (privacy hard fork mode) |
+| `newStateProof` | `[topic]` | a new state-transition proof was attached to a block |
+
+```json
+{"jsonrpc":"2.0","id":3,"method":"mersennet_subscribe","params":["MersennetOrdersTrades", 1]}
+```
+
+`mersennet_unsubscribe` takes the subscription id. The trade terminal's own feed (`wss://trade.mersennet.com/ws`) adds tickers, candles and account channels on top of these — see [Mersennet Trade](/ecosystem/trade/#rest-and-websocket-api).
+
+---
+
 ## Network Methods
 
 ### net_version
@@ -609,7 +656,7 @@ Returns the client version string.
 **Response:**
 
 ```json
-{ "jsonrpc": "2.0", "id": 1, "result": "Mersennet/0.1.0" }
+{ "jsonrpc": "2.0", "id": 1, "result": "Mersennet/0.7.0-f67d812" }
 ```
 
 ---
@@ -765,11 +812,11 @@ curl -X POST https://rpc.mersennet.com \
     "jailEscalationHeight": 1569600,
     "benchHeight": 1569600
   },
-  "height": 1350412,
-  "epoch": 750,
-  "nextEpochAt": 1351800,
-  "activeSet": ["0x728b…", "0x9d39…", "0xc16b…", "0xe4c6…"],
-  "consensusValidators": ["0x728b…", "0x9d39…", "0xc16b…", "0xe4c6…"],
+  "height": 1592678,
+  "epoch": 884,
+  "nextEpochAt": 1593000,
+  "activeSet": ["0x292f…", "0x728b…", "0x9d39…", "0xb1fb…", "0xc16b…", "0xe4c6…"],
+  "consensusValidators": ["0x292f…", "0x728b…", "0x9d39…", "0xb1fb…", "0xc16b…", "0xe4c6…"],
   "validators": [
     {
       "identity": "0x728b…",
@@ -825,7 +872,7 @@ curl -X POST http://127.0.0.1:8545 \
   "identity": "0x47a51113b276a74a624b1a245e07663a5af73e5c",
   "operator": "0x6dd9bb44ddfaba76d8868915d6fe80c3f8a932ec",
   "registrationProof": "0x…65 bytes…",
-  "version": "Mersennet/0.7.0-ecba1ee"
+  "version": "Mersennet/0.7.0-f67d812"
 }
 ```
 
@@ -856,7 +903,7 @@ Returns the on-chain code-publication attestation for a contract, or `null` if n
 **Parameters:**
 
 1. `address`: Contract address (hex)
-2. `blockNumber` (optional): Block number or `"latest"`
+2. `blockNumber` (optional): accepted for compatibility but ignored — always the latest state
 
 **Returns:** `{ contract, deployer, codeHash, metadataUri, publishedAtBlock }` or `null`.
 
@@ -864,12 +911,12 @@ Returns the on-chain code-publication attestation for a contract, or `null` if n
 
 ### mersennet_getCodeHash
 
-Returns the keccak-256 code hash at an address (or `null` if there is no code).
+Returns the `codeHash` recorded in the contract's code-publication attestation (see `mersennet_getCodeAttestation`), or `null` if none was published — even when the address has code. Use `eth_getCode` for the raw bytecode.
 
 **Parameters:**
 
 1. `address`: Contract address (hex)
-2. `blockNumber` (optional): Block number or `"latest"`
+2. `blockNumber` (optional): accepted for compatibility but ignored — always the latest state
 
 ---
 
@@ -946,7 +993,7 @@ curl -X POST http://localhost:8545 \
 }
 ```
 
-The response contains only `{ accepted, txHash }`. Fills happen when the transaction mines; observe them by polling `mersennet_orders_getOpenOrders` / `getTrades` or subscribing to the `MersennetOrdersTrades` WebSocket topic.
+The response contains only `{ accepted, txHash }`. Fills happen when the transaction mines; observe them by polling `mersennet_orders_getOpenOrders`, reading `mersennet_getDomainEvents` (domain `mersennet_orders`, kind `trade`) or subscribing to the `MersennetOrdersTrades` topic with `mersennet_subscribe` (see [WebSocket subscriptions](#websocket-subscriptions)).
 
 ---
 
@@ -1043,7 +1090,7 @@ Get all open orders for a specific address.
 
 ### mersennet_orders_getProtocol
 
-Every CLOB consensus switch and live parameter in one call: `switches` (`agentDelegationHeight`, `frameCallerHeight`, `priceScaleHeight`, `settlementHeight`), the `*Active` flags at the head, `initialMarginBps` / `maintenanceMarginBps` as enforced now, `weiPerCollateralUnit` (1 before the settlement switch, 10¹⁸ after), `insuranceFund`, `badDebt`, and each market's `priceScale`. Clients should read this instead of hard-coding heights.
+Every CLOB consensus switch and live parameter in one call: `switches` (`agentDelegationHeight`, `frameCallerHeight`, `priceScaleHeight`, `settlementHeight`), the `*Active` flags at the head, `initialMarginBps` / `maintenanceMarginBps` as enforced now, `weiPerCollateralUnit` (1 before the settlement switch, 10¹⁸ after), `insuranceFund`, `badDebt`, and each market's `priceScale`. Clients should read this instead of hard-coding heights. It also carries `settlementInitialMarginBps` / `settlementMaintenanceMarginBps` (the margins that apply from `settlementHeight`: 1000 / 500 bps today) and `height`, the block the answer describes.
 
 ---
 
@@ -1070,11 +1117,11 @@ An account grants a second key permission to trade for it with `setAgent(address
 ```json
 {
   "owner": "0x…",
-  "agentDelegationHeight": 1650000,
+  "agentDelegationHeight": 1569600,
   "active": true,
   "frameCallerHeight": 1605600,
   "frameCallerActive": true,
-  "height": 1651234,
+  "height": 1592700,
   "agents": [{ "agent": "0x…", "expiresAtBlock": 1710400, "expired": false }]
 }
 ```
@@ -1299,6 +1346,8 @@ The following CLOB markets are registered on the testnet:
 | 3 | ETH | ETH perpetual, priced in USD |
 | 4 | SOL | SOL perpetual, priced in USD |
 | 5 | ARB | ARB perpetual, priced in USD |
+
+Ids 6 (`E2E150`) and 7 (`E2E263`) also appear in `getMarkets`: they are internal end-to-end test listings with no liquidity — ignore them.
 
 :::note
 Market creation is permissionless via the `createMarket` precompile call, so the live list may contain additional markets — query `mersennet_orders_getMarkets` for the current set.

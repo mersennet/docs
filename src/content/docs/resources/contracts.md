@@ -5,14 +5,14 @@ title: "Deployed Contracts"
 Reference of contracts deployed on Mersennet testnet (Chain ID 131071). All addresses below are live on the current chain (redeployed August 2026 after the fresh-genesis reset; addresses are unchanged from the previous chain).
 
 :::caution[Testnet resets]
-Testnet chain state may be wiped during protocol upgrades. When that happens, contracts are redeployed and this page is updated — always treat this page (or `deployments.json` in the contracts repository) as the source of truth for addresses.
+Testnet state is only wiped at a re-genesis (last: August 2026); scheduled protocol upgrades keep state and addresses. After a re-genesis, contracts are redeployed and this page is updated — treat this page as the source of truth for addresses.
 :::
 
 ## Native Precompiles
 
 | Contract | Address | Description |
 |----------|---------|-------------|
-| **MersennetOrders** | `0x0000000000000000000000000000000000000100` | Native CLOB matching engine. `placeOrder`, `placeOrderExt`, `cancelOrder`, `createMarket` (permissionless listing, 100 MRSN fee), `depositCollateral`, `withdrawCollateral`, `depositTokenCollateral`, `withdrawTokenCollateral`, `getPosition`, `getCollateral`, `getTokenCollateral`, `getBestBidAsk`. Collateral (native MRSN and registered tokens like USDC) is fully escrowed at this address. |
+| **MersennetOrders** | `0x0000000000000000000000000000000000000100` | Native CLOB matching engine. `placeOrder`, `placeOrderExt`, `cancelOrder`, `createMarket` (permissionless listing, 100 MRSN fee), `depositCollateral`, `withdrawCollateral`, `depositTokenCollateral`, `withdrawTokenCollateral`, `getPosition`, `getCollateral`, `getTokenCollateral`, `getBestBidAsk`; `setAgent`, `revokeAgent`, `agentOf` (since block 1,569,600); `liquidate` (from block 1,605,600). Collateral (native MRSN and registered tokens like USDC) is fully escrowed at this address. |
 | **MersennetStaking** | `0x0000000000000000000000000000000000000400` | Delegated staking and the open validator set. `delegate`, `undelegate`, `claimRewards`, `withdrawUnbonded`; `registerValidator`, `addSelfStake`, `unregisterValidator`, `rotateValidatorKey`. |
 
 ## Foundation
@@ -20,6 +20,7 @@ Testnet chain state may be wiped during protocol upgrades. When that happens, co
 | Contract | Address | Description |
 |----------|---------|-------------|
 | **Multicall3** | `0xdc27E8F5F77721f5930B8C90FADe391E28331Da6` | Batched RPC reads. Used by wagmi, viem, ethers.js for efficient multi-call queries. |
+| **Maker Vault** | `0xe77F94c4Bf7D6d2E2371aFdE440a0b9b8a567725` | Pooled market-maker capital; shares `mvMRSN`; deposits from block 1,605,600 ([Maker Vault](/ecosystem/maker-vault/)). |
 | **WMRSN** | `0x5bBF04528469591280D36D46209c7CCD5a68a798` | ERC-20 wrapped MRSN for protocols that need an ERC-20 representation of the native token. |
 
 ## Mock Tokens
@@ -49,8 +50,8 @@ MockDAI:              0x27942c2cEE3e0e02377d01BFE6E74cefC9a9FD45
 ## ABI Links
 
 - **Block Explorer**: [https://explorer.mersennet.com](https://explorer.mersennet.com) — search by address and view contract details.
-- **Source Code**: Mersennet contracts repository (see [GitHub](https://github.com/mersennet)).
-- **Multicall3**: Standard [Multicall3](https://github.com/mds1/multicall) ABI; compatible with wagmi/viem defaults.
+- **Source Code**: the contract sources ship with the node repository (Business Source License 1.1, publishing shortly); verified ABIs are on the explorer's contract pages.
+- **Multicall3**: Standard [Multicall3](https://github.com/mds1/multicall3) ABI; compatible with wagmi/viem defaults.
 
 ## Usage Examples
 

@@ -78,7 +78,11 @@ The heart of the node. Contains all types, execution logic, and consensus:
 | `flat_state` | `FlatState`, a flat key-value representation for fast reads |
 | `state_trait` | `StateBackend` trait abstracting storage (sled, redb, in-memory) |
 | `mempool` | Transaction pool with nonce ordering, gas price priority, per-sender limits, replacement logic |
-| `precompiles` | MersennetOrders EVM precompile registration at address `0x0100` |
+| `precompiles` | Registration of the Mersennet precompiles: `0x0100` MersennetOrders, `0x0200`/`0x0201` shielded, `0x0202` code publication, `0x0300` state-proof verifier, `0x0400` MersennetStaking |
+| `staking` | Open validator set: registration, self-stake, delegation, epochs, benching and jailing, operator rewards |
+| `shielded_evm`, `shielded_state`, `shielded_orders`, `shielded_persistence` | Shielded pool: shield/unshield transactions, note and nullifier trees, shielded order intents, persistence (activates with the privacy hard fork) |
+| `liquidation_auction`, `threshold_mempool`, `dkg` | Sealed-bid liquidation auctions, threshold-encrypted order intents and the validator DKG (privacy hard fork design) |
+| `code_publication`, `state_proof` | Contract code attestations; per-block state-transition proof objects |
 | `precompile_abi` | ABI encoding/decoding for precompile function selectors |
 | `mersennet_orders` | Order book state: markets, orders, positions, matching engine |
 | `config` | `AppConfig` and all sub-config structs (`EngineConfig`, `P2pConfig`, etc.) |
@@ -119,6 +123,7 @@ HTTP and WebSocket RPC servers:
 | `rpc.rs` | HTTP JSON-RPC server using `tiny_http`. Handles `eth_*` and `mersennet_*` methods. Includes CORS, metrics, and Prometheus `/metrics` endpoint |
 | `ws.rs` | WebSocket server for `eth_subscribe` (new blocks, pending transactions, logs) |
 | `rpc_router.rs` | Method dispatch router mapping RPC method names to handler functions |
+| `rpc_shielded.rs` | Shielded, viewing-grant and state-proof method dispatcher |
 
 ### `crates/network/`: P2P Networking
 
@@ -242,11 +247,14 @@ The default `sled` backend persists all state to disk at the configured `state_p
 state/
 ├── node_key.json      # Node identity (secp256k1 keypair)
 ├── peers.json         # Known peer addresses
-└── sled_db/           # sled embedded database
-    ├── accounts       # Address → AccountInfo (nonce, balance, code_hash)
-    ├── storage        # (Address, Slot) → U256 value
-    ├── code           # CodeHash → Bytecode
-    └── metadata       # Chain height, state root, etc.
+└── state/             # sled embedded database (redb is selectable)
+    ├── accounts           # Address → account record (nonce, balance, code)
+    ├── storage            # (Address, Slot) → U256 value
+    ├── mersennet_orders   # order-book state
+    ├── validator_registry # open validator set
+    ├── bridge_*           # EVM ⇄ CLOB message queues
+    ├── blocks, history_index  # recent blocks and the disk-backed hash index
+    └── height_meta, pruning   # chain height, roots, housekeeping
 ```
 
 ### Snapshots
@@ -255,7 +263,7 @@ The state backend supports snapshots for:
 
 - **Crash recovery**: Restore to last consistent state on unexpected shutdown
 - **State sync**: Share state snapshots with new nodes joining the network
-- **Archive queries**: Historical state lookups at specific block heights
+- **Recent-window queries**: blocks, transactions and receipts for the ~2,048 most recent heights on the public RPC (state reads are always at the head; there is no archive mode)
 
 ## EVM Integration
 
@@ -286,6 +294,7 @@ Beyond the standard Ethereum precompiles (ecRecover, SHA-256, RIPEMD-160, identi
 | `0x0201` | **Shield / Unshield** | Transparent ⇄ shielded bridge (`shield`, `unshield`); activates with the privacy hard fork |
 | `0x0202` | **Code Publication** | Register/revoke a contract code attestation |
 | `0x0300` | **State-Proof Verifier** | Verify an SP1 state-transition proof on-chain (`verifyStateProof(bytes)`) |
+| `0x0400` | **MersennetStaking** | Open validator set and delegation: `registerValidator`, `addSelfStake`, `unregisterValidator`, `rotateValidatorKey`, `delegate`, `undelegate`, `claimRewards`, `withdrawUnbonded` |
 
 The MersennetOrders precompile is registered via a custom `EvmHandler` that injects it into the precompile table before each block's execution. A global context (`MERSENNET_ORDERS_CTX`) provides the precompile access to the order book state.
 
@@ -295,7 +304,7 @@ Gas follows standard EVM rules:
 
 - Base transaction cost: 21,000 gas
 - Contract creation: 32,000 gas + code deposit cost
-- Storage operations: 20,000 gas (SSTORE cold), 5,000 gas (SSTORE warm)
+- Storage operations (Prague): 20,000 gas for a zero → non-zero SSTORE plus 2,100 for a cold access, 2,900 for a warm reset
 - MersennetOrders precompile calls: fixed gas costs per operation type
 - Block gas limit: 30,000,000 (configurable)
 

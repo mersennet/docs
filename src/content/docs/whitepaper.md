@@ -12,6 +12,10 @@ title: "Whitepaper"
 
 ## Preface
 
+:::note[Design versus deployment (updated 20 Sep 2026)]
+This paper describes the protocol design. Where the public testnet differs today, the live behaviour is: **leader-gated BFT PoS** with a deterministic, stake-agnostic round-robin leader per height, one signed finality vote per validator and finality at >2/3 of stake (the two-round prevote/precommit pipeline, stake-weighted proposer election and HotStuff-2 are the roadmap path, not what runs); an **open validator set** through the staking precompile at `0x…0400` since block 1,348,200 (1,000 MRSN minimum self-stake, top 12 by stake, 1,800-block epochs, 7,200-block unbonding, six validators active); **downtime is never slashed** — it is benched and jailed — and only equivocation is; P2P messages are signed but **not encrypted** (Noise is planned); the public testnet runs the `sled` storage backend. Section 22 keeps the implementation record current.
+:::
+
 This document is a technical whitepaper describing the Mersennet protocol, a Layer 1 blockchain that unifies EVM execution with native order matching. It is intended as a specification of the system's design, architecture, and rationale. It is not a formal specification in the sense of the Ethereum Yellow Paper; parameters and mechanisms may evolve based on implementation experience and community feedback. Non-core aspects such as API bindings, client libraries, and operator tooling are documented elsewhere. This whitepaper draws structural inspiration from foundational works including the [Bitcoin whitepaper](https://bitcoin.org/bitcoin.pdf) [1], [Ethereum whitepaper](https://ethereum.org/whitepaper/) [2], [Solana](https://solana.com/solana-whitepaper.pdf) [3], and [Polkadot](https://polkadot.network/PolkaDotPaper.pdf) [4].
 
 **Version History:** v1.0 (initial draft), v2.0 (comprehensive technical), v3.0 (Ethereum-style expansion), v4.0 (incorporates patterns from top blockchain whitepapers), v5.0 (formula fixes, technical depth), v6.0 (parallel EVM execution, HotStuff-2 consensus, CLOB precompile, Frequent Batch Auctions, MEV protection, comprehensive benchmarks), v7.0 (production storage engine, WebSocket subscriptions, block pipeline, Noise P2P encryption, ZK state proofs, Account Abstraction, cross-chain bridges, TypeScript SDK, block explorer), v7.1 (Mersenne-prime tokenomics finalized: 2^89−1 supply cap, 2^61−1 block reward, 33,550,336-block halving; CLOB collateral backed 1:1 by escrowed native MRSN).
@@ -26,7 +30,7 @@ We propose Mersennet, a novel Layer 1 blockchain that **decouples the consensus 
 
 1. **Parallel EVM Execution**: Optimistic concurrency control (Block-STM / Grevm pattern) with static dependency analysis, multi-version memory, and conflict detection, enabling multi-core transaction processing while maintaining sequential semantics.
 2. **CLOB Precompile** (`0x0100`): The first EVM precompile that gives Solidity smart contracts direct, atomic access to a native order book, enabling composable DeFi strategies (vault → order → fill → callback) in a single transaction.
-3. **BFT Proof-of-Stake Consensus**: Two-round prevote/precommit finality with stake-weighted proposer rotation and escalating slashing. A two-phase **HotStuff-2** pipeline is implemented as the optimized upgrade path (≈33% lower latency than three-phase CometBFT, with linear message complexity and optimistic responsiveness), exercised in benchmarks.
+3. **BFT Proof-of-Stake Consensus**: Single-round finality votes over a leader-gated proposal today (final at >2/3 of stake), designed to evolve into two-round prevote/precommit finality with stake-weighted proposer rotation. A two-phase **HotStuff-2** pipeline is implemented as the optimized upgrade path (≈33% lower latency than three-phase CometBFT, with linear message complexity and optimistic responsiveness), exercised in benchmarks.
 4. **Frequent Batch Auctions (FBA)**: Uniform-price discrete auctions that eliminate front-running and MEV extraction from order matching. Transactions within a batch window are indistinguishable by arrival time.
 5. **Commit-Reveal MEV Protection**: Two-phase transaction submission for EVM where users commit a hash before revealing the transaction, preventing sandwich attacks and information leakage.
 
@@ -66,7 +70,7 @@ By unifying general-purpose smart contracts with institutional-grade order books
 | **BASE** | Optimistic Rollup | EVM (L2) | Contract-based | No | N/A | L2 finality depends on L1 |
 | **XDC Network** | XDPoS | EVM-compatible | Contract-based | No | N/A | Limited DeFi ecosystem |
 | **TRON** | DPoS | TVM (EVM-like) | Contract-based | No | N/A | Centralization concerns |
-| **Mersennet** | **BFT PoS (HotStuff-2 path)** | **Parallel EVM + MersennetOrders + Bridge** | **Native, same state + FBA** | **Yes (Block-STM)** | **Precompile (atomic)** | New architecture, unproven at scale |
+| **Mersennet** | **Leader-gated BFT PoS (HotStuff-2 as upgrade path)** | **Parallel EVM + MersennetOrders + Bridge** | **Native, same state + FBA** | **Yes (Block-STM)** | **Precompile (atomic)** | New architecture, unproven at scale |
 
 **Decoupling insight (Polkadot):** Polkadot separates *canonicality* (which history is valid) from *validity* (whether state transitions are correct). Mersennet adopts a related insight: *execution domains* (EVM, MersennetOrders) can be distinct while sharing a single canonicality layer and state root.
 
@@ -277,7 +281,7 @@ Mersennet consists of four primary execution domains unified under a single cons
 #### 2.2.4 Consensus Engine
 - **HotStuff-2 Protocol** *(v6.0)*: Two-phase BFT with Quorum Certificates, linear message complexity, and optimistic responsiveness
 - **Legacy CometBFT**: Three-phase Prevote/Precommit/Commit (retained for backward compatibility)
-- **Validator Set**: Staked validators with weighted proposer selection
+- **Validator Set**: Staked validators; deterministic round-robin proposer selection today (stake-weighted selection is the roadmap design)
 - **Finality**: 2/3 stake-weighted voting with 2-chain commit rule
 - **Slashing**: Economic penalties with escalation, jailing, and tombstoning
 - **Rewards**: Block rewards distributed proportionally to stake with halving schedule
@@ -329,7 +333,7 @@ The transition function $\mathcal{T}$ executes in phases:
 4. **Batch Auction Execution** *(v6.0)*: Execute pending Frequent Batch Auctions across all markets; apply fills to MersennetOrders state
 5. **MersennetOrders Matching**: Process remaining order submissions, match orders, update positions
 6. **Bridge Processing**: Dequeue and process bridge messages
-7. **Consensus Finalization**: Run HotStuff-2 round (propose → vote → QC → 2-chain commit); apply slashing
+7. **Consensus Finalization**: Finality votes over the proposed block (>2/3 of stake); HotStuff-2 rounds (propose → vote → QC → 2-chain commit) are the benchmarked upgrade path; apply slashing
 8. **State Commit**: Compute Merkle state root (incremental, dirty accounts only), persist to database
 9. **Event Indexing**: Index domain events for querying
 
@@ -539,7 +543,7 @@ Where $S_{prevote}$ and $S_{precommit}$ are the stake-weighted vote counts.
 
 #### 4.5.3 Round Timeout
 
-If a round fails to finalize within $timeout_{ms}$ milliseconds, the next round begins. Validators who fail to precommit after prevoting are subject to timeout slashing.
+If a round fails to finalize within $timeout_{ms}$ milliseconds, the next round begins with the next leader. On the live network a validator that misses its leader slots is **benched and then jailed, never slashed**; the timeout penalty below is a dormant parameter kept for the two-round design.
 
 ### 4.6 Slashing Mechanism
 
@@ -554,7 +558,7 @@ Slashing penalizes validators for consensus violations:
 
 Base penalty rates (in basis points):
 - Double-sign: $P_{double} = 500$ bps (5% of stake)
-- Timeout: $P_{timeout} = 100$ bps (1% of stake)
+- Timeout: $P_{timeout} = 100$ bps (1% of stake) — dormant; not applied on the live network (downtime → benching/jail)
 
 #### 4.6.3 Escalation Mechanism
 
@@ -588,9 +592,9 @@ Validators must wait through an unbonding period before withdrawing stake:
 
 $$unlockHeight = currentHeight + unbondingPeriod$$
 
-Default unbonding period: 2 blocks (configurable).
+Default unbonding period in the consensus engine: 2 blocks (configurable); the public testnet's open validator set uses `validator_set.unbonding_blocks` = 7,200 (~4 h).
 
-During unbonding, stake is still slashable but cannot be used for voting.
+During unbonding, stake cannot be used for voting. On the current testnet unbonding entries in the staking precompile are not slashed; equivocation slashing acts on the validator's consensus stake.
 
 ### 4.8 Block Rewards
 
@@ -622,7 +626,7 @@ Once $S_{minted} \geq S_{max}$, no further rewards are minted (a backstop that t
 
 ### 4.9 Validator Changes
 
-Validator set changes are queued and applied at block boundaries:
+On the public testnet, validator-set changes go through the staking precompile at `0x…0400` (`registerValidator`, `addSelfStake`, `delegate`, `undelegate`, `unregisterValidator`; 1,000 MRSN minimum self-stake; the top 12 by self + delegated stake form the active set at each 1,800-block epoch). At the engine level, changes are queued and applied at block boundaries:
 
 - **Stake**: Add stake to existing validator or create new validator
 - **Unbond**: Begin unbonding process for stake amount
@@ -711,7 +715,7 @@ This ensures liveness: even if leaders fail, the protocol eventually progresses.
 
 #### 4.10.7 Leader Election
 
-Leaders are selected deterministically using weighted round-robin based on stake:
+Leaders are selected deterministically. The live network uses a stake-agnostic round-robin over the active set — `leader(height, round) = validators[(height + round) mod n]`, skipping benched validators — while the design target is a weighted round-robin based on stake:
 
 $$leader(round) = validators[\text{weighted\_index}(round)]$$
 
@@ -2163,10 +2167,10 @@ v6.0 introduces layered MEV protection. We analyze residual attack surfaces:
 ### 13.7 Known Limitations
 
 1. ~~**No Signature Verification**~~: ✅ **Resolved in v5.x**: ECDSA secp256k1 transaction signing and verification implemented
-2. **Centralized Initialization**: Genesis validators are manually configured
+2. ~~**Centralized Initialization**~~: ✅ **Resolved (14 Sep 2026)**: the validator set is permissionless through the staking precompile since block 1,348,200; genesis validators only seeded the first epochs
 3. ~~**Limited P2P**~~: ✅ **Resolved in v5.x**: UDP gossip, TCP sync, peer discovery implemented
-4. ~~**No Encryption**~~: ✅ **Resolved in v7.0**: Noise protocol P2P encryption (`Noise_XX_25519_ChaChaPoly_BLAKE2s`) implemented, configurable via `p2p.noise_enabled`
-5. ~~**Storage Engine**~~: ✅ **Resolved in v7.0**: production storage moved to redb (ACID/MVCC) via the pluggable `StateBackend` trait; sled remains available for development
+4. **No Encryption**: P2P messages are signed but not encrypted; a Noise (`Noise_XX_25519_ChaChaPoly_BLAKE2s`) transport exists as a module but is not wired into UDP gossip yet (`p2p.noise_enabled` is reserved)
+5. ~~**Storage Engine**~~: ✅ **Resolved in v7.0**: redb (ACID/MVCC) is available via the pluggable `StateBackend` trait alongside sled; the public testnet runs sled
 6. **Parallel Execution Heuristic**: Static dependency analysis may over-serialize transactions when addresses are not known upfront (e.g., delegate calls). Runtime MVCC validation catches this but triggers sequential fallback.
 
 ---
@@ -2210,7 +2214,7 @@ For workloads with high conflict rates (e.g., all transactions touching the same
 
 **Live public testnet (two-round prevote/precommit BFT — the consensus the network runs today):**
 - **Block time**: 2 seconds (`block_time_ms = 2000` in the network configuration)
-- **Finality**: single-block — a block is final once 2/3+ stake precommits it, so end-to-end finality is **~2 seconds**, set by the block interval rather than by vote latency (the two voting rounds complete well within the interval)
+- **Finality**: single-block — a block is final once signed finality votes from validators holding >2/3 of the stake are seen, so end-to-end finality is **~2 seconds**, set by the block interval rather than by vote latency
 
 **HotStuff-2 pipeline (implemented in the node; benchmarked as the upgrade path, not yet live):**
 - **Block proposal**: ~50–100 ms
@@ -2256,7 +2260,7 @@ Per-block consensus messaging on the live testnet:
 - Prevote phase: ~200ms
 - Precommit phase: ~200ms
 
-The voting rounds themselves complete in ~500ms; end-to-end finality is governed by the configured 2-second block interval, so a transaction is final **~2 seconds** after the block containing it is proposed.
+The finality votes themselves arrive within a few hundred milliseconds; end-to-end finality is governed by the configured 2-second block interval, so a transaction is final **~2 seconds** after the block containing it is proposed.
 
 #### 14.2.2 Transaction Latency
 
@@ -2608,7 +2612,7 @@ Prometheus metrics exposed at `/metrics`:
 The following items from v5.0's roadmap have been implemented:
 
 - ✅ **Parallel EVM Execution**: Block-STM optimistic concurrency control
-- ✅ **HotStuff-2 Consensus**: Two-phase BFT with 33% faster finality
+- 🔬 **HotStuff-2 Consensus**: two-phase BFT pipeline implemented and benchmarked (33% faster finality); the live network runs the leader-gated single-vote protocol
 - ✅ **CLOB Precompile**: EVM-callable order book at `0x0100`
 - ✅ **Frequent Batch Auctions**: MEV-resistant uniform-price auctions
 - ✅ **Commit-Reveal MEV Protection**: Two-phase EVM transaction submission
@@ -2621,10 +2625,10 @@ The following items from v5.0's roadmap have been implemented:
 
 ### 16.2 Completed *(v7.0)*
 
-- ✅ **Production Storage Engine (redb)**: Pure-Rust ACID-compliant MVCC storage via pluggable `StateBackend` trait, replacing dev-grade sled. Runtime-selectable via config (`storage_backend: "redb"` or `"sled"`).
+- ✅ **Storage backends (redb and sled)**: pure-Rust ACID-compliant MVCC storage (redb) via the pluggable `StateBackend` trait, runtime-selectable (`storage_backend: "redb"` or `"sled"`); the public testnet runs sled.
 - ✅ **WebSocket Subscriptions**: Real-time event streaming for `NewHeads`, `NewPendingTransactions`, `Logs`, `MersennetOrdersTrades`, `MersennetOrdersBook`, and `BatchAuctionResults`. Configurable via `ws.enabled` / `ws.addr`.
 - ✅ **Block Pipeline**: Overlapping execution of block N+1 with consensus of block N (Monad-class pipelining). Configurable depth, automatic drain-and-commit.
-- ✅ **Noise Protocol Encryption**: Authenticated P2P using `Noise_XX_25519_ChaChaPoly_BLAKE2s` (same pattern as libp2p and WireGuard). X25519 keypair generation, mutual authentication, encrypted message exchange.
+- 🔬 **Noise Protocol Encryption**: `Noise_XX_25519_ChaChaPoly_BLAKE2s` handshake and transport implemented as a module (same pattern as libp2p and WireGuard); not yet wired into the UDP gossip layer, so P2P traffic is signed but unencrypted.
 - ✅ **ZK State Proofs**: Modular prover framework with `StateProver` trait, `MockProver` implementation, batch aggregation (`BatchProofAggregator`), and checkpoint chain verification (`CheckpointStore`). Wired into block production loop for periodic proof checkpoints.
 - ✅ **Account Abstraction (ERC-4337)**: Full `UserOperation` lifecycle: `EntryPoint` with nonce/gas/signature validation, `UserOpMempool` with sender indexing, `Bundler` for bundle creation, paymaster staking support.
 - 🚧 **Cross-Chain Bridge Infrastructure** *(implemented in the node, not yet live)*: Multi-chain deposit/withdrawal (Ethereum, Arbitrum, Optimism, Base, custom chains), relayer verification, token configuration with min/max/daily limits, Merkle proof generation for withdrawal finalization. The bridge is not wired to public RPC and no bridge contracts are deployed on any external chain yet.
@@ -2658,7 +2662,7 @@ The following items from v5.0's roadmap have been implemented:
 - **Consensus Upgrade Path**: Evaluate Bullshark [11] and Shoal for DAG-based consensus with zero communication overhead, potentially achieving 40-80% latency reduction over HotStuff-2.
 - **State Sharding**: Partition MersennetOrders markets across shards for horizontal throughput scaling. Each shard processes its own order book independently; cross-shard trades use atomic commit protocols.
 - **SDK Expansion**: Python (`sdk-python/`) and Go (`sdk-go/`) client libraries now ship alongside the TypeScript SDK; a Rust client library remains future work.
-- **Public Testnet** *(live)*: A four-validator public testnet has been operating since mid-2026 (chain ID 131071, ~2s blocks) with a public RPC, faucet, explorer, and trading front-end; community validator onboarding and incentivized testing remain future work.
+- **Public Testnet** *(live)*: the public testnet (chain ID 131071, ~2 s blocks) runs with an open validator set — six validators active in September 2026, two of them community-run — a public RPC, faucet, explorer, trading terminal, signed node releases and a points program for traders and node runners; the shielded pool and the bridge remain future work.
 - **Mainnet Launch**: Production deployment with genesis validator ceremony.
 
 ### 16.6 Research Areas
@@ -2816,7 +2820,7 @@ Like Ethereum and Bitcoin, Mersennet requires every full node to process every t
 ### 18.5 Implementation Notes and Limitations
 
 - ~~**No transaction signature verification**~~: ✅ **Resolved**: ECDSA secp256k1 signing and verification implemented with chain ID replay protection.
-- **Genesis validator bootstrap**: Initial validator set is configured manually; decentralized validator onboarding is future work.
+- **Validator onboarding**: permissionless since block 1,348,200 (staking precompile); the genesis set only seeded the first epochs.
 - **Network encryption**: P2P messages are unencrypted; TLS or noise protocol is planned.
 - **Bridge queue limits**: Queues have configurable max length; under high load, oldest messages may be evicted (FIFO). Applications must handle backpressure.
 - **Parallel execution accuracy** *(v6.0)*: Static dependency analysis uses heuristic address extraction. Delegate calls or self-modifying contracts may produce inaccurate access sets. MVCC validation detects these cases and triggers sequential fallback.
@@ -2827,7 +2831,7 @@ Like Ethereum and Bitcoin, Mersennet requires every full node to process every t
 
 | Feature | Bitcoin | Ethereum | Solana | Hyperliquid | dYdX v4 | **Mersennet v7** |
 |--------|---------|----------|--------|------------|---------|-------------|
-| Consensus | PoW | Gasper PoS | PoH+Tower | HyperBFT | CometBFT | **HotStuff-2** |
+| Consensus | PoW | Gasper PoS | PoH+Tower | HyperBFT | CometBFT | **Leader-gated BFT PoS** (HotStuff-2 path) |
 | Execution | Script | Sequential EVM | Parallel BPF | HyperCore + HyperEVM (dual) | EVM-like | **Parallel EVM + Pipeline** |
 | Order Matching | None | Contract | None | Native 200K/s | Native | **Native 1.5M/s** |
 | EVM ↔ CLOB | N/A | N/A | N/A | **Async** (CoreWriter, next-block, delayed) | Bridge | **Precompile (atomic, same-tx)** |
@@ -2837,7 +2841,7 @@ Like Ethereum and Bitcoin, Mersennet requires every full node to process every t
 | State Model | UTXO | Account | Account | Dual (Core+EVM) | Account | **Multi-domain (unified)** |
 | Account Abstraction | No | ERC-4337 | No | No | No | **ERC-4337 native** |
 | Cross-Chain Bridge | No | External | Wormhole | No | IBC | **Multi-chain infrastructure (implemented, not yet live)** |
-| P2P Encryption | None | DevP2P | QUIC | Custom | Tendermint | **Noise XX** |
+| P2P Encryption | None | DevP2P | QUIC | Custom | Tendermint | Signed, unencrypted (**Noise XX** planned) |
 | ZK Proofs | No | No | No | No | No | **State proof framework** |
 | TPS | ~7 | ~15 | ~65K | ~200K ops | ~1K | **~60K EVM + 1.5M CLOB** |
 
@@ -2887,7 +2891,7 @@ We believe Mersennet is well-positioned to capture the intersection of:
 - **On-chain derivatives** ($2.5T+ market): Full EVM DeFi composability + native CLOB performance
 - **Institutional credit** ($2.5T+ market): Transparent price discovery + EVM settlement logic
 
-The implementation comprises ~47,500 lines of Rust across ~106 source files, with comprehensive test coverage (276 tests), a live four-validator public testnet, CI/CD, and Prometheus observability.
+The implementation comprises ~47,500 lines of Rust across ~106 source files, with comprehensive test coverage (330+ tests), a live public testnet with an open validator set, CI/CD, and Prometheus observability.
 
 As Mersennet continues to evolve toward mainnet, we welcome contributions from researchers, developers, and the broader blockchain community.
 
@@ -3063,7 +3067,7 @@ $n$ = mempool/batch size, $k$ = txs per sender or parallel groups, $m$ = selecte
 | $QC = (blockHash, height, round, signers, aggregateStake)$ | Quorum Certificate |
 | $\text{commit}(B) \iff \exists QC_r(B) \land \exists QC_{r+1}(B')$ | 2-chain commit rule |
 | $timeout(r) = base + (r - lastCommit) \cdot delta$ | Progressive timeout |
-| $leader(r) = validators[\text{weighted\_index}(r)]$ | Weighted leader election |
+| $leader(h, r) = validators[(h + r) \bmod n]$ | Leader rotation (live); weighted election is the design target |
 
 ### Slashing
 

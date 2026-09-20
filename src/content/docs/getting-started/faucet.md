@@ -56,7 +56,7 @@ curl -X POST https://faucet.mersennet.com/claim-token \
 
 | Issue | Solution |
 |-------|----------|
-| `rate limited` error | Each address can claim MRSN once per hour. Wait, or use a second test address. |
+| `rate limited` error | Each address — and each IP — can claim MRSN once per hour. Wait for the cooldown shown on the page. |
 | Request fails | Check that your address is a valid 0x-prefixed Ethereum address (40 hex characters). |
 | No MRSN received | Look up the returned `tx_hash` on the [explorer](https://explorer.mersennet.com). Confirm your wallet is on Chain ID 131071. |
 | Tokens not visible in MetaMask | Import the token contract address manually, or claim through the faucet UI, which offers to add the token for you. |

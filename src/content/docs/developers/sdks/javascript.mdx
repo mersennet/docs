@@ -38,7 +38,7 @@ const ack = await orders.submitOrder(
   wallet.address, // owner — must be the signer's address
   1,              // market ID (MRSN)
   'buy',
-  '0xf4240',      // price
+  '0x2c88',       // price: 11400 = $114.00 on MRSN (priceScale 100) — read the scale from getMarkets()
   '0xa',          // size
   'gtc',
   signer
@@ -65,7 +65,7 @@ curl -X POST https://rpc.mersennet.com \
 # at 0x…0100 and submit it via eth_sendRawTransaction instead.
 curl -X POST http://localhost:8545 \
   -H "Content-Type: application/json" \
-  -d '{"jsonrpc":"2.0","method":"mersennet_orders_submitOrder","params":[{"owner":"0xOwnerAddress","market_id":1,"side":"buy","price":"0xf4240","size":"0xa","tif":"gtc"}],"id":2}'
+  -d '{"jsonrpc":"2.0","method":"mersennet_orders_submitOrder","params":[{"owner":"0xOwnerAddress","market_id":1,"side":"buy","price":"0x2c88","size":"0xa","tif":"gtc"}],"id":2}'
 
 # Check balance
 curl -X POST https://rpc.mersennet.com \
@@ -78,7 +78,7 @@ curl -X POST https://rpc.mersennet.com \
 
 ## Installation
 
-The SDK is public on GitHub ([mersennet/sdk-ts](https://github.com/mersennet/sdk-ts), MIT), released as [v0.1.0](https://github.com/mersennet/sdk-ts/releases/tag/v0.1.0). Until it is on npm, install the latest release tag straight from the repository (Node ≥ 20; the package builds on install):
+The SDK is public on GitHub ([mersennet/sdk-ts](https://github.com/mersennet/sdk-ts), MIT), released as [v0.1.1](https://github.com/mersennet/sdk-ts/releases/tag/v0.1.1). Until it is on npm, install the latest release tag straight from the repository (Node ≥ 20; the package builds on install):
 
 ```bash
 npm install github:mersennet/sdk-ts#semver:^0.1
@@ -238,7 +238,7 @@ const ack = await orders.submitOrder(
   wallet.address, // owner — must be the signer's address
   1,              // marketId
   "buy",          // "buy" | "sell"
-  "0xf4240",      // price
+  "0x2c88",       // price: 11400 = $114.00 at priceScale 100
   "0xa",          // size
   "gtc",          // "gtc" | "ioc" | "fok"
   signer
@@ -255,7 +255,7 @@ await orders.cancelOrder(wallet.address, 123, signer);
 
 ### Deposit Collateral
 
-`depositCollateral` and `withdrawCollateral` take an amount in **collateral units**, and the unit changes at the settlement switch (block 1,605,600): before it one unit is one wei (10¹⁸ units per MRSN), from it one unit is one MRSN. Convert human MRSN amounts with `toCollateralUnits()`, which reads `weiPerCollateralUnit` from `getProtocol()` so the same code works in both eras; never hard-code `1e18`.
+`depositCollateral` and `withdrawCollateral` take an amount in **collateral units**, and the unit changes at the settlement switch (block 1,605,600, Sun 20 Sep 2026 ≈ 16:30 UTC): before it one unit is one wei (10¹⁸ units per MRSN), from it one unit is one MRSN. Convert human MRSN amounts with `toCollateralUnits()`, which reads `weiPerCollateralUnit` from `getProtocol()` so the same code works in both eras; never hard-code `1e18`.
 
 ```javascript
 // Escrow 1 MRSN from the signer's native balance.
@@ -277,7 +277,7 @@ console.log(await orders.collateralUnitsPerMrsn());
 
 ### Agent keys and liquidations
 
-`setAgent` lets a second key place and cancel orders **as** your account (it can never deposit or withdraw); the terminal's one-click trading is built on it. `getLiquidatable` and `liquidate` are the keeper surface that activates with the settlement switch. All four are available from block 1,569,600 (agents) and 1,605,600 (liquidations); `getProtocol()` reports whether each is active.
+`setAgent` lets a second key place and cancel orders **as** your account (it can never deposit or withdraw); the terminal's one-click trading is built on it. `getLiquidatable` and `liquidate` are the keeper surface that activates with the settlement switch. `setAgent`, `revokeAgent` and `getAgents` have been live since block 1,569,600 (19 Sep 2026, 19:23 UTC); `getLiquidatable`, `isLiquidatable` and `liquidate` activate at block 1,605,600 (20 Sep ≈ 16:30 UTC).
 
 ```javascript
 import { Wallet } from "ethers";
@@ -368,6 +368,7 @@ const tradeSubId = await sub.onTrade((trade) => {
 }, 1); // optional: market ID
 
 // Order book updates
+// MersennetOrdersBook is accepted by the node but not emitted in 0.7.0 — poll orders.getOrderBook(1) for book state.
 const bookSubId = await sub.onBookUpdate((update) => {
   console.log("Book update:", update);
 }, 1);
@@ -377,7 +378,7 @@ sub.unsubscribe(blockSubId);
 ```
 
 :::note
-The public WebSocket endpoint `wss://rpc.mersennet.com` is enabled for `eth_subscribe` subscriptions (`newHeads`, `logs`); send regular JSON-RPC calls over HTTPS. A node you run yourself needs `ws.enabled = true`.
+The public WebSocket endpoint `wss://rpc.mersennet.com` supports `eth_subscribe` (`newHeads`, `newPendingTransactions`, `logs`) and `mersennet_subscribe` (`MersennetOrdersTrades`, `newShieldedRoot`, `newStateProof`, …); every other JSON-RPC call must go over HTTPS. `MersennetOrdersBook` subscriptions are accepted but node 0.7.0 never emits them — poll `getOrderBook` instead. A node you run yourself needs `ws.enabled = true`.
 :::
 
 ## Full API Reference
@@ -407,7 +408,7 @@ The public WebSocket endpoint `wss://rpc.mersennet.com` is enabled for `eth_subs
 | | `getPosition(owner, marketId)` | Position (`{ size, entry_price }`) via `eth_call` on the precompile |
 | | `getCollateral(owner)` | Collateral balance in collateral units, via `eth_call` on the precompile |
 | | `submitOrder(owner, marketId, side, price, size, tif, signer)` | Submit an order (signed precompile tx); `owner` is the transaction sender and must be the signer's address — when the sender is an agent key, the order lands on the granting owner's account |
-| | `submitBatchOrder({ owner, orders }, signer)` | Submit several orders in sequence, each a signed tx |
+| | `submitBatchOrder({ owner, orders }, signer)` | Submit several orders in sequence, each a signed tx (returns nothing; read back with `getOpenOrders`) |
 | | `cancelOrder(owner, orderId, signer)` | Cancel an order (signed precompile tx; the chain enforces ownership) |
 | | `depositCollateral(owner, amount, signer)` | Deposit (signed tx); `amount` in collateral units — use `toCollateralUnits` |
 | | `withdrawCollateral(owner, amount, signer)` | Withdraw (signed tx; the chain validates margin first); `amount` in collateral units |
@@ -419,7 +420,7 @@ The public WebSocket endpoint `wss://rpc.mersennet.com` is enabled for `eth_subs
 | | `MersennetOrders.toChainPrice(human, market)` | Static: human price → on-chain price for a market (rounds to the nearest unit) |
 | | `MersennetOrders.toHumanPrice(chain, market)` | Static: on-chain price → human price for a market |
 | | `getAgents(owner)` | Agent keys granted by `owner`, plus whether delegation is active on the network |
-| | `setAgent(owner, agent, expiresAtBlock, signer)` | Let `agent` trade for `owner` until `expiresAtBlock` (0 = no expiry); signed by the owner |
+| | `setAgent(owner, agent, expiresAtBlock, signer)` | Let `agent` trade for `owner` until `expiresAtBlock` (0 = no expiry; otherwise at most the current height + 3,900,000 blocks ≈ 90 days); signed by the owner |
 | | `revokeAgent(owner, agent, signer)` | Revoke an agent; signed by the owner that granted it |
 | | `getLiquidatable()` | Accounts below maintenance margin at the head (empty before the settlement switch) |
 | | `liquidate(keeper, account, signer)` | Liquidate `account` (anyone may call; the keeper earns half of the 1% fee into its collateral) |

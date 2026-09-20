@@ -42,13 +42,13 @@ Unlike CLOBs implemented purely in Solidity (gas-intensive, slow) or on separate
 
 ## Consensus Consistency
 
-Every order book mutation is a **mined transaction**. Whether an order arrives as a wallet-signed precompile call or through the `mersennet_orders_*` convenience RPC, it enters the mempool, gossips to the elected leader, and executes inside a block that every validator re-executes identically. That gives three guarantees:
+Every order book mutation is a **mined transaction**. It arrives as a wallet-signed precompile call (`eth_sendRawTransaction`; the unsigned `mersennet_orders_*` mutation RPCs return `-32604` on public nodes), enters the mempool, gossips to the elected leader, and executes inside a block that every validator re-executes identically. That gives three guarantees:
 
 1. **One book, everywhere** — the order book state is part of consensus state, byte-identical on every node.
 2. **Fills are on-chain events** — every match emits a `trade` domain event in the block, which the explorer, the trade indexer, and the `MersennetOrdersTrades` WebSocket topic all consume.
 3. **Collateral is real** — `depositCollateral` escrows native MRSN 1:1 at the precompile address inside the same journaled transaction; the CLOB ledger can never desync from token balances.
 
-The practical consequence for integrators: a successful `submitOrder` RPC response means *accepted into the mempool*, not *executed*. The order rests or fills when its transaction mines (typically the next block, ~2s). Poll `getOpenOrders` or subscribe to the WebSocket feed rather than assuming synchronous execution.
+The practical consequence for integrators: a transaction hash back from `eth_sendRawTransaction` means *accepted into the mempool*, not *executed*. The order rests or fills when its transaction mines (typically the next block, ~2s). Poll `getOpenOrders` or subscribe to the WebSocket feed rather than assuming synchronous execution.
 
 ## IMersennetOrders Interface
 
@@ -80,8 +80,8 @@ function placeOrder(
 |-----------|------|-------------|
 | `marketId` | `uint64` | Numeric market identifier (e.g. 1 = MRSN) |
 | `isBuy` | `bool` | `true` = buy, `false` = sell |
-| `price` | `uint256` | Price in quote-asset units (18 decimals) |
-| `size` | `uint256` | Order size in base-asset units (18 decimals) |
+| `price` | `uint256` | On-chain price = human price × the market's `priceScale` (100 on MRSN, SOL and ARB since block 1,569,600 → $0.01 ticks; 1 on BTC and ETH). Read it from `mersennet_orders_getMarkets` or use the SDKs' `toChainPrice` |
+| `size` | `uint256` | Whole units of the base asset (integer lots; `lotSize` 1 on every market) |
 | `tif` | `uint8` | Time-in-force: 0 = GTC, 1 = IOC, 2 = FOK |
 
 **Returns:** `orderId` (unique ID), `filled` (amount matched immediately), `remaining` (amount left on book).
@@ -195,6 +195,19 @@ function getBestBidAsk(uint64 marketId) external view returns (uint256 bestBid, 
 
 **Gas:** 5,000
 
+### Agent keys and liquidations
+
+| Function | Gas | Since | Behaviour |
+|----------|-----|-------|-----------|
+| `setAgent(address agent, uint64 expiresAtBlock)` | 30,000 | block 1,569,600 | Lets `agent` place and cancel orders **as** the caller until `expiresAtBlock` (0 = no expiry, otherwise ≤ current height + 3,900,000 blocks). Agents can never deposit or withdraw. |
+| `revokeAgent(address agent)` | 30,000 | block 1,569,600 | Ends the grant immediately. |
+| `agentOf(address agent) → (address owner, uint64 expiresAtBlock)` | 3,000 | block 1,569,600 | Zero owner means no grant. |
+| `liquidate(address account) → bool` | 150,000 | block 1,605,600 | Closes an account below maintenance margin at the book; 1% of the closed notional is split between the caller and the insurance fund. Returns `false` for a healthy account. |
+
+### Price scale
+
+On-chain prices are `human price × priceScale`. Since block 1,569,600 MRSN, SOL and ARB carry `priceScale = 100` (a tick of $0.01); BTC and ETH stay at 1. Read the scale from `mersennet_orders_getMarkets` (or the `markets` array of `mersennet_orders_getProtocol`) and never assume integer prices — the SDKs expose `toChainPrice` / `toHumanPrice` for the conversion. Sizes are unchanged: integer lots.
+
 ## Function Selectors
 
 | Selector | Function |
@@ -212,6 +225,10 @@ function getBestBidAsk(uint64 marketId) external view returns (uint256 bestBid, 
 | `0x5c1548fb` | `getCollateral()` |
 | `0x042e02cf` | `isLiquidatable(address)` |
 | `0x8ee0a7fa` | `getBestBidAsk(uint64)` |
+| `0xb845309c` | `setAgent(address,uint64)` — since block 1,569,600 |
+| `0x7da6ac0d` | `revokeAgent(address)` — since block 1,569,600 |
+| `0xac3c0e30` | `agentOf(address)` — since block 1,569,600 |
+| `0x2f865568` | `liquidate(address)` — from block 1,605,600 |
 
 ## Example: Vault Strategy
 
@@ -229,12 +246,16 @@ contract VaultStrategy {
         MERSENNET_ORDERS.cancelOrder(lastAskOrderId);
 
         // Place new quotes (atomic in single tx)
-        (uint256 bidId,,) = MERSENNET_ORDERS.placeOrder(marketId, true, midPrice - spread, 1 ether, 0);
-        (uint256 askId,,) = MERSENNET_ORDERS.placeOrder(marketId, false, midPrice + spread, 1 ether, 0);
+        // sizes are integer lots; prices are human × priceScale (see the parameter table)
+        (uint256 bidId,,) = MERSENNET_ORDERS.placeOrder(marketId, true, midPrice - spread, 1, 0);
+        (uint256 askId,,) = MERSENNET_ORDERS.placeOrder(marketId, false, midPrice + spread, 1, 0);
     }
 
     function deposit() external payable {
-        MERSENNET_ORDERS.depositCollateral(msg.value);
+        // Collateral units: wei before block 1,605,600, whole MRSN from it. The precompile debits the
+        // caller's native balance — and from 1,605,600 the caller is this contract (frame-caller
+        // authorisation), so the contract holds its own order-book account.
+        MERSENNET_ORDERS.depositCollateral(msg.value / 1e18);
     }
 }
 ```
@@ -268,8 +289,8 @@ Price-time priority:
 
 ## Collateral and Risk
 
-- MersennetOrders supports **margin trading** with configurable initial and maintenance margin
-- **Liquidations** can be triggered when margin falls below maintenance via `isLiquidatable()`
+- MersennetOrders supports **margin trading**: no margin is enforced before block 1,605,600; from it, 10% initial margin (10× maximum leverage) and 5% maintenance margin
+- **Liquidations**: any keeper can call `liquidate(address)` on an account below maintenance margin (from block 1,605,600); it closes the position at the book and takes a 1% fee split between the keeper and the insurance fund. `isLiquidatable(address)` is the view
 - Smart contracts can call liquidation logic atomically with other operations
 - Collateral is global (not per-market). Native MRSN is the primary collateral; whitelisted ERC-20 tokens can also be posted via `depositTokenCollateral` and count toward margin at a configured haircut (e.g. USDC at 90% weight on testnet)
 
@@ -283,4 +304,4 @@ Price-time priority:
 | **Shared state** | EVM and CLOB see the same balances and positions |
 | **Full trading lifecycle** | Orders (incl. post-only/GTD), permissionless market listing, multi-collateral margin — all via standard Solidity calls |
 
-No other L1 offers atomic EVM + CLOB interaction in a single transaction. Mersennet enables institutional-grade DeFi strategies -- vaults, arbitrage, market making -- that are infeasible elsewhere.
+Few chains offer atomic EVM + order-book interaction in a single transaction. Mersennet enables institutional-grade DeFi strategies -- vaults, arbitrage, market making -- that are infeasible elsewhere.

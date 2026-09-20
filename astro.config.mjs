@@ -144,6 +144,7 @@ export default defineConfig({
           label: 'Ecosystem',
           items: [
             { slug: 'ecosystem/trade' },
+            { slug: 'ecosystem/maker-vault' },
           ],
         },
         {

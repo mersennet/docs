@@ -15,7 +15,8 @@ JSON-RPC 2.0 envelope:
 | Code | Meaning | Typical cause & fix |
 |------|---------|---------------------|
 | `-32700` | Parse error | Request body is not valid JSON. Check `Content-Type: application/json` and quoting. |
-| `-32601` | Method not found | Typo in the method name, or the method is disabled on this node (e.g. `eth_sendTransaction`). See [Methods](/developers/rpc/methods/). |
+| `-32600` | Invalid request | Malformed JSON-RPC envelope, empty batch, more than 100 calls in a batch, or a body over 2 MiB. |
+| `-32601` | Method not found | Typo in the method name; a method disabled on this node (`eth_sendTransaction`, `mersennet_orders_addMarket` / `setMarginParams` / `liquidate` over RPC); or any non-subscription method sent over the WebSocket endpoint (`WS: method not supported`). See [Methods](/developers/rpc/methods/). |
 | `-32602` | Invalid params | Wrong type, missing field, or malformed hex (addresses are 20 bytes `0x…`, hashes 32 bytes). The message names the offending parameter. |
 | `-32000` | Execution error | Generic server-side failure while executing the request: the message carries the underlying reason. |
 
@@ -38,7 +39,7 @@ CLOB business errors (unknown market, bad tick/lot size, insufficient collateral
 | Code | Meaning | Fix |
 |------|---------|-----|
 | `-32604` | Forbidden | The viewing key or grant doesn't authorize this read. Check the grant's `scope` and expiry; see [Selective Disclosure](/privacy/selective-disclosure/). |
-| `-32605` | Method disabled | Shielded methods are gated behind the privacy hard fork. Before activation, mutation methods return this code. |
+| `-32605` | Method disabled | Shielded methods are gated behind the privacy hard fork: before activation, shielded mutations return this code. After the fork the transparent state, log and transaction-metadata methods (`eth_getLogs`, `eth_getTransactionByHash`, receipts, filters, `eth_getBalance`…) return it instead. |
 
 :::tip[Debugging checklist]
 1. Wrong network? `eth_chainId` should return `0x1ffff` (testnet) or `0x1fff` (mainnet).

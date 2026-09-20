@@ -24,7 +24,7 @@ curl -s https://rpc.mersennet.com \
 
 ```json
 {
-  "blockHeight": 500,
+  "blockHeight": 1592357,
   "prevStateRoot": "0x…",
   "newStateRoot":  "0x…",
   "prevNullifierRoot": "0x…",
@@ -40,7 +40,7 @@ curl -s https://rpc.mersennet.com \
 
 Note that `proofType` is `"SP1"` in both modes; `proverMode` is the authoritative field distinguishing real SP1 proofs from development ones.
 
-A stateless verifier is available as `mersennet_verifyStateProof`, and `mersennet_getStateProof` fetches the proof for any specific block.
+A stateless verifier is available as `mersennet_verifyStateProof`, and `mersennet_getStateProof` fetches the proof for a block still inside the node's recent window (about 2,048 blocks on the public RPC; older heights return `proof: null`).
 
 ## The Ethereum bridge (Groth16)
 

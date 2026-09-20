@@ -2,7 +2,7 @@
 title: "Go SDK"
 ---
 
-The Mersennet Go SDK (`github.com/mersennet/sdk-go`) provides a typed client for the JSON-RPC API, MersennetOrders (on-chain order book), and the privacy stack: grant-gated note scanning, portfolio reconstruction, and compliance attestations, at feature parity with the TypeScript SDK (cross-language digest test vectors pin compatibility).
+The Mersennet Go SDK (`github.com/mersennet/sdk-go`) provides a typed client for the JSON-RPC API, MersennetOrders (on-chain order book), and the privacy read side: grant-gated note scanning, portfolio reconstruction, and compliance attestations — the same read, reconstruction and attestation surface as the TypeScript SDK (cross-language digest test vectors pin compatibility). It has no WebSocket client, prover, migration or transaction-signing helpers yet; sign with go-ethereum as shown below.
 
 :::tip[Privacy / shielded features]
 This page covers the **transparent** surface (`eth_*` / `mersennet_*` / `mersennet_orders_*`). For the shielded-note workflow (viewing grants, note scanning, reconstruction, attestations), see **[Shielded SDK](/developers/privacy/shielded-sdk)** and the runnable example in `examples/view-notes-end-to-end/` inside the SDK repository.
@@ -51,7 +51,7 @@ func main() {
     if err != nil {
         log.Fatal(err)
     }
-    fmt.Println("Balance (wei):", balance)
+    fmt.Println("Balance (hex wei):", balance)
 }
 ```
 
@@ -70,7 +70,7 @@ underwater, _ := orders.GetLiquidatable()    // keeper feed: accounts below main
 
 ### Collateral units and deposits
 
-`depositCollateral` / `withdrawCollateral` take an amount in **collateral units**, and the unit changes at the settlement switch (block 1,605,600): one unit is one wei before it (10¹⁸ units per MRSN) and one MRSN from it. `ToCollateralUnits` converts a human MRSN amount for the current era by reading `weiPerCollateralUnit` from `GetProtocol()`, so the same code works before and after the switch; never hard-code `1e18`.
+`depositCollateral` / `withdrawCollateral` take an amount in **collateral units**, and the unit changes at the settlement switch (block 1,605,600, Sun 20 Sep 2026 ≈ 16:30 UTC): one unit is one wei before it (10¹⁸ units per MRSN) and one MRSN from it. `ToCollateralUnits` converts a human MRSN amount for the current era by reading `weiPerCollateralUnit` from `GetProtocol()`, so the same code works before and after the switch; never hard-code `1e18`.
 
 ```go
 perMRSN, _ := orders.CollateralUnitsPerMRSN() // *big.Int: 10^18 before the switch, 1 from it
@@ -100,7 +100,7 @@ Read the live CLOB through the `Orders` client:
 ```go
 orders := mersennet.NewOrders(provider)
 
-// Market 1 = MRSN. Prices and sizes are integer protocol units.
+// Market 1 = MRSN. On-chain price = human price × PriceScale (100 on MRSN/SOL/ARB, 1 on BTC/ETH); sizes are integer lots.
 // Both sides are sorted by ascending price: best bid is the LAST bid,
 // best ask is the FIRST ask.
 book, err := orders.GetOrderBook(1)
@@ -113,7 +113,7 @@ fmt.Println("Best bid:", book.Bids[len(book.Bids)-1], "Best ask:", book.Asks[0])
 // unconditionally. Orders are signed transactions to the CLOB precompile
 // (0x0000000000000000000000000000000000000100); the unsigned owner-field
 // RPC was removed for security (it let anyone trade as anyone).
-_, err = orders.PlaceOrder(1, "buy", "105", "3", "gtc", "0xOwnerAddress")
+_, err = orders.PlaceOrder(1, "buy", "11400", "3", "gtc", "0xOwnerAddress") // 11400 = $114.00 at PriceScale 100
 fmt.Println(err) // ErrSignedOrderRequired
 ```
 
@@ -138,7 +138,14 @@ import (
 
 // placeOrder(uint64 marketId, bool isBuy, uint256 price, uint256 size, uint8 tif)
 // selector 0x4c570d73; each argument is ABI-encoded as a 32-byte word.
-calldata := encodePlaceOrder(1, true, big.NewInt(105), big.NewInt(3), 0)
+// There is no encoder helper in the Go SDK yet: build the calldata word by word.
+word := func(v *big.Int) []byte { return common.LeftPadBytes(v.Bytes(), 32) }
+calldata := common.FromHex("0x4c570d73")
+calldata = append(calldata, word(big.NewInt(1))...)      // marketId = 1 (MRSN)
+calldata = append(calldata, word(big.NewInt(1))...)      // isBuy = true
+calldata = append(calldata, word(big.NewInt(11400))...)  // price: $114.00 at PriceScale 100
+calldata = append(calldata, word(big.NewInt(3))...)      // size: 3 lots
+calldata = append(calldata, word(big.NewInt(0))...)      // tif: 0 = GTC
 
 key, _ := crypto.HexToECDSA(privateKeyHex)
 precompile := common.HexToAddress("0x0000000000000000000000000000000000000100")
@@ -161,6 +168,9 @@ fmt.Println("tx:", txHash) // the order is placed when this transaction mines
 | `GetBlockByHash(hash, includeTxs)` | Block by hash |
 | `GetTransaction(hash)` | Transaction by hash |
 | `GetBalance(address)` | Native MRSN balance |
+| `ViewBalances(req)`, `ViewPositions(req)`, `ViewOrders(req)` | Grant-gated reconstruction reads (`mersennet_view*`; return `-32605` until the privacy hard fork) |
+| `ViewGrantStatus(grantIdHex)` | Status of a viewing grant |
+| `GetCodeAttestation(address)` | Code-publication attestation for a contract, or nil |
 | `GetNonce(address)` | Account nonce |
 | `SendRawTransaction(rawTx)` | Submit a signed transaction |
 | `Call(txObject)` | Simulate a call (`eth_call`) |
@@ -181,7 +191,7 @@ fmt.Println("tx:", txHash) // the order is placed when this transaction mines
 | `GetAgents(owner)` | Agent keys granted by `owner` and whether delegation is active (`mersennet_orders_getAgents`) |
 | `GetLiquidatable()` | Accounts below maintenance margin at the head (keeper feed; empty before the settlement switch) |
 | `mersennet.ToChainPrice(human, priceScale)` / `mersennet.ToHumanPrice(chain, priceScale)` | Package functions: human ↔ on-chain price for a market |
-| `AddMarket(base, quote, lot, tick)` | Add a market (admin; disabled on public RPC) |
+| `AddMarket(base, quote, lot, tick)` | **Deprecated** — `mersennet_orders_addMarket` is disabled on every node; list a market with the `createMarket` precompile call (100 MRSN fee) |
 
 There are no Go signing helpers yet: build the calldata, sign with go-ethereum, and submit via `SendRawTransaction`. The same applies to `setAgent(address agent, uint64 expiresAtBlock)` (selector `0xb845309c`), `revokeAgent(address agent)` (`0x7da6ac0d`) and the keeper call `liquidate(address account)` (`0x2f865568`).
 
@@ -192,12 +202,14 @@ The Go SDK mirrors the TypeScript privacy primitives byte-for-byte (shared diges
 - `ScanGrantedNotes(provider, material, opts)` walks grant-gated encrypted notes and decrypts them locally with your delegated viewing material; the chain never sees plaintext.
 - `ReconstructPortfolio(notes, opts)` and `DefaultNullifierDeriver(note)` rebuild balances/positions client-side.
 - `ComputePortfolioDigest(...)` and `BuildPortfolioAttestation(...)` produce the canonical compliance-attestation digest, identical across the TS, Python, and Go SDKs.
+- `ScanAndReconstructBalances`, `ReconstructPositions`, `ReconstructOpenOrders` rebuild spendable balances, positions and open orders from scanned notes and fills; `VerifyAttestation` checks a received attestation.
+- `ViewingKeyFromSeed`, `CreateOwnerViewingMaterial`, `DelegateViewToken` derive viewing material and grant tokens (deterministic test helpers today, like the TypeScript ones); `ParseEncryptedNotePayload` / `ParseShieldedNotePlaintext` decode note envelopes.
 
 ```go
 material := mersennet.GrantedViewingMaterial{
     GrantID:            "0x...",
     RecipientPublicKey: "0x...",
-    Decrypt:            mersennet.NewMockNoteDecryptor("0x..."),
+    Decrypt:            mersennet.NewMockNoteDecryptor("0x..."), // example decryptor, not the production viewing-key cryptosystem
 }
 
 result, err := mersennet.ScanGrantedNotes(provider, material, &mersennet.GrantedNoteScanOptions{Limit: 64})

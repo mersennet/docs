@@ -14,11 +14,15 @@ This guide walks you through deploying and interacting with an NFT collection on
 
 ## Full Solidity Contract
 
-Here is a complete ERC-721 implementation with metadata, minting, and transfer:
+Here is a minimal ERC-721-style contract for learning — metadata, minting and transfers, plus the receiver check on `safeTransferFrom`. It is not fully EIP-721 compliant (no ERC-165 `supportsInterface`, no `getApproved` / `isApprovedForAll`), so marketplaces and wallets that detect ERC-721 via ERC-165 will not recognise it; use OpenZeppelin's `ERC721` for anything beyond a tutorial:
 
 ```solidity
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
+
+interface IERC721Receiver {
+    function onERC721Received(address operator, address from, uint256 tokenId, bytes calldata data) external returns (bytes4);
+}
 
 contract MersennetNFT {
     string public name;
@@ -92,6 +96,12 @@ contract MersennetNFT {
     function safeTransferFrom(address from, address to, uint256 tokenId) external {
         require(_isApprovedOrOwner(msg.sender, tokenId), "Not authorized");
         _transfer(from, to, tokenId);
+        if (to.code.length > 0) {
+            require(
+                IERC721Receiver(to).onERC721Received(msg.sender, from, tokenId, "") == IERC721Receiver.onERC721Received.selector,
+                "Unsafe recipient"
+            );
+        }
     }
 
     function _isApprovedOrOwner(address spender, uint256 tokenId) internal view returns (bool) {

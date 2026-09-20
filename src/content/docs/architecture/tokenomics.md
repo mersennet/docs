@@ -12,7 +12,7 @@ This document provides complete tokenomics documentation for Mersennet (MRSN), i
 | **Ticker** | MRSN |
 | **Supply Cap** | 2⁸⁹ − 1 wei ≈ 618,970,019.64 MRSN |
 | **Decimals** | 18 |
-| **Chain ID** | 8191 (mainnet) · 131071 (testnet) |
+| **Chain ID** | 8191 (mainnet, not launched) · 131071 (testnet) |
 
 Mersennet's constants are chosen from the number theory the network is named for:
 
@@ -21,7 +21,7 @@ Mersennet's constants are chosen from the number theory the network is named for
 - **Halving interval = 33,550,336 blocks**, the **5th perfect number**, `2¹² × (2¹³ − 1)`, whose Mersenne factor `2¹³ − 1 = 8191` is the mainnet chain ID.
 
 :::note
-These are the protocol's target constants, defined in the node source (`config.rs`) and the genesis config. The current public testnet was bootstrapped with legacy emission parameters and adopts this schedule from its next network upgrade.
+These are the protocol's constants, defined in the node source (`config.rs`) and the canonical network config (`token_economics` in `networks/testnet/config.json`). The public testnet runs this schedule today: each active validator's operator wallet receives its stake-weighted share of 2⁶¹ − 1 wei every block.
 :::
 
 ### Cap vs. emission: two distinct numbers
@@ -67,7 +67,7 @@ Validator rewards are **minted on every block** according to the halving schedul
 | **Initial Reward per Block** | 2⁶¹ − 1 wei ≈ 2.3 MRSN |
 | **Halving Interval** | 33,550,336 blocks |
 | **Block Time** | ~2 seconds |
-| **Halving Period** | ~2.1 years |
+| **Halving Period** | ~2.1 years (~2.2 at the observed 2.1 s blocks) |
 | **Total Emitted (all eras)** | ≈ 154.72M MRSN |
 
 ### Halving Epochs
@@ -111,7 +111,7 @@ At ~2 s block time (~2.1 years per halving):
 
 ## Reward Distribution
 
-Block rewards are distributed to **all active validators** proportionally to their stake:
+Block rewards are distributed to **all active validators** proportionally to their stake (self-stake plus delegations). Since block 1,440,000 the validator's share is credited to its **operator wallet**; the part earned by delegated stake accrues in the staking precompile (`0x…0400`), minus the validator's commission (`commissionBps`, 5–10% on today's validators), and delegators collect it with `claimRewards`:
 
 ```
 validator_reward = (effective_reward × validator_stake) / total_stake

@@ -3,7 +3,7 @@ title: "Become a Validator"
 description: "The Mersennet testnet validator set is open: register a node with 1,000 MRSN self-stake, join the active set at the next epoch, produce blocks and earn rewards. Parameters, lifecycle, one-click and raw-precompile registration."
 ---
 
-The validator set is **permissionless** from block **1,348,200** (2026-09-14, about 08:35 UTC). Any full node whose operator bonds the minimum self-stake can register; from the next epoch it signs blocks and earns block rewards like the genesis validators. Nothing to apply for, nobody to ask.
+The validator set is **permissionless** since block **1,348,200** (Mon 14 Sep 2026, 09:32 UTC). Any full node whose operator bonds the minimum self-stake can register; from the next epoch it signs blocks and earns block rewards like the genesis validators. No application or approval is required.
 
 :::tip[Before you start]
 You need a running node with your wallet configured as operator. That is [Step 2 of Run a Node](/validators/run-a-node/#step-2--install-one-command) with `--operator 0xYOUR_WALLET`; the node is verified automatically within about ten minutes of being online.
@@ -17,12 +17,12 @@ The previous upgrade activated at block 1,569,600 on Sat 19 Sep 19:23 UTC. Four 
 
 | Parameter | Value | Meaning |
 |---|---|---|
-| Activation | block **1,348,200** (~2026-09-14 08:35 UTC) | Registration and epoch transitions start here. Before that the four genesis validators are the set. |
+| Activation | block **1,348,200** (14 Sep 2026, 09:32 UTC) | Registration and epoch transitions start here. Before that the four genesis validators are the set. |
 | Minimum self-stake | **1,000 MRSN** | One faucet claim (1,000 + 1 MRSN for gas). Escrowed by the staking precompile when you register; the bond is taken from your balance after gas, so keep a little above the bond. |
 | Active set size | **12** | Ranked by self-stake + delegated stake at each epoch boundary. |
-| Epoch | **1,800 blocks (1 hour)** | Boundaries at heights divisible by 1,800 (every :00 at 2-second blocks). |
-| Joining | register in one epoch → **active from the next** | A registration at 10:20 is active from 11:00. |
-| Benching | miss **3** leader slots in an epoch (and your misses are at least a tenth of what you proposed) | From block **1,569,600** (~Sat 19 Sep 19:00 UTC): you are taken out of the **leader rotation for the rest of the epoch** — you keep voting and your stake, and the network stops spending failover rounds on you. Cleared at the boundary, where the jail rule below judges the epoch. A live validator that drops a slot now and then is never benched: three misses out of forty proposed is 7.5%, below the tenth. |
+| Epoch | **1,800 blocks (~1 hour; ~63 min at the observed ~2.1 s)** | Boundaries at heights divisible by 1,800 — they drift off the clock hour; the next one is `nextEpochAt` in `mersennet_validatorSet` and on the staking page. |
+| Joining | register in one epoch → **active from the next** | A registration in epoch N is active from the first block of epoch N+1, at most ~63 minutes later. |
+| Benching | miss **3** leader slots in an epoch (and your misses are at least a tenth of what you proposed) | Since block **1,569,600** (Sat 19 Sep 2026, 19:23 UTC): you are taken out of the **leader rotation for the rest of the epoch** — you keep voting and your stake, and the network stops spending failover rounds on you. Cleared at the boundary, where the jail rule below judges the epoch. A live validator that drops a slot now and then is never benched: three misses out of forty proposed is 7.5%, below the tenth. |
 | Jailing | miss **>20%** of your leader slots in an epoch (judged only if you had **≥5** slots, or were benched) | You sit out the **following epoch**; eligible again after that. **No stake is lost.** From block **1,569,600** repeat offences escalate: consecutive jails last 1, 2, 4, 8, 16, then 24 epochs; one clean epoch as an active validator resets the count. |
 | Leaving | `unregisterValidator` → removed at the next epoch boundary | Self-stake unbonds for **7,200 blocks (~4 hours)**, then `withdrawUnbonded()` returns it. |
 | Key rotation | `rotateValidatorKey` with a proof from the new node key | Effective at the next epoch; delegations follow the validator. |
@@ -41,7 +41,7 @@ Unbonding of *delegated* stake also takes 7,200 blocks, so one number applies ev
 | pending | next epoch boundary, ranked below the top 12 | **standby** |
 | standby | more self-stake or delegations at a boundary | **active** |
 | active | outranked at a boundary | **standby** |
-| active | missed 3 leader slots (since block 1,569,600) | **benched** for the rest of the epoch — still active, still voting, not in the leader rotation |
+| active | missed 3 leader slots, at least a tenth of what it proposed (since block 1,569,600) | **benched** for the rest of the epoch — still active, still voting, not in the leader rotation |
 | active | missed > 20% of ≥ 5 slots in the epoch (or was benched) | **jailed** (one epoch; 2, 4, 8… for consecutive offences since block 1,569,600) |
 | jailed | when the jail ends | **active** or **standby** by rank |
 | active / standby | `unregisterValidator` | **exiting** |
@@ -61,8 +61,8 @@ The active set is recomputed **deterministically from chain state** at every epo
 
 1. Open [trade.mersennet.com/staking](https://trade.mersennet.com/staking) with the operator wallet.
 2. Under **Validator set → Register a node** your verified node is listed (host, identity, build). Choose the self-stake (≥ 1,000 MRSN) and a commission.
-3. Press **Bond & register**. One transaction: the terminal already holds your node's signed proof, so there is nothing to copy.
-4. The table shows your entry as **pending**, then **active** at the next :00. Missed and proposed slots for the current epoch are live.
+3. Press **Bond 1,000 MRSN & register**. One transaction: the terminal already holds your node's signed proof, so there is nothing to copy.
+4. The table shows your entry as **pending**, then **active** at the next epoch boundary. Missed and proposed slots for the current epoch are live.
 
 ## Manage your node from the terminal
 
@@ -124,7 +124,7 @@ The [explorer's Validators page](https://explorer.mersennet.com/validators) rend
 
 ## Running well
 
-- **Stay online.** A validator that is down costs everyone a failover round per missed slot (8 seconds from block 1,440,000; 19 before) — until it is benched after three misses (since block 1,569,600) and jailed at the epoch boundary. Your node starts proposing and voting by itself at the boundary where it becomes active — the log says `this node is in the active validator set: proposing blocks when leader`. Restart quickly after upgrades (`sudo systemctl restart mersennet` is graceful; the node finishes its in-flight block).
+- **Stay online.** A validator that is down costs everyone a failover round per missed slot (8 seconds since block 1,400,550; 19 s before) — until it is benched after three misses (since block 1,569,600) and jailed at the epoch boundary. Your node starts proposing and voting by itself at the boundary where it becomes active — the log says `this node is in the active validator set: proposing blocks when leader`. Restart quickly after upgrades (`sudo systemctl restart mersennet` is graceful; the node finishes its in-flight block).
 - **Upgrade when `mersennet-check` or the staking page says so — always before an announced switch height.** Re-running the installer keeps your keys, data and operator setting and refreshes the consensus sections of the config from the canonical one.
 - **If it wedges, it restarts itself.** Since the 16 Sep build the node exits when its head has not moved for five minutes while the network is 60+ blocks ahead, and systemd restarts it; the watchdog never fires on a network-wide halt (nothing is ahead).
 - **Back up `keys/node_key.json`.** It *is* your validator identity. If it leaks, rotate with `rotateValidatorKey` from a fresh node.
@@ -135,7 +135,7 @@ The [explorer's Validators page](https://explorer.mersennet.com/validators) rend
 
 **Do I need 1,000,000 MRSN like the genesis validators?** No. Their stake was written into the genesis file; the minimum for everyone else is 1,000 MRSN.
 
-**My node is verified but not in the validator list.** Verification (points, explorer badge) and registration are separate steps. Register on the staking page; you appear as `pending` immediately and `active` at the next hour.
+**My node is verified but not in the validator list.** Verification (points, explorer badge) and registration are separate steps. Register on the staking page; you appear as `pending` immediately and `active` at the next epoch boundary (at most ~63 minutes).
 
 **Can I run several validators?** Yes, one registration per node identity, each with its own self-stake. For node-runner points only one node per operator counts.
 

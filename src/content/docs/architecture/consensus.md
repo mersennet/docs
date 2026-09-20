@@ -11,7 +11,7 @@ Mersennet uses **leader-gated BFT proof-of-stake**: one elected validator produc
 | **Consensus** | Leader-gated BFT proof-of-stake, single elected leader per height (HotStuff-2 pipeline: roadmap, not live) |
 | **Block Time** | ~2 seconds on the current testnet (configurable per network) |
 | **Finality** | ≥ 2/3 of total stake, signed votes gossiped per block |
-| **Failover** | Timeout-based round rotation to the next leader (8 s per round since block 1,440,000); since block 1,569,600 a leader that missed 3 slots in an epoch is benched until the epoch boundary |
+| **Failover** | Timeout-based round rotation to the next leader (8 s per round since block 1,400,550; 19 s before); since block 1,569,600 a leader that missed 3 slots (at least a tenth of what it proposed) in an epoch is benched until the epoch boundary |
 | **Implementation** | Rust |
 
 ## Validator Selection
@@ -79,10 +79,10 @@ The block hash commits to the block's actual content — `parent_hash`, `timesta
 
 ## Block Finalization
 
-A block is **finalized** when signed votes from validators representing more than 2/3 of total stake have been observed for its hash:
+A block is **finalized** when signed votes from validators representing at least 2/3 of total stake have been observed for its hash:
 
 ```text
-T = 2/3 × total_stake + 1
+T = ⌊2/3 × total_stake⌋
 finalized ⟺ Σ stake(voters for block_hash) ≥ T
 ```
 
@@ -133,7 +133,7 @@ When slashing is executed, tokens are taken from:
 ### Tombstone vs. Jail
 
 - **Tombstoned**: Permanently banned. Cannot rejoin.
-- **Jailed**: Temporarily excluded. Can `unjail()` after the jail period.
+- **Jailed**: Excluded for 1, 2, 4, 8, 16 then 24 epochs (consecutive offences); eligible again automatically at the epoch boundary when the jail ends — there is no `unjail` call.
 
 ## Block Structure
 
@@ -149,7 +149,7 @@ Every finalized block contains the following fields:
 | `transactions` | `Vec<Transaction>` | Ordered list of transactions included in the block |
 | `receipts` | `Vec<Receipt>` | Execution receipts corresponding 1:1 with transactions |
 | `proposer` | `Address` | Validator address that proposed this block |
-| `coinbase` | `Address` | Address receiving block rewards (same as proposer) |
+| `coinbase` | `Address` | The proposer's address. Block rewards are not paid to it alone: they are split pro-rata across the active set every block and credited to operator wallets (see [Tokenomics](/architecture/tokenomics/)) |
 | `gas_limit` | `u64` | Maximum gas allowed in this block (default 30,000,000) |
 | `gas_used` | `u64` | Total gas consumed by all transactions |
 | `base_fee` | `U256` | EIP-1559 base fee for this block (adjusts per block) |
@@ -186,7 +186,7 @@ A transaction moves through the following stages from submission to finalization
 
   1. SUBMISSION
      │  Client sends signed transaction via JSON-RPC
-     │  (eth_sendRawTransaction or mersennet_sendTransaction)
+     │  (eth_sendRawTransaction)
      │
   2. VALIDATION
      │  ├─ Verify ECDSA signature (recover signer from r, s, v)
@@ -340,7 +340,7 @@ Transaction and vote gossip uses configurable parameters:
 
 ## Configuration Reference
 
-Complete reference of all configuration parameters with their default values.
+Core configuration parameters with their default values (the canonical testnet config also carries `genesis`, `privacy` and `watchdog` sections).
 
 ### `engine`: Core Engine Settings
 
@@ -352,6 +352,8 @@ Complete reference of all configuration parameters with their default values.
 | `fee_elasticity_multiplier` | `u64` | `2` | EIP-1559 elasticity multiplier |
 | `fee_max_change_denominator` | `u64` | `8` | Max base fee change per block (12.5%) |
 | `storage_backend` | `string` | `"sled"` | Storage backend: `"sled"`, `"redb"`, or `"memory"` |
+| `resume_root_check` | `string` | `"warn"` | Startup check of the restored state root against the head block: `"warn"` logs a mismatch, `"fatal"` exits (code 5) |
+
 
 ### `mempool`: Transaction Pool
 
@@ -371,6 +373,22 @@ Complete reference of all configuration parameters with their default values.
 | `peers` | `string[]` | `[]` | Seed peer addresses for bootstrap |
 | `block_time_ms` | `u64` | `1000` | Target block production interval in ms (the public testnet runs `2000`) |
 | `noise_enabled` | `bool` | `false` | Enable Noise protocol encryption |
+| `compact_wire_height` | `u64` | `0` | Testnet: `1440000`. Compact (base64) gossip encoding from this height |
+| `fast_failover_height` | `u64` | `0` | Testnet: `1400550`. Leader failover rounds of 3 block-times + 2 s (8 s) from this height, 8 block-times + 3 s (19 s) before |
+
+
+### `validator_set`: Open Validator Set
+
+| Parameter | Type | Testnet | Description |
+|-----------|------|---------|-------------|
+| `activation_height` | `u64` | `1348200` | Permissionless registration and epoch transitions start here |
+| `epoch_blocks` | `u64` | `1800` | Epoch length (~1 h) |
+| `min_self_stake_mrsn` | `u64` | `1000` | Minimum self-stake to register |
+| `max_validators` | `u64` | `12` | Active set size (top by self + delegated stake) |
+| `unbonding_blocks` | `u64` | `7200` | Unbonding for self-stake and delegations (~4 h) |
+| `jail_miss_bps` / `jail_min_slots` | `u64` | `2000` / `5` | Jailed after missing >20% of leader slots in an epoch, judged with ≥5 slots (or when benched) |
+| `rewards_to_operator_height` | `u64` | `1440000` | Block rewards credited to the operator wallet from this height |
+| `bench_height` / `jail_escalation_height` | `u64` | `1569600` | Benching after 3 missed slots; escalating jail 1, 2, 4, 8, 16, 24 epochs |
 
 ### `rpc`: JSON-RPC Server
 
@@ -383,7 +401,7 @@ Complete reference of all configuration parameters with their default values.
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
-| `enabled` | `bool` | `false` | Enable the WebSocket server |
+| `enabled` | `bool` | `false` | Enable the WebSocket server (the canonical testnet config enables it on `127.0.0.1:8546`; the code default address is `127.0.0.1:9945`) |
 | `addr` | `string` | `"127.0.0.1:9945"` | WebSocket listen address and port |
 
 ### `slashing`: Slashing Parameters
@@ -395,7 +413,7 @@ Complete reference of all configuration parameters with their default values.
 | `escalation_step_bps` | `u64` | `25` | Penalty increase per repeated offense (0.25%) |
 | `escalation_max_bps` | `u64` | `1000` | Maximum escalated penalty (10%) |
 | `round_timeout_ms` | `u64` | `500` | Consensus round timeout in milliseconds |
-| `unbonding_period` | `u64` | `2` | Blocks before unbonded stake is withdrawable (code default; the public testnet configs use 100) |
+| `unbonding_period` | `u64` | `2` | Consensus-engine unbonding in blocks (code default; the canonical testnet config also sets 2). The open validator set's staking unbonding is separate: `validator_set.unbonding_blocks` = 7,200 (~4 h). |
 
 ### `token_economics`: Reward & Supply
 
@@ -409,8 +427,11 @@ Complete reference of all configuration parameters with their default values.
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
-| `initial_margin_bps` | `u64` | `0` | Initial margin requirement (basis points) |
-| `maintenance_margin_bps` | `u64` | `0` | Maintenance margin requirement (basis points) |
+| `initial_margin_bps` | `u64` | `0` | Initial margin requirement (basis points) before `settlement_height` |
+| `maintenance_margin_bps` | `u64` | `0` | Maintenance margin requirement (basis points) before `settlement_height` |
+| `settlement_initial_margin_bps` / `settlement_maintenance_margin_bps` | `u64` | `1000` / `500` | Margins that apply from `settlement_height` (testnet: 10% / 5%) |
+| `agent_delegation_height`, `price_scale_height`, `price_rescales`, `frame_caller_height`, `settlement_height` | heights | `0` | Consensus switches (testnet: 1,569,600 / 1,569,600 with `[[1,100],[4,100],[5,100]]` / 1,605,600 / 1,605,600) |
+| `allow_unsigned_orders_rpc` | `bool` | `false` | Accept unsigned order mutations over RPC (devnets only) |
 
 ### `bridge`: Cross-Domain Bridge
 
@@ -447,7 +468,9 @@ Complete reference of all configuration parameters with their default values.
     "peer_store_path": "state/peers.json",
     "listen": "0.0.0.0:30303",
     "peers": [
-      "46.225.30.187:30303"
+      "46.225.30.187:30303",
+      "46.225.183.192:30303",
+      "49.13.54.79:30303"
     ],
     "block_time_ms": 2000,
     "noise_enabled": false

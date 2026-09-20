@@ -28,7 +28,7 @@ flowchart TD
 
 ## SDK primitives
 
-The TypeScript SDK ships the full pipeline so a wallet does not implement crypto by hand:
+The TypeScript, Python and Go SDKs ship the full pipeline (`scanOwnNotes` / `scan_and_reconstruct_balances` / `ScanAndReconstructBalances`) so a wallet does not implement crypto by hand:
 
 | Helper | Purpose |
 |---|---|

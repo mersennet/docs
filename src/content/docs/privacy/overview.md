@@ -5,13 +5,17 @@ description: "Account-level privacy for the EVM and the native order book, with 
 
 ![Abstract illustration of a shielded account: a glowing orb wrapped in a translucent hexagonal shield](/img/privacy.webp)
 
-Mersennet is a zero-knowledge Layer 1 where **privacy and verifiability are the defaults**. Instead of bolting a mixer onto a transparent chain, Mersennet provides *account-level* privacy across both the EVM and the native central limit order book (CLOB), Aztec-style, while keeping the chain publicly verifiable through succinct proofs.
+:::note[Activation]
+The shielded pool is designed in, anchored in every block, and **not yet active**: shielded deposits, transfers, orders and viewing grants switch on at the privacy hard fork (no date announced). Everything on this page describes that design; today's testnet is transparent, and the client-side SDK pieces can be exercised against mock data.
+:::
+
+Mersennet is a zero-knowledge Layer 1 designed so that **privacy and verifiability are the defaults**. Instead of bolting a mixer onto a transparent chain, Mersennet provides *account-level* privacy across both the EVM and the native central limit order book (CLOB), Aztec-style, while keeping the chain publicly verifiable through succinct proofs.
 
 ## What "account-level privacy" means
 
-On a transparent chain, anyone can read your balances, positions, and order flow from the public state. On Mersennet, that information lives in **shielded accounts**: balances, transfers, positions, and orders are represented as encrypted *notes* committed to an on-chain Merkle tree. The network can verify that every state transition is valid without learning *who* owns what.
+On a transparent chain, anyone can read your balances, positions, and order flow from the public state. On Mersennet, once the privacy hard fork is active, that information lives in **shielded accounts**: balances, transfers, positions, and orders are represented as encrypted *notes* committed to an on-chain Merkle tree. The network can verify that every state transition is valid without learning *who* owns what.
 
-| Surface | Transparent chain | Mersennet shielded |
+| Surface | Transparent chain (Mersennet today) | Mersennet shielded (post-fork design) |
 |---|---|---|
 | Balances | Public per address | Encrypted notes, owner-only |
 | Transfers | Sender, recipient, amount public | Nullifier in / commitment out, amounts hidden |
