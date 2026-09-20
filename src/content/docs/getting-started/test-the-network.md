@@ -35,7 +35,7 @@ The installer verifies the signed release, restores the latest state snapshot an
 
 ## 4. Become a validator
 
-The validator set is **permissionless** from block 1,348,200 (2026-09-14, ~08:35 UTC). With your node verified, open [trade.mersennet.com/staking](https://trade.mersennet.com/staking) with the operator wallet, choose a self-stake of at least **1,000 MRSN** (one faucet claim) and press **Bond & register**. From the next hourly epoch your node signs blocks and earns block rewards.
+The validator set is **permissionless** since block 1,348,200 (Mon 14 Sep 2026, 09:32 UTC). With your node verified, open [trade.mersennet.com/staking](https://trade.mersennet.com/staking) with the operator wallet, choose a self-stake of at least **1,000 MRSN** (one faucet claim) and press **Bond & register**. From the next hourly epoch your node signs blocks and earns block rewards.
 
 - Top **12** by self-stake + delegations are active; the rest are on standby.
 - Miss more than **20%** of your leader slots in an epoch and you sit out the next one (since block 1,569,600: three missed slots bench you for the rest of the epoch, and consecutive jails escalate 1, 2, 4, 8, 16, 24 epochs). Nothing is slashed for downtime; only equivocation is.
@@ -54,13 +54,13 @@ Mersennet is EVM-equivalent: Hardhat, Foundry, ethers and viem work unchanged. D
 
 ## 7. Points
 
-Season 1 points on [trade.mersennet.com/points](https://trade.mersennet.com/points) track participation. All of these are live:
+Season 1 points on [trade.mersennet.com/points](https://trade.mersennet.com/points) track participation. Live today, or opening at today's upgrade:
 
-- **Trading**: 1 point per $1 traded (bots excluded).
+- **Trading**: 1 point per $1 of taker volume — market orders and limit orders that cross; resting fills earn nothing (bots excluded).
 - **Node running**: 500 points a day for each verified node while it is online.
-- **Liquidity**: 0.1 LP point per MRSN per day deposited in the [maker vault](https://trade.mersennet.com/vault).
+- **Liquidity**: 0.1 LP point per MRSN per day deposited in the [maker vault](https://trade.mersennet.com/vault) — deposits open at block 1,605,600 (Sun 20 Sep, ~16:30 UTC); see [Maker Vault](/ecosystem/maker-vault/).
 - **Referrals**: the referrer earns 10% of each referee's trading points; nothing is deducted from the referee.
-- **Weekly sprint**: the top 3 traders by volume each week earn 3,000 / 2,000 / 1,000 bonus points.
+- **Weekly sprint**: the top 3 traders by taker volume each week earn 3,000 / 2,000 / 1,000 bonus points.
 
 The [leaderboard](https://trade.mersennet.com/leaderboard) ranks traders and shows the sprint standings.
 

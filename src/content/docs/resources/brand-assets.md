@@ -108,7 +108,7 @@ The **wordmark** is always JetBrains Mono Bold, all caps, with 0.14em tracking.
 |-------|--------|-------------|
 | Logo (mark) | SVG | Five-bar M mark in phosphor green (white, black, and deep-green variants in the kit) |
 | Favicon | SVG | Mark on a rounded black tile |
-| Social Card | SVG/PNG | Open Graph / Twitter share image (1200×630) |
+| Social Card | SVG (PNG in the kit) | Open Graph / Twitter share image (1200×630) |
 
 :::tip
 The full media kit (vector masters, transparent PNG renders, and platform-exact social sizes) lives in the monorepo's `brand/` directory (repository currently private — contact the team for access).
@@ -130,4 +130,4 @@ When building dApps or documentation for Mersennet:
 
 ## Contact
 
-For custom brand requests, partnerships, or asset access, reach out via the [Mersennet GitHub organization](https://github.com/mersennet) or community channels.
+For custom brand requests, partnerships, or asset access, reach out in the official Telegram chat, [t.me/Mersennet](https://t.me/Mersennet).

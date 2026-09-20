@@ -6,7 +6,7 @@ description: "Connect a wallet to the Mersennet Trade terminal, claim faucet MRS
 This guide takes you from an empty wallet to a closed position on [Mersennet Trade](https://trade.mersennet.com), the terminal over the native on-chain order book. No code is needed; every step is a wallet click. It takes about ten minutes, and nothing on the testnet has monetary value.
 
 :::note[Every order is a transaction]
-Orders, cancels, deposits and withdrawals are wallet-signed transactions to the order-book precompile at `0x…0100`. There is no relay and no gasless path, so each action costs a little gas from your MRSN balance and shows up on the [explorer](https://explorer.mersennet.com) like any other transaction. One-click trading (Settings → One-Click Trading, from block 1,569,600) replaces the wallet popups with a browser agent key you grant on-chain; the key can place and cancel orders for your account but never withdraw.
+Orders, cancels, deposits and withdrawals are wallet-signed transactions to the order-book precompile at `0x…0100`. There is no relay and no gasless path, so each action costs a little gas from your MRSN balance and shows up on the [explorer](https://explorer.mersennet.com) like any other transaction. One-click trading (Settings → One-Click Trading, live since block 1,569,600 on 19 Sep) replaces the wallet popups with a browser agent key you grant on-chain; the key can place and cancel orders for your account but never withdraw.
 :::
 
 ## Step 1: Connect a wallet
@@ -56,9 +56,9 @@ Stop, stop-limit, trailing-stop and TWAP orders are armed in your browser and se
 
 Testnet participation is tracked on the [Points page](https://trade.mersennet.com/points):
 
-- **1 point per $1 traded** (bots are excluded): a 1 MRSN order at a $100 price earns about 100 points.
-- The [leaderboard](https://trade.mersennet.com/leaderboard) ranks traders by points and shows the **weekly sprint**: the top 3 traders by volume each week earn 3,000 / 2,000 / 1,000 bonus points.
-- Other live programs: 500 points a day for a verified node, 0.1 LP point per MRSN per day in the maker vault, and referrals (10% of a referee's trading points).
+- **1 point per $1 of taker volume** (bots are excluded): a 1 MRSN *market* order at about $115 earns about 115 points; a resting limit order that gets filled earns none.
+- The [leaderboard](https://trade.mersennet.com/leaderboard) ranks traders by points and shows the **weekly sprint**: the top 3 traders by taker volume each week earn 3,000 / 2,000 / 1,000 bonus points.
+- Other programs: 500 points a day for a verified node, referrals (10% of a referee's trading points), and 0.1 LP point per MRSN per day in the [maker vault](/ecosystem/maker-vault/) once deposits open at block 1,605,600 (Sun 20 Sep, ~16:30 UTC).
 
 :::note[Units on testnet]
 Prices are quoted in USD; balances, PnL and equity are shown in MRSN. In the margin engine one MRSN of collateral counts as one dollar of margin — there is no MRSN/USD conversion on the testnet yet — so leverage and PnL read as if MRSN were the quote currency. MockUSDC (the test USDC) is also accepted as collateral at 90% weight.

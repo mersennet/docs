@@ -20,7 +20,7 @@ Use the following configuration to connect to Mersennet testnet.
 | **Block Time** | ~2 seconds |
 
 :::tip
-The public WebSocket endpoint `wss://rpc.mersennet.com` is enabled for `eth_subscribe` subscriptions (`newHeads`, `logs`) — send regular JSON-RPC calls over HTTPS. Nodes you run yourself serve WebSocket subscriptions on port 8546.
+The public WebSocket endpoint `wss://rpc.mersennet.com` is enabled for `eth_subscribe` subscriptions (`newHeads`, `logs`, `newPendingTransactions`) — send regular JSON-RPC calls over HTTPS. Nodes you run yourself serve WebSocket subscriptions on port 8546.
 :::
 
 ## Node Operators: P2P Bootnodes
@@ -47,9 +47,9 @@ Consensus rules change at announced block heights ("switches" in the node config
 
 | Height | When (UTC) | What changes | Minimum release |
 |---|---|---|---|
-| 1,440,000 | Tue 2026-09-16 (active) | Block rewards credited to the operator wallet; compact (base64) gossip encoding | `9e3a508` (15 Sep) |
-| 1,569,600 | Sat 2026-09-19 19:23 UTC (active) | **Benching**: 3 missed leader slots → out of the leader rotation until the epoch boundary. **Escalating jail**: consecutive jails last 1, 2, 4, 8, 16, 24 epochs. **Agent delegation** on the CLOB precompile (`setAgent` / `revokeAgent`; one-click trading in the terminal). **Finer ticks**: MRSN, SOL and ARB switch to `priceScale` 100 — on-chain prices become human × 100 and the markets trade on $0.01 ticks; books, positions and last prices are rescaled in place | 17 Sep release |
-| 1,605,600 | Sun 2026-09-20 ~16:30 (live estimate on the [upgrades page](https://explorer.mersennet.com/upgrades)) | **Settlement**: one collateral unit = one MRSN (existing balances ÷10¹⁸ once), realized PnL settles into collateral at every fill, 10% initial / 5% maintenance margin with keeper liquidations (`liquidate(address)`, 1% fee split keeper/insurance fund), self-trade prevention. **Contracts act as themselves on the CLOB and staking precompiles**: the precompiles authorise on the call frame's `msg.sender` instead of the transaction origin. A contract that calls `depositCollateral` / `placeOrder` / `setAgent` now owns its own account (the maker vault depends on this, and its deposits open at this height), and a contract can no longer act on the account of the user calling it. Direct transactions are unchanged | 18 Sep release (`settlement_height`, `frame_caller_height`) |
+| 1,440,000 | Wed 2026-09-16 15:45 UTC (active) | Block rewards credited to the operator wallet; compact (base64) gossip encoding | `9e3a508` (15 Sep) |
+| 1,569,600 | Sat 2026-09-19 19:23 UTC (active) | **Benching**: 3 missed leader slots → out of the leader rotation until the epoch boundary. **Escalating jail**: consecutive jails last 1, 2, 4, 8, 16, 24 epochs. **Agent delegation** on the CLOB precompile (`setAgent` / `revokeAgent`; one-click trading in the terminal). **Finer ticks**: MRSN, SOL and ARB switch to `priceScale` 100 — on-chain prices become human × 100 and the markets trade on $0.01 ticks; books, positions and last prices are rescaled in place | `f67d812` (18 Sep; the 17 Sep build also carries it) |
+| 1,605,600 | Sun 2026-09-20 ~16:30 (live estimate on the [upgrades page](https://explorer.mersennet.com/upgrades)) | **Settlement**: one collateral unit = one MRSN (existing balances ÷10¹⁸ once), realized PnL settles into collateral at every fill, 10% initial / 5% maintenance margin with keeper liquidations (`liquidate(address)`, 1% fee split keeper/insurance fund), self-trade prevention. **Contracts act as themselves on the CLOB and staking precompiles**: the precompiles authorise on the call frame's `msg.sender` instead of the transaction origin. A contract that calls `depositCollateral` / `placeOrder` / `setAgent` now owns its own account (the maker vault depends on this, and its deposits open at this height), and a contract can no longer act on the account of the user calling it. Direct transactions are unchanged | `f67d812` (18 Sep) — `settlement_height`, `frame_caller_height` |
 
 ETAs assume the observed block time (~2.1 s: missed leader slots stretch the nominal 2 s) and drift by tens of minutes over a day — the live countdown is on the explorer's [Protocol upgrades](https://explorer.mersennet.com/upgrades) page and the terminal's [staking page](https://trade.mersennet.com/staking), or `GET https://trade.mersennet.com/api/v1/protocol/switches`. The same explorer page keeps the record of **completed** upgrades: the block's actual timestamp next to the estimate that was on record and the difference between them (`GET /api/v1/protocol/upgrades`).
 
@@ -180,6 +180,7 @@ The following contracts are deployed on Mersennet testnet and ready for integrat
 | **MockUSDC** | `0xA44B23d1D0C0133dA71DeCe399d5d5aDE6DD22d1` |
 | **MockUSDT** | `0x3923578a19d0e9B35cef08B7Eba0cb6D4B9c28F6` |
 | **MockDAI** | `0x27942c2cEE3e0e02377d01BFE6E74cefC9a9FD45` |
+| **Maker Vault (`mvMRSN`)** | `0xe77F94c4Bf7D6d2E2371aFdE440a0b9b8a567725` |
 
 ### Usage Notes
 

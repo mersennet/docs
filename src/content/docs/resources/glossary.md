@@ -16,7 +16,7 @@ once, linked everywhere.
 
 **Nullifier**: A unique tag derived from a note and its owner's key, published when the note is spent. The chain rejects duplicate nullifiers (that's double-spend prevention), but a nullifier cannot be linked back to its note.
 
-**Shield / Unshield**: Moving value between transparent EVM balances and shielded notes, via the precompile at `0x0201`. Shielding debits your public balance and mints a commitment; unshielding consumes a note (publishing its nullifier) and credits a public address. These are the only moments value visibly crosses the boundary.
+**Shield / Unshield** (privacy hard fork, not yet active): Moving value between transparent EVM balances and shielded notes, via the precompile at `0x0201`. Shielding debits your public balance and mints a commitment; unshielding consumes a note (publishing its nullifier) and credits a public address. These are the only moments value visibly crosses the boundary.
 
 **Viewing key**: The key pair that can *see* your notes without being able to *spend* them. Spending requires the separate spend key. Viewing keys make [selective disclosure](/privacy/selective-disclosure/) possible.
 
@@ -40,11 +40,11 @@ once, linked everywhere.
 
 **Atomic composability**: A contract can place an order and read its fill in the *same transaction*, because the order book is a precompile sharing state with the EVM. This is the property asynchronous designs (e.g. message-passing to an external matcher) cannot offer.
 
-**FBA (Frequent Batch Auction)**: Orders accumulate threshold-encrypted during a block and are matched in one batch at a uniform clearing price at the tick. Removes the speed race that makes front-running profitable.
+**FBA (Frequent Batch Auction)** (privacy hard fork design): Shielded orders would accumulate threshold-encrypted during a block and be matched in one batch at a uniform clearing price at the tick, removing the speed race that makes front-running profitable. The live order book matches by price-time priority.
 
-**Threshold-encrypted mempool**: Shielded order payloads are encrypted to a 5-of-7 committee of validators (via DKG); no minority can peek at order flow before the tick.
+**Threshold-encrypted mempool** (privacy hard fork design): Shielded order payloads would be encrypted to a threshold committee of validators (via DKG) so that no minority can peek at order flow before the tick.
 
-**Sealed-bid liquidation**: Liquidations run as auctions among bonded liquidators with encrypted bids; a ZK proof shows a position is underwater without revealing it. The liquidated account's identity never appears on-chain.
+**Sealed-bid liquidation** (privacy hard fork design): Liquidations would run as auctions among bonded liquidators with encrypted bids, a ZK proof showing a position is underwater without revealing it. On today's testnet liquidations are open keeper calls to `liquidate(address)` from block 1,605,600.
 
 ## Proofs
 

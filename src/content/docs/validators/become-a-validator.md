@@ -3,7 +3,7 @@ title: "Become a Validator"
 description: "The Mersennet testnet validator set is open: register a node with 1,000 MRSN self-stake, join the active set at the next epoch, produce blocks and earn rewards. Parameters, lifecycle, one-click and raw-precompile registration."
 ---
 
-The validator set is **permissionless** from block **1,348,200** (2026-09-14, about 08:35 UTC). Any full node whose operator bonds the minimum self-stake can register; from the next epoch it signs blocks and earns block rewards like the genesis validators. Nothing to apply for, nobody to ask.
+The validator set is **permissionless** since block **1,348,200** (Mon 14 Sep 2026, 09:32 UTC). Any full node whose operator bonds the minimum self-stake can register; from the next epoch it signs blocks and earns block rewards like the genesis validators. Nothing to apply for, nobody to ask.
 
 :::tip[Before you start]
 You need a running node with your wallet configured as operator. That is [Step 2 of Run a Node](/validators/run-a-node/#step-2--install-one-command) with `--operator 0xYOUR_WALLET`; the node is verified automatically within about ten minutes of being online.
@@ -17,7 +17,7 @@ The previous upgrade activated at block 1,569,600 on Sat 19 Sep 19:23 UTC. Four 
 
 | Parameter | Value | Meaning |
 |---|---|---|
-| Activation | block **1,348,200** (~2026-09-14 08:35 UTC) | Registration and epoch transitions start here. Before that the four genesis validators are the set. |
+| Activation | block **1,348,200** (14 Sep 2026, 09:32 UTC) | Registration and epoch transitions start here. Before that the four genesis validators are the set. |
 | Minimum self-stake | **1,000 MRSN** | One faucet claim (1,000 + 1 MRSN for gas). Escrowed by the staking precompile when you register; the bond is taken from your balance after gas, so keep a little above the bond. |
 | Active set size | **12** | Ranked by self-stake + delegated stake at each epoch boundary. |
 | Epoch | **1,800 blocks (1 hour)** | Boundaries at heights divisible by 1,800 (every :00 at 2-second blocks). |
