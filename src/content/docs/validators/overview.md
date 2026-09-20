@@ -65,7 +65,7 @@ Only **equivocation** costs stake. Downtime is never slashed; it is handled by b
 | Offense | Penalty | Consequence |
 |---------|---------|-------------|
 | **Equivocation (double-signing: two blocks at one height)** | 5% of stake (base) | **Tombstoned**, permanently banned from the validator set |
-| **3 missed leader slots in an epoch** (from block 1,569,600) | none | **Benched**: out of the leader rotation for the rest of the epoch; still voting, stake untouched |
+| **3 missed leader slots in an epoch** (since block 1,569,600) | none | **Benched**: out of the leader rotation for the rest of the epoch; still voting, stake untouched |
 | **Downtime (>20% of leader slots missed in an epoch, or benched)** | none | **Jailed** for the next epoch, then back automatically. From block 1,569,600 consecutive jails escalate: 1, 2, 4, 8, 16, 24 epochs; one clean epoch resets the count |
 
 A tombstoned validator cannot rejoin the network. Downtime costs the epochs out of the set and the rewards not earned — see [Become a Validator](/validators/become-a-validator/#parameters-testnet).

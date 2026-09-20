@@ -11,7 +11,7 @@ Mersennet uses **leader-gated BFT proof-of-stake**: one elected validator produc
 | **Consensus** | Leader-gated BFT proof-of-stake, single elected leader per height (HotStuff-2 pipeline: roadmap, not live) |
 | **Block Time** | ~2 seconds on the current testnet (configurable per network) |
 | **Finality** | ≥ 2/3 of total stake, signed votes gossiped per block |
-| **Failover** | Timeout-based round rotation to the next leader (8 s per round since block 1,440,000); from block 1,569,600 a leader that missed 3 slots in an epoch is benched until the epoch boundary |
+| **Failover** | Timeout-based round rotation to the next leader (8 s per round since block 1,440,000); since block 1,569,600 a leader that missed 3 slots in an epoch is benched until the epoch boundary |
 | **Implementation** | Rust |
 
 ## Validator Selection
@@ -92,7 +92,7 @@ Votes are ECDSA signatures over a domain-separated digest of `(height, block_has
 
 The active set is recomputed at every **epoch boundary** (heights divisible by `validator_set.epoch_blocks`, 1,800 blocks ≈ 1 hour on the testnet), identically on every node from committed chain state:
 
-1. Judge the ending epoch: a validator that missed more than `jail_miss_bps` (20%) of its leader slots — with at least `jail_min_slots` (5) slots, or that was benched — is **jailed for the next epoch** (from block 1,569,600 consecutive jails escalate 1, 2, 4, 8, 16, 24 epochs); exits requested during the epoch are applied and the self-stake starts unbonding (`unbonding_blocks`, 7,200 ≈ 4 h); pending key rotations take effect. Within an epoch, from the same height, a leader that misses 3 slots is **benched**: out of the leader rotation until the boundary, still voting. No stake is lost for downtime.
+1. Judge the ending epoch: a validator that missed more than `jail_miss_bps` (20%) of its leader slots — with at least `jail_min_slots` (5) slots, or that was benched — is **jailed for the next epoch** (since block 1,569,600 consecutive jails escalate 1, 2, 4, 8, 16, 24 epochs); exits requested during the epoch are applied and the self-stake starts unbonding (`unbonding_blocks`, 7,200 ≈ 4 h); pending key rotations take effect. Within an epoch, from the same height, a leader that misses 3 slots is **benched**: out of the leader rotation until the boundary, still voting. No stake is lost for downtime.
 2. Rank eligible validators (registered in an earlier epoch, not jailed, self-stake ≥ minimum) by self-stake + delegations.
 3. The top `max_validators` (12) become the consensus set for the epoch; the leader schedule and the 2/3-stake finality threshold use exactly this set.
 

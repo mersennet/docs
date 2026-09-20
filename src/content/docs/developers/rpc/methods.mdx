@@ -907,7 +907,7 @@ List every CLOB market (genesis-seeded and permissionlessly created), sorted by 
 }
 ```
 
-`priceScale`: on-chain prices for the market are **human price × priceScale** (1 = integer prices). MRSN, SOL and ARB carry `priceScale = 1` before block 1,569,600 and `100` from it, so the `lastPrice` above (`0x2d11` = 11537) means $115.37 and the finest tick is $0.01; before the switch the same market reported `priceScale: 1` and integer-dollar prices. Sizes are unchanged and notional = price × size ÷ priceScale. Read it from this method rather than assuming integers.
+`priceScale`: on-chain prices for the market are **human price × priceScale** (1 = integer prices). MRSN, SOL and ARB have carried `priceScale = 100` since block 1,569,600 (Sat 19 Sep 2026), so the `lastPrice` above (`0x2d11` = 11537) means $115.37 and the finest tick is $0.01; before that height the same market reported `priceScale: 1` and integer-dollar prices. Sizes are unchanged and notional = price × size ÷ priceScale. Read it from this method rather than assuming integers.
 
 ---
 

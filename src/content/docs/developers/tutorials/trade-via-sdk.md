@@ -19,7 +19,7 @@ Every write is a **wallet-signed transaction** to the precompile, submitted with
 :::
 
 :::note[Prices are scaled]
-On-chain prices are `human price × priceScale`. `priceScale` is 1 for every market today; from block 1,569,600 MRSN, SOL and ARB carry `priceScale = 100` ($0.01 ticks). Read the scale from `getMarkets` and convert with `toChainPrice`, as below, rather than assuming integers.
+On-chain prices are `human price × priceScale`. MRSN, SOL and ARB carry `priceScale = 100` ($0.01 ticks) since block 1,569,600; BTC and ETH are still 1 (integer prices). Read the scale from `getMarkets` and convert with `toChainPrice`, as below, rather than assuming integers.
 :::
 
 ## TypeScript
