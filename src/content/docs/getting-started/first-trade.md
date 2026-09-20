@@ -64,13 +64,13 @@ Testnet participation is tracked on the [Points page](https://trade.mersennet.co
 Prices are quoted in USD; balances, PnL and equity are shown in MRSN. In the margin engine one MRSN of collateral counts as one dollar of margin — there is no MRSN/USD conversion on the testnet yet — so leverage and PnL read as if MRSN were the quote currency. MockUSDC (the test USDC) is also accepted as collateral at 90% weight.
 :::
 
-:::caution[What changes this weekend]
-Two protocol switches land at announced block heights (about 2.1 s per block; live ETAs at [trade.mersennet.com/api/v1/protocol/switches](https://trade.mersennet.com/api/v1/protocol/switches) and on the [staking page](https://trade.mersennet.com/staking)):
+:::caution[Protocol upgrade on Sun 20 Sep]
+Protocol upgrades land at announced block heights (about 2.1 s per block; the live estimate and the record of past upgrades are on the explorer's [upgrades page](https://explorer.mersennet.com/upgrades) and the [staking page](https://trade.mersennet.com/staking)):
 
-- **Block 1,569,600 (Sat 19 Sep, about 19:00 UTC)**: agent delegation (one-click trading), $0.01 ticks on MRSN, SOL and ARB, validator benching and escalating jail.
-- **Block 1,605,600 (Sun 20 Sep, about 16:00 UTC)**: settlement. One collateral unit becomes one MRSN, realized PnL settles into collateral at every fill, initial margin is 10% (10× maximum leverage) and maintenance margin 5% with keeper liquidations. Before this height the chain enforces no margin. Maker vault deposits open at the same height.
+- **Block 1,569,600 — done, Sat 19 Sep 19:23 UTC**: agent delegation (one-click trading), $0.01 ticks on MRSN, SOL and ARB, validator benching and escalating jail.
+- **Block 1,605,600 (Sun 20 Sep, about 16:30 UTC)**: settlement. One collateral unit becomes one MRSN, realized PnL settles into collateral at every fill, initial margin is 10% (10× maximum leverage) and maintenance margin 5% with keeper liquidations. Before this height the chain enforces no margin. Maker vault deposits open at the same height.
 
-Your collateral and open positions carry over; the terminal converts units for the current era. Full details: [Scheduled protocol switches](/getting-started/network-info/#protocol-upgrades).
+Your collateral and open positions carry over; the terminal converts units for the current era. Full details: [Protocol upgrades](/getting-started/network-info/#protocol-upgrades).
 :::
 
 ## Next steps

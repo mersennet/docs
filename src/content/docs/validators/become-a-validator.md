@@ -9,8 +9,8 @@ The validator set is **permissionless** from block **1,348,200** (2026-09-14, ab
 You need a running node with your wallet configured as operator. That is [Step 2 of Run a Node](/validators/run-a-node/#step-2--install-one-command) with `--operator 0xYOUR_WALLET`; the node is verified automatically within about ten minutes of being online.
 :::
 
-:::caution[Protocol switch at block 1,569,600 (~Sat 19 Sep 19:00 UTC) — upgrade your validator before it]
-Four rules activate at that height: **benching** (a validator that misses 3 leader slots leaves the leader rotation until the epoch boundary), **escalating jail** (consecutive jails last 1, 2, 4, 8, 16, 24 epochs), **agent delegation** on the CLOB precompile, and the **price rescale** of MRSN, SOL and ARB to $0.01 ticks. All of them change how every node executes blocks, so a validator on a build from before 17 Sep forks off at the switch. A further switch follows at **block 1,605,600 (~Sun 20 Sep 16:00 UTC)** — settlement (one collateral unit = one MRSN, realized PnL settles, 10% initial / 5% maintenance margin with keeper liquidations) and contracts calling the CLOB act as themselves — and needs the **18 Sep release**; one upgrade to that release covers both. Upgrading is the install command again (`curl -fsSL https://mersennet.com/downloads/install.sh | sudo bash -s -- --operator 0xYOUR_WALLET`); the staking page shows *upgrade required* next to your node until it runs the current release. All scheduled switches: [Network Info](/getting-started/network-info/#protocol-upgrades).
+:::caution[Protocol upgrade at block 1,605,600 (Sun 20 Sep, live estimate on the [upgrades page](https://explorer.mersennet.com/upgrades)) — run the current release before it]
+The previous upgrade activated at block 1,569,600 on Sat 19 Sep 19:23 UTC. Four rules came in with it: **benching** (a validator that misses 3 leader slots leaves the leader rotation until the epoch boundary), **escalating jail** (consecutive jails last 1, 2, 4, 8, 16, 24 epochs), **agent delegation** on the CLOB precompile, and the **price rescale** of MRSN, SOL and ARB to $0.01 ticks. All of them change how every node executes blocks, so a validator on a build from before 17 Sep has already forked off. The next upgrade follows at **block 1,605,600 (Sun 20 Sep, ~16:30 UTC)** — settlement (one collateral unit = one MRSN, realized PnL settles, 10% initial / 5% maintenance margin with keeper liquidations) and contracts calling the CLOB act as themselves — and needs the **18 Sep release**; one upgrade to that release covers both. Upgrading is the install command again (`curl -fsSL https://mersennet.com/downloads/install.sh | sudo bash -s -- --operator 0xYOUR_WALLET`); the staking page shows *upgrade required* next to your node until it runs the current release. All scheduled switches: [Network Info](/getting-started/network-info/#protocol-upgrades).
 :::
 
 ## Parameters (testnet)
@@ -41,8 +41,8 @@ Unbonding of *delegated* stake also takes 7,200 blocks, so one number applies ev
 | pending | next epoch boundary, ranked below the top 12 | **standby** |
 | standby | more self-stake or delegations at a boundary | **active** |
 | active | outranked at a boundary | **standby** |
-| active | missed 3 leader slots (from block 1,569,600) | **benched** for the rest of the epoch — still active, still voting, not in the leader rotation |
-| active | missed > 20% of ≥ 5 slots in the epoch (or was benched) | **jailed** (one epoch; 2, 4, 8… for consecutive offences from block 1,569,600) |
+| active | missed 3 leader slots (since block 1,569,600) | **benched** for the rest of the epoch — still active, still voting, not in the leader rotation |
+| active | missed > 20% of ≥ 5 slots in the epoch (or was benched) | **jailed** (one epoch; 2, 4, 8… for consecutive offences since block 1,569,600) |
 | jailed | when the jail ends | **active** or **standby** by rank |
 | active / standby | `unregisterValidator` | **exiting** |
 | exiting | next epoch boundary | removed; self-stake unbonds 7,200 blocks |
@@ -124,7 +124,7 @@ The [explorer's Validators page](https://explorer.mersennet.com/validators) rend
 
 ## Running well
 
-- **Stay online.** A validator that is down costs everyone a failover round per missed slot (8 seconds from block 1,440,000; 19 before) — until it is benched after three misses (from block 1,569,600) and jailed at the epoch boundary. Your node starts proposing and voting by itself at the boundary where it becomes active — the log says `this node is in the active validator set: proposing blocks when leader`. Restart quickly after upgrades (`sudo systemctl restart mersennet` is graceful; the node finishes its in-flight block).
+- **Stay online.** A validator that is down costs everyone a failover round per missed slot (8 seconds from block 1,440,000; 19 before) — until it is benched after three misses (since block 1,569,600) and jailed at the epoch boundary. Your node starts proposing and voting by itself at the boundary where it becomes active — the log says `this node is in the active validator set: proposing blocks when leader`. Restart quickly after upgrades (`sudo systemctl restart mersennet` is graceful; the node finishes its in-flight block).
 - **Upgrade when `mersennet-check` or the staking page says so — always before an announced switch height.** Re-running the installer keeps your keys, data and operator setting and refreshes the consensus sections of the config from the canonical one.
 - **If it wedges, it restarts itself.** Since the 16 Sep build the node exits when its head has not moved for five minutes while the network is 60+ blocks ahead, and systemd restarts it; the watchdog never fires on a network-wide halt (nothing is ahead).
 - **Back up `keys/node_key.json`.** It *is* your validator identity. If it leaks, rotate with `rotateValidatorKey` from a fresh node.
