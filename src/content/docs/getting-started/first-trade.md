@@ -56,8 +56,8 @@ Stop, stop-limit, trailing-stop and TWAP orders are armed in your browser and se
 
 Testnet participation is tracked on the [Points page](https://trade.mersennet.com/points):
 
-- **1 point per $1 of taker volume** (bots are excluded): a 1 MRSN *market* order at about $115 earns about 115 points; a resting limit order that gets filled earns none.
-- The [leaderboard](https://trade.mersennet.com/leaderboard) ranks traders by points and shows the **weekly sprint**: the top 3 traders by taker volume each week earn 3,000 / 2,000 / 1,000 bonus points.
+- **1 point per $1 traded** (bots are excluded): a 1 MRSN order at about $115 earns about 115 points, whether it crossed the book or rested and got filled — both sides of a fill earn.
+- The [leaderboard](https://trade.mersennet.com/leaderboard) ranks traders by points and shows the **weekly sprint**: the top 3 traders by volume (both sides of each fill) each week earn 3,000 / 2,000 / 1,000 bonus points.
 - Other programs: 500 points a day for a verified node, referrals (10% of a referee's trading points), and 0.1 LP point per MRSN per day in the [maker vault](/ecosystem/maker-vault/) once deposits open at block 1,605,600 (Sun 20 Sep, ~16:30 UTC).
 
 :::note[Units on testnet]
