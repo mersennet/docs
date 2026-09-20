@@ -2,7 +2,30 @@
 title: "Monitoring & Alerts"
 ---
 
-Running a validator requires 24/7 visibility into node health, consensus participation, and resource usage. This guide covers setting up Prometheus and Grafana for Mersennet monitoring, plus recommended alert rules.
+Running a validator requires 24/7 visibility into node health, consensus participation, and resource usage. Start with the network's built-in Telegram alerts (nothing to install), then add Prometheus and Grafana if you want dashboards and your own alert rules.
+
+## Telegram alerts (built in)
+
+The network watches every registered validator and the nodes it can reach, and can message you on Telegram about yours. No software on your server: link your operator wallet once.
+
+1. Open the [staking page](https://trade.mersennet.com/staking) with the operator wallet connected. In the **Your node** card, click **Enable Telegram alerts**.
+2. Sign the message (a signature, not a transaction — nothing is sent on chain), then follow the `t.me/…?start=` link and press **Start** in the bot.
+3. The bot confirms the link and answers `/status` at any time with your validator's state, build and height. **Disable** in the same card unlinks it.
+
+You are told when your validator:
+
+| Event | When |
+|---|---|
+| Changes status | pending → active, active → standby, jailed, exiting… with the reason |
+| Is benched | missed 3 leader slots this epoch — out of the rotation until the epoch boundary |
+| Is missing slots | 2+ missed leader slots and nothing proposed this epoch |
+| Is jailed | until which epoch, and the escalation count |
+| Falls behind | node height more than 300 blocks behind the chain (and again when it catches up) |
+| Goes silent | the network's probe has not reached the node for 45 minutes |
+| Runs an old build | your build differs from the current release, with the upgrade command |
+| Faces a protocol upgrade | reminders ahead of each announced height |
+
+Traders can link the same bot from the account panel on the [trade page](https://trade.mersennet.com/trade) for liquidation warnings (equity within 1.6× of maintenance margin, and when an account becomes liquidatable) once the settlement upgrade is live.
 
 ## Overview
 

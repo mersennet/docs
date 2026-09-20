@@ -5856,6 +5856,62 @@ Fills are on-chain `trade` events: the transaction is on the [explorer](https://
 
 
 ---
+source: https://docs.mersennet.com/ecosystem/maker-vault/
+---
+
+
+The Maker Vault is an on-chain strategy vault on the Mersennet testnet: depositors pool native MRSN, the vault holds it as collateral on the order-book precompile, and a manager-approved **agent key** quotes both sides of the book on the vault's behalf. Shares track the vault's net asset value (NAV), so market-making PnL — positive or negative — accrues to depositors.
+
+| | |
+|---|---|
+| Contract | `0xe77F94c4Bf7D6d2E2371aFdE440a0b9b8a567725` ([explorer](https://explorer.mersennet.com/address/0xe77F94c4Bf7D6d2E2371aFdE440a0b9b8a567725)) |
+| Share token | `mvMRSN` (18 decimals, non-transferable accounting inside the vault) |
+| Asset | native MRSN |
+| Minimum deposit | 1 MRSN |
+| Deposits open | block 1,605,600 — the settlement / frame-caller upgrade of Sun 20 Sep 2026 (live estimate on the [upgrades page](https://explorer.mersennet.com/upgrades)) |
+| LP points | 0.1 point per MRSN per day while deposited ([Points](https://trade.mersennet.com/points)) |
+| UI | [trade.mersennet.com/vault](https://trade.mersennet.com/vault) |
+
+:::note[Why it needs the 1,605,600 upgrade]
+Before that height the precompiles authorised the *transaction origin*, so a contract could not hold its own order-book account. From block 1,605,600 precompiles authorise the calling frame (`msg.sender`), and the vault acts as itself: its collateral, orders and positions belong to the contract, never to the agent or the manager.
+:::
+
+## How it works
+
+1. **Deposit.** `deposit()` with MRSN as the call value mints shares at the current share price (`nav / totalShares`; 1 share = 1 MRSN when the vault is empty). The terminal's vault page does this for you.
+2. **Quote.** The manager pushes free MRSN onto the precompile as collateral (`pushCollateral`) and grants a bot an agent key (`setAgent(agent, expiresAtBlock)`, revocable at any time). The agent places and cancels orders **as the vault**; it can never deposit, withdraw or move collateral. The manager keeps a reserve of the vault's assets free (10% on the testnet) so withdrawals do not have to wait for positions to close.
+3. **Withdraw.** `withdraw(shares)` burns shares and pays `shares × nav / totalShares` in MRSN, from the free balance first and then from precompile collateral that is not backing an open position. If more collateral is in use than the withdrawal needs, the call reverts with `collateral in use` — try again shortly or with a smaller amount.
+
+NAV = free MRSN in the contract + collateral on the precompile + unrealized PnL of open positions marked at the order-book mid. Every figure the contract exposes is in wei.
+
+## Reading the vault
+
+```solidity
+interface IMakerVault {
+    function nav() external view returns (uint256);          // wei
+    function sharePrice() external view returns (uint256);   // wei per share (1e18 = 1 MRSN)
+    function totalShares() external view returns (uint256);
+    function sharesOf(address) external view returns (uint256);
+    function depositors() external view returns (uint256);
+    function collateral() external view returns (uint256);   // on the precompile, wei
+    function unrealizedPnl() external view returns (int256); // signed, wei
+    function deposit() external payable returns (uint256 shares);
+    function withdraw(uint256 shares) external returns (uint256 amount);
+}
+```
+
+The trade API mirrors the state for dashboards: `GET https://trade.mersennet.com/api/v1/vault/info` (parameters and whether deposits are open), `/vault/state` (TVL, shares, PnL, depositors) and `/vault/user/:address` (your shares, value and history).
+
+## What can go wrong
+
+- **The strategy loses money.** Market making carries inventory risk; share price can fall below 1 MRSN. Deposit test MRSN you are prepared to see move.
+- **Withdrawals can be delayed.** Collateral backing open positions cannot be pulled; the reserve covers normal withdrawals, a large one may need a retry.
+- **Testnet guard rails.** The manager can pause deposits, set a deposit cap, change the minimum deposit, change or revoke the agent, cancel orders and flatten positions in an emergency. Manager transfer is two-step (`transferManager` then `acceptManager`).
+
+The contract source is `contracts/src/orders/MakerVault.sol` in the node repository (Business Source License 1.1, publishing shortly); the deployed bytecode is verifiable on the explorer.
+
+
+---
 source: https://docs.mersennet.com/ecosystem/trade/
 ---
 
@@ -5930,8 +5986,12 @@ A step-by-step walkthrough is in [Your First Trade](/getting-started/first-trade
 The terminal is also where testnet participation is tracked and where the validator set is managed:
 
 - **Points** ([/points](https://trade.mersennet.com/points)): 1 point per $1 traded; **0.1 point per MRSN per day** deposited in the maker vault; **500 points a day** for running a verified node (automatic once your node has an operator address — see [Run a Node](/validators/run-a-node/#get-recognised-verified-node-runner)); **referrals** pay the referrer 10% of each referee's trading points (the referee confirms the link with one signature; nothing is deducted from them); the **weekly sprint** awards the top three traders by volume 3,000 / 2,000 / 1,000 bonus points every Monday 00:00 UTC ([leaderboard](https://trade.mersennet.com/leaderboard)).
-- **Maker vault** ([/vault](https://trade.mersennet.com/vault)): pool MRSN behind the market maker that quotes every market. Deposits mint `mvMRSN` shares at the vault's net asset value (free MRSN + collateral on the precompile + unrealized PnL at mid), so maker PnL moves the share price; withdraw any time at NAV from the vault's free reserve (10% of NAV) and, beyond that, from collateral not backing open positions. The bot trades for the vault through **agent delegation** — it can place and cancel orders in the vault's name, never withdraw. Depositors earn **LP points: 0.1 per MRSN per day**. Contract `0xe77F94c4Bf7D6d2E2371aFdE440a0b9b8a567725` (`contracts/src/orders/MakerVault.sol`); testnet MRSN has no monetary value.
+- **Maker vault** ([/vault](https://trade.mersennet.com/vault)): pool MRSN behind the market maker that quotes every market. Deposits mint `mvMRSN` shares at the vault's net asset value (free MRSN + collateral on the precompile + unrealized PnL at mid), so maker PnL moves the share price; withdraw any time at NAV from the vault's free reserve (10% of NAV) and, beyond that, from collateral not backing open positions. The bot trades for the vault through **agent delegation** — it can place and cancel orders in the vault's name, never withdraw. Depositors earn **LP points: 0.1 per MRSN per day**. Deposits open at block 1,605,600 (Sun 20 Sep 2026). Full description: [Maker Vault](/ecosystem/maker-vault/). Testnet MRSN has no monetary value.
 - **Staking** ([/staking](https://trade.mersennet.com/staking)): delegate MRSN to any validator, claim rewards, and — with a verified node — **register as a validator** in one click (1,000 MRSN self-stake; [Become a Validator](/validators/become-a-validator/)).
+
+## Telegram alerts for traders
+
+From the account panel on the trade page you can link a Telegram account (one signed message, no transaction). Once the settlement upgrade is live the bot warns you when a position's equity gets within 1.6× of its maintenance margin and again when the account becomes liquidatable; `/status` answers with your collateral and open positions at any time. Validator operators link the same bot from the [staking page](https://trade.mersennet.com/staking) — see [Monitoring & Alerts](/validators/monitoring/#telegram-alerts-built-in).
 
 ## REST and WebSocket API
 
@@ -7834,7 +7894,30 @@ source: https://docs.mersennet.com/validators/monitoring/
 ---
 
 
-Running a validator requires 24/7 visibility into node health, consensus participation, and resource usage. This guide covers setting up Prometheus and Grafana for Mersennet monitoring, plus recommended alert rules.
+Running a validator requires 24/7 visibility into node health, consensus participation, and resource usage. Start with the network's built-in Telegram alerts (nothing to install), then add Prometheus and Grafana if you want dashboards and your own alert rules.
+
+## Telegram alerts (built in)
+
+The network watches every registered validator and the nodes it can reach, and can message you on Telegram about yours. No software on your server: link your operator wallet once.
+
+1. Open the [staking page](https://trade.mersennet.com/staking) with the operator wallet connected. In the **Your node** card, click **Enable Telegram alerts**.
+2. Sign the message (a signature, not a transaction — nothing is sent on chain), then follow the `t.me/…?start=` link and press **Start** in the bot.
+3. The bot confirms the link and answers `/status` at any time with your validator's state, build and height. **Disable** in the same card unlinks it.
+
+You are told when your validator:
+
+| Event | When |
+|---|---|
+| Changes status | pending → active, active → standby, jailed, exiting… with the reason |
+| Is benched | missed 3 leader slots this epoch — out of the rotation until the epoch boundary |
+| Is missing slots | 2+ missed leader slots and nothing proposed this epoch |
+| Is jailed | until which epoch, and the escalation count |
+| Falls behind | node height more than 300 blocks behind the chain (and again when it catches up) |
+| Goes silent | the network's probe has not reached the node for 45 minutes |
+| Runs an old build | your build differs from the current release, with the upgrade command |
+| Faces a protocol upgrade | reminders ahead of each announced height |
+
+Traders can link the same bot from the account panel on the [trade page](https://trade.mersennet.com/trade) for liquidation warnings (equity within 1.6× of maintenance margin, and when an account becomes liquidatable) once the settlement upgrade is live.
 
 ## Overview
 
