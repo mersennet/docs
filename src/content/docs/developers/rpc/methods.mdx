@@ -572,8 +572,8 @@ Order-book and proof topics. The second parameter is a market id (integer or hex
 
 | Topic | Params | Event |
 |-------|--------|-------|
-| `MersennetOrdersTrades` | `[topic, marketId?]` | each fill: market, price (chain units — divide by `priceScale`), size, taker side, block |
-| `MersennetOrdersBook` | `[topic, marketId]` | book update for the market after each block |
+| `MersennetOrdersTrades` | `[topic, marketId?]` | each fill: `{ taker, maker, market_id, side, price, size }` — price and size as decimal strings in chain units (divide the price by `priceScale`) |
+| `MersennetOrdersBook` | `[topic, marketId]` | reserved — accepted but not emitted by node 0.7.0; poll `mersennet_orders_getOrderBook` |
 | `BatchAuctionResults` | `[topic, marketId?]` | batch-auction clearing results (privacy hard fork mode) |
 | `newShieldedRoot` | `[topic]` | new shielded state root, every block |
 | `newClearingPrice` | `[topic, marketId?]` | uniform clearing price per tick (privacy hard fork mode) |

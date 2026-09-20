@@ -37,7 +37,7 @@ def encode_place_order(market_id: int, is_buy: bool, price: int, size: int, tif:
 acct = Account.from_key(os.environ["PRIVATE_KEY"])
 signed = acct.sign_transaction({
     "to": PRECOMPILE,
-    "data": encode_place_order(1, True, 1_000_000, 10, 0),  # market 1 = MRSN, GTC buy
+    "data": encode_place_order(1, True, 11400, 10, 0),  # market 1 = MRSN, GTC buy at $114.00 (price_scale 100 — read it from get_markets())
     "value": 0,
     "gas": 300_000,
     "gasPrice": int(provider.gas_price(), 16),
@@ -67,7 +67,7 @@ curl -X POST https://rpc.mersennet.com \
 # at 0x…0100 and submit it via eth_sendRawTransaction instead.
 curl -X POST http://localhost:8545 \
   -H "Content-Type: application/json" \
-  -d '{"jsonrpc":"2.0","method":"mersennet_orders_submitOrder","params":[{"owner":"0xOwnerAddress","market_id":1,"side":"buy","price":"0xf4240","size":"0xa","tif":"gtc"}],"id":2}'
+  -d '{"jsonrpc":"2.0","method":"mersennet_orders_submitOrder","params":[{"owner":"0xOwnerAddress","market_id":1,"side":"buy","price":"0x2c88","size":"0xa","tif":"gtc"}],"id":2}'
 
 # Check balance
 curl -X POST https://rpc.mersennet.com \
@@ -206,7 +206,7 @@ underwater = orders.get_liquidatable()  # keeper feed: accounts below maintenanc
 
 ### Collateral units and deposits
 
-`depositCollateral` / `withdrawCollateral` take an amount in **collateral units**, and the unit changes at the settlement switch (block 1,605,600): one unit is one wei before it (10¹⁸ units per MRSN) and one MRSN from it. `to_collateral_units()` converts a human MRSN amount for the current era by reading `weiPerCollateralUnit` from `get_protocol()`, so the same code works before and after the switch; never hard-code `10**18`.
+`depositCollateral` / `withdrawCollateral` take an amount in **collateral units**, and the unit changes at the settlement switch (block 1,605,600, Sun 20 Sep 2026 ≈ 16:30 UTC): one unit is one wei before it (10¹⁸ units per MRSN) and one MRSN from it. `to_collateral_units()` converts a human MRSN amount for the current era by reading `weiPerCollateralUnit` from `get_protocol()`, so the same code works before and after the switch; never hard-code `10**18`.
 
 ```python
 units_per_mrsn = orders.collateral_units_per_mrsn()   # 10**18 before the switch, 1 from it
@@ -269,7 +269,7 @@ def encode_place_order(market_id: int, is_buy: bool, price: int, size: int, tif:
 acct = Account.from_key(os.environ["PRIVATE_KEY"])
 signed = acct.sign_transaction({
     "to": PRECOMPILE,
-    "data": encode_place_order(1, True, 1_000_000, 10, 0),
+    "data": encode_place_order(1, True, 11400, 10, 0),  # 11400 = $114.00 at price_scale 100
     "value": 0,
     "gas": 300_000,
     "gasPrice": int(provider.gas_price(), 16),
@@ -302,7 +302,9 @@ for t in trades:
 ### Get Positions
 
 ```python
-positions = orders.get_positions("0xOwnerAddress", market=1)
+pos = orders.get_positions("0xOwnerAddress", market=1)   # {'market': 1, 'size': 31, 'entry_price': 11495, 'raw': '0x…'}
+print(pos["size"], orders.to_human_price(pos["entry_price"], 100))   # size is signed: negative = short
+all_positions = orders.get_positions("0xOwnerAddress")   # {market_id: {...}} for every non-zero position
 ```
 
 ### Create Market
@@ -318,7 +320,7 @@ Solidity interface.
 |--------|-------------|
 | `get_order_book(market)` | Order book (`bids` / `asks`, both sorted by ascending price) |
 | `get_trades(market)` | Recent trade events for a market (`mersennet_getDomainEvents`) |
-| `get_positions(address, market=None)` | Raw `eth_call` result of the position read for one market |
+| `get_positions(address, market=None)` | `getPosition(uint64)` via the precompile: `{market, size (signed int, negative = short), entry_price (chain price), raw}`; without `market`, every non-zero position keyed by market id (SDK ≥ 0.1.1) |
 | `get_markets()` | Listed markets with `tick_size`, `lot_size`, `last_price`, `price_scale`, `status` |
 | `to_chain_price(human, price_scale)` / `to_human_price(chain, price_scale)` | Static: human ↔ on-chain price (on-chain = human × `price_scale`) |
 | `get_protocol()` | Every CLOB consensus switch and live parameter (`mersennet_orders_getProtocol`) |
@@ -365,7 +367,7 @@ subscriber.disconnect()
 ```
 
 :::tip
-The public WebSocket endpoint `wss://rpc.mersennet.com` is enabled for `eth_subscribe` subscriptions (`newHeads`, `logs`); send regular JSON-RPC calls over HTTPS. A node you run yourself needs `ws.enabled = true`.
+The public WebSocket endpoint `wss://rpc.mersennet.com` supports `eth_subscribe` (`newHeads`, `newPendingTransactions`, `logs`) and `mersennet_subscribe` (`MersennetOrdersTrades`, `newShieldedRoot`, `newStateProof`, …); every other JSON-RPC call must go over HTTPS. A node you run yourself needs `ws.enabled = true`.
 :::
 
 ## Error Handling

@@ -3,23 +3,28 @@ title: "Shielded SDK"
 description: "Client-side privacy primitives in the Mersennet JavaScript SDK: proving, note scanning, reconstruction, selective disclosure, and migration."
 ---
 
-The Mersennet JavaScript SDK (`@mersennet/sdk`) ships a **shielded surface** for wallets and apps that connect to a chain with the ZK privacy hard fork activated. It covers client-side proving, note scanning, balance/position/order reconstruction, selective-disclosure reads, and migration.
+The Mersennet JavaScript SDK (`@mersennet/sdk`) ships a **shielded surface** for wallets and apps that connect to a chain with the ZK privacy hard fork activated.
+
+:::note[Activation]
+The public testnet has not activated the privacy hard fork: every `mersennet_view*` call and every shielded mutation returns `-32605` today. The helpers below run entirely client-side, so they can be exercised against mock or locally generated data (and a local privacy-enabled node); nothing here moves value on the public testnet yet.
+::: It covers client-side proving, note scanning, balance/position/order reconstruction, selective-disclosure reads, and migration.
 
 All shielded crypto runs **client-side**. The node is never asked to decrypt your data; it only verifies proofs and gates authorized reads. See [Privacy on Mersennet](/privacy/overview/) for the conceptual model.
 
 ## Install
 
 ```bash
-npm install @mersennet/sdk
+npm install github:mersennet/sdk-ts#semver:^0.1   # npm publication as @mersennet/sdk is pending
 # or, from a checkout:
-npm install /path/to/mersennet/sdk
+npm install /path/to/sdk-ts
 ```
 
 ## Modules at a glance
 
 | Area | Exports |
 |---|---|
-| Shielded client | `ShieldedClient`, `ViewingKeyHelpers`, `createOwnerViewingMaterial`, `createMockNoteDecryptor` |
+| Shielded client | `ShieldedClient` (`getBalance`, `reconstructBalances`, `scanOwnNotes`, `scanRecentBlocks`, `placeOrder`, `setProver`, `setGrantedViewingMaterial`, `publicKeys`), `ViewingKeyHelpers`, `createOwnerViewingMaterial`, `createMockNoteDecryptor` — `ViewingKeyHelpers.fromSeed` / `delegateViewToken` are deterministic test helpers today; production key derivation and grant tokens are not implemented yet |
+| Attestations | `buildPortfolioAttestation`, `verifyAttestation`, `computePortfolioDigest`, `ATTESTATION_VERSION`, `ComplianceAttestation` |
 | Note scanning | `scanGrantedNotes`, `parseEncryptedNotePayload`, `parseShieldedNotePlaintext` |
 | Reconstruction | `reconstructPortfolio`, `scanAndReconstructBalances`, `defaultNullifierDeriver` |
 | Positions & orders | `reconstructPositions`, `reconstructOpenOrders` |
@@ -28,7 +33,7 @@ npm install /path/to/mersennet/sdk
 
 ## Client-side proving (`NoirWasmProver`)
 
-Shielded transactions require a Noir proof generated in the wallet, so keys never leave the device. `NoirWasmProver` wraps a proving backend that the wallet injects (built on `@noir-lang/noir_js` + `@aztec/bb.js`).
+Shielded transactions require a Noir proof generated in the wallet, so keys never leave the device. `NoirWasmProver` wraps a proving backend that the wallet injects (built on `@noir-lang/noir_js` + `@aztec/bb.js`). Until the order circuits ship, `ShieldedClient.placeOrder` feeds mock public inputs to the prover — the flow is end-to-end testable, the proof is not yet meaningful.
 
 ```ts
 import { NoirWasmProver } from '@mersennet/sdk';
@@ -83,7 +88,7 @@ Drive transparent → shielded migration with a plan-then-confirm flow (see [Mig
 import { planMigration, confirmMigration } from '@mersennet/sdk';
 
 const plan = planMigration(accounts);            // accounts: MigrationNoteParams[]
-// plan → pre-fork per-asset totals to preview; submit each via mersennet_submitShield ...
+// plan → per-asset totals to preview; the fork mints these notes automatically (no transaction to submit)
 const result = confirmMigration(accounts, scannedNotes); // post-fork landed-note confirmation
 ```
 

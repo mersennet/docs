@@ -54,7 +54,6 @@ Mersennet supports all standard Ethereum precompiles:
 | 0x08 | ecPairing | BN254 pairing |
 | 0x09 | blake2f | BLAKE2 compression function |
 | 0x0a | KZG point evaluation | EIP-4844 point-evaluation precompile |
-| 0x0b–0x11 | BLS12-381 | Prague BLS12-381 curve operations |
 
 ### Mersennet Extensions
 
@@ -94,7 +93,7 @@ Mersennet uses a **custom binary transaction format** alongside standard Ethereu
 
 Mersennet implements EIP-1559's dynamic base fee: the base fee adjusts each block based on target utilization (`fee_elasticity_multiplier: 2`, `fee_max_change_denominator: 8`, i.e. up to 12.5% change per block). There is **no separate priority tip**: `eth_maxPriorityFeePerGas` returns `0x0`.
 
-Validators earn primarily from **block rewards**, not transaction fees. Fee market parameters can be updated via governance.
+Validators earn primarily from **block rewards**, not transaction fees. Fee market parameters are node configuration (`engine.fee_elasticity_multiplier`, `engine.fee_max_change_denominator`), the same in every node's canonical config.
 
 ### Block Structure
 

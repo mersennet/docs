@@ -44,7 +44,7 @@ flowchart LR
 
 **Public (by design):** the note commitment tree root, the nullifier set, aggregate market statistics (e.g. last clearing price and matched size for a batch auction tick), and the existence of state transitions. These public values are *address-free by construction*: Mersennet's CI enforces that no address fields leak into shielded events.
 
-## The transparent ↔ shielded bridge
+## Shield / unshield: the transparent ↔ shielded boundary
 
 Value enters and leaves the shielded pool through two operations:
 

@@ -18,16 +18,19 @@ A viewing grant is a capability you mint and hand to a grantee. It is **scoped**
 - **Revocable**: the grantor can revoke at any time, immediately invalidating future reads.
 
 ```ts
-// Illustrative flow over mersennet_viewGrantToken
-const grant = await rpc.viewGrantToken({
+// Pseudo-code over mersennet_viewGrantToken — the real call takes one object with
+// grantorCommitmentHex, grantorSigPubkeyHex, granteePubkeyHex, scopes[], startBlock?,
+// endBlock and the grantor's signatureHex (see the Shielded JSON-RPC reference).
+const { grantToken } = await rpc.viewGrantToken({
   scopes: ['balances:read', 'positions:read'],
-  grantee: auditorPubKey,
+  granteePubkeyHex: auditorPubKey,
   startBlock: currentBlock,
-  endBlock: currentBlock + 1_296_000, // ~30 days at 2s blocks
+  endBlock: currentBlock + 1_296_000, // ~30 days at 2 s blocks
+  // …grantor commitment, signing key and signature
 });
 
-// The grantee reconstructs only what was shared
-const view = await rpc.viewBalances(grant.token);
+// The grantee reconstructs only what was shared: reads take { grantIdHex, limit?, cursorHex? }
+const view = await rpc.viewBalances({ grantIdHex: grantToken.grantId });
 ```
 
 ## Lifecycle
