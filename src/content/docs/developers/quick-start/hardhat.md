@@ -16,7 +16,7 @@ Create a new project or use an existing one:
 ```bash
 mkdir my-mersennet-dapp && cd my-mersennet-dapp
 npm init -y
-npm install --save-dev hardhat @nomicfoundation/hardhat-toolbox
+npm install --save-dev hardhat@^2 @nomicfoundation/hardhat-toolbox@^5
 npx hardhat init
 ```
 
@@ -25,6 +25,8 @@ Select **Create a TypeScript project** when prompted.
 ## Network Configuration
 
 Add Mersennet to your `hardhat.config.ts`:
+
+This guide targets **Hardhat 2.x** (pinned above). Hardhat 3 changed the config format (`type: "http"` networks, a `plugins` array, `network.connect()` in scripts); if you already use Hardhat 3, follow its [network configuration reference](https://hardhat.org/docs/reference/configuration) with the same URL, chain ID and account settings.
 
 ```typescript
 import { HardhatUserConfig } from "hardhat/config";
@@ -44,8 +46,8 @@ const config: HardhatUserConfig = {
 export default config;
 ```
 
-:::note[HttpNetworkConfig]
-Mersennet uses standard JSON-RPC, including `eth_feeHistory` (priority-fee rewards are always 0, since there is no tip). If you encounter issues with gas estimation, you may need to adjust `timeout` in the network config or pin a fixed `gasPrice`. Deployment works with locally signed transactions via `eth_sendRawTransaction` (the Hardhat default).
+:::note[Fee estimation on Mersennet]
+Mersennet uses standard JSON-RPC, including `eth_feeHistory` — its `reward` array is empty, since there is no priority tip. If you encounter issues with gas estimation, you may need to adjust `timeout` in the network config or pin a fixed `gasPrice`. Deployment works with locally signed transactions via `eth_sendRawTransaction` (the Hardhat default).
 :::
 
 ## Sample ERC-20 Contract
@@ -119,7 +121,7 @@ Expected output:
 
 ```
 Deploying with account: 0x...
-Account balance: 1000000000000000000
+Account balance: 1001000000000000000000
 MyToken deployed to: 0x...
 ```
 
@@ -144,7 +146,7 @@ Or use the [block explorer](https://explorer.mersennet.com) to view the transact
 
 | Issue | Solution |
 |-------|----------|
-| Fee estimation looks off | `eth_feeHistory` is supported, but priority-fee rewards are always 0 (no tip on Mersennet). Legacy gas-price transactions are the simplest fit. |
+| Fee estimation looks off | `eth_feeHistory` is supported, but its `reward` array is empty (no priority tip on Mersennet); tooling that indexes `reward[i][j]` needs a pinned `gasPrice`. Legacy gas-price transactions are the simplest fit. |
 | Gas estimation fails | Try increasing `gasLimit` in the deployment script or use a fixed value (e.g., `3000000`). |
 | Connection refused | Ensure the RPC URL `https://rpc.mersennet.com` is reachable from your network. |
 | Insufficient funds | Get testnet MRSN from the [faucet](https://faucet.mersennet.com). |

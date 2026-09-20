@@ -34,7 +34,7 @@ Public per-market stats for the most recent batch-auction tick: `{ markets: [{ m
 | Method | Purpose |
 |---|---|
 | `mersennet_submitShieldedTransfer({ envelopeBincodeHex })` | Private P2P transfer: input nullifiers, output commitments, Noir proof. |
-| `mersennet_submitShield({ envelopeBincodeHex })` | Transparent → shielded: EOA, amount, new note commitment. |
+| `mersennet_submitShield({ envelopeBincodeHex })` | Transparent → shielded. The envelope is the bincode encoding of `ShieldTx { from: Address, amount: U256, outputCommitment: Fr, encryptedOutput: Vec<u8>, proof: CircuitProof }` — the debited EOA (`tx.origin` must equal it), the amount, the new note's commitment, the note ciphertext for the recipient and the output-circuit proof (`commit(note) == outputCommitment`, `note.value == amount`). Anything else is rejected with `-32602 invalid shield envelope`. |
 | `mersennet_submitUnshield({ envelopeBincodeHex })` | Shielded → transparent: spent nullifier, recipient EOA, amount. |
 | `mersennet_submitShieldedOrder({ anchorRootHex, nullifierHex, newCommitmentHex, marketId, side, price, size, ownerPkHex, saltHex, tif?, gasLimit?, maxFeePerGas?, proofBytesHex? })` | Submit a threshold-encrypted shielded order intent; returns an `intentId`. |
 | `mersennet_submitLiquidationClaim({ claimBincodeHex })` | Bonded-liquidator-only encrypted liquidation claim. |

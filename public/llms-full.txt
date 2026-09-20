@@ -1643,6 +1643,9 @@ const amountAMin = amountADesired * 95n / 100n;
 const amountBMin = amountBDesired * 95n / 100n;
 const deadline = Math.floor(Date.now() / 1000) + 60 * 20;
 
+const ERC20_ABI = ["function approve(address,uint256) returns (bool)"];
+const erc20A = new ethers.Contract(USDC, ERC20_ABI, wallet);
+const erc20B = new ethers.Contract(USDT, ERC20_ABI, wallet);
 await erc20A.approve(ROUTER, amountADesired);
 await erc20B.approve(ROUTER, amountBDesired);
 
@@ -1684,6 +1687,8 @@ await tx.wait();
 ## Remove Liquidity
 
 ```javascript
+// `factory` is the Factory contract from the section below; `deadline` as above.
+const deadline = Math.floor(Date.now() / 1000) + 60 * 20;
 const pairAddress = await factory.getPair(USDC, USDT);
 const lpToken = new ethers.Contract(pairAddress, ["function approve(address,uint256) returns (bool)"], wallet);
 
@@ -1890,7 +1895,7 @@ These are pre-deployed tokens on Mersennet testnet:
 
 | Token | Address | Use Case |
 |-------|---------|----------|
-| WMRSN | `0x5bBF04528469591280D36D46209c7CCD5a68a798` | Wrapped MRSN for DEX |
+| WMRSN | `0x5bBF04528469591280D36D46209c7CCD5a68a798` | ERC-20 wrapper of the native MRSN |
 | MockUSDC | `0xA44B23d1D0C0133dA71DeCe399d5d5aDE6DD22d1` | Test stablecoin |
 | MockUSDT | `0x3923578a19d0e9B35cef08B7Eba0cb6D4B9c28F6` | Test stablecoin |
 | MockDAI | `0x27942c2cEE3e0e02377d01BFE6E74cefC9a9FD45` | Test stablecoin |
@@ -1913,11 +1918,15 @@ This guide walks you through deploying and interacting with an NFT collection on
 
 ## Full Solidity Contract
 
-Here is a complete ERC-721 implementation with metadata, minting, and transfer:
+Here is a minimal ERC-721-style contract for learning — metadata, minting and transfers, plus the receiver check on `safeTransferFrom`. It is not fully EIP-721 compliant (no ERC-165 `supportsInterface`, no `getApproved` / `isApprovedForAll`), so marketplaces and wallets that detect ERC-721 via ERC-165 will not recognise it; use OpenZeppelin's `ERC721` for anything beyond a tutorial:
 
 ```solidity
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
+
+interface IERC721Receiver {
+    function onERC721Received(address operator, address from, uint256 tokenId, bytes calldata data) external returns (bytes4);
+}
 
 contract MersennetNFT {
     string public name;
@@ -1991,6 +2000,12 @@ contract MersennetNFT {
     function safeTransferFrom(address from, address to, uint256 tokenId) external {
         require(_isApprovedOrOwner(msg.sender, tokenId), "Not authorized");
         _transfer(from, to, tokenId);
+        if (to.code.length > 0) {
+            require(
+                IERC721Receiver(to).onERC721Received(msg.sender, from, tokenId, "") == IERC721Receiver.onERC721Received.selector,
+                "Unsafe recipient"
+            );
+        }
     }
 
     function _isApprovedOrOwner(address spender, uint256 tokenId) internal view returns (bool) {
@@ -2154,7 +2169,7 @@ Public per-market stats for the most recent batch-auction tick: `{ markets: [{ m
 | Method | Purpose |
 |---|---|
 | `mersennet_submitShieldedTransfer({ envelopeBincodeHex })` | Private P2P transfer: input nullifiers, output commitments, Noir proof. |
-| `mersennet_submitShield({ envelopeBincodeHex })` | Transparent → shielded: EOA, amount, new note commitment. |
+| `mersennet_submitShield({ envelopeBincodeHex })` | Transparent → shielded. The envelope is the bincode encoding of `ShieldTx { from: Address, amount: U256, outputCommitment: Fr, encryptedOutput: Vec<u8>, proof: CircuitProof }` — the debited EOA (`tx.origin` must equal it), the amount, the new note's commitment, the note ciphertext for the recipient and the output-circuit proof (`commit(note) == outputCommitment`, `note.value == amount`). Anything else is rejected with `-32602 invalid shield envelope`. |
 | `mersennet_submitUnshield({ envelopeBincodeHex })` | Shielded → transparent: spent nullifier, recipient EOA, amount. |
 | `mersennet_submitShieldedOrder({ anchorRootHex, nullifierHex, newCommitmentHex, marketId, side, price, size, ownerPkHex, saltHex, tif?, gasLimit?, maxFeePerGas?, proofBytesHex? })` | Submit a threshold-encrypted shielded order intent; returns an `intentId`. |
 | `mersennet_submitLiquidationClaim({ claimBincodeHex })` | Bonded-liquidator-only encrypted liquidation claim. |
@@ -2373,7 +2388,7 @@ libs = ["lib"]
 solc = "0.8.20"
 optimizer = true
 optimizer_runs = 200
-evm_version = "shanghai"
+evm_version = "prague"
 
 [rpc_endpoints]
 mersennet_testnet = "https://rpc.mersennet.com"
@@ -2392,6 +2407,7 @@ forge create src/MyToken.sol:MyToken \
   --rpc-url https://rpc.mersennet.com \
   --private-key $PRIVATE_KEY \
   --legacy \
+  --broadcast \
   --constructor-args 1000000
 ```
 
@@ -2506,11 +2522,11 @@ cast send 0xRecipient --value 1ether --legacy \
 |-----------|-----------|-------|
 | `forge build` | ✅ | |
 | `forge test` | ✅ | Against local Anvil or Mersennet RPC |
-| `forge create` | ✅ | Use `--legacy` |
+| `forge create` | ✅ | Use `--legacy --broadcast` (Foundry 1.x dry-runs without `--broadcast`) |
 | `cast call` | ✅ | Read-only |
 | `cast send` | ✅ | Use `--legacy` |
 | `eth_sendTransaction` | ❌ | Disabled — returns `-32601`; use `eth_sendRawTransaction` |
-| `eth_feeHistory` | ✅ | Supported (priority fee rewards are always 0) |
+| `eth_feeHistory` | ✅ | Supported (the `reward` array is empty — no priority tip) |
 
 
 ---
@@ -2532,7 +2548,7 @@ Create a new project or use an existing one:
 ```bash
 mkdir my-mersennet-dapp && cd my-mersennet-dapp
 npm init -y
-npm install --save-dev hardhat @nomicfoundation/hardhat-toolbox
+npm install --save-dev hardhat@^2 @nomicfoundation/hardhat-toolbox@^5
 npx hardhat init
 ```
 
@@ -2541,6 +2557,8 @@ Select **Create a TypeScript project** when prompted.
 ## Network Configuration
 
 Add Mersennet to your `hardhat.config.ts`:
+
+This guide targets **Hardhat 2.x** (pinned above). Hardhat 3 changed the config format (`type: "http"` networks, a `plugins` array, `network.connect()` in scripts); if you already use Hardhat 3, follow its [network configuration reference](https://hardhat.org/docs/reference/configuration) with the same URL, chain ID and account settings.
 
 ```typescript
 import { HardhatUserConfig } from "hardhat/config";
@@ -2560,8 +2578,8 @@ const config: HardhatUserConfig = {
 export default config;
 ```
 
-:::note[HttpNetworkConfig]
-Mersennet uses standard JSON-RPC, including `eth_feeHistory` (priority-fee rewards are always 0, since there is no tip). If you encounter issues with gas estimation, you may need to adjust `timeout` in the network config or pin a fixed `gasPrice`. Deployment works with locally signed transactions via `eth_sendRawTransaction` (the Hardhat default).
+:::note[Fee estimation on Mersennet]
+Mersennet uses standard JSON-RPC, including `eth_feeHistory` — its `reward` array is empty, since there is no priority tip. If you encounter issues with gas estimation, you may need to adjust `timeout` in the network config or pin a fixed `gasPrice`. Deployment works with locally signed transactions via `eth_sendRawTransaction` (the Hardhat default).
 :::
 
 ## Sample ERC-20 Contract
@@ -2635,7 +2653,7 @@ Expected output:
 
 ```
 Deploying with account: 0x...
-Account balance: 1000000000000000000
+Account balance: 1001000000000000000000
 MyToken deployed to: 0x...
 ```
 
@@ -2660,7 +2678,7 @@ Or use the [block explorer](https://explorer.mersennet.com) to view the transact
 
 | Issue | Solution |
 |-------|----------|
-| Fee estimation looks off | `eth_feeHistory` is supported, but priority-fee rewards are always 0 (no tip on Mersennet). Legacy gas-price transactions are the simplest fit. |
+| Fee estimation looks off | `eth_feeHistory` is supported, but its `reward` array is empty (no priority tip on Mersennet); tooling that indexes `reward[i][j]` needs a pinned `gasPrice`. Legacy gas-price transactions are the simplest fit. |
 | Gas estimation fails | Try increasing `gasLimit` in the deployment script or use a fixed value (e.g., `3000000`). |
 | Connection refused | Ensure the RPC URL `https://rpc.mersennet.com` is reachable from your network. |
 | Insufficient funds | Get testnet MRSN from the [faucet](https://faucet.mersennet.com). |
@@ -2683,7 +2701,8 @@ JSON-RPC 2.0 envelope:
 | Code | Meaning | Typical cause & fix |
 |------|---------|---------------------|
 | `-32700` | Parse error | Request body is not valid JSON. Check `Content-Type: application/json` and quoting. |
-| `-32601` | Method not found | Typo in the method name, or the method is disabled on this node (e.g. `eth_sendTransaction`). See [Methods](/developers/rpc/methods/). |
+| `-32600` | Invalid request | Malformed JSON-RPC envelope, empty batch, more than 100 calls in a batch, or a body over 2 MiB. |
+| `-32601` | Method not found | Typo in the method name; a method disabled on this node (`eth_sendTransaction`, `mersennet_orders_addMarket` / `setMarginParams` / `liquidate` over RPC); or any non-subscription method sent over the WebSocket endpoint (`WS: method not supported`). See [Methods](/developers/rpc/methods/). |
 | `-32602` | Invalid params | Wrong type, missing field, or malformed hex (addresses are 20 bytes `0x…`, hashes 32 bytes). The message names the offending parameter. |
 | `-32000` | Execution error | Generic server-side failure while executing the request: the message carries the underlying reason. |
 
@@ -2706,7 +2725,7 @@ CLOB business errors (unknown market, bad tick/lot size, insufficient collateral
 | Code | Meaning | Fix |
 |------|---------|-----|
 | `-32604` | Forbidden | The viewing key or grant doesn't authorize this read. Check the grant's `scope` and expiry; see [Selective Disclosure](/privacy/selective-disclosure/). |
-| `-32605` | Method disabled | Shielded methods are gated behind the privacy hard fork. Before activation, mutation methods return this code. |
+| `-32605` | Method disabled | Shielded methods are gated behind the privacy hard fork: before activation, shielded mutations return this code. After the fork the transparent state, log and transaction-metadata methods (`eth_getLogs`, `eth_getTransactionByHash`, receipts, filters, `eth_getBalance`…) return it instead. |
 
 :::tip[Debugging checklist]
 1. Wrong network? `eth_chainId` should return `0x1ffff` (testnet) or `0x1fff` (mainnet).
@@ -2840,7 +2859,7 @@ Always returns an empty array.
 
 ### eth_syncing
 
-Returns `false` when not syncing, or a sync status object.
+Always returns `false` (nodes bootstrap from a snapshot and follow the chain live; there is no sync-status object).
 
 **Parameters:** None
 
@@ -2848,7 +2867,7 @@ Returns `false` when not syncing, or a sync status object.
 
 ### eth_mining
 
-Returns whether the node is actively mining/producing blocks.
+Always returns `false` — there is no proof-of-work; block production is a validator role, not "mining".
 
 **Parameters:** None
 
@@ -2856,7 +2875,7 @@ Returns whether the node is actively mining/producing blocks.
 
 ### eth_protocolVersion
 
-Returns the current protocol version.
+Returns the constant `"0x41"`.
 
 **Parameters:** None
 
@@ -2869,7 +2888,7 @@ Returns account balance in wei.
 **Parameters:**
 
 1. `address`: 20-byte address (hex)
-2. `blockNumber` (optional): Block number or `"latest"`
+2. `blockNumber` (optional): accepted for compatibility but ignored — the node answers with the latest state
 
 <Tabs syncKey="lang">
   <TabItem label="curl">
@@ -2914,7 +2933,7 @@ Returns nonce (transaction count) for an address.
 **Parameters:**
 
 1. `address`: 20-byte address (hex)
-2. `blockNumber` (optional): `"latest"` or block number
+2. `blockNumber` (optional): accepted for compatibility but ignored — always the latest state
 
 ---
 
@@ -2925,7 +2944,7 @@ Returns the bytecode at an address.
 **Parameters:**
 
 1. `address`: 20-byte address (hex)
-2. `blockNumber` (optional): Block number or `"latest"`
+2. `blockNumber` (optional): accepted for compatibility but ignored — always the latest state
 
 ---
 
@@ -2937,7 +2956,7 @@ Returns the value at a storage slot.
 
 1. `address`: 20-byte address (hex)
 2. `slot`: Storage slot (hex)
-3. `blockNumber` (optional): Block number or `"latest"`
+3. `blockNumber` (optional): accepted for compatibility but ignored — always the latest state
 
 ---
 
@@ -2948,7 +2967,7 @@ Executes a call without creating a transaction (read-only).
 **Parameters:**
 
 1. `callObject`: `{ from?, to, gas?, gasPrice?, value?, data? }`
-2. `blockNumber` (optional): `"latest"` or block number
+2. `blockNumber` (optional): accepted for compatibility but ignored — always the latest state
 
 ```bash
 curl -X POST https://rpc.mersennet.com \
@@ -2982,7 +3001,7 @@ full transaction metadata is not part of the post-fork public surface.
 
 **Parameters:**
 
-1. `blockNumber`: Block number (hex) or `"latest"`, `"pending"`
+1. `blockNumber`: Block number (hex) or `"latest"` (`"pending"` and `"earliest"` are rejected with `-32602`)
 2. `fullTransactions`: `true` for full tx objects, `false` for hashes only
 
 ```bash
@@ -3000,12 +3019,15 @@ curl -X POST https://rpc.mersennet.com \
   "result": {
     "number": "0x1234",
     "hash": "0x...",
+    "parentHash": "0x...",
+    "timestamp": "0x...",
+    "miner": "0x...",
     "proposer": "0x...",
     "gasLimit": "0x...",
     "gasUsed": "0x...",
     "baseFeePerGas": "0x...",
     "stateRoot": "0x...",
-    "domainEvents": [],
+    "transactionsRoot": "0x...",
     "transactions": ["0x...", "0x..."]
   }
 }
@@ -3084,9 +3106,14 @@ surface because receipt metadata and logs remain private.
     "blockNumber": "0x...",
     "transactionIndex": "0x0",
     "status": "0x1",
+    "from": "0x...",
+    "to": "0x...",
     "gasUsed": "0x...",
-    "output": "0x...",
+    "cumulativeGasUsed": "0x...",
+    "effectiveGasPrice": "0x1",
     "logs": [],
+    "logsBloom": "0x...",
+    "type": "0x0",
     "contractAddress": "0x..."
   }
 }
@@ -3107,7 +3134,7 @@ Returns logs matching a filter.
 ```bash
 curl -X POST https://rpc.mersennet.com \
   -H "Content-Type: application/json" \
-  -d '{"jsonrpc":"2.0","method":"eth_getLogs","params":[{"fromBlock":"0x0","toBlock":"latest","address":"0xA44B23d1D0C0133dA71DeCe399d5d5aDE6DD22d1"}],"id":1}'
+  -d '{"jsonrpc":"2.0","method":"eth_getLogs","params":[{"fromBlock":"0x184b00","toBlock":"latest","address":"0xA44B23d1D0C0133dA71DeCe399d5d5aDE6DD22d1"}],"id":1}'
 ```
 
 ---
@@ -3123,7 +3150,7 @@ curl -X POST https://rpc.mersennet.com \
 Sends a pre-signed raw transaction.
 
 :::caution
-Mersennet accepts **both** standard Ethereum RLP-encoded transactions (EIP-155) and its own custom binary format. MetaMask-signed transactions work natively.
+Mersennet accepts **both** standard Ethereum RLP-encoded transactions (legacy/EIP-155, EIP-2930 and EIP-1559 envelopes) and its own custom binary format. MetaMask-signed transactions work natively.
 :::
 
 **Parameters:**
@@ -3259,6 +3286,45 @@ Destroys a filter. Returns `true` if the filter existed.
 
 ---
 
+## WebSocket subscriptions
+
+Subscriptions are the only methods served over `wss://rpc.mersennet.com` (everything else over WebSocket returns `-32601 WS: method not supported`). A node you run yourself needs `ws.enabled = true` and listens on port 8546.
+
+### eth_subscribe
+
+**Parameters:** `subscriptionType` (`"newHeads"`, `"newPendingTransactions"`, `"logs"`) and, for `logs`, an optional filter `{ address?, topics? }`.
+
+**Returns:** a subscription id; events arrive as `eth_subscription` notifications with `{ subscription, result }`.
+
+```json
+{"jsonrpc":"2.0","id":1,"method":"eth_subscribe","params":["newHeads"]}
+{"jsonrpc":"2.0","id":2,"method":"eth_subscribe","params":["logs",{"address":"0xA44B23d1D0C0133dA71DeCe399d5d5aDE6DD22d1"}]}
+```
+
+`eth_unsubscribe` takes the subscription id and returns `true`.
+
+### mersennet_subscribe
+
+Order-book and proof topics. The second parameter is a market id (integer or hex) where shown; where it is optional, omitting it streams every market.
+
+| Topic | Params | Event |
+|-------|--------|-------|
+| `MersennetOrdersTrades` | `[topic, marketId?]` | each fill: market, price (chain units — divide by `priceScale`), size, taker side, block |
+| `MersennetOrdersBook` | `[topic, marketId]` | book update for the market after each block |
+| `BatchAuctionResults` | `[topic, marketId?]` | batch-auction clearing results (privacy hard fork mode) |
+| `newShieldedRoot` | `[topic]` | new shielded state root, every block |
+| `newClearingPrice` | `[topic, marketId?]` | uniform clearing price per tick (privacy hard fork mode) |
+| `newAuctionSettled` | `[topic, marketId?]` | auction settlement (privacy hard fork mode) |
+| `newStateProof` | `[topic]` | a new state-transition proof was attached to a block |
+
+```json
+{"jsonrpc":"2.0","id":3,"method":"mersennet_subscribe","params":["MersennetOrdersTrades", 1]}
+```
+
+`mersennet_unsubscribe` takes the subscription id. The trade terminal's own feed (`wss://trade.mersennet.com/ws`) adds tickers, candles and account channels on top of these — see [Mersennet Trade](/ecosystem/trade/#rest-and-websocket-api).
+
+---
+
 ## Network Methods
 
 ### net_version
@@ -3327,7 +3393,7 @@ Returns the client version string.
 **Response:**
 
 ```json
-{ "jsonrpc": "2.0", "id": 1, "result": "Mersennet/0.1.0" }
+{ "jsonrpc": "2.0", "id": 1, "result": "Mersennet/0.7.0-f67d812" }
 ```
 
 ---
@@ -3483,11 +3549,11 @@ curl -X POST https://rpc.mersennet.com \
     "jailEscalationHeight": 1569600,
     "benchHeight": 1569600
   },
-  "height": 1350412,
-  "epoch": 750,
-  "nextEpochAt": 1351800,
-  "activeSet": ["0x728b…", "0x9d39…", "0xc16b…", "0xe4c6…"],
-  "consensusValidators": ["0x728b…", "0x9d39…", "0xc16b…", "0xe4c6…"],
+  "height": 1592678,
+  "epoch": 884,
+  "nextEpochAt": 1593000,
+  "activeSet": ["0x292f…", "0x728b…", "0x9d39…", "0xb1fb…", "0xc16b…", "0xe4c6…"],
+  "consensusValidators": ["0x292f…", "0x728b…", "0x9d39…", "0xb1fb…", "0xc16b…", "0xe4c6…"],
   "validators": [
     {
       "identity": "0x728b…",
@@ -3543,7 +3609,7 @@ curl -X POST http://127.0.0.1:8545 \
   "identity": "0x47a51113b276a74a624b1a245e07663a5af73e5c",
   "operator": "0x6dd9bb44ddfaba76d8868915d6fe80c3f8a932ec",
   "registrationProof": "0x…65 bytes…",
-  "version": "Mersennet/0.7.0-ecba1ee"
+  "version": "Mersennet/0.7.0-f67d812"
 }
 ```
 
@@ -3574,7 +3640,7 @@ Returns the on-chain code-publication attestation for a contract, or `null` if n
 **Parameters:**
 
 1. `address`: Contract address (hex)
-2. `blockNumber` (optional): Block number or `"latest"`
+2. `blockNumber` (optional): accepted for compatibility but ignored — always the latest state
 
 **Returns:** `{ contract, deployer, codeHash, metadataUri, publishedAtBlock }` or `null`.
 
@@ -3582,12 +3648,12 @@ Returns the on-chain code-publication attestation for a contract, or `null` if n
 
 ### mersennet_getCodeHash
 
-Returns the keccak-256 code hash at an address (or `null` if there is no code).
+Returns the `codeHash` recorded in the contract's code-publication attestation (see `mersennet_getCodeAttestation`), or `null` if none was published — even when the address has code. Use `eth_getCode` for the raw bytecode.
 
 **Parameters:**
 
 1. `address`: Contract address (hex)
-2. `blockNumber` (optional): Block number or `"latest"`
+2. `blockNumber` (optional): accepted for compatibility but ignored — always the latest state
 
 ---
 
@@ -3664,7 +3730,7 @@ curl -X POST http://localhost:8545 \
 }
 ```
 
-The response contains only `{ accepted, txHash }`. Fills happen when the transaction mines; observe them by polling `mersennet_orders_getOpenOrders` / `getTrades` or subscribing to the `MersennetOrdersTrades` WebSocket topic.
+The response contains only `{ accepted, txHash }`. Fills happen when the transaction mines; observe them by polling `mersennet_orders_getOpenOrders`, reading `mersennet_getDomainEvents` (domain `mersennet_orders`, kind `trade`) or subscribing to the `MersennetOrdersTrades` topic with `mersennet_subscribe` (see [WebSocket subscriptions](#websocket-subscriptions)).
 
 ---
 
@@ -3761,7 +3827,7 @@ Get all open orders for a specific address.
 
 ### mersennet_orders_getProtocol
 
-Every CLOB consensus switch and live parameter in one call: `switches` (`agentDelegationHeight`, `frameCallerHeight`, `priceScaleHeight`, `settlementHeight`), the `*Active` flags at the head, `initialMarginBps` / `maintenanceMarginBps` as enforced now, `weiPerCollateralUnit` (1 before the settlement switch, 10¹⁸ after), `insuranceFund`, `badDebt`, and each market's `priceScale`. Clients should read this instead of hard-coding heights.
+Every CLOB consensus switch and live parameter in one call: `switches` (`agentDelegationHeight`, `frameCallerHeight`, `priceScaleHeight`, `settlementHeight`), the `*Active` flags at the head, `initialMarginBps` / `maintenanceMarginBps` as enforced now, `weiPerCollateralUnit` (1 before the settlement switch, 10¹⁸ after), `insuranceFund`, `badDebt`, and each market's `priceScale`. Clients should read this instead of hard-coding heights. It also carries `settlementInitialMarginBps` / `settlementMaintenanceMarginBps` (the margins that apply from `settlementHeight`: 1000 / 500 bps today) and `height`, the block the answer describes.
 
 ---
 
@@ -3788,11 +3854,11 @@ An account grants a second key permission to trade for it with `setAgent(address
 ```json
 {
   "owner": "0x…",
-  "agentDelegationHeight": 1650000,
+  "agentDelegationHeight": 1569600,
   "active": true,
   "frameCallerHeight": 1605600,
   "frameCallerActive": true,
-  "height": 1651234,
+  "height": 1592700,
   "agents": [{ "agent": "0x…", "expiresAtBlock": 1710400, "expired": false }]
 }
 ```
@@ -4018,6 +4084,8 @@ The following CLOB markets are registered on the testnet:
 | 4 | SOL | SOL perpetual, priced in USD |
 | 5 | ARB | ARB perpetual, priced in USD |
 
+Ids 6 (`E2E150`) and 7 (`E2E263`) also appear in `getMarkets`: they are internal end-to-end test listings with no liquidity — ignore them.
+
 :::note
 Market creation is permissionless via the `createMarket` precompile call, so the live list may contain additional markets — query `mersennet_orders_getMarkets` for the current set.
 :::
@@ -4129,7 +4197,7 @@ Mersennet exposes a JSON-RPC API compatible with the Ethereum JSON-RPC specifica
 | Testnet | `https://rpc.mersennet.com` | `wss://rpc.mersennet.com` |
 
 :::tip
-The public WebSocket endpoint `wss://rpc.mersennet.com` is enabled for `eth_subscribe` subscriptions (`newHeads`, `logs`) — send regular JSON-RPC calls over HTTPS. A node you run yourself needs `ws.enabled = true` in its config.
+The public WebSocket endpoint `wss://rpc.mersennet.com` is enabled for `eth_subscribe` subscriptions (`newHeads`, `logs`, `newPendingTransactions`) and `mersennet_subscribe` topics (`MersennetOrdersTrades`, `MersennetOrdersBook`, `BatchAuctionResults`, `newShieldedRoot`, `newClearingPrice`, `newAuctionSettled`, `newStateProof`) — send regular JSON-RPC calls over HTTPS (any other method over WebSocket returns `-32601`). A node you run yourself needs `ws.enabled = true` in its config.
 :::
 
 ## Authentication
@@ -4174,7 +4242,7 @@ Mersennet supports the core Ethereum JSON-RPC methods:
 
 - **Block/Chain:** `eth_blockNumber`, `eth_chainId`, `eth_getBlockByNumber`, `eth_getBlockByHash`
 - **Account:** `eth_getBalance`, `eth_getTransactionCount`, `eth_getCode`, `eth_getStorageAt`
-- **Transaction:** `eth_getTransactionByHash`, `eth_getTransactionReceipt`, `eth_sendTransaction`, `eth_sendRawTransaction`
+- **Transaction:** `eth_getTransactionByHash`, `eth_getTransactionReceipt`, `eth_sendRawTransaction` (`eth_sendTransaction` is disabled and returns `-32601`: sign locally)
 - **Execution:** `eth_call`, `eth_estimateGas`, `eth_gasPrice`, `eth_feeHistory`, `eth_maxPriorityFeePerGas`
 - **Logs:** `eth_getLogs`
 - **Filters:** `eth_newFilter`, `eth_newBlockFilter`, `eth_newPendingTransactionFilter`, `eth_getFilterChanges`, `eth_getFilterLogs`, `eth_uninstallFilter`
@@ -4193,15 +4261,15 @@ See [RPC Methods Reference](/developers/rpc/methods) for full details.
 | `mersennet_getDomainEvents` | Get domain events for a block range |
 | `mersennet_getCodeAttestation` / `mersennet_getCodeHash` | On-chain contract code-publication registry lookups |
 | `mersennet_orders_*` | MersennetOrders trading methods (submitOrder, cancelOrder, depositCollateral, getOrderBook, getOpenOrders). Writes route through consensus and return `{accepted, txHash}` (unsigned write RPCs are disabled on public endpoints — submit signed precompile transactions instead). |
-| `mersennet_bridge_*` | MersennetBridge bridge methods (enqueueOrdersToEvm, enqueueEvmToOrders, dequeueOrdersToEvm, dequeueEvmToOrders) |
-| **Shielded / ZK** | Shielded transfers & orders, SP1 state proofs, and selective-disclosure reads; see the [Shielded JSON-RPC reference](/developers/privacy/shielded-rpc) |
+| `mersennet_bridge_*` | Internal EVM ⇄ CLOB message-queue RPCs (`enqueue*` / `dequeue*`), node-local and for testing. No external asset bridge is live. |
+| **Shielded / ZK** | Shielded transfers & orders, SP1 state proofs, and selective-disclosure reads; mutations return `-32605` until the privacy hard fork activates, reads such as `mersennet_getShieldedBalance` and `mersennet_getLatestStateProof` work now. See the [Shielded JSON-RPC reference](/developers/privacy/shielded-rpc) |
 | **WebSocket** | `eth_subscribe` and `mersennet_subscribe` push notifications (new heads, trades, shielded roots, state proofs) |
 
 ### Notes on specific methods
 
 | Method | Notes |
 |--------|-------|
-| `eth_subscribe` / `eth_unsubscribe` | Available over **WebSocket connections only** (not HTTP); enabled on the public endpoint `wss://rpc.mersennet.com` for `newHeads` and `logs`. Filters (`eth_newFilter` + `eth_getFilterChanges`) are the HTTP polling equivalent. |
+| `eth_subscribe` / `eth_unsubscribe` | Available over **WebSocket connections only** (not HTTP); enabled on the public endpoint `wss://rpc.mersennet.com` for `newHeads`, `logs` and `newPendingTransactions` (plus `mersennet_subscribe` order-book topics). Filters (`eth_newFilter` + `eth_getFilterChanges`) are the HTTP polling equivalent. |
 | `eth_maxPriorityFeePerGas` | Returns `0x0`: Mersennet uses an EIP-1559 base fee with no separate priority tip. |
 | `debug_*` / `trace_*` / `personal_*` | Not implemented. |
 
@@ -4241,6 +4309,11 @@ Common error codes:
 | -32601 | Method not found |
 | -32602 | Invalid params |
 | -32000 | Server error (e.g., insufficient funds, revert) |
+| -32005 | Rate limited (100 requests/s per IP) or transaction rejected |
+| -32604 | Unsigned mutation: the method needs a signed transaction |
+| -32605 | Method disabled until the privacy hard fork |
+
+Full list with fixes: [Error Reference](/developers/rpc/errors/).
 
 
 ---
@@ -5287,7 +5360,7 @@ source: https://docs.mersennet.com/developers/tutorials/first-private-trade/
 Shielded trading activates at the privacy hard fork; the shielded pool is anchored in every block today but private orders are not accepted yet. This tutorial describes the post-fork flow. To trade on the testnet today, see [Your First Trade](/getting-started/first-trade/) (terminal) or [Trade via SDK and RPC](/developers/tutorials/trade-via-sdk/).
 :::
 
-In about fifteen minutes you'll go from an empty wallet to a settled trade that nobody (not the node, not the sequencer, not the order book) could attribute to you, using the real `@mersennet/sdk`.
+Once the privacy hard fork is live, this walkthrough takes about fifteen minutes: from an empty wallet to a settled trade that nobody (not the node, not the sequencer, not the order book) could attribute to you, using the real `@mersennet/sdk`. Until then, steps 1–2 work on the public testnet and the rest can be rehearsed against a local privacy-enabled node.
 
 :::caution[Shielded methods are fork-gated]
 Steps 1–2 (connect, faucet) run against the live public testnet today. The shielded mutation methods used in Steps 3–5 (`mersennet_submitShield`, `mersennet_submitShieldedOrder`, …) are gated by the **privacy hard fork** and return error `-32605` on the current public testnet until it activates. To run those steps end-to-end now, use a local dev node started in privacy mode; the code is identical.
@@ -5316,7 +5389,7 @@ Every RPC error code Mersennet returns is catalogued in the [error reference](/d
 
 ## Step 1: Connect
 
-Point a `MersennetProvider` at the public testnet RPC and confirm you're on the right chain. The testnet chain ID is `0x1ffff`, which is 131071, a Mersenne prime, naturally.
+Point a `MersennetProvider` at the public testnet RPC and confirm you're on the right chain. The testnet chain ID is `0x1ffff`, which is 131071 (2¹⁷ − 1, a Mersenne prime).
 
 ```ts title="connect.ts"
 import { MersennetProvider } from '@mersennet/sdk';
@@ -5366,7 +5439,7 @@ The faucet is rate-limited per address and per IP. Details and troubleshooting l
 
 Right now your balance is transparent: anyone can read it. Privacy starts when you move value into the shielded pool.
 
-Two sentences of theory. A **note** is an encrypted record of value: asset, amount, owner public key, and randomness, and only you (and anyone you explicitly authorize) can read it. A **commitment** is a hiding, binding hash of that note, appended to the on-chain commitment tree, revealing nothing about the contents. The full model, including nullifiers, which retire notes when spent, is in [Shielded accounts](/privacy/shielded-accounts/), and every term is defined in the [glossary](/resources/glossary/).
+A **note** is an encrypted record of value: asset, amount, owner public key, and randomness, and only you (and anyone you explicitly authorize) can read it. A **commitment** is a hiding, binding hash of that note, appended to the on-chain commitment tree, revealing nothing about the contents. The full model, including nullifiers, which retire notes when spent, is in [Shielded accounts](/privacy/shielded-accounts/), and every term is defined in the [glossary](/resources/glossary/).
 
 First, derive your viewing key and the note you're about to mint:
 
@@ -5393,26 +5466,20 @@ const note: Note = {
 };
 const commitment = defaultNoteCommitment(note);
 
-// The shield envelope is the bincode encoding of (your EOA, the amount,
-// the new note commitment), 0x-hex — the standard encoding for every
-// opaque payload on the shielded surface. bincode uses fixed-width
-// little-endian integers, so the envelope is a plain byte concatenation:
-const strip = (hex: string) => hex.replace(/^0x/, '');
-const leHex = (value: bigint, byteLen: number) => {
-  const out = Buffer.alloc(byteLen);
-  for (let i = 0; i < byteLen; i += 1) {
-    out[i] = Number(value & 0xffn);
-    value >>= 8n;
-  }
-  return out.toString('hex');
-};
-
-const eoa = '0xYourWalletAddress'; // the transparent account funded in Step 2
-const shieldEnvelopeHex =
-  '0x' +
-  strip(eoa) +            // your EOA (20 bytes)
-  leHex(note.value, 32) + // the amount (u256, little-endian)
-  strip(commitment);      // the new note commitment (32 bytes)
+// The shield envelope is the bincode encoding of the node's `ShieldTx`:
+// { from, amount, outputCommitment, encryptedOutput, proof } — five fields,
+// including the note ciphertext for the recipient and the output-circuit
+// proof (see the Shielded JSON-RPC reference for the layout). The SDK's
+// envelope builder ships with the privacy hard fork; until then this step
+// is illustrative — a hand-rolled concatenation of the first three fields is
+// rejected with -32602 "invalid shield envelope".
+const shieldEnvelopeHex: string = encodeShieldTx({
+  from: '0xYourWalletAddress',      // the transparent account funded in Step 2
+  amount: note.value,
+  outputCommitment: commitment,      // defaultNoteCommitment(note)
+  encryptedOutput,                   // note ciphertext for the recipient
+  proof,                             // output-circuit proof
+}); // encodeShieldTx: SDK helper, arrives with the fork
 
 const result = await provider.request('mersennet_submitShield', [
   { envelopeBincodeHex: shieldEnvelopeHex },
@@ -5423,7 +5490,7 @@ console.log('Shielded:', result);
 The chain records only the commitment. Your address appears once (in the shield itself, because value is visibly *entering* the pool) and never again. Everything you do from here is unlinkable to it. See the [Shielded JSON-RPC reference](/developers/privacy/shielded-rpc/) for the exact payload format and its counterpart, `mersennet_submitUnshield`.
 
 :::note[Activation gate]
-Shielded mutation methods are gated by the privacy hard fork. On a pre-privacy node they return error `-32605` ("method disabled in current chain mode"). If you hit it, you're either on the wrong endpoint or the fork hasn't activated on that network yet.
+Shielded mutation methods are gated by the privacy hard fork. On a pre-privacy node they return error `-32605` ("shielded methods are disabled until the privacy hard fork activates"). If you hit it, you're either on the wrong endpoint or the fork hasn't activated on that network yet.
 :::
 
 ## Step 4: Place a private order
@@ -5437,11 +5504,12 @@ const provider = new MersennetProvider('https://rpc.mersennet.com');
 const vk = ViewingKeyHelpers.fromSeed(process.env.WALLET_SEED!);
 const client = new ShieldedClient({ provider, viewingKey: vk });
 
-// Market 1 = MRSN. Buy 5 lots at a limit price of 130 ticks.
+// Market 1 = MRSN, priceScale 100 since block 1,569,600: $130.00 is 13000 on chain.
+// Read the scale from getMarkets (or MersennetOrders.toChainPrice) rather than assuming it.
 const { intentId } = await client.placeOrder({
   marketId: 1n,
   side: 'buy',
-  price: 130n,
+  price: 13000n,
   size: 5n,
 });
 console.log('Order intent submitted:', intentId);
@@ -5497,6 +5565,11 @@ Liquidity on the testnet order book is thin and intermittent. Your order may res
 There is no `getMyFills` endpoint, by design. The node never learns which fills are yours, so your wallet reconstructs its own state by scanning encrypted notes and decrypting the ones addressed to your viewing key. Mint a self-grant (`mersennet_viewGrantToken` issued to your own viewing key; see [selective disclosure](/privacy/selective-disclosure/)), then scan:
 
 ```ts title="watch-settlement.ts"
+// A self-grant lets your own wallet decrypt its notes (mersennet_viewGrantToken to your own address);
+// spent nullifiers come from the same chain reads the explorer uses.
+const selfGrantId: string = await mintSelfGrant(provider, vk);      // see Selective disclosure
+const spentNullifiers: string[] = await fetchSpentNullifiers(provider); // your indexer or a node read
+
 // Scan and decrypt your own notes, refreshing the local note cache.
 const scan = await client.scanOwnNotes(selfGrantId, { limit: 100 });
 console.log(
@@ -5518,7 +5591,7 @@ When your order fills, a new note appears in the scan and your reconstructed bal
 
 ## Step 6: Verify the chain
 
-You've trusted the RPC node for six steps. Now stop. Every Mersennet block carries a zero-knowledge proof that the whole state transition (your shield, your order, the auction that matched it) was executed correctly:
+You've trusted the RPC node for six steps. Now stop. Every Mersennet block carries a state-transition proof object for the whole transition (your shield, your order, the auction that matched it). On the public testnet it comes from the development prover (`proverMode: "development"`, no real SP1 proving yet); in production it is an SP1 proof:
 
 ```bash title="fetch-state-proof.sh"
 curl -X POST https://rpc.mersennet.com \
@@ -5567,7 +5640,7 @@ The TypeScript SDK is not on npm yet; install the release tag from GitHub (`npm 
 
 ```typescript title="trade.ts"
 import { Wallet } from 'ethers';
-import { MersennetProvider, MersennetOrders } from '@mersennet/sdk';
+import { MersennetProvider, MersennetOrders, type TxSigner } from '@mersennet/sdk';
 
 // 1. Configure the RPC
 const provider = new MersennetProvider('https://rpc.mersennet.com');
@@ -5575,7 +5648,7 @@ const orders = new MersennetOrders(provider);
 if ((await provider.getChainId()) !== 131071) throw new Error('not Mersennet testnet');
 
 const wallet = new Wallet(process.env.PRIVATE_KEY!);
-const signer = (tx) => wallet.signTransaction(tx); // TxSigner: signs the TxRequest the SDK builds
+const signer: TxSigner = (tx) => wallet.signTransaction(tx); // signs the TxRequest the SDK builds
 
 async function mined(txHash: string) {
   while (!(await provider.getTransactionReceipt(txHash))) {
@@ -5622,11 +5695,11 @@ console.log('open orders:', await orders.getOpenOrders(wallet.address));
 console.log('position:', await orders.getPosition(wallet.address, mrsn.id)); // { size, entry_price }
 ```
 
-`submitOrder` builds the `placeOrder` calldata, fetches the nonce, gas price and chain ID, hands the transaction to your signer and broadcasts the result. To cancel, call `orders.cancelOrder(wallet.address, orderId, signer)` with an `id` from `getOpenOrders`. The full method list, including agent keys and liquidations, is in the [JavaScript SDK reference](/developers/sdks/javascript/#full-api-reference).
+`submitOrder` builds the `placeOrder` calldata, fetches the nonce, gas price and chain ID, hands the transaction to your signer and broadcasts the result. To cancel, call `orders.cancelOrder(wallet.address, Number(order.id), signer)` with an order from `getOpenOrders` (ids come back as hex strings; `cancelOrder` takes a number). The full method list, including agent keys and liquidations, is in the [JavaScript SDK reference](/developers/sdks/javascript/#full-api-reference).
 
 ## Python
 
-The Python SDK reads everything but has no signing helpers yet: build the calldata, sign it with `eth-account`, and submit it with `provider.send_raw_transaction()`.
+The Python SDK reads everything but has no signing helpers yet: build the calldata, sign it with `eth-account` (`pip install eth-account` — it is not a dependency of the SDK), and submit it with `provider.send_raw_transaction()`.
 
 ```python title="trade.py"
 import os
@@ -5703,7 +5776,9 @@ print("open orders:", open_orders)
 raw = provider.call({"from": acct.address, "to": PRECOMPILE,
                      "data": "0x0f85fc5a" + format(mrsn["id"], "064x")})
 if raw not in ("", "0x"):
-    size, entry_price = int(raw[2:66], 16), int(raw[66:130], 16)
+    # size is an int128 (two's complement): negative for a short
+    size = int.from_bytes(bytes.fromhex(raw[2:66]), "big", signed=True)
+    entry_price = int(raw[66:130], 16)
     print("position size:", size, "entry price:", orders.to_human_price(entry_price, mrsn["price_scale"]))
 ```
 
@@ -5819,7 +5894,10 @@ func main() {
 		"data": "0x0f85fc5a" + hexutil.Encode(word(new(big.Int).SetUint64(mrsn.ID)))[2:],
 	})
 	if out := common.FromHex(raw); len(out) >= 64 {
-		size := new(big.Int).SetBytes(out[:32])
+		size := new(big.Int).SetBytes(out[:32]) // int128 two's complement: negative for a short
+		if out[0]&0x80 != 0 {
+			size.Sub(size, new(big.Int).Lsh(big.NewInt(1), 256))
+		}
 		entry := new(big.Int).SetBytes(out[32:64])
 		fmt.Println("position size:", size, "entry price:", mersennet.ToHumanPrice(entry.Uint64(), mrsn.PriceScale))
 	}

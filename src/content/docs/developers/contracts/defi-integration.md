@@ -152,6 +152,9 @@ const amountAMin = amountADesired * 95n / 100n;
 const amountBMin = amountBDesired * 95n / 100n;
 const deadline = Math.floor(Date.now() / 1000) + 60 * 20;
 
+const ERC20_ABI = ["function approve(address,uint256) returns (bool)"];
+const erc20A = new ethers.Contract(USDC, ERC20_ABI, wallet);
+const erc20B = new ethers.Contract(USDT, ERC20_ABI, wallet);
 await erc20A.approve(ROUTER, amountADesired);
 await erc20B.approve(ROUTER, amountBDesired);
 
@@ -193,6 +196,8 @@ await tx.wait();
 ## Remove Liquidity
 
 ```javascript
+// `factory` is the Factory contract from the section below; `deadline` as above.
+const deadline = Math.floor(Date.now() / 1000) + 60 * 20;
 const pairAddress = await factory.getPair(USDC, USDT);
 const lpToken = new ethers.Contract(pairAddress, ["function approve(address,uint256) returns (bool)"], wallet);
 

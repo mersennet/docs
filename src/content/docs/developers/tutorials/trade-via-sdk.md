@@ -28,7 +28,7 @@ The TypeScript SDK is not on npm yet; install the release tag from GitHub (`npm 
 
 ```typescript title="trade.ts"
 import { Wallet } from 'ethers';
-import { MersennetProvider, MersennetOrders } from '@mersennet/sdk';
+import { MersennetProvider, MersennetOrders, type TxSigner } from '@mersennet/sdk';
 
 // 1. Configure the RPC
 const provider = new MersennetProvider('https://rpc.mersennet.com');
@@ -36,7 +36,7 @@ const orders = new MersennetOrders(provider);
 if ((await provider.getChainId()) !== 131071) throw new Error('not Mersennet testnet');
 
 const wallet = new Wallet(process.env.PRIVATE_KEY!);
-const signer = (tx) => wallet.signTransaction(tx); // TxSigner: signs the TxRequest the SDK builds
+const signer: TxSigner = (tx) => wallet.signTransaction(tx); // signs the TxRequest the SDK builds
 
 async function mined(txHash: string) {
   while (!(await provider.getTransactionReceipt(txHash))) {
@@ -83,11 +83,11 @@ console.log('open orders:', await orders.getOpenOrders(wallet.address));
 console.log('position:', await orders.getPosition(wallet.address, mrsn.id)); // { size, entry_price }
 ```
 
-`submitOrder` builds the `placeOrder` calldata, fetches the nonce, gas price and chain ID, hands the transaction to your signer and broadcasts the result. To cancel, call `orders.cancelOrder(wallet.address, orderId, signer)` with an `id` from `getOpenOrders`. The full method list, including agent keys and liquidations, is in the [JavaScript SDK reference](/developers/sdks/javascript/#full-api-reference).
+`submitOrder` builds the `placeOrder` calldata, fetches the nonce, gas price and chain ID, hands the transaction to your signer and broadcasts the result. To cancel, call `orders.cancelOrder(wallet.address, Number(order.id), signer)` with an order from `getOpenOrders` (ids come back as hex strings; `cancelOrder` takes a number). The full method list, including agent keys and liquidations, is in the [JavaScript SDK reference](/developers/sdks/javascript/#full-api-reference).
 
 ## Python
 
-The Python SDK reads everything but has no signing helpers yet: build the calldata, sign it with `eth-account`, and submit it with `provider.send_raw_transaction()`.
+The Python SDK reads everything but has no signing helpers yet: build the calldata, sign it with `eth-account` (`pip install eth-account` — it is not a dependency of the SDK), and submit it with `provider.send_raw_transaction()`.
 
 ```python title="trade.py"
 import os
@@ -164,7 +164,9 @@ print("open orders:", open_orders)
 raw = provider.call({"from": acct.address, "to": PRECOMPILE,
                      "data": "0x0f85fc5a" + format(mrsn["id"], "064x")})
 if raw not in ("", "0x"):
-    size, entry_price = int(raw[2:66], 16), int(raw[66:130], 16)
+    # size is an int128 (two's complement): negative for a short
+    size = int.from_bytes(bytes.fromhex(raw[2:66]), "big", signed=True)
+    entry_price = int(raw[66:130], 16)
     print("position size:", size, "entry price:", orders.to_human_price(entry_price, mrsn["price_scale"]))
 ```
 
@@ -280,7 +282,10 @@ func main() {
 		"data": "0x0f85fc5a" + hexutil.Encode(word(new(big.Int).SetUint64(mrsn.ID)))[2:],
 	})
 	if out := common.FromHex(raw); len(out) >= 64 {
-		size := new(big.Int).SetBytes(out[:32])
+		size := new(big.Int).SetBytes(out[:32]) // int128 two's complement: negative for a short
+		if out[0]&0x80 != 0 {
+			size.Sub(size, new(big.Int).Lsh(big.NewInt(1), 256))
+		}
 		entry := new(big.Int).SetBytes(out[32:64])
 		fmt.Println("position size:", size, "entry price:", mersennet.ToHumanPrice(entry.Uint64(), mrsn.PriceScale))
 	}

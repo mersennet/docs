@@ -11,7 +11,7 @@ Mersennet exposes a JSON-RPC API compatible with the Ethereum JSON-RPC specifica
 | Testnet | `https://rpc.mersennet.com` | `wss://rpc.mersennet.com` |
 
 :::tip
-The public WebSocket endpoint `wss://rpc.mersennet.com` is enabled for `eth_subscribe` subscriptions (`newHeads`, `logs`) — send regular JSON-RPC calls over HTTPS. A node you run yourself needs `ws.enabled = true` in its config.
+The public WebSocket endpoint `wss://rpc.mersennet.com` is enabled for `eth_subscribe` subscriptions (`newHeads`, `logs`, `newPendingTransactions`) and `mersennet_subscribe` topics (`MersennetOrdersTrades`, `MersennetOrdersBook`, `BatchAuctionResults`, `newShieldedRoot`, `newClearingPrice`, `newAuctionSettled`, `newStateProof`) — send regular JSON-RPC calls over HTTPS (any other method over WebSocket returns `-32601`). A node you run yourself needs `ws.enabled = true` in its config.
 :::
 
 ## Authentication
@@ -56,7 +56,7 @@ Mersennet supports the core Ethereum JSON-RPC methods:
 
 - **Block/Chain:** `eth_blockNumber`, `eth_chainId`, `eth_getBlockByNumber`, `eth_getBlockByHash`
 - **Account:** `eth_getBalance`, `eth_getTransactionCount`, `eth_getCode`, `eth_getStorageAt`
-- **Transaction:** `eth_getTransactionByHash`, `eth_getTransactionReceipt`, `eth_sendTransaction`, `eth_sendRawTransaction`
+- **Transaction:** `eth_getTransactionByHash`, `eth_getTransactionReceipt`, `eth_sendRawTransaction` (`eth_sendTransaction` is disabled and returns `-32601`: sign locally)
 - **Execution:** `eth_call`, `eth_estimateGas`, `eth_gasPrice`, `eth_feeHistory`, `eth_maxPriorityFeePerGas`
 - **Logs:** `eth_getLogs`
 - **Filters:** `eth_newFilter`, `eth_newBlockFilter`, `eth_newPendingTransactionFilter`, `eth_getFilterChanges`, `eth_getFilterLogs`, `eth_uninstallFilter`
@@ -75,15 +75,15 @@ See [RPC Methods Reference](/developers/rpc/methods) for full details.
 | `mersennet_getDomainEvents` | Get domain events for a block range |
 | `mersennet_getCodeAttestation` / `mersennet_getCodeHash` | On-chain contract code-publication registry lookups |
 | `mersennet_orders_*` | MersennetOrders trading methods (submitOrder, cancelOrder, depositCollateral, getOrderBook, getOpenOrders). Writes route through consensus and return `{accepted, txHash}` (unsigned write RPCs are disabled on public endpoints — submit signed precompile transactions instead). |
-| `mersennet_bridge_*` | MersennetBridge bridge methods (enqueueOrdersToEvm, enqueueEvmToOrders, dequeueOrdersToEvm, dequeueEvmToOrders) |
-| **Shielded / ZK** | Shielded transfers & orders, SP1 state proofs, and selective-disclosure reads; see the [Shielded JSON-RPC reference](/developers/privacy/shielded-rpc) |
+| `mersennet_bridge_*` | Internal EVM ⇄ CLOB message-queue RPCs (`enqueue*` / `dequeue*`), node-local and for testing. No external asset bridge is live. |
+| **Shielded / ZK** | Shielded transfers & orders, SP1 state proofs, and selective-disclosure reads; mutations return `-32605` until the privacy hard fork activates, reads such as `mersennet_getShieldedBalance` and `mersennet_getLatestStateProof` work now. See the [Shielded JSON-RPC reference](/developers/privacy/shielded-rpc) |
 | **WebSocket** | `eth_subscribe` and `mersennet_subscribe` push notifications (new heads, trades, shielded roots, state proofs) |
 
 ### Notes on specific methods
 
 | Method | Notes |
 |--------|-------|
-| `eth_subscribe` / `eth_unsubscribe` | Available over **WebSocket connections only** (not HTTP); enabled on the public endpoint `wss://rpc.mersennet.com` for `newHeads` and `logs`. Filters (`eth_newFilter` + `eth_getFilterChanges`) are the HTTP polling equivalent. |
+| `eth_subscribe` / `eth_unsubscribe` | Available over **WebSocket connections only** (not HTTP); enabled on the public endpoint `wss://rpc.mersennet.com` for `newHeads`, `logs` and `newPendingTransactions` (plus `mersennet_subscribe` order-book topics). Filters (`eth_newFilter` + `eth_getFilterChanges`) are the HTTP polling equivalent. |
 | `eth_maxPriorityFeePerGas` | Returns `0x0`: Mersennet uses an EIP-1559 base fee with no separate priority tip. |
 | `debug_*` / `trace_*` / `personal_*` | Not implemented. |
 
@@ -123,3 +123,8 @@ Common error codes:
 | -32601 | Method not found |
 | -32602 | Invalid params |
 | -32000 | Server error (e.g., insufficient funds, revert) |
+| -32005 | Rate limited (100 requests/s per IP) or transaction rejected |
+| -32604 | Unsigned mutation: the method needs a signed transaction |
+| -32605 | Method disabled until the privacy hard fork |
+
+Full list with fixes: [Error Reference](/developers/rpc/errors/).

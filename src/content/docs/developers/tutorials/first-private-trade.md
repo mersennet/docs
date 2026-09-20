@@ -7,7 +7,7 @@ description: "An end-to-end walkthrough: connect to the Mersennet testnet, shiel
 Shielded trading activates at the privacy hard fork; the shielded pool is anchored in every block today but private orders are not accepted yet. This tutorial describes the post-fork flow. To trade on the testnet today, see [Your First Trade](/getting-started/first-trade/) (terminal) or [Trade via SDK and RPC](/developers/tutorials/trade-via-sdk/).
 :::
 
-In about fifteen minutes you'll go from an empty wallet to a settled trade that nobody (not the node, not the sequencer, not the order book) could attribute to you, using the real `@mersennet/sdk`.
+Once the privacy hard fork is live, this walkthrough takes about fifteen minutes: from an empty wallet to a settled trade that nobody (not the node, not the sequencer, not the order book) could attribute to you, using the real `@mersennet/sdk`. Until then, steps 1–2 work on the public testnet and the rest can be rehearsed against a local privacy-enabled node.
 
 :::caution[Shielded methods are fork-gated]
 Steps 1–2 (connect, faucet) run against the live public testnet today. The shielded mutation methods used in Steps 3–5 (`mersennet_submitShield`, `mersennet_submitShieldedOrder`, …) are gated by the **privacy hard fork** and return error `-32605` on the current public testnet until it activates. To run those steps end-to-end now, use a local dev node started in privacy mode; the code is identical.
@@ -36,7 +36,7 @@ Every RPC error code Mersennet returns is catalogued in the [error reference](/d
 
 ## Step 1: Connect
 
-Point a `MersennetProvider` at the public testnet RPC and confirm you're on the right chain. The testnet chain ID is `0x1ffff`, which is 131071, a Mersenne prime, naturally.
+Point a `MersennetProvider` at the public testnet RPC and confirm you're on the right chain. The testnet chain ID is `0x1ffff`, which is 131071 (2¹⁷ − 1, a Mersenne prime).
 
 ```ts title="connect.ts"
 import { MersennetProvider } from '@mersennet/sdk';
@@ -86,7 +86,7 @@ The faucet is rate-limited per address and per IP. Details and troubleshooting l
 
 Right now your balance is transparent: anyone can read it. Privacy starts when you move value into the shielded pool.
 
-Two sentences of theory. A **note** is an encrypted record of value: asset, amount, owner public key, and randomness, and only you (and anyone you explicitly authorize) can read it. A **commitment** is a hiding, binding hash of that note, appended to the on-chain commitment tree, revealing nothing about the contents. The full model, including nullifiers, which retire notes when spent, is in [Shielded accounts](/privacy/shielded-accounts/), and every term is defined in the [glossary](/resources/glossary/).
+A **note** is an encrypted record of value: asset, amount, owner public key, and randomness, and only you (and anyone you explicitly authorize) can read it. A **commitment** is a hiding, binding hash of that note, appended to the on-chain commitment tree, revealing nothing about the contents. The full model, including nullifiers, which retire notes when spent, is in [Shielded accounts](/privacy/shielded-accounts/), and every term is defined in the [glossary](/resources/glossary/).
 
 First, derive your viewing key and the note you're about to mint:
 
@@ -113,26 +113,20 @@ const note: Note = {
 };
 const commitment = defaultNoteCommitment(note);
 
-// The shield envelope is the bincode encoding of (your EOA, the amount,
-// the new note commitment), 0x-hex — the standard encoding for every
-// opaque payload on the shielded surface. bincode uses fixed-width
-// little-endian integers, so the envelope is a plain byte concatenation:
-const strip = (hex: string) => hex.replace(/^0x/, '');
-const leHex = (value: bigint, byteLen: number) => {
-  const out = Buffer.alloc(byteLen);
-  for (let i = 0; i < byteLen; i += 1) {
-    out[i] = Number(value & 0xffn);
-    value >>= 8n;
-  }
-  return out.toString('hex');
-};
-
-const eoa = '0xYourWalletAddress'; // the transparent account funded in Step 2
-const shieldEnvelopeHex =
-  '0x' +
-  strip(eoa) +            // your EOA (20 bytes)
-  leHex(note.value, 32) + // the amount (u256, little-endian)
-  strip(commitment);      // the new note commitment (32 bytes)
+// The shield envelope is the bincode encoding of the node's `ShieldTx`:
+// { from, amount, outputCommitment, encryptedOutput, proof } — five fields,
+// including the note ciphertext for the recipient and the output-circuit
+// proof (see the Shielded JSON-RPC reference for the layout). The SDK's
+// envelope builder ships with the privacy hard fork; until then this step
+// is illustrative — a hand-rolled concatenation of the first three fields is
+// rejected with -32602 "invalid shield envelope".
+const shieldEnvelopeHex: string = encodeShieldTx({
+  from: '0xYourWalletAddress',      // the transparent account funded in Step 2
+  amount: note.value,
+  outputCommitment: commitment,      // defaultNoteCommitment(note)
+  encryptedOutput,                   // note ciphertext for the recipient
+  proof,                             // output-circuit proof
+}); // encodeShieldTx: SDK helper, arrives with the fork
 
 const result = await provider.request('mersennet_submitShield', [
   { envelopeBincodeHex: shieldEnvelopeHex },
@@ -143,7 +137,7 @@ console.log('Shielded:', result);
 The chain records only the commitment. Your address appears once (in the shield itself, because value is visibly *entering* the pool) and never again. Everything you do from here is unlinkable to it. See the [Shielded JSON-RPC reference](/developers/privacy/shielded-rpc/) for the exact payload format and its counterpart, `mersennet_submitUnshield`.
 
 :::note[Activation gate]
-Shielded mutation methods are gated by the privacy hard fork. On a pre-privacy node they return error `-32605` ("method disabled in current chain mode"). If you hit it, you're either on the wrong endpoint or the fork hasn't activated on that network yet.
+Shielded mutation methods are gated by the privacy hard fork. On a pre-privacy node they return error `-32605` ("shielded methods are disabled until the privacy hard fork activates"). If you hit it, you're either on the wrong endpoint or the fork hasn't activated on that network yet.
 :::
 
 ## Step 4: Place a private order
@@ -157,11 +151,12 @@ const provider = new MersennetProvider('https://rpc.mersennet.com');
 const vk = ViewingKeyHelpers.fromSeed(process.env.WALLET_SEED!);
 const client = new ShieldedClient({ provider, viewingKey: vk });
 
-// Market 1 = MRSN. Buy 5 lots at a limit price of 130 ticks.
+// Market 1 = MRSN, priceScale 100 since block 1,569,600: $130.00 is 13000 on chain.
+// Read the scale from getMarkets (or MersennetOrders.toChainPrice) rather than assuming it.
 const { intentId } = await client.placeOrder({
   marketId: 1n,
   side: 'buy',
-  price: 130n,
+  price: 13000n,
   size: 5n,
 });
 console.log('Order intent submitted:', intentId);
@@ -217,6 +212,11 @@ Liquidity on the testnet order book is thin and intermittent. Your order may res
 There is no `getMyFills` endpoint, by design. The node never learns which fills are yours, so your wallet reconstructs its own state by scanning encrypted notes and decrypting the ones addressed to your viewing key. Mint a self-grant (`mersennet_viewGrantToken` issued to your own viewing key; see [selective disclosure](/privacy/selective-disclosure/)), then scan:
 
 ```ts title="watch-settlement.ts"
+// A self-grant lets your own wallet decrypt its notes (mersennet_viewGrantToken to your own address);
+// spent nullifiers come from the same chain reads the explorer uses.
+const selfGrantId: string = await mintSelfGrant(provider, vk);      // see Selective disclosure
+const spentNullifiers: string[] = await fetchSpentNullifiers(provider); // your indexer or a node read
+
 // Scan and decrypt your own notes, refreshing the local note cache.
 const scan = await client.scanOwnNotes(selfGrantId, { limit: 100 });
 console.log(
@@ -238,7 +238,7 @@ When your order fills, a new note appears in the scan and your reconstructed bal
 
 ## Step 6: Verify the chain
 
-You've trusted the RPC node for six steps. Now stop. Every Mersennet block carries a zero-knowledge proof that the whole state transition (your shield, your order, the auction that matched it) was executed correctly:
+You've trusted the RPC node for six steps. Now stop. Every Mersennet block carries a state-transition proof object for the whole transition (your shield, your order, the auction that matched it). On the public testnet it comes from the development prover (`proverMode: "development"`, no real SP1 proving yet); in production it is an SP1 proof:
 
 ```bash title="fetch-state-proof.sh"
 curl -X POST https://rpc.mersennet.com \

@@ -21,7 +21,7 @@ libs = ["lib"]
 solc = "0.8.20"
 optimizer = true
 optimizer_runs = 200
-evm_version = "shanghai"
+evm_version = "prague"
 
 [rpc_endpoints]
 mersennet_testnet = "https://rpc.mersennet.com"
@@ -40,6 +40,7 @@ forge create src/MyToken.sol:MyToken \
   --rpc-url https://rpc.mersennet.com \
   --private-key $PRIVATE_KEY \
   --legacy \
+  --broadcast \
   --constructor-args 1000000
 ```
 
@@ -154,8 +155,8 @@ cast send 0xRecipient --value 1ether --legacy \
 |-----------|-----------|-------|
 | `forge build` | ✅ | |
 | `forge test` | ✅ | Against local Anvil or Mersennet RPC |
-| `forge create` | ✅ | Use `--legacy` |
+| `forge create` | ✅ | Use `--legacy --broadcast` (Foundry 1.x dry-runs without `--broadcast`) |
 | `cast call` | ✅ | Read-only |
 | `cast send` | ✅ | Use `--legacy` |
 | `eth_sendTransaction` | ❌ | Disabled — returns `-32601`; use `eth_sendRawTransaction` |
-| `eth_feeHistory` | ✅ | Supported (priority fee rewards are always 0) |
+| `eth_feeHistory` | ✅ | Supported (the `reward` array is empty — no priority tip) |
