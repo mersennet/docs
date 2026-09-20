@@ -56,11 +56,11 @@ Mersennet is EVM-equivalent: Hardhat, Foundry, ethers and viem work unchanged. D
 
 Season 1 points on [trade.mersennet.com/points](https://trade.mersennet.com/points) track participation. Live today, or opening at today's upgrade:
 
-- **Trading**: 1 point per $1 of taker volume — market orders and limit orders that cross; resting fills earn nothing (bots excluded).
+- **Trading**: 1 point per $1 traded — the taker and the resting maker of every fill each earn its notional (bots excluded).
 - **Node running**: 500 points a day for each verified node while it is online.
 - **Liquidity**: 0.1 LP point per MRSN per day deposited in the [maker vault](https://trade.mersennet.com/vault) — deposits open at block 1,605,600 (Sun 20 Sep, ~16:30 UTC); see [Maker Vault](/ecosystem/maker-vault/).
 - **Referrals**: the referrer earns 10% of each referee's trading points; nothing is deducted from the referee.
-- **Weekly sprint**: the top 3 traders by taker volume each week earn 3,000 / 2,000 / 1,000 bonus points.
+- **Weekly sprint**: the top 3 traders by volume (both sides of each fill) each week earn 3,000 / 2,000 / 1,000 bonus points.
 
 The [leaderboard](https://trade.mersennet.com/leaderboard) ranks traders and shows the sprint standings.
 

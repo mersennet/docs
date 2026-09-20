@@ -6135,7 +6135,7 @@ A step-by-step walkthrough is in [Your First Trade](/getting-started/first-trade
 
 The terminal is also where testnet participation is tracked and where the validator set is managed:
 
-- **Points** ([/points](https://trade.mersennet.com/points)): 1 point per $1 of taker volume; **0.1 point per MRSN per day** deposited in the maker vault; **500 points a day** for running a verified node (automatic once your node has an operator address — see [Run a Node](/validators/run-a-node/#get-recognised-verified-node-runner)); **referrals** pay the referrer 10% of each referee's trading points (the referee confirms the link with one signature; nothing is deducted from them); the **weekly sprint** awards the top three traders by taker volume 3,000 / 2,000 / 1,000 bonus points every Monday 00:00 UTC ([leaderboard](https://trade.mersennet.com/leaderboard)).
+- **Points** ([/points](https://trade.mersennet.com/points)): 1 point per $1 traded (both the taker and the maker of a fill earn its notional); **0.1 point per MRSN per day** deposited in the maker vault; **500 points a day** for running a verified node (automatic once your node has an operator address — see [Run a Node](/validators/run-a-node/#get-recognised-verified-node-runner)); **referrals** pay the referrer 10% of each referee's trading points (the referee confirms the link with one signature; nothing is deducted from them); the **weekly sprint** awards the top three traders by volume (both sides of each fill) 3,000 / 2,000 / 1,000 bonus points every Monday 00:00 UTC ([leaderboard](https://trade.mersennet.com/leaderboard)).
 - **Maker vault** ([/vault](https://trade.mersennet.com/vault)): pool MRSN behind the market maker that quotes every market. Deposits mint `mvMRSN` shares at the vault's net asset value (free MRSN + collateral on the precompile + unrealized PnL at mid), so maker PnL moves the share price; withdraw any time at NAV from the vault's free reserve (10% of NAV) and, beyond that, from collateral not backing open positions. The bot trades for the vault through **agent delegation** — it can place and cancel orders in the vault's name, never withdraw. Depositors earn **LP points: 0.1 per MRSN per day**. Deposits open at block 1,605,600 (Sun 20 Sep 2026). Full description: [Maker Vault](/ecosystem/maker-vault/). Testnet MRSN has no monetary value.
 - **Staking** ([/staking](https://trade.mersennet.com/staking)): delegate MRSN to any validator, claim rewards, and — with a verified node — **register as a validator** in one click (1,000 MRSN self-stake; [Become a Validator](/validators/become-a-validator/)).
 
@@ -6282,8 +6282,8 @@ Stop, stop-limit, trailing-stop and TWAP orders are armed in your browser and se
 
 Testnet participation is tracked on the [Points page](https://trade.mersennet.com/points):
 
-- **1 point per $1 of taker volume** (bots are excluded): a 1 MRSN *market* order at about $115 earns about 115 points; a resting limit order that gets filled earns none.
-- The [leaderboard](https://trade.mersennet.com/leaderboard) ranks traders by points and shows the **weekly sprint**: the top 3 traders by taker volume each week earn 3,000 / 2,000 / 1,000 bonus points.
+- **1 point per $1 traded** (bots are excluded): a 1 MRSN order at about $115 earns about 115 points, whether it crossed the book or rested and got filled — both sides of a fill earn.
+- The [leaderboard](https://trade.mersennet.com/leaderboard) ranks traders by points and shows the **weekly sprint**: the top 3 traders by volume (both sides of each fill) each week earn 3,000 / 2,000 / 1,000 bonus points.
 - Other programs: 500 points a day for a verified node, referrals (10% of a referee's trading points), and 0.1 LP point per MRSN per day in the [maker vault](/ecosystem/maker-vault/) once deposits open at block 1,605,600 (Sun 20 Sep, ~16:30 UTC).
 
 :::note[Units on testnet]
@@ -6813,11 +6813,11 @@ Mersennet is EVM-equivalent: Hardhat, Foundry, ethers and viem work unchanged. D
 
 Season 1 points on [trade.mersennet.com/points](https://trade.mersennet.com/points) track participation. Live today, or opening at today's upgrade:
 
-- **Trading**: 1 point per $1 of taker volume — market orders and limit orders that cross; resting fills earn nothing (bots excluded).
+- **Trading**: 1 point per $1 traded — the taker and the resting maker of every fill each earn its notional (bots excluded).
 - **Node running**: 500 points a day for each verified node while it is online.
 - **Liquidity**: 0.1 LP point per MRSN per day deposited in the [maker vault](https://trade.mersennet.com/vault) — deposits open at block 1,605,600 (Sun 20 Sep, ~16:30 UTC); see [Maker Vault](/ecosystem/maker-vault/).
 - **Referrals**: the referrer earns 10% of each referee's trading points; nothing is deducted from the referee.
-- **Weekly sprint**: the top 3 traders by taker volume each week earn 3,000 / 2,000 / 1,000 bonus points.
+- **Weekly sprint**: the top 3 traders by volume (both sides of each fill) each week earn 3,000 / 2,000 / 1,000 bonus points.
 
 The [leaderboard](https://trade.mersennet.com/leaderboard) ranks traders and shows the sprint standings.
 
@@ -6926,7 +6926,7 @@ import { Card, CardGrid, LinkCard } from '@astrojs/starlight/components';
     [DeFi integration](/developers/contracts/defi-integration/)
   </Card>
   <Card title="Make your first trade" icon="approve-check">
-    Connect a wallet, claim faucet MRSN, deposit collateral and place a market order on the terminal in a few minutes. Every order is a signed transaction you can find on the explorer; 1 point per $1 of taker volume.
+    Connect a wallet, claim faucet MRSN, deposit collateral and place a market order on the terminal in a few minutes. Every order is a signed transaction you can find on the explorer; 1 point per $1 traded, on both sides of a fill.
 
     [Your first trade](/getting-started/first-trade/) ·
     [Open the terminal](https://trade.mersennet.com)
