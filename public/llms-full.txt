@@ -356,7 +356,7 @@ Core configuration parameters with their default values (the canonical testnet c
 | `gas_limit_per_block` | `u64` | `30000000` | Maximum gas per block (30M) |
 | `fee_elasticity_multiplier` | `u64` | `2` | EIP-1559 elasticity multiplier |
 | `fee_max_change_denominator` | `u64` | `8` | Max base fee change per block (12.5%) |
-| `storage_backend` | `string` | `"sled"` | Storage backend: `"sled"`, `"redb"`, or `"memory"` |
+| `storage_backend` | `string` | `"sled"` | Storage backend: `"sled"` (the public testnet and its snapshots), `"redb"`, or `"memory"` (tests). See the note in [Run a Node](/validators/run-a-node/) before changing it. |
 | `resume_root_check` | `string` | `"warn"` | Startup check of the restored state root against the head block: `"warn"` logs a mismatch, `"fatal"` exits (code 5) |
 
 
@@ -8506,6 +8506,8 @@ The set is open since block 1,348,200. With your node verified (above), open [tr
 curl -fsSL https://mersennet.com/downloads/install.sh | sudo bash -s -- --reset-state --operator 0xYOUR_WALLET
 ```
 
+**The log repeats `resuming chain from persisted height persisted_height=N next_block=N+1` and then `FORK DETECTED … height=N+1 … parent hash mismatch`, every few minutes, and `mersennet-check` shows height N−1.** The state on disk was committed at block N but the block record for N was never written (the process was killed between the two writes — on the redb backend nothing detected it). The node then compares every block N+1 against a head of N−1 and refuses block N as already applied, so it never recovers on its own; the liveness watchdog restarts it every five minutes, which is why the resume line repeats. Fix on `f67d812`: make sure `engine.storage_backend` is `"sled"` (or absent), then `sudo bash install.sh --reset-state` with the same `--data-dir` / `--operator` flags as your original install — it removes `data/state` (both formats) and restores the current snapshot, and the node is in sync within a minute. Confirm with `mersennet-check` that *Data dir* is the directory you expected and *Block height* reads *in sync*. If the reset does not change anything, the node is reading a different directory than the installer reset (a manual run from the bundle directory, or an absolute `engine.state_path`): stop it, delete that directory's `data/state`, and start it again. The next release fills the missing block record from a peer automatically.
+
 **My node stopped advancing (the explorer moves, `mersennet-check` shows the same height).** Since the 16 Sep release the node notices this itself: when its head has not moved for five minutes while the network is at least 60 blocks ahead, it exits and systemd restarts it (log line *"head has not advanced while the network moved on"*). On an older build, `sudo systemctl restart mersennet` does the same by hand. If it happens repeatedly, send us `journalctl -u mersennet -n 300 --no-pager` in the [Telegram chat](https://t.me/Mersennet) or through the terminal's [feedback form](https://trade.mersennet.com/feedback) — such reports are exactly what the testnet is for.
 
 **Do I have to upgrade when a new release comes out?** For a full node: whenever convenient — `mersennet-check` says *update available*. For a **validator: yes, before the next protocol switch height** (listed on [Network Info](/getting-started/network-info/#protocol-upgrades) and announced on [Become a Validator](/validators/become-a-validator) and the [changelog](/resources/changelog); the staking page warns when your node is behind the current release). A validator on an old build applies the old rules from the switch height on, disagrees with the network about the next leader or the validator set, and forks off — it then needs `--reset-state`. Upgrading is the same one-line command as installing; it keeps your keys and data and takes under a minute.
@@ -8625,7 +8627,7 @@ Relative paths resolve against the node's working directory. The RPC defaults to
 | `gas_limit_per_block` | `u64` | `30000000` | Maximum gas per block (30M) |
 | `fee_elasticity_multiplier` | `u64` | `2` | EIP-1559 elasticity (target = limit / multiplier) |
 | `fee_max_change_denominator` | `u64` | `8` | Max base fee change per block (1/8 = 12.5%) |
-| `storage_backend` | `string` | `"sled"` | `"sled"`, `"redb"`, or `"memory"` (both persistent backends keep the validator registry) |
+| `storage_backend` | `string` | `"sled"` | **Keep `"sled"` on the public testnet.** The published snapshots are sled-format: a node switched to `"redb"` ignores the restored snapshot and replays the chain from genesis (hours), and on release `f67d812` the redb backend has no interrupted-commit guard, so a hard kill mid-block can leave it wedged (`persisted_height=N`, then `FORK DETECTED` at `N+1` on every restart — fixed in the next release, which also self-heals that state). `"memory"` is for tests. |
 | `resume_root_check` | `string` | `"warn"` | At startup the restored state's root is compared with the head block's: `"warn"` logs `RESTORED STATE ROOT MISMATCH` and continues; `"fatal"` exits (code 5) so the node is never run on state that does not match the chain — the fix is `--reset-state`. The canonical testnet config is authoritative (currently `"warn"`; the flip to `"fatal"` is a scheduled ops step); builds up to `e6eb772` ignore the setting and keep warning |
 
 #### `mempool`: Transaction Pool
