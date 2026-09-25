@@ -351,7 +351,7 @@ Core configuration parameters with their default values (the canonical testnet c
 | `gas_limit_per_block` | `u64` | `30000000` | Maximum gas per block (30M) |
 | `fee_elasticity_multiplier` | `u64` | `2` | EIP-1559 elasticity multiplier |
 | `fee_max_change_denominator` | `u64` | `8` | Max base fee change per block (12.5%) |
-| `storage_backend` | `string` | `"sled"` | Storage backend: `"sled"`, `"redb"`, or `"memory"` |
+| `storage_backend` | `string` | `"sled"` | Storage backend: `"sled"` (the public testnet and its snapshots), `"redb"`, or `"memory"` (tests). See the note in [Run a Node](/validators/run-a-node/) before changing it. |
 | `resume_root_check` | `string` | `"warn"` | Startup check of the restored state root against the head block: `"warn"` logs a mismatch, `"fatal"` exits (code 5) |
 
 
