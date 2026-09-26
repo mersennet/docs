@@ -24,7 +24,7 @@ On-chain prices are `human price × priceScale`. MRSN, SOL and ARB carry `priceS
 
 ## TypeScript
 
-The TypeScript SDK is not on npm yet; install the release tag from GitHub (`npm install github:mersennet/sdk-ts#semver:^0.1`) as described in [JavaScript SDK → Installation](/developers/sdks/javascript/#installation). Signing is delegated to you through a `TxSigner` callback — here an ethers `Wallet`.
+Install the TypeScript SDK with `npm install @mersennet/sdk` (see [JavaScript SDK → Installation](/developers/sdks/javascript/#installation)). Signing is delegated to you through a `TxSigner` callback — here an ethers `Wallet`.
 
 ```typescript title="trade.ts"
 import { Wallet } from 'ethers';
