@@ -32,7 +32,9 @@ JSON-RPC 2.0 envelope:
 |------|-------|-----|
 | `-32604` | Unsigned mutation disabled | Unsigned `mersennet_orders_*` mutations are disabled on this node; submit a signed transaction to the precompile at `0x…0100`. |
 
-CLOB business errors (unknown market, bad tick/lot size, insufficient collateral, withdrawal exceeds equity, …) surface as transaction reverts with a reason string when using the precompile path.
+CLOB and staking business errors (unknown market, bad tick/lot size, insufficient collateral, withdrawal exceeds equity, not the order's owner, …) are **reverts with a reason** from block 1,969,200 (Tue 29 Sep 2026, afternoon–evening UTC — live estimate on the [upgrades page](https://explorer.mersennet.com/upgrades)): the transaction fails with `Error(string)` output carrying the precompile's message, and only the call's base gas (20,000) plus the intrinsic cost is charged — the rest is refunded, like a Solidity `require`. `eth_call` returns the same `Error(string)` bytes as its `result`, so a client can simulate an order and show the reason before sending it (the trade terminal does). Before that block a refused call is a precompile *halt*: empty output and the whole gas limit consumed.
+
+Reason strings (verbatim): `unknown market`, `market is halted`, `size must be > 0`, `fok not fillable`, `insufficient collateral for initial margin`, `insufficient equity`, `withdrawal would bring equity below maintenance margin`, `caller does not own this order`, `post-only order would cross the book`, `post-only/expiry flags require GTC time-in-force`, `market symbol already exists`, `invalid market parameters`, `token is not a registered collateral asset`, `account is not liquidatable`, plus the agent-delegation and calldata messages (`invalid agent address`, `missing marketId`, `invalid TimeInForce value`, …).
 
 ## Privacy / shielded
 

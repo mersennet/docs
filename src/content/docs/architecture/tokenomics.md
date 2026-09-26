@@ -152,11 +152,32 @@ Individual validator rewards are calculated from `effective_reward`. This guaran
 
 Due to integer division with 18-decimal precision, the sum of individual rewards may be slightly less than the effective reward. The difference is **implicitly burned**, typically negligible (0–2 wei per block) but it keeps `total_minted` strictly within the cap.
 
+## Transaction Fees
+
+Mersennet runs an EIP-1559-style base fee: every block's base fee moves with the gas the previous block used (target half the block limit, at most ±12.5% per block) and every transaction must pay at least the base fee of the block that includes it. There is no priority tip today; `eth_gasPrice` returns the current base fee and wallets, the SDKs and the bots use it as is.
+
+### Floor and split — from block 1,969,200 (Tue 29 Sep 2026, afternoon–evening UTC; live estimate on the [upgrades page](https://explorer.mersennet.com/upgrades))
+
+Until this switch the base fee could fall to **1 wei**, which made transactions effectively free: in September one account put about 530,000 reverting orders a day on the chain at no cost. From the switch:
+
+| Rule | Value |
+|------|-------|
+| **Base fee floor** | 1 gwei (10⁹ wei). The base fee still rises with usage; it never falls below the floor. |
+| **Under-priced transactions** | Refused at the mempool; a block that declares a base fee under the floor is invalid. |
+| **Protocol treasury** | 50% of the base fee each block collects → `0xacACE2b290334e45f2db8Bd819BB4b6868477777` |
+| **Block proposer** | 25% → the proposer's reward recipient (its operator wallet) |
+| **Burned** | 25% (before the switch: 100%) |
+
+What it costs: a simple transfer (21,000 gas) is 0.000021 MRSN; an order on the book (~70,000 gas) about 0.00007 MRSN. Flooding the chain the way the September incident did would cost 24–160 MRSN a day instead of nothing.
+
+The split is applied identically by the producing validator and every importing node right after block rewards, so it is part of the state root. The parameters live in the node configuration (`engine.fee_floor_height`, `min_base_fee_wei`, `fee_treasury_bps`, `fee_proposer_bps`, `fee_treasury_address`) and are exposed by `mersennet_orders_getProtocol` under `fees`; the [upgrades page](https://explorer.mersennet.com/upgrades) tracks the activation.
+
 ## Summary
 
 | Topic | Summary |
 |-------|---------|
 | **Supply cap** | 2⁸⁹ − 1 wei ≈ 618.97M MRSN (hard ceiling, Mersenne prime) |
+| **Transaction fees** | Base fee ≥ 1 gwei from block 1,969,200; 50% treasury / 25% proposer / 25% burned |
 | **Block reward** | 2⁶¹ − 1 wei ≈ 2.3 MRSN/block initially (Mersenne prime), minted per block |
 | **Halving** | Every 33,550,336 blocks (5th perfect number, ~2.1 years at ~2 s blocks) |
 | **Total emission** | ≈ 154.72M MRSN (converges well below the cap) |
