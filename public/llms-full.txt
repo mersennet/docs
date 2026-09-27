@@ -1527,11 +1527,32 @@ Individual validator rewards are calculated from `effective_reward`. This guaran
 
 Due to integer division with 18-decimal precision, the sum of individual rewards may be slightly less than the effective reward. The difference is **implicitly burned**, typically negligible (0–2 wei per block) but it keeps `total_minted` strictly within the cap.
 
+## Transaction Fees
+
+Mersennet runs an EIP-1559-style base fee: every block's base fee moves with the gas the previous block used (target half the block limit, at most ±12.5% per block) and every transaction must pay at least the base fee of the block that includes it. There is no priority tip today; `eth_gasPrice` returns the current base fee and wallets, the SDKs and the bots use it as is.
+
+### Floor and split — from block 1,969,200 (Tue 29 Sep 2026, afternoon–evening UTC; live estimate on the [upgrades page](https://explorer.mersennet.com/upgrades))
+
+Until this switch the base fee could fall to **1 wei**, which made transactions effectively free: in September one account put about 530,000 reverting orders a day on the chain at no cost. From the switch:
+
+| Rule | Value |
+|------|-------|
+| **Base fee floor** | 1 gwei (10⁹ wei). The base fee still rises with usage; it never falls below the floor. |
+| **Under-priced transactions** | Refused at the mempool; a block that declares a base fee under the floor is invalid. |
+| **Protocol treasury** | 50% of the base fee each block collects → `0xacACE2b290334e45f2db8Bd819BB4b6868477777` |
+| **Block proposer** | 25% → the proposer's reward recipient (its operator wallet) |
+| **Burned** | 25% (before the switch: 100%) |
+
+What it costs: a simple transfer (21,000 gas) is 0.000021 MRSN; an order on the book (~70,000 gas) about 0.00007 MRSN. Flooding the chain the way the September incident did would cost 24–160 MRSN a day instead of nothing.
+
+The split is applied identically by the producing validator and every importing node right after block rewards, so it is part of the state root. The parameters live in the node configuration (`engine.fee_floor_height`, `min_base_fee_wei`, `fee_treasury_bps`, `fee_proposer_bps`, `fee_treasury_address`) and are exposed by `mersennet_orders_getProtocol` under `fees`; the [upgrades page](https://explorer.mersennet.com/upgrades) tracks the activation.
+
 ## Summary
 
 | Topic | Summary |
 |-------|---------|
 | **Supply cap** | 2⁸⁹ − 1 wei ≈ 618.97M MRSN (hard ceiling, Mersenne prime) |
+| **Transaction fees** | Base fee ≥ 1 gwei from block 1,969,200; 50% treasury / 25% proposer / 25% burned |
 | **Block reward** | 2⁶¹ − 1 wei ≈ 2.3 MRSN/block initially (Mersenne prime), minted per block |
 | **Halving** | Every 33,550,336 blocks (5th perfect number, ~2.1 years at ~2 s blocks) |
 | **Total emission** | ≈ 154.72M MRSN (converges well below the cap) |
@@ -2775,7 +2796,9 @@ JSON-RPC 2.0 envelope:
 |------|-------|-----|
 | `-32604` | Unsigned mutation disabled | Unsigned `mersennet_orders_*` mutations are disabled on this node; submit a signed transaction to the precompile at `0x…0100`. |
 
-CLOB business errors (unknown market, bad tick/lot size, insufficient collateral, withdrawal exceeds equity, …) surface as transaction reverts with a reason string when using the precompile path.
+CLOB and staking business errors (unknown market, bad tick/lot size, insufficient collateral, withdrawal exceeds equity, not the order's owner, …) are **reverts with a reason** from block 1,969,200 (Tue 29 Sep 2026, afternoon–evening UTC — live estimate on the [upgrades page](https://explorer.mersennet.com/upgrades)): the transaction fails with `Error(string)` output carrying the precompile's message, and only the call's base gas (20,000) plus the intrinsic cost is charged — the rest is refunded, like a Solidity `require`. `eth_call` returns the same `Error(string)` bytes as its `result`, so a client can simulate an order and show the reason before sending it (the trade terminal does). Before that block a refused call is a precompile *halt*: empty output and the whole gas limit consumed.
+
+Reason strings (verbatim): `unknown market`, `market is halted`, `size must be > 0`, `fok not fillable`, `insufficient collateral for initial margin`, `insufficient equity`, `withdrawal would bring equity below maintenance margin`, `caller does not own this order`, `post-only order would cross the book`, `post-only/expiry flags require GTC time-in-force`, `market symbol already exists`, `invalid market parameters`, `token is not a registered collateral asset`, `account is not liquidatable`, plus the agent-delegation and calldata messages (`invalid agent address`, `missing marketId`, `invalid TimeInForce value`, …).
 
 ## Privacy / shielded
 
@@ -4679,13 +4702,13 @@ curl -X POST https://rpc.mersennet.com \
 
 ## Installation
 
-The SDK is public on GitHub ([mersennet/sdk-ts](https://github.com/mersennet/sdk-ts), MIT), released as [v0.1.1](https://github.com/mersennet/sdk-ts/releases/tag/v0.1.1). Until it is on npm, install the latest release tag straight from the repository (Node ≥ 20; the package builds on install):
-
 ```bash
-npm install github:mersennet/sdk-ts#semver:^0.1
+npm install @mersennet/sdk
 ```
 
-Or from a checkout (`npm install && npm run build` in `sdk-ts/`, then `npm install /path/to/sdk-ts`). The import name is `@mersennet/sdk` either way.
+Published on npm as [`@mersennet/sdk`](https://www.npmjs.com/package/@mersennet/sdk) from the [mersennet/sdk-ts](https://github.com/mersennet/sdk-ts) releases (MIT), with a signed provenance statement from GitHub Actions — `npm audit signatures` verifies that the tarball was built from the tagged source. Current version: 0.1.1.
+
+Or from a checkout (`npm install && npm run build` in `sdk-ts/`, then `npm install /path/to/sdk-ts`).
 
 ## Quick Start
 
@@ -5110,11 +5133,11 @@ curl -X POST https://rpc.mersennet.com \
 
 ## Installation
 
-The SDK is public on GitHub ([mersennet/sdk-python](https://github.com/mersennet/sdk-python), MIT), released as [v0.1.1](https://github.com/mersennet/sdk-python/releases/tag/v0.1.1). Until it is on PyPI, install the release tag straight from the repository (Python ≥ 3.10):
-
 ```bash
-pip install "git+https://github.com/mersennet/sdk-python.git@v0.1.1"
+pip install mersennet-sdk
 ```
+
+Published on PyPI as [`mersennet-sdk`](https://pypi.org/project/mersennet-sdk/) from the [mersennet/sdk-python](https://github.com/mersennet/sdk-python) releases (MIT) through PyPI trusted publishing — every upload comes from the tagged source in GitHub Actions, no upload token exists. Current version: 0.1.1. Import name: `mersennet`.
 
 From a checkout:
 
@@ -5708,7 +5731,7 @@ On-chain prices are `human price × priceScale`. MRSN, SOL and ARB carry `priceS
 
 ## TypeScript
 
-The TypeScript SDK is not on npm yet; install the release tag from GitHub (`npm install github:mersennet/sdk-ts#semver:^0.1`) as described in [JavaScript SDK → Installation](/developers/sdks/javascript/#installation). Signing is delegated to you through a `TxSigner` callback — here an ethers `Wallet`.
+Install the TypeScript SDK with `npm install @mersennet/sdk` (see [JavaScript SDK → Installation](/developers/sdks/javascript/#installation)). Signing is delegated to you through a `TxSigner` callback — here an ethers `Wallet`.
 
 ```typescript title="trade.ts"
 import { Wallet } from 'ethers';
@@ -6018,7 +6041,7 @@ The Maker Vault is an on-chain strategy vault on the Mersennet testnet: deposito
 | Share token | `mvMRSN` (18 decimals, non-transferable accounting inside the vault) |
 | Asset | native MRSN |
 | Minimum deposit | 1 MRSN |
-| Deposits open | block 1,605,600 — the settlement / frame-caller upgrade of Sun 20 Sep 2026 (live estimate on the [upgrades page](https://explorer.mersennet.com/upgrades)) |
+| Deposits opened | block 1,605,600 — the settlement / frame-caller upgrade of 20 Sep 2026 (activation record on the [upgrades page](https://explorer.mersennet.com/upgrades)) |
 | LP points | 0.1 point per MRSN per day while deposited ([Points](https://trade.mersennet.com/points)) |
 | UI | [trade.mersennet.com/vault](https://trade.mersennet.com/vault) |
 
@@ -6029,7 +6052,7 @@ Before that height the precompiles authorised the *transaction origin*, so a con
 ## How it works
 
 1. **Deposit.** `deposit()` with MRSN as the call value mints shares at the current share price (`nav / totalShares`; 1 share = 1 MRSN when the vault is empty). The terminal's vault page does this for you.
-2. **Quote.** The manager pushes free MRSN onto the precompile as collateral (`pushCollateral`) and grants a bot an agent key (`setAgent(agent, expiresAtBlock)`, revocable at any time). The agent places and cancels orders **as the vault**; it can never deposit, withdraw or move collateral. The manager keeps a reserve of the vault's assets free (10% on the testnet) so withdrawals do not have to wait for positions to close.
+2. **Quote.** The manager pushes free MRSN onto the precompile as collateral (`pushCollateral`) and grants a bot an agent key (`setAgent(agent, expiresAtBlock)`, revocable at any time). The agent places and cancels orders **as the vault**; it can never deposit, withdraw or move collateral. The manager keeps a reserve of the vault's assets free (10% on the testnet) so withdrawals do not have to wait for positions to close. The order book enforces a 10% initial margin against the vault's collateral, and the agent sizes its quotes to that collateral — so deposits translate directly into book depth, and the vault can never be quoted beyond what it holds.
 3. **Withdraw.** `withdraw(shares)` burns shares and pays `shares × nav / totalShares` in MRSN, from the free balance first and then from precompile collateral that is not backing an open position. If more collateral is in use than the withdrawal needs, the call reverts with `collateral in use` — try again shortly or with a smaller amount.
 
 NAV = free MRSN in the contract + collateral on the precompile + unrealized PnL of open positions marked at the order-book mid. Every figure the contract exposes is in wei.
@@ -6136,7 +6159,7 @@ A step-by-step walkthrough is in [Your First Trade](/getting-started/first-trade
 The terminal is also where testnet participation is tracked and where the validator set is managed:
 
 - **Points** ([/points](https://trade.mersennet.com/points)): 1 point per $1 traded (both the taker and the maker of a fill earn its notional); **0.1 point per MRSN per day** deposited in the maker vault; **500 points a day** for running a verified node (automatic once your node has an operator address — see [Run a Node](/validators/run-a-node/#get-recognised-verified-node-runner)); **referrals** pay the referrer 10% of each referee's trading points (the referee confirms the link with one signature; nothing is deducted from them); the **weekly sprint** awards the top three traders by volume (both sides of each fill) 3,000 / 2,000 / 1,000 bonus points every Monday 00:00 UTC ([leaderboard](https://trade.mersennet.com/leaderboard)).
-- **Maker vault** ([/vault](https://trade.mersennet.com/vault)): pool MRSN behind the market maker that quotes every market. Deposits mint `mvMRSN` shares at the vault's net asset value (free MRSN + collateral on the precompile + unrealized PnL at mid), so maker PnL moves the share price; withdraw any time at NAV from the vault's free reserve (10% of NAV) and, beyond that, from collateral not backing open positions. The bot trades for the vault through **agent delegation** — it can place and cancel orders in the vault's name, never withdraw. Depositors earn **LP points: 0.1 per MRSN per day**. Deposits open at block 1,605,600 (Sun 20 Sep 2026). Full description: [Maker Vault](/ecosystem/maker-vault/). Testnet MRSN has no monetary value.
+- **Maker vault** ([/vault](https://trade.mersennet.com/vault)): pool MRSN behind the market maker that quotes every market. Deposits mint `mvMRSN` shares at the vault's net asset value (free MRSN + collateral on the precompile + unrealized PnL at mid), so maker PnL moves the share price; withdraw any time at NAV from the vault's free reserve (10% of NAV) and, beyond that, from collateral not backing open positions. The bot trades for the vault through **agent delegation** — it can place and cancel orders in the vault's name, never withdraw. Depositors earn **LP points: 0.1 per MRSN per day**. Deposits opened at block 1,605,600 (20 Sep 2026). Full description: [Maker Vault](/ecosystem/maker-vault/). Testnet MRSN has no monetary value.
 - **Staking** ([/staking](https://trade.mersennet.com/staking)): delegate MRSN to any validator, claim rewards, and — with a verified node — **register as a validator** in one click (1,000 MRSN self-stake; [Become a Validator](/validators/become-a-validator/)).
 
 ## Telegram alerts for traders
@@ -7552,6 +7575,10 @@ Notable milestones and updates for the Mersennet ecosystem.
 
 ### Open Validator Set, Snapshot Sync, Verified Node Runners
 
+- **Next release — two consensus switches at block 1,969,200 (Tue 29 Sep, afternoon–evening UTC; live estimate on the [upgrades page](https://explorer.mersennet.com/upgrades))**. Validators must be on it before then. **Order-book errors as reverts**: a refused order-book or staking call returns its reason (`Error(string)`) and charges 20k gas instead of the whole limit; `eth_call` returns the reason too. **Gas-price floor and fee split**: the base fee never falls below 1 gwei; of what each block collects 50% goes to the protocol treasury, 25% to the block proposer, 25% is burned ([details](/architecture/tokenomics/#transaction-fees)). Also in this release: rewards and fee shares are credited so that an account first seen through an RPC balance query still exists on every node (a latent state-root divergence).
+- **26 Sep release `b7c75ff`** (operational, no consensus change): a graceful restart can no longer orphan a block — the node stops producing the moment shutdown is requested and waits for an in-flight block to reach its peers. `mersennet --help` prints the options; unknown arguments are rejected; the binary no longer starts the developer devnet demo when run without a configuration. The market maker now sizes its quotes to the Maker Vault's collateral and backs off when its orders revert on chain; the vault manager pushes deposits in whole MRSN (a rounding bug had left them idle since the settlement switch). New public health check `GET /api/v1/health/exchange` (fills, order-book revert ratio, maker quoting, vault collateral, indexer lag) on the [status page](https://status.mersennet.com); the explorer's Network page shows the 24 h transaction success rate.
+- **Exchange pause, 20–25 Sep**: from the settlement switch (Sun 20 Sep 16:29 UTC) until Fri 25 Sep 19:00 UTC no trade printed. The market maker quotes for the Maker Vault, whose collateral was 450 MRSN, with sizes designed for a far larger account; under the new 10% initial margin every one of its orders was refused, and the refused orders (about 530,000 a day) made up 91% of the chain's transactions. Chain, wallets and user orders were unaffected; the vault's depositors kept their MRSN. Fixed by the changes above plus a 1,000,000 MRSN seed deposit from the market-making treasury (shown on the vault page; it earns no LP points).
+- **25 Sep release `1185154`**: a node whose block record at its persisted height is missing (field report on `f67d812`: `persisted_height=487`, `FORK DETECTED height=488` forever, surviving `--reset-state`) now announces it at startup and fills the record from block-sync instead of refusing every block at the next height. redb backend: interrupted-commit marker, state directory created on first start, a warning when redb is configured over a restored sled snapshot. `mersennet_validatorSet` reports `selfStake` as the self-bonded amount and adds `votingStake`.
 - **Permissionless validator registration** from block 1,348,200: `registerValidator` on the staking precompile with 1,000 MRSN self-stake and a node-key proof; the top 12 by self + delegated stake form the active set at every hourly epoch; jailing for missed slots (no slashing), exits with ~4 h unbonding, key rotation. One-click registration on the terminal's staking page. New RPCs `mersennet_validatorSet`, `mersennet_nodeIdentity`.
 - **Fork choice by finality**: a node that applied a block finality later overruled rolls back and follows the canonical chain automatically. Large blocks are delivered over TCP (UDP gossip could not carry blocks above ~25 transactions), and block-sync rotates peers.
 - **Snapshot bootstrap**: fresh installs restore a signed, SHA-256-verified state snapshot and are in sync in about a minute instead of replaying the chain. Signed release bundles (ed25519) and the `mersennet-check` health tool.
