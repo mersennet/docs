@@ -11,7 +11,7 @@ The Maker Vault is an on-chain strategy vault on the Mersennet testnet: deposito
 | Share token | `mvMRSN` (18 decimals, non-transferable accounting inside the vault) |
 | Asset | native MRSN |
 | Minimum deposit | 1 MRSN |
-| Deposits open | block 1,605,600 — the settlement / frame-caller upgrade of Sun 20 Sep 2026 (live estimate on the [upgrades page](https://explorer.mersennet.com/upgrades)) |
+| Deposits opened | block 1,605,600 — the settlement / frame-caller upgrade of 20 Sep 2026 (activation record on the [upgrades page](https://explorer.mersennet.com/upgrades)) |
 | LP points | 0.1 point per MRSN per day while deposited ([Points](https://trade.mersennet.com/points)) |
 | UI | [trade.mersennet.com/vault](https://trade.mersennet.com/vault) |
 
