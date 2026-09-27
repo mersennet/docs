@@ -77,7 +77,11 @@ Yes. The set is open since block 1,348,200: run a node with `--operator 0xYOUR_W
 
 ### What are points and how do node runners earn them?
 
-Points track testnet participation on [trade.mersennet.com/points](https://trade.mersennet.com/points): 1 point per $1 traded, and **500 points a day** for running a verified node. Verification is automatic within about ten minutes of your node being online with an operator address configured.
+Points track testnet participation on [trade.mersennet.com/points](https://trade.mersennet.com/points): 1 point per $1 traded, **500 points a day** for running a verified node, 10% of a referee's trading points, the weekly sprint bonus and 0.1 point per MRSN-day in the Maker Vault. Verification of a node is automatic within about ten minutes of it being online with an operator address configured. Points have no monetary value and promise no token or airdrop; farming them forfeits them — see [Testnet Policies](/resources/testnet-policies/).
+
+### Does testnet MRSN have value? Will the testnet be reset?
+
+No, and possibly. Testnet MRSN and everything built on it exist to exercise the software and cannot be redeemed; anyone selling testnet MRSN is running a scam. The chain may be reset with at least 48 hours' notice when a defect cannot be carried forward. [Testnet Policies](/resources/testnet-policies/) has the full statement, including rate limits, data retention and how incidents are communicated.
 
 ## Ecosystem
 
