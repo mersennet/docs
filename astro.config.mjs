@@ -152,6 +152,7 @@ export default defineConfig({
           items: [
             { slug: 'whitepaper' },
             { slug: 'resources/faq' },
+            { slug: 'resources/testnet-policies' },
             { slug: 'resources/glossary' },
             { slug: 'resources/contracts' },
             { slug: 'resources/brand-assets' },
