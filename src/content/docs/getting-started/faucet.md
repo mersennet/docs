@@ -25,38 +25,30 @@ One click on **＋ Add Mersennet to wallet** configures MetaMask with the right 
 
 The mock tokens also have a public `faucet()` function on-chain, so contracts and scripts can mint them directly — see [Deployed Contracts](/resources/contracts) for addresses.
 
-## Programmatic Access
+## Scripts and CI
 
-Request MRSN via HTTP for scripts or CI/CD:
+Since 28 September 2026 every drip needs a browser challenge (Cloudflare Turnstile), so a bare `curl` to `/faucet` is answered with `403 challenge failed`. The HTTP API is unchanged otherwise — `POST /faucet` with `{"address": "0x…", "turnstileToken": "…"}` — but a token can only be produced by the widget on the faucet page, which is the point.
 
-```bash
-curl -X POST https://faucet.mersennet.com/faucet \
-  -H "Content-Type: application/json" \
-  -d '{"address": "0xYourWalletAddress"}'
-```
+For scripts, CI pipelines and test suites, fund once and transfer:
 
-```json
-{
-  "success": true,
-  "tx_hash": "0x..."
-}
-```
-
-Mock tokens work the same way:
+1. Claim from the page into a wallet you control (three drips a day per connection — 3,003 MRSN).
+2. Transfer from that wallet in your scripts with any EVM tooling, for example with Foundry:
 
 ```bash
-curl -X POST https://faucet.mersennet.com/claim-token \
-  -H "Content-Type: application/json" \
-  -d '{"address": "0xYourWalletAddress", "token": "usdc"}'
+cast send 0xRecipient --value 100ether \
+  --rpc-url https://rpc.mersennet.com --private-key $FUNDING_KEY
 ```
 
-`token` accepts `usdc`, `usdt`, or `dai`.
+Running a hackathon, a course, or a large integration test that needs more? Ask in the [Telegram group](https://t.me/Mersennet) — a one-off grant to a funding wallet is a two-minute job on our side.
+
+Mock tokens (`usdc`, `usdt`, `dai`) follow the same rule: claim them on the page, transfer with `cast send <token> "transfer(address,uint256)" …`.
 
 ## Troubleshooting
 
 | Issue | Solution |
 |-------|----------|
 | `rate limited` error | Each address — and each IP — can claim MRSN once per hour, and one connection can take at most three drips a day (3,003 MRSN — plenty for testing; validators bond 1,000). Wait for the cooldown shown on the page. |
+| `challenge failed` | The page's verification widget did not complete or its token expired — wait for the green tick and try again, or reload. A request from a script without a token always gets this answer (see above). |
 | Request fails | Check that your address is a valid 0x-prefixed Ethereum address (40 hex characters). |
 | No MRSN received | Look up the returned `tx_hash` on the [explorer](https://explorer.mersennet.com). Confirm your wallet is on Chain ID 131071. |
 | Tokens not visible in MetaMask | Import the token contract address manually, or claim through the faucet UI, which offers to add the token for you. |
