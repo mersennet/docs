@@ -55,6 +55,7 @@ export default defineConfig({
             { slug: 'getting-started/wallet-setup' },
             { slug: 'getting-started/faucet' },
             { slug: 'getting-started/first-trade' },
+            { slug: 'getting-started/points' },
             { slug: 'getting-started/first-transaction' },
           ],
         },
