@@ -5,6 +5,10 @@ on:
     branches: [develop, main]
   pull_request:
 
+# The job only reads the checkout; public PRs from forks must not get a write token.
+permissions:
+  contents: read
+
 jobs:
   build:
     name: build (incl. internal link validation), audit
