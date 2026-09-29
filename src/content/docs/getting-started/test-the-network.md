@@ -21,11 +21,11 @@ Add the network to your wallet ([Wallet Setup](/getting-started/wallet-setup/) �
 
 ## 2. Trade
 
-[trade.mersennet.com](https://trade.mersennet.com) is a perpetuals terminal on the **native order book** (precompile `0x…0100`): deposit MRSN as collateral, place limit or market orders, long or short with leverage. Matching and settlement are atomic on-chain — no sequencer, no off-chain matcher. Market makers quote live prices, so books are usually two-sided. Guide: [Mersennet Trade](/ecosystem/trade/).
+[trade.mersennet.com](https://trade.mersennet.com) is a perpetuals terminal on the **native order book** (precompile `0x…0100`): deposit MRSN or USDC as collateral, place limit or market orders, long or short with leverage. Matching and settlement are atomic on-chain — no sequencer, no off-chain matcher. Market makers quote live prices, so books are usually two-sided. Guide: [Mersennet Trade](/ecosystem/trade/).
 
 ## 3. Run a node
 
-One command on any Ubuntu 22.04+ / Debian 12+ server (2 vCPU, 4 GB RAM, 40 GB SSD is enough):
+One command on any Ubuntu 22.04+ / Debian 12+ server (4 vCPU, 8 GB RAM and a 100 GB SSD recommended — [hardware](/validators/run-a-node/#step-1--get-a-server)):
 
 ```bash
 curl -fsSL https://mersennet.com/downloads/install.sh | sudo bash -s -- --operator 0xYOUR_WALLET
@@ -54,16 +54,16 @@ Mersennet is EVM-equivalent: Hardhat, Foundry, ethers and viem work unchanged. D
 
 ## 7. Points
 
-Season 1 points on [trade.mersennet.com/points](https://trade.mersennet.com/points) track participation. Live today, or opening at today's upgrade:
+Season 1 points on [trade.mersennet.com/points](https://trade.mersennet.com/points) track participation:
 
 - **Trading**: 1 point per $1 traded — the taker and the resting maker of every fill each earn its notional (bots excluded).
-- **Node running**: 500 points a day for each verified node while it is online.
-- **Liquidity**: 0.1 LP point per MRSN per day deposited in the [maker vault](https://trade.mersennet.com/vault) — deposits open at block 1,605,600 (Sun 20 Sep, ~16:30 UTC); see [Maker Vault](/ecosystem/maker-vault/).
+- **Node running**: 500 points a day per operator wallet while its verified node is online (one node counts per operator).
+- **Liquidity**: 0.1 LP point per MRSN per day deposited in the [maker vault](https://trade.mersennet.com/vault); see [Maker Vault](/ecosystem/maker-vault/).
 - **Referrals**: the referrer earns 10% of each referee's trading points; nothing is deducted from the referee.
 - **Weekly sprint**: the top 3 traders by volume (both sides of each fill) each week earn 3,000 / 2,000 / 1,000 bonus points.
 
-The [leaderboard](https://trade.mersennet.com/leaderboard) ranks traders and shows the sprint standings.
+The [leaderboard](https://trade.mersennet.com/leaderboard) ranks traders and shows the sprint standings. Rates, tiers, fair-play rules and the bug bounty: [Points — Season 1](/getting-started/points/).
 
 ## Is it up?
 
-[status.mersennet.com](https://status.mersennet.com/status/mersennet) shows live uptime of the RPC (two public nodes with automatic failover), explorer, faucet, terminal and the snapshot server. Something wrong or confusing? Ask in the official Telegram chat [t.me/Mersennet](https://t.me/Mersennet), or use the terminal's [feedback form](https://trade.mersennet.com/feedback) — both go straight to the team.
+[status.mersennet.com](https://status.mersennet.com/status/mersennet) shows live uptime of the RPC (several origins with automatic failover), explorer, faucet, terminal and the snapshot server, and any incident in progress. Something wrong or confusing? Ask in the official Telegram chat [t.me/Mersennet](https://t.me/Mersennet), or use the terminal's [feedback form](https://trade.mersennet.com/feedback) — both go straight to the team.
