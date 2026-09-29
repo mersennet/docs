@@ -11,7 +11,7 @@ Testnet MRSN, the mock stablecoins, every balance, position, order, vault share 
 
 ## Points
 
-Points on the [points page](https://trade.mersennet.com/points) record participation: trading volume, running a verified node, referrals, the weekly sprint and Maker Vault deposits. They are a scoreboard, not an asset:
+Points on the [points page](https://trade.mersennet.com/points) record participation: trading volume, running a verified node, referrals, the weekly sprint, Maker Vault deposits and valid bug reports — rates and rules on [Points — Season 1](/getting-started/points/). They are a scoreboard, not an asset:
 
 - They have no monetary value and are not a token, security or claim of any kind.
 - They carry **no promise of a future token, allocation, airdrop or payment**. Any future program will be announced on its own terms; nothing on this network implies one.

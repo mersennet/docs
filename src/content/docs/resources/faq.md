@@ -77,7 +77,7 @@ Yes. The set is open since block 1,348,200: run a node with `--operator 0xYOUR_W
 
 ### What are points and how do node runners earn them?
 
-Points track testnet participation on [trade.mersennet.com/points](https://trade.mersennet.com/points): 1 point per $1 traded, **500 points a day** for running a verified node, 10% of a referee's trading points, the weekly sprint bonus and 0.1 point per MRSN-day in the Maker Vault. Verification of a node is automatic within about ten minutes of it being online with an operator address configured. Points have no monetary value and promise no token or airdrop; farming them forfeits them — see [Testnet Policies](/resources/testnet-policies/).
+Points track testnet participation on [trade.mersennet.com/points](https://trade.mersennet.com/points): 1 point per $1 traded, **500 points a day** for running a verified node, 10% of a referee's trading points, the weekly sprint bonus and 0.1 point per MRSN-day in the Maker Vault. Verification of a node is automatic within about ten minutes of it being online with an operator address configured. Points have no monetary value and promise no token or airdrop; farming them forfeits them. Exact rates, tiers and the fair-play rules: [Points — Season 1](/getting-started/points/).
 
 ### Does testnet MRSN have value? Will the testnet be reset?
 
@@ -93,7 +93,7 @@ Mersennet Trade is the perpetuals trading terminal built on the on-chain CLOB pr
 
 ### How do I report a vulnerability? {#security}
 
-Email **security@mersennet.com** (or message an admin in the [Telegram group](https://t.me/Mersennet) and ask for a private channel). Please include steps to reproduce, the affected component (node, precompile, terminal, API, explorer, faucet) and, for chain issues, the block height. We acknowledge within 48 hours and keep you informed until the fix ships; credit in the changelog is yours if you want it. Do not test against other users' funds or run denial-of-service traffic — this is a public testnet, but people are using it. Every public web hostname (mersennet.com, trade, explorer, faucet, docs, status) publishes the same contact at `/.well-known/security.txt`.
+Email **security@mersennet.com** (or message an admin in the [Telegram group](https://t.me/Mersennet) and ask for a private channel). Please include steps to reproduce, the affected component (node, precompile, terminal, API, explorer, faucet) and, for chain issues, the block height. We acknowledge within 48 hours and keep you informed until the fix ships; credit in the changelog is yours if you want it, and valid reports earn 1,000 to 50,000 points under the [bug bounty](/getting-started/points/#bug-bounty). Do not test against other users' funds or run denial-of-service traffic — this is a public testnet, but people are using it. Every public web hostname (mersennet.com, trade, explorer, faucet, docs, status) publishes the same contact at `/.well-known/security.txt`.
 
 ---
 
