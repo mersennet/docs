@@ -37,7 +37,7 @@ The installer verifies the signed release, restores the latest state snapshot an
 
 The validator set is **permissionless** since block 1,348,200 (Mon 14 Sep 2026, 09:32 UTC). With your node verified, open [trade.mersennet.com/staking](https://trade.mersennet.com/staking) with the operator wallet, choose a self-stake of at least **1,000 MRSN** (one faucet claim) and press **Bond & register**. From the next hourly epoch your node signs blocks and earns block rewards.
 
-- Top **12** by self-stake + delegations are active; the rest are on standby.
+- The top **12** by self-stake + delegations are active, the top **50** from block 2,127,600 (Sat 3 Oct); the rest are on standby.
 - Miss more than **20%** of your leader slots in an epoch and you sit out the next one (since block 1,569,600: three missed slots bench you for the rest of the epoch, and consecutive jails escalate 1, 2, 4, 8, 16, 24 epochs). Nothing is slashed for downtime; only equivocation is.
 - Leave with one click; self-stake unbonds in **7,200 blocks (~4 h)**.
 - **Keep the node on the current release.** Consensus rules change at announced heights ([schedule](/getting-started/network-info/#protocol-upgrades)); the staking page shows *upgrade required* next to your node when it is behind, and the upgrade is the install command again.

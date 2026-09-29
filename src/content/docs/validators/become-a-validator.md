@@ -19,7 +19,7 @@ The previous upgrade activated at block 1,569,600 on Sat 19 Sep 19:23 UTC. Four 
 |---|---|---|
 | Activation | block **1,348,200** (14 Sep 2026, 09:32 UTC) | Registration and epoch transitions start here. Before that the four genesis validators are the set. |
 | Minimum self-stake | **1,000 MRSN** | One faucet claim (1,000 + 1 MRSN for gas). Escrowed by the staking precompile when you register; the bond is taken from your balance after gas, so keep a little above the bond. |
-| Active set size | **12** | Ranked by self-stake + delegated stake at each epoch boundary. |
+| Active set size | **12**, **50** from block **2,127,600** (Sat 3 Oct 2026, ~15:30 UTC) | Ranked by self-stake + delegated stake at each epoch boundary. The larger set is a consensus switch (`validator_set.max_validators_height`); validators need the 30 Sep release before that height. |
 | Epoch | **1,800 blocks (~1 hour; ~63 min at the observed ~2.1 s)** | Boundaries at heights divisible by 1,800 — they drift off the clock hour; the next one is `nextEpochAt` in `mersennet_validatorSet` and on the staking page. |
 | Joining | register in one epoch → **active from the next** | A registration in epoch N is active from the first block of epoch N+1, at most ~63 minutes later. |
 | Benching | miss **3** leader slots in an epoch (and your misses are at least a tenth of what you proposed) | Since block **1,569,600** (Sat 19 Sep 2026, 19:23 UTC): you are taken out of the **leader rotation for the rest of the epoch** — you keep voting and your stake, and the network stops spending failover rounds on you. Cleared at the boundary, where the jail rule below judges the epoch. A live validator that drops a slot now and then is never benched: three misses out of forty proposed is 7.5%, below the tenth. |
@@ -37,8 +37,8 @@ Unbonding of *delegated* stake also takes 7,200 blocks, so one number applies ev
 | From | Event | To |
 |---|---|---|
 | — | `registerValidator` with ≥ 1,000 MRSN | **pending** |
-| pending | next epoch boundary, ranked in the top 12 | **active** |
-| pending | next epoch boundary, ranked below the top 12 | **standby** |
+| pending | next epoch boundary, ranked within the active set size | **active** |
+| pending | next epoch boundary, ranked below it | **standby** |
 | standby | more self-stake or delegations at a boundary | **active** |
 | active | outranked at a boundary | **standby** |
 | active | missed 3 leader slots, at least a tenth of what it proposed (since block 1,569,600) | **benched** for the rest of the epoch — still active, still voting, not in the leader rotation |
@@ -51,7 +51,7 @@ Unbonding of *delegated* stake also takes 7,200 blocks, so one number applies ev
 |---|---|---|
 | `pending` | yellow | Registered this epoch; eligible from the next boundary. |
 | `active` | green | In the consensus set: your node signs blocks when the schedule makes it leader and votes on every height. |
-| `standby` | grey | Eligible but ranked below the top 12. Add self-stake or attract delegations. |
+| `standby` | grey | Eligible but ranked below the active set size. Add self-stake or attract delegations. |
 | `jailed` | red | Missed too many slots last epoch; excluded for this epoch, back automatically. |
 | `exiting` | grey | Leaving at the next boundary. |
 

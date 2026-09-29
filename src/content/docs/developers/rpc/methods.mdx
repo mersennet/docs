@@ -771,7 +771,7 @@ Same as `eth_getLogs`.
 
 ### mersennet_validators
 
-Returns the current **consensus set** — the validators producing blocks this epoch — with their voting stake (self-stake + delegations). Since the validator set opened, this is the top-12 active set recomputed at every hourly epoch; use `mersennet_validatorSet` for registrations, statuses and parameters.
+Returns the current **consensus set** — the validators producing blocks this epoch — with their voting stake (self-stake + delegations). Since the validator set opened, this is the active set (top 12 by stake, top 50 from block 2,127,600) recomputed at every hourly epoch; use `mersennet_validatorSet` for registrations, statuses and parameters.
 
 **Parameters:** None
 
@@ -805,6 +805,8 @@ curl -X POST https://rpc.mersennet.com \
     "epochBlocks": 1800,
     "minSelfStake": "0x3635c9adc5dea00000",
     "maxValidators": 12,
+    "maxValidatorsHeight": 2127600,
+    "maxValidatorsAfter": 50,
     "unbondingBlocks": 7200,
     "jailMissBps": 2000,
     "jailMinSlots": 5,
@@ -844,6 +846,7 @@ curl -X POST https://rpc.mersennet.com \
 | Field | Meaning |
 |-------|---------|
 | `active` | `false` before `activationHeight`; the genesis set applies until then |
+| `maxValidators` | Active-set size the current epoch was formed with. `maxValidatorsHeight` / `maxValidatorsAfter` (from the 30 Sep release): from the first epoch boundary at or after that height the set holds up to `maxValidatorsAfter` (`0` = no switch configured) |
 | `epoch`, `nextEpochAt` | Current epoch index and the height of the next boundary (`epochBlocks` multiples) |
 | `activeSet` | Identities producing blocks this epoch (sorted); `consensusValidators` is the engine's view and should match |
 | `status` | `pending` (registered this epoch), `active`, `standby` (eligible, ranked below `maxValidators`), `jailed`, `exiting` |

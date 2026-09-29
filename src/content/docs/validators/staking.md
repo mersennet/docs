@@ -30,7 +30,7 @@ Delegation â€” staking MRSN with an existing validator without running a node â€
 Delegators earn a share of the validator's block rewards (minus validator commission) under an F1-style accounting model. The [explorer's Validators page](https://explorer.mersennet.com/validators) shows each validator's delegated total and commission, and any address page shows its delegations, pending rewards, and unbonding entries. Read methods: `mersennet_staking_getValidators`, `mersennet_staking_getDelegation`, `mersennet_staking_getUnbonding` (see the [RPC reference](/developers/rpc/methods/)).
 
 :::tip[The validator set is open]
-Since block 1,348,200 anyone can register a node as a validator. Delegated stake counts toward a validator's ranking: the top 12 by self-stake + delegations form the active set at each epoch (1,800 blocks, ~1 h). See [Become a Validator](/validators/become-a-validator/).
+Since block 1,348,200 anyone can register a node as a validator. Delegated stake counts toward a validator's ranking: the top 12 by self-stake + delegations form the active set at each epoch (1,800 blocks, ~1 h), the top 50 from block 2,127,600 (Sat 3 Oct). See [Become a Validator](/validators/become-a-validator/).
 :::
 
 ## Minimum Stake
