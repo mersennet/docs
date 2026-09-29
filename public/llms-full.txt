@@ -6103,7 +6103,7 @@ Mersennet Trade is live at **[https://trade.mersennet.com](https://trade.mersenn
 | **Order Engine** | MersennetOrders native precompile (`0x…0100`) |
 | **Order Types** | Limit and Market (GTC/IOC/FOK, post-only, on-chain good-till-date expiry) placed directly on the precompile. **Stop, Stop-limit, Trailing stop, TWAP** are armed in your browser and executed as wallet-signed orders when they trigger — silently with one-click trading, otherwise with a wallet popup at trigger time; they fire while a Mersennet Trade tab is open. **Scale** places a ladder of limit orders at once; **Chase** re-pegs a post-only order to the top of the book (needs one-click). |
 | **Ticks** | BTC trades on $10 and ETH on $1 integer ticks; since block 1,569,600 MRSN, SOL and ARB trade on **$0.01 ticks** (`priceScale` 100 on chain — the terminal shows human prices everywhere). |
-| **One-click trading** | An **agent key** kept in your browser, granted on-chain by your wallet (`setAgent` on the precompile, ~7 days, two confirmations to set up: the grant and 3 MRSN of gas). It signs orders, TP/SL and conditional orders without popups; orders, positions and collateral stay on your main wallet; the key can never withdraw. Revoke any time from Settings. Live since block 1,569,600 (Sat 19 Sep 2026, 19:23 UTC). |
+| **One-click trading** | An **agent key** kept in your browser, granted on-chain by your wallet (`setAgent` on the precompile, ~7 days, two confirmations to set up: the grant and 0.5 MRSN of gas — about 7,000 orders at the 1 gwei floor). It signs orders, TP/SL and conditional orders without popups; orders, positions and collateral stay on your main wallet; the key can never withdraw. Leftover gas is never lost: it stays in the key, **Revoke** (Settings) sweeps it back to your wallet, and enabling again after the 7-day permission lapses reuses the same key and balance. Live since block 1,569,600 (Sat 19 Sep 2026, 19:23 UTC). |
 | **Fees** | The testnet charges **no trading fee**; the planned schedule shown in the terminal starts at 0% maker / 0.035% taker and falls with 30-day volume |
 | **Funding** | Every 8 hours (typical rates ±0.01% per interval) |
 | **Collateral** | Native MRSN plus registered tokens (MockUSDC, the test USDC, at 90% weight), fully escrowed on-chain by the precompile. From block 1,605,600 one collateral unit is **one MRSN**, realized PnL is **settled into collateral at every fill** (a closed trade's profit is withdrawable; a loss beyond your collateral is booked as protocol bad debt), initial margin is **10%** (10× max leverage), **maintenance margin 5%** with **keeper liquidations** (anyone may call `liquidate(address)` on the precompile; an account below maintenance is closed on the book, a 1% fee on the closed notional is split between the keeper and the insurance fund, and the fund covers losses the collateral could not — the network runs a default keeper), and **self-trade prevention** cancels your own resting order instead of filling it. A position can always be *reduced*, however deep under water. Before that height collateral units were wei and PnL was tracked but not settled; balances are divided by 10¹⁸ once at the switch, so a deposit of 100 MRSN made before it is still 100 MRSN after (the terminal, API and SDKs convert for the current era), and a position whose equity is below 5% of its notional in the switch block is closed by the keeper. **Testnet unit convention:** margin and PnL are computed in the markets' quote units, and one MRSN of collateral counts as one quote unit (MockUSDC counts 1:1 at 90% weight) — there is no MRSN/USD conversion in the margin engine yet, so leverage and PnL read as if MRSN were the quote currency. |
@@ -6205,14 +6205,14 @@ One click on **＋ Add Mersennet to wallet** configures MetaMask with the right 
 
 | Claim | Amount | Cooldown |
 |-------|--------|----------|
-| MRSN (native) | 1,000 MRSN + 1 MRSN for gas | 1 claim per address per hour |
+| MRSN (native) | 1,000 MRSN + 1 MRSN for gas | 1 claim per address per hour, at most 3 claims per connection (IP) per day |
 | MockUSDC / MockUSDT / MockDAI | 10,000 per token | 1 claim per token per address per hour |
 
 The mock tokens also have a public `faucet()` function on-chain, so contracts and scripts can mint them directly — see [Deployed Contracts](/resources/contracts) for addresses.
 
-## Programmatic Access
+## Scripts and CI
 
-Request MRSN via HTTP for scripts or CI/CD:
+The HTTP API keeps working without a browser — at a script-sized allowance. Since 28 September 2026 the page runs a Cloudflare Turnstile check; a request **without** the widget's token is served **once per address and once per IP every 24 hours** (1,001 MRSN — enough to fund a pipeline wallet daily), while the page allows one claim an hour and three a day:
 
 ```bash
 curl -X POST https://faucet.mersennet.com/faucet \
@@ -6221,13 +6221,10 @@ curl -X POST https://faucet.mersennet.com/faucet \
 ```
 
 ```json
-{
-  "success": true,
-  "tx_hash": "0x..."
-}
+{ "success": true, "tx_hash": "0x..." }
 ```
 
-Mock tokens work the same way:
+A second call the same day answers `429` with the reason. Mock tokens work the same way (`token`: `usdc`, `usdt` or `dai`; once per token per day without the widget):
 
 ```bash
 curl -X POST https://faucet.mersennet.com/claim-token \
@@ -6235,13 +6232,15 @@ curl -X POST https://faucet.mersennet.com/claim-token \
   -d '{"address": "0xYourWalletAddress", "token": "usdc"}'
 ```
 
-`token` accepts `usdc`, `usdt`, or `dai`.
+Need more for a hackathon, a course or a large integration test? Fund one wallet and transfer from it (`cast send 0xRecipient --value 100ether --rpc-url https://rpc.mersennet.com --private-key $KEY`), or ask in the [Telegram group](https://t.me/Mersennet) for a one-off grant.
 
 ## Troubleshooting
 
 | Issue | Solution |
 |-------|----------|
-| `rate limited` error | Each address — and each IP — can claim MRSN once per hour. Wait for the cooldown shown on the page. |
+| `rate limited` error | Each address — and each IP — can claim MRSN once per hour, and one connection can take at most three drips a day (3,003 MRSN — plenty for testing; validators bond 1,000). Wait for the cooldown shown on the page. |
+| `challenge failed` | The page's verification widget did not complete or its token expired — wait for the green tick and try again, or reload. |
+| `429` from a script | Scripts without the widget get one drip per address and per IP per day; the page gets more (see above). |
 | Request fails | Check that your address is a valid 0x-prefixed Ethereum address (40 hex characters). |
 | No MRSN received | Look up the returned `tx_hash` on the [explorer](https://explorer.mersennet.com). Confirm your wallet is on Chain ID 131071. |
 | Tokens not visible in MetaMask | Import the token contract address manually, or claim through the faucet UI, which offers to add the token for you. |
@@ -6307,7 +6306,7 @@ Testnet participation is tracked on the [Points page](https://trade.mersennet.co
 
 - **1 point per $1 traded** (bots are excluded): a 1 MRSN order at about $115 earns about 115 points, whether it crossed the book or rested and got filled — both sides of a fill earn.
 - The [leaderboard](https://trade.mersennet.com/leaderboard) ranks traders by points and shows the **weekly sprint**: the top 3 traders by volume (both sides of each fill) each week earn 3,000 / 2,000 / 1,000 bonus points.
-- Other programs: 500 points a day for a verified node, referrals (10% of a referee's trading points), and 0.1 LP point per MRSN per day in the [maker vault](/ecosystem/maker-vault/) once deposits open at block 1,605,600 (Sun 20 Sep, ~16:30 UTC).
+- Other programs: 500 points a day for running a verified node, referrals (10% of a referee's trading points), and 0.1 LP point per MRSN per day in the [maker vault](/ecosystem/maker-vault/). All rates, tiers and the bug bounty: [Points — Season 1](/getting-started/points/).
 
 :::note[Units on testnet]
 Prices are quoted in USD; balances, PnL and equity are shown in MRSN. In the margin engine one MRSN of collateral counts as one dollar of margin — there is no MRSN/USD conversion on the testnet yet — so leverage and PnL read as if MRSN were the quote currency. MockUSDC (the test USDC) is also accepted as collateral at 90% weight.
@@ -6779,6 +6778,61 @@ Mersennet is designed for builders. Whether you're deploying a simple ERC-20, bu
 
 
 ---
+source: https://docs.mersennet.com/getting-started/points/
+---
+
+
+Points record how you use the testnet. Your balance, tier and rank are on [trade.mersennet.com/points](https://trade.mersennet.com/points), the ranking on the [leaderboard](https://trade.mersennet.com/leaderboard). **Season 1 is running**; its end date will be announced in advance in the [Telegram group](https://t.me/Mersennet) and on this page.
+
+Points have **no monetary value** and promise no token, allocation or airdrop — see [Testnet Policies](/resources/testnet-policies/#points) and the terminal's [Terms of Use](https://trade.mersennet.com/terms) (§8).
+
+## How points are earned
+
+| Source | Rate | Credited |
+|---|---|---|
+| **Trading** | 1 point per $1 of notional volume, to **both sides** of every fill — maker and taker | within a few minutes of the fill |
+| **Node runner** | 500 points a day per operator wallet with a **verified, online** node (one node counts per operator) | daily, while the node stays verified |
+| **Maker Vault** | 0.1 point per MRSN per day deposited (1,000 MRSN for a day = 100 points) | continuously, every few minutes |
+| **Referrals** | 10% of each referee's trading points, once the referee confirms your link with one signature | with the referee's trading points |
+| **Weekly sprint** | the week's top three traders by volume (maker + taker) receive 3,000 / 2,000 / 1,000 bonus points | shortly after Monday 00:00 UTC, for the week that just ended |
+| **Bug bounty** | 1,000 to 50,000 points for a valid security report, by severity — see [below](#bug-bounty) | when the fix is confirmed |
+
+Your total is the sum of all sources. Node verification is automatic within about ten minutes of your node running with an operator address — see [Run a Node](/validators/run-a-node/). Referral codes are on the terminal's [Referrals page](https://trade.mersennet.com/referrals).
+
+## Tiers
+
+| Tier | Total points |
+|---|---|
+| Bronze | 0 |
+| Silver | 1,000 |
+| Gold | 10,000 |
+| Platinum | 100,000 |
+| Diamond | 1,000,000 |
+
+## Fair play
+
+- Trading through the API or the SDKs is welcome — what counts is real volume against the order book.
+- The network's own bots (market maker, takers, liquidator) are excluded from points, the sprint and every "human" figure on the [stats page](https://trade.mersennet.com/stats).
+- Points earned through **wash trading or self-dealing across wallets, faucet or referral farming, exploiting a bug instead of reporting it**, or automation that misrepresents itself as human use are forfeited, and the wallets involved may be excluded ([Terms §8](https://trade.mersennet.com/terms)).
+- Rates can change between seasons. A change during the season is announced before it applies, and totals may be recalculated if a bug in the accounting is found.
+
+## Bug bounty
+
+Found a security issue? Report it privately — never in public — to **security@mersennet.com**, or ask an admin in the [Telegram group](https://t.me/Mersennet) for a private channel. Include steps to reproduce, the affected component and, for chain issues, the block height. We acknowledge within 48 hours.
+
+| Severity | Points | Examples |
+|---|---|---|
+| Critical | 50,000 | an outsider halts consensus or makes honest nodes diverge; creating, stealing or moving funds, collateral or stake you do not own; an agent key that can withdraw; signature forgery; remote code execution on a node |
+| High | 20,000 | one request or transaction crashes or wedges a node; unfair gains through margin, PnL or liquidation arithmetic; bypassing the faucet's limits at scale; authentication bypass on the trade API |
+| Medium | 5,000 | bypassing a rate limit on the API or RPC; stored or reflected XSS on the terminal or explorer; leaking non-public data from the API |
+| Low | 1,000 | limited-impact information disclosure or misconfiguration |
+
+**Scope**: the node and its precompiles (order book, staking), the trade terminal and API, the explorer, the faucet and the SDKs — all source-available on [GitHub](https://github.com/mersennet). **Out of scope**: third-party services (Cloudflare, wallets, Telegram), social engineering, volumetric denial of service, findings in test code, and scanner output without a working proof.
+
+**Rules**: the first report of an issue earns the points; demonstrate, do not exploit (do not drain accounts or attack the public infrastructure); we set the severity and credit the wallet you name, with a mention in the [changelog](/resources/changelog/) if you want one.
+
+
+---
 source: https://docs.mersennet.com/getting-started/test-the-network/
 ---
 
@@ -6801,11 +6855,11 @@ Add the network to your wallet ([Wallet Setup](/getting-started/wallet-setup/) �
 
 ## 2. Trade
 
-[trade.mersennet.com](https://trade.mersennet.com) is a perpetuals terminal on the **native order book** (precompile `0x…0100`): deposit MRSN as collateral, place limit or market orders, long or short with leverage. Matching and settlement are atomic on-chain — no sequencer, no off-chain matcher. Market makers quote live prices, so books are usually two-sided. Guide: [Mersennet Trade](/ecosystem/trade/).
+[trade.mersennet.com](https://trade.mersennet.com) is a perpetuals terminal on the **native order book** (precompile `0x…0100`): deposit MRSN or USDC as collateral, place limit or market orders, long or short with leverage. Matching and settlement are atomic on-chain — no sequencer, no off-chain matcher. Market makers quote live prices, so books are usually two-sided. Guide: [Mersennet Trade](/ecosystem/trade/).
 
 ## 3. Run a node
 
-One command on any Ubuntu 22.04+ / Debian 12+ server (2 vCPU, 4 GB RAM, 40 GB SSD is enough):
+One command on any Ubuntu 22.04+ / Debian 12+ server (4 vCPU, 8 GB RAM and a 100 GB SSD recommended — [hardware](/validators/run-a-node/#step-1--get-a-server)):
 
 ```bash
 curl -fsSL https://mersennet.com/downloads/install.sh | sudo bash -s -- --operator 0xYOUR_WALLET
@@ -6834,19 +6888,19 @@ Mersennet is EVM-equivalent: Hardhat, Foundry, ethers and viem work unchanged. D
 
 ## 7. Points
 
-Season 1 points on [trade.mersennet.com/points](https://trade.mersennet.com/points) track participation. Live today, or opening at today's upgrade:
+Season 1 points on [trade.mersennet.com/points](https://trade.mersennet.com/points) track participation:
 
 - **Trading**: 1 point per $1 traded — the taker and the resting maker of every fill each earn its notional (bots excluded).
-- **Node running**: 500 points a day for each verified node while it is online.
-- **Liquidity**: 0.1 LP point per MRSN per day deposited in the [maker vault](https://trade.mersennet.com/vault) — deposits open at block 1,605,600 (Sun 20 Sep, ~16:30 UTC); see [Maker Vault](/ecosystem/maker-vault/).
+- **Node running**: 500 points a day per operator wallet while its verified node is online (one node counts per operator).
+- **Liquidity**: 0.1 LP point per MRSN per day deposited in the [maker vault](https://trade.mersennet.com/vault); see [Maker Vault](/ecosystem/maker-vault/).
 - **Referrals**: the referrer earns 10% of each referee's trading points; nothing is deducted from the referee.
 - **Weekly sprint**: the top 3 traders by volume (both sides of each fill) each week earn 3,000 / 2,000 / 1,000 bonus points.
 
-The [leaderboard](https://trade.mersennet.com/leaderboard) ranks traders and shows the sprint standings.
+The [leaderboard](https://trade.mersennet.com/leaderboard) ranks traders and shows the sprint standings. Rates, tiers, fair-play rules and the bug bounty: [Points — Season 1](/getting-started/points/).
 
 ## Is it up?
 
-[status.mersennet.com](https://status.mersennet.com/status/mersennet) shows live uptime of the RPC (two public nodes with automatic failover), explorer, faucet, terminal and the snapshot server. Something wrong or confusing? Ask in the official Telegram chat [t.me/Mersennet](https://t.me/Mersennet), or use the terminal's [feedback form](https://trade.mersennet.com/feedback) — both go straight to the team.
+[status.mersennet.com](https://status.mersennet.com/status/mersennet) shows live uptime of the RPC (several origins with automatic failover), explorer, faucet, terminal and the snapshot server, and any incident in progress. Something wrong or confusing? Ask in the official Telegram chat [t.me/Mersennet](https://t.me/Mersennet), or use the terminal's [feedback form](https://trade.mersennet.com/feedback) — both go straight to the team.
 
 
 ---
@@ -7575,6 +7629,7 @@ Notable milestones and updates for the Mersennet ecosystem.
 
 ### Open Validator Set, Snapshot Sync, Verified Node Runners
 
+- **27 Sep — the terminal is open source.** [`mersennet/trade`](https://github.com/mersennet/trade) (terminal, API, indexer, market-making bots) is public under the Business Source License 1.1, like the node: run your own terminal, API or indexer against a Mersennet network freely; other networks need a commercial license; Apache-2.0 from 2030-09-30. Contributions need the CLA in the repository. Same day, from community feedback: exact point totals with progress measured against the next tier's threshold, uniform two-decimal delegation columns, a copy button on the node upgrade command, a bolder upgrade notice, "Sep" everywhere. State snapshots are now taken on an app host and mirrored to the public RPC node, which no longer restarts four times a day.
 - **Next release — two consensus switches at block 1,969,200 (Tue 29 Sep, afternoon–evening UTC; live estimate on the [upgrades page](https://explorer.mersennet.com/upgrades))**. Validators must be on it before then. **Order-book errors as reverts**: a refused order-book or staking call returns its reason (`Error(string)`) and charges 20k gas instead of the whole limit; `eth_call` returns the reason too. **Gas-price floor and fee split**: the base fee never falls below 1 gwei; of what each block collects 50% goes to the protocol treasury, 25% to the block proposer, 25% is burned ([details](/architecture/tokenomics/#transaction-fees)). Also in this release: rewards and fee shares are credited so that an account first seen through an RPC balance query still exists on every node (a latent state-root divergence).
 - **26 Sep release `b7c75ff`** (operational, no consensus change): a graceful restart can no longer orphan a block — the node stops producing the moment shutdown is requested and waits for an in-flight block to reach its peers. `mersennet --help` prints the options; unknown arguments are rejected; the binary no longer starts the developer devnet demo when run without a configuration. The market maker now sizes its quotes to the Maker Vault's collateral and backs off when its orders revert on chain; the vault manager pushes deposits in whole MRSN (a rounding bug had left them idle since the settlement switch). New public health check `GET /api/v1/health/exchange` (fills, order-book revert ratio, maker quoting, vault collateral, indexer lag) on the [status page](https://status.mersennet.com); the explorer's Network page shows the 24 h transaction success rate.
 - **Exchange pause, 20–25 Sep**: from the settlement switch (Sun 20 Sep 16:29 UTC) until Fri 25 Sep 19:00 UTC no trade printed. The market maker quotes for the Maker Vault, whose collateral was 450 MRSN, with sizes designed for a far larger account; under the new 10% initial margin every one of its orders was refused, and the refused orders (about 530,000 a day) made up 91% of the chain's transactions. Chain, wallets and user orders were unaffected; the vault's depositors kept their MRSN. Fixed by the changes above plus a 1,000,000 MRSN seed deposit from the market-making treasury (shown on the vault page; it earns no LP points).
@@ -7845,7 +7900,11 @@ Yes. The set is open since block 1,348,200: run a node with `--operator 0xYOUR_W
 
 ### What are points and how do node runners earn them?
 
-Points track testnet participation on [trade.mersennet.com/points](https://trade.mersennet.com/points): 1 point per $1 traded, and **500 points a day** for running a verified node. Verification is automatic within about ten minutes of your node being online with an operator address configured.
+Points track testnet participation on [trade.mersennet.com/points](https://trade.mersennet.com/points): 1 point per $1 traded, **500 points a day** for running a verified node, 10% of a referee's trading points, the weekly sprint bonus and 0.1 point per MRSN-day in the Maker Vault. Verification of a node is automatic within about ten minutes of it being online with an operator address configured. Points have no monetary value and promise no token or airdrop; farming them forfeits them. Exact rates, tiers and the fair-play rules: [Points — Season 1](/getting-started/points/).
+
+### Does testnet MRSN have value? Will the testnet be reset?
+
+No, and possibly. Testnet MRSN and everything built on it exist to exercise the software and cannot be redeemed; anyone selling testnet MRSN is running a scam. The chain may be reset with at least 48 hours' notice when a defect cannot be carried forward. [Testnet Policies](/resources/testnet-policies/) has the full statement, including rate limits, data retention and how incidents are communicated.
 
 ## Ecosystem
 
@@ -7857,7 +7916,7 @@ Mersennet Trade is the perpetuals trading terminal built on the on-chain CLOB pr
 
 ### How do I report a vulnerability? {#security}
 
-Email **security@mersennet.com** (or message an admin in the [Telegram group](https://t.me/Mersennet) and ask for a private channel). Please include steps to reproduce, the affected component (node, precompile, terminal, API, explorer, faucet) and, for chain issues, the block height. We acknowledge within 48 hours and keep you informed until the fix ships; credit in the changelog is yours if you want it. Do not test against other users' funds or run denial-of-service traffic — this is a public testnet, but people are using it. Every public web hostname (mersennet.com, trade, explorer, faucet, docs, status) publishes the same contact at `/.well-known/security.txt`.
+Email **security@mersennet.com** (or message an admin in the [Telegram group](https://t.me/Mersennet) and ask for a private channel). Please include steps to reproduce, the affected component (node, precompile, terminal, API, explorer, faucet) and, for chain issues, the block height. We acknowledge within 48 hours and keep you informed until the fix ships; credit in the changelog is yours if you want it, and valid reports earn 1,000 to 50,000 points under the [bug bounty](/getting-started/points/#bug-bounty). Do not test against other users' funds or run denial-of-service traffic — this is a public testnet, but people are using it. Every public web hostname (mersennet.com, trade, explorer, faucet, docs, status) publishes the same contact at `/.well-known/security.txt`.
 
 ---
 
@@ -7933,6 +7992,69 @@ once, linked everywhere.
 **Halving schedule**: Block rewards start at 2⁶¹ − 1 wei (≈2.3 MRSN) and halve every 33,550,336 blocks (the 5th perfect number); total emission converges to ≈154.72M MRSN, well below the 2⁸⁹ − 1 wei (≈618.97M MRSN) supply cap. See [Tokenomics](/architecture/tokenomics/).
 
 **Mersenne prime**: A prime of the form 2ᵖ−1. The network's namesake and its chain IDs: testnet `131071` (2¹⁷−1), mainnet `8191` (2¹³−1). The logo's five bars are `11111₂` = 31 = 2⁵−1.
+
+
+---
+source: https://docs.mersennet.com/resources/testnet-policies/
+---
+
+
+The Mersennet testnet is a public network run for testing. This page states plainly what you can rely on and what you cannot. It applies to everything under `mersennet.com` — the chain, `trade.mersennet.com`, the faucet, the explorer and the docs — and complements the terminal's [Terms of Use](https://trade.mersennet.com/terms) and [Risk Disclosure](https://trade.mersennet.com/risk).
+
+## Testnet assets have no value
+
+Testnet MRSN, the mock stablecoins, every balance, position, order, vault share and staking bond exist only to exercise the software. They cannot be bought, sold or redeemed, and nobody at Mersennet will ever ask you to pay for them. Anyone offering to sell testnet MRSN is running a scam.
+
+## Points
+
+Points on the [points page](https://trade.mersennet.com/points) record participation: trading volume, running a verified node, referrals, the weekly sprint, Maker Vault deposits and valid bug reports — rates and rules on [Points — Season 1](/getting-started/points/). They are a scoreboard, not an asset:
+
+- They have no monetary value and are not a token, security or claim of any kind.
+- They carry **no promise of a future token, allocation, airdrop or payment**. Any future program will be announced on its own terms; nothing on this network implies one.
+- Accrual rules can change between seasons, a season can be paused, and totals can be recalculated if a bug or an abuse is found.
+- Points earned through wash trading, self-dealing across wallets, faucet or referral farming, exploits, or automation misrepresenting itself as human use are forfeited, and the wallets involved may be excluded.
+
+## Resets
+
+The chain **may be reset** — a new genesis, all balances and history gone. Resets are used only when the alternative is carrying a defect forward; there have been two (July and August 2026, both for feature releases that changed genesis — see the [changelog](/resources/changelog/)). A reset is announced at least 48 hours ahead on the [Telegram group](https://t.me/Mersennet), the [announcement bar](https://trade.mersennet.com) and this changelog, together with what happens to points (the default is that points survive a reset; balances do not). Node operators re-run the installer; keys and operator settings are kept.
+
+## Protocol upgrades
+
+Consensus changes activate at announced block heights, listed with live time estimates on the [upgrades page](https://explorer.mersennet.com/upgrades) and in the staking page's schedule. Validators must run the current release before each height — a node on an old build forks off at the switch and is jailed. Releases are signed; the installer refuses unsigned bundles. Nothing is required from traders at an upgrade.
+
+## Rate limits
+
+| Surface | Limit |
+|---|---|
+| Faucet | 1 drip (1,001 MRSN) per address per hour; at most 3 drips per connection (IP) per day; 1 mock-token claim per token per address per hour |
+| Public RPC (`rpc.mersennet.com`) | Fair use behind Cloudflare; `admin_*`, `debug_*`, `miner_*`, `personal_*` are not exposed; `eth_getLogs` spans up to 2,000 blocks per call. Heavy users should [run their own node](/validators/run-a-node/) — it is in sync in about a minute |
+| Trade API | 600 requests per minute per IP; 60 per minute on sensitive endpoints (keys, agents, alerts, auth) |
+
+Limits protect the network for everyone and may be tightened during abuse without notice.
+
+## Data and privacy
+
+The chain is public: every transaction, order and balance is visible to anyone, forever (until a reset). The terminal and API store what they need to serve you — your address, orders you armed in the browser (stop, TWAP), referral links, points, feedback you submit — and the origin IP for rate limiting. No accounts, no e-mail, no tracking cookies; see the terminal's [Privacy Policy](https://trade.mersennet.com/privacy). Shielded (private) features are not active on this testnet yet; nothing you do here is private.
+
+## Availability, incidents and support
+
+There is no uptime guarantee. What you can rely on:
+
+- **Status**: [status.mersennet.com](https://status.mersennet.com/status/mersennet) checks the chain, RPC, terminal, API, explorer, faucet, snapshots and the exchange's liveness every minute; the team is paged on red.
+- **Incidents** are written up in the [changelog](/resources/changelog/) with cause, effect and fix — for example the 20–25 September exchange pause.
+- **Support**: questions in the [Telegram group](https://t.me/Mersennet); bugs and product feedback through the [feedback form](https://trade.mersennet.com/feedback) (it reaches the team within minutes); security issues to **security@mersennet.com** — never in public, see the [FAQ](/resources/faq/#security).
+- **Node operators**: the staking page and `mersennet-check` tell you when your build is behind; the installer upgrades in one command and keeps your keys.
+
+## Known limitations
+
+- Shielded accounts, notes and private orders are described in the docs but switch on at the privacy hard fork; today the shielded root is anchored in every block and nothing else.
+- Preview pages in the terminal (spot, options, OTC, copy trading and others) are roadmap mock-ups and say so in a banner; they are not connected to the chain.
+- Validators run on modest hosts; a validator that runs out of memory restarts itself gracefully (a few seconds off the leader rotation) until the next release sizes the state cache.
+- The testnet is not the mainnet: mainnet starts from its own genesis, and nothing here carries over unless a program says so explicitly.
+
+## Open source
+
+The node ([`mersennet/mersennet`](https://github.com/mersennet/mersennet)) and the terminal ([`mersennet/trade`](https://github.com/mersennet/trade)) are source-available under the Business Source License 1.1 (Apache-2.0 from 2030); the explorer, SDKs, website, faucet and these docs are MIT. Contributions to the node and terminal need the CLA in each repository.
 
 
 ---

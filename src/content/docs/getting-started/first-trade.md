@@ -58,7 +58,7 @@ Testnet participation is tracked on the [Points page](https://trade.mersennet.co
 
 - **1 point per $1 traded** (bots are excluded): a 1 MRSN order at about $115 earns about 115 points, whether it crossed the book or rested and got filled — both sides of a fill earn.
 - The [leaderboard](https://trade.mersennet.com/leaderboard) ranks traders by points and shows the **weekly sprint**: the top 3 traders by volume (both sides of each fill) each week earn 3,000 / 2,000 / 1,000 bonus points.
-- Other programs: 500 points a day for a verified node, referrals (10% of a referee's trading points), and 0.1 LP point per MRSN per day in the [maker vault](/ecosystem/maker-vault/) once deposits open at block 1,605,600 (Sun 20 Sep, ~16:30 UTC).
+- Other programs: 500 points a day for running a verified node, referrals (10% of a referee's trading points), and 0.1 LP point per MRSN per day in the [maker vault](/ecosystem/maker-vault/). All rates, tiers and the bug bounty: [Points — Season 1](/getting-started/points/).
 
 :::note[Units on testnet]
 Prices are quoted in USD; balances, PnL and equity are shown in MRSN. In the margin engine one MRSN of collateral counts as one dollar of margin — there is no MRSN/USD conversion on the testnet yet — so leverage and PnL read as if MRSN were the quote currency. MockUSDC (the test USDC) is also accepted as collateral at 90% weight.
