@@ -4,14 +4,20 @@
    JetBrains Mono for every label, square geometry, corner-bracket panels.
    Prose stays in the grotesk for readability; the mono is for UI chrome. */
 
-/* Self-hosted and preloaded (astro.config.mjs): with the Google Fonts stylesheet the
-   text reflowed about 1.3 s into every desktop load when the web font replaced the fallback. */
-@font-face { font-family: 'Schibsted Grotesk'; font-style: normal; font-weight: 400 800; font-display: swap; src: url('/fonts/SchibstedGrotesk.woff2') format('woff2'); }
-@font-face { font-family: 'JetBrains Mono'; font-style: normal; font-weight: 400 800; font-display: swap; src: url('/fonts/JetBrainsMono.woff2') format('woff2'); }
+/* Self-hosted, preloaded (astro.config.mjs) and `optional`: a font that is not ready at
+   first paint is not swapped in later, because the swap reflowed every page's text by a
+   line or more. It is in the cache for the next page. */
+@font-face { font-family: 'Schibsted Grotesk'; font-style: normal; font-weight: 400 800; font-display: optional; src: url('/fonts/SchibstedGrotesk.woff2') format('woff2'); }
+@font-face { font-family: 'JetBrains Mono'; font-style: normal; font-weight: 400 800; font-display: optional; src: url('/fonts/JetBrainsMono.woff2') format('woff2'); }
+/* Without the web fonts, text is set in Arial / Courier New scaled to their metrics
+   (average advance and vertical metrics, measured from the woff2 files), so it looks close. */
+@font-face { font-family: 'Schibsted Grotesk Fallback'; font-weight: 400; src: local('Arial'), local('Liberation Sans'), local('Helvetica'); size-adjust: 104.73%; ascent-override: 93.24%; descent-override: 24.62%; line-gap-override: 0%; }
+@font-face { font-family: 'Schibsted Grotesk Fallback'; font-weight: 700; src: local('Arial Bold'), local('Arial-BoldMT'), local('Liberation Sans Bold'), local('Helvetica Bold'); size-adjust: 102.66%; ascent-override: 95.12%; descent-override: 25.11%; line-gap-override: 0%; }
+@font-face { font-family: 'JetBrains Mono Fallback'; src: local('Courier New'), local('Liberation Mono'); size-adjust: 99.98%; ascent-override: 102.02%; descent-override: 30%; line-gap-override: 0%; }
 
 :root {
-  --sl-font: 'Schibsted Grotesk', ui-sans-serif, system-ui, sans-serif;
-  --sl-font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', monospace;
+  --sl-font: 'Schibsted Grotesk', 'Schibsted Grotesk Fallback', ui-sans-serif, system-ui, sans-serif;
+  --sl-font-mono: 'JetBrains Mono', 'JetBrains Mono Fallback', ui-monospace, 'SF Mono', monospace;
 
   /* Phosphor green on black */
   --sl-color-accent-low: #0b2916;
