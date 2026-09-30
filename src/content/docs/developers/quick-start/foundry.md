@@ -1,5 +1,6 @@
 ---
 title: "Deploy with Foundry"
+description: "Build, test and deploy smart contracts to the Mersennet testnet with Foundry: forge, cast and the network settings."
 ---
 
 This guide explains how to build and deploy smart contracts to Mersennet using Foundry. Mersennet's `eth_sendRawTransaction` accepts standard Ethereum RLP-encoded transactions (legacy, EIP-2930, and EIP-1559) in addition to its own custom binary format, so `forge create` and `cast send` work with locally signed transactions.

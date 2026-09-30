@@ -1,5 +1,6 @@
 ---
 title: "Deployed Contracts"
+description: "Addresses of the contracts and precompiles deployed on the Mersennet testnet (chain 131071): tokens, order book, staking and the maker vault."
 ---
 
 Reference of contracts deployed on Mersennet testnet (Chain ID 131071). All addresses below are live on the current chain (redeployed August 2026 after the fresh-genesis reset; addresses are unchanged from the previous chain).

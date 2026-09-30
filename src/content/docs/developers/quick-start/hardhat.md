@@ -1,5 +1,6 @@
 ---
 title: "Deploy with Hardhat"
+description: "Set up Hardhat for the Mersennet testnet (chain 131071) and deploy your first contract, from project setup to the explorer."
 ---
 
 This guide walks you through setting up Hardhat and deploying a smart contract to Mersennet testnet (Chain ID 131071).

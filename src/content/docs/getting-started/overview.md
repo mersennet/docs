@@ -1,5 +1,6 @@
 ---
 title: "What is Mersennet?"
+description: "What Mersennet is: an EVM Layer 1 with a native on-chain order book, leader-gated BFT finality in ~2 s, and account-level privacy at the privacy fork."
 ---
 
 **Mersennet** is an EVM-compatible Layer 1 with two things most chains don't have: a **native order matching engine (MersennetOrders)** built into the execution layer, and **account-level privacy** with verifiable state. Your Solidity contracts deploy unchanged — and they can place, fill, and cancel orders on a real order book atomically, inside the same transaction.
@@ -36,12 +37,12 @@ Mersennet is designed for builders. Whether you're deploying a simple ERC-20, bu
 | Step | Link |
 |------|------|
 | 0. The one-page map of everything you can test | [Test the Network](/getting-started/test-the-network/) |
-| 1. Add the network to your wallet | [Wallet Setup](/getting-started/wallet-setup) |
-| 2. Get testnet MRSN from the faucet | [Faucet](/getting-started/faucet) |
-| 3. Send your first transaction | [First Transaction](/getting-started/first-transaction) |
-| 4. Deploy a smart contract | [Hardhat Quick Start](/developers/quick-start/hardhat) |
-| 5. Explore the architecture | [Consensus](/architecture/consensus) · [Tokenomics](/architecture/tokenomics) |
+| 1. Add the network to your wallet | [Wallet Setup](/getting-started/wallet-setup/) |
+| 2. Get testnet MRSN from the faucet | [Faucet](/getting-started/faucet/) |
+| 3. Send your first transaction | [First Transaction](/getting-started/first-transaction/) |
+| 4. Deploy a smart contract | [Hardhat Quick Start](/developers/quick-start/hardhat/) |
+| 5. Explore the architecture | [Consensus](/architecture/consensus/) · [Tokenomics](/architecture/tokenomics/) |
 | 6. Learn about privacy | [Privacy on Mersennet](/privacy/overview/) |
 | 7. Run a node (one command, in sync in a minute) and earn points | [Run a Node](/validators/run-a-node/) |
 | 8. Become a validator with 1,000 MRSN | [Become a Validator](/validators/become-a-validator/) |
-| 9. Read the whitepaper | [Whitepaper](/whitepaper) |
+| 9. Read the whitepaper | [Whitepaper](/whitepaper/) |

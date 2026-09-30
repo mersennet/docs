@@ -1,5 +1,6 @@
 ---
 title: "Token Economics"
+description: "MRSN token economics: the 2^89 − 1 wei supply cap, allocation, halving block rewards, validator rewards and the transaction fee split."
 ---
 
 This document provides complete tokenomics documentation for Mersennet (MRSN), including supply, allocation, emission schedule, and validator reward distribution.

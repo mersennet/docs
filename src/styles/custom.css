@@ -4,6 +4,11 @@
    JetBrains Mono for every label, square geometry, corner-bracket panels.
    Prose stays in the grotesk for readability; the mono is for UI chrome. */
 
+/* Self-hosted and preloaded (astro.config.mjs): with the Google Fonts stylesheet the
+   text reflowed about 1.3 s into every desktop load when the web font replaced the fallback. */
+@font-face { font-family: 'Schibsted Grotesk'; font-style: normal; font-weight: 400 800; font-display: swap; src: url('/fonts/SchibstedGrotesk.woff2') format('woff2'); }
+@font-face { font-family: 'JetBrains Mono'; font-style: normal; font-weight: 400 800; font-display: swap; src: url('/fonts/JetBrainsMono.woff2') format('woff2'); }
+
 :root {
   --sl-font: 'Schibsted Grotesk', ui-sans-serif, system-ui, sans-serif;
   --sl-font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', monospace;
@@ -492,4 +497,16 @@ footer.sl-flex,
 .katex-display {
   overflow-x: auto;
   padding: 0.4rem 0;
+}
+/* Inline formulas cannot wrap; on a phone a long one scrolls by itself instead of
+   widening the whole page. */
+@media (max-width: 640px) {
+  .katex:not(.katex-display .katex) {
+    display: inline-block;
+    max-width: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+    vertical-align: middle;
+    padding: 2px 0;
+  }
 }

@@ -1,5 +1,6 @@
 ---
 title: "Node Architecture"
+description: "Inside a Mersennet node: the Rust binary that executes blocks, runs consensus, stores state and serves JSON-RPC, component by component."
 ---
 
 This page describes the internal architecture of a Mersennet node, the Rust binary that produces blocks, executes transactions, participates in consensus, and serves the JSON-RPC API.

@@ -1,5 +1,6 @@
 ---
 title: "NFT (ERC-721) Guide"
+description: "Deploy an ERC-721 NFT collection on the Mersennet testnet: a minimal contract with metadata, minting, transfers and safe receivers."
 ---
 
 This guide walks you through deploying and interacting with an NFT collection on Mersennet (Chain ID 131071).

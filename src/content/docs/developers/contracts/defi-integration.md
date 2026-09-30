@@ -1,16 +1,17 @@
 ---
 title: "DeFi Integration"
+description: "Integrate DeFi contracts with Mersennet: trade on the native order book from Solidity, with deployed contract addresses and examples."
 ---
 
 :::caution[AMM contracts not deployed on the current testnet]
-The Mersennet Swap AMM described in this guide is **not deployed on the current testnet chain** (the chain was reset for the consensus overhaul; only the [foundation contracts](/resources/contracts) were redeployed). Trading on Mersennet happens on the native [MersennetOrders CLOB](/architecture/order-book). This guide is kept as an integration reference for when the AMM returns.
+The Mersennet Swap AMM described in this guide is **not deployed on the current testnet chain** (the chain was reset for the consensus overhaul; only the [foundation contracts](/resources/contracts/) were redeployed). Trading on Mersennet happens on the native [MersennetOrders CLOB](/architecture/order-book/). This guide is kept as an integration reference for when the AMM returns.
 :::
 
 Mersennet Swap is a Uniswap V2–style AMM. This guide shows how to swap tokens, add liquidity, and query prices using a Router contract.
 
 ## Contract Addresses
 
-For current, live addresses always check [Deployed Contracts](/resources/contracts). The token addresses on the current chain:
+For current, live addresses always check [Deployed Contracts](/resources/contracts/). The token addresses on the current chain:
 
 | Contract | Address |
 |----------|---------|

@@ -1,5 +1,6 @@
 ---
 title: "Staking Guide"
+description: "Staking on Mersennet: self-stake and delegation, reward split and commission, unbonding, jailing, and slashing only for equivocation."
 ---
 
 Staking is how you participate in Mersennet consensus and earn rewards. This guide covers how staking works, rewards, unbonding, and slashing conditions.
@@ -49,7 +50,7 @@ validator_reward = (block_reward × validator_stake) / total_stake
 - **Halving**: Every 33,550,336 blocks (~2.1 years at ~2 s blocks)
 - **Crediting**: the validator's share is credited to its operator wallet every block; the delegators' share accrues in the staking precompile and is collected with `claimRewards` (one click on the staking page)
 
-Illustration with four validators of 1M MRSN each (today's set has six: the four genesis validators plus two community validators with smaller self-stakes, which earn in the same proportion):
+Illustration with four validators of 1M MRSN each (the live set, on the [explorer](https://explorer.mersennet.com/validators), adds community validators with smaller self-stakes, which earn in the same proportion):
 - Total stake = 4M MRSN
 - Block reward ≈ 2.3058 MRSN
 - Each validator receives 2.3058 × (1M / 4M) = **≈0.5765 MRSN per block**
@@ -110,4 +111,4 @@ Downtime is not slashed on the testnet — the cost is an epoch (~1 h, escalatin
 | **Unbonding** | 7,200 blocks (~4 h) on testnet; tokens locked until the period ends |
 | **Slashing** | Double-sign (equivocation) → slashed; downtime → benched after 3 missed slots, jailed an epoch (1, 2, 4, 8, 16, 24 for repeats), no stake penalty |
 
-For operational details, see [Validator Overview](/validators/overview) and [Monitoring & Alerts](/validators/monitoring).
+For operational details, see [Validator Overview](/validators/overview/) and [Monitoring & Alerts](/validators/monitoring/).

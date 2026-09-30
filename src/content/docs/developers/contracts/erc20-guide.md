@@ -1,5 +1,6 @@
 ---
 title: "ERC-20 Token Guide"
+description: "Deploy and use an ERC-20 token on the Mersennet testnet (chain 131071) with Hardhat: the contract, deployment and transfers."
 ---
 
 This guide walks you through deploying and interacting with an ERC-20 token on Mersennet (Chain ID 131071).
@@ -81,7 +82,7 @@ contract MersennetToken {
 
 ### Option 1: Hardhat
 
-1. Create a Hardhat project and add the Mersennet network (see [Deploy with Hardhat](/developers/quick-start/hardhat)).
+1. Create a Hardhat project and add the Mersennet network (see [Deploy with Hardhat](/developers/quick-start/hardhat/)).
 2. Save the contract as `contracts/MersennetToken.sol`.
 3. Deploy:
 

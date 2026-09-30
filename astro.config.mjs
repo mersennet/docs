@@ -21,16 +21,15 @@ export default defineConfig({
       plugins: [starlightLinksValidator()],
       title: 'Mersennet',
       description:
-        'Build private DeFi on a zero-knowledge EVM Layer 1 with shielded accounts, a native on-chain order book, and SP1-proven state.',
+        'Build on Mersennet, an EVM Layer 1 with a native on-chain order book: run a node, trade through the SDKs, and read the protocol and RPC reference.',
       logo: {
         src: './src/assets/logo.svg',
         alt: 'Mersennet',
       },
       favicon: '/favicon.svg',
       head: [
-        { tag: 'link', attrs: { rel: 'preconnect', href: 'https://fonts.googleapis.com' } },
-        { tag: 'link', attrs: { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossorigin: true } },
-        { tag: 'link', attrs: { rel: 'stylesheet', href: 'https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap' } },
+        { tag: 'link', attrs: { rel: 'preload', href: '/fonts/SchibstedGrotesk.woff2', as: 'font', type: 'font/woff2', crossorigin: true } },
+        { tag: 'link', attrs: { rel: 'preload', href: '/fonts/JetBrainsMono.woff2', as: 'font', type: 'font/woff2', crossorigin: true } },
         { tag: 'link', attrs: { rel: 'icon', href: '/favicon.ico', sizes: '48x48' } },
         { tag: 'link', attrs: { rel: 'apple-touch-icon', href: '/apple-touch-icon.png' } },
         { tag: 'meta', attrs: { property: 'og:image', content: 'https://docs.mersennet.com/og.jpg' } },

@@ -1,12 +1,13 @@
 ---
 title: "RPC Methods Reference"
+description: "Reference for every Mersennet JSON-RPC method: the eth_ namespace plus the mersennet_ order-book, staking and network extensions, with examples."
 ---
 
 import { Tabs, TabItem } from '@astrojs/starlight/components';
 
 Complete reference for JSON-RPC methods supported by Mersennet. All examples use `https://rpc.mersennet.com` as the RPC URL.
 
-Mersennet implements the standard `eth_` namespace plus native extensions across `net_`, `web3_`, `txpool_`, `mersennet_`, `mersennet_orders_`, `mersennet_staking_`, and `mersennet_bridge_`. The privacy/ZK methods (shielded transfers, SP1 state proofs, selective-disclosure reads) also live in the `mersennet_` namespace and are documented separately in the [Shielded JSON-RPC reference](/developers/privacy/shielded-rpc).
+Mersennet implements the standard `eth_` namespace plus native extensions across `net_`, `web3_`, `txpool_`, `mersennet_`, `mersennet_orders_`, `mersennet_staking_`, and `mersennet_bridge_`. The privacy/ZK methods (shielded transfers, SP1 state proofs, selective-disclosure reads) also live in the `mersennet_` namespace and are documented separately in the [Shielded JSON-RPC reference](/developers/privacy/shielded-rpc/).
 
 ---
 
@@ -1381,11 +1382,11 @@ The shielded precompiles (`0x0200`, `0x0201`, `0x0300`) and shielded RPC methods
 
 ## Privacy & shielded methods
 
-Shielded transfers and orders, SP1 state proofs, and selective-disclosure (viewing-grant) reads are exposed through the `mersennet_*` namespace and documented in full in the **[Shielded JSON-RPC reference](/developers/privacy/shielded-rpc)**. For typed client helpers, see the **[Shielded SDK](/developers/privacy/shielded-sdk)**.
+Shielded transfers and orders, SP1 state proofs, and selective-disclosure (viewing-grant) reads are exposed through the `mersennet_*` namespace and documented in full in the **[Shielded JSON-RPC reference](/developers/privacy/shielded-rpc/)**. For typed client helpers, see the **[Shielded SDK](/developers/privacy/shielded-sdk/)**.
 
 ### mersennet_getShieldedBalance
 
-Returns **aggregate** shielded-pool counters: `{ totalNoteCount, totalNullifierCount, transparentEoaCount }`. The node never decrypts balances; per-account balances are reconstructed client-side via viewing grants (see the [Shielded JSON-RPC reference](/developers/privacy/shielded-rpc)).
+Returns **aggregate** shielded-pool counters: `{ totalNoteCount, totalNullifierCount, transparentEoaCount }`. The node never decrypts balances; per-account balances are reconstructed client-side via viewing grants (see the [Shielded JSON-RPC reference](/developers/privacy/shielded-rpc/)).
 
 **Parameters:** None
 
@@ -1443,7 +1444,7 @@ print(resp.json()["result"])
 | `net_` | 3 | Network status |
 | `web3_` | 1 | Client info |
 | `txpool_` | 1 | Mempool status |
-| `mersennet_` | transparent equivalents + code attestation + shielded/ZK | Native equivalents, code-publication lookups, and the shielded/state-proof/disclosure surface ([Privacy](/developers/privacy/shielded-rpc)) |
+| `mersennet_` | transparent equivalents + code attestation + shielded/ZK | Native equivalents, code-publication lookups, and the shielded/state-proof/disclosure surface ([Privacy](/developers/privacy/shielded-rpc/)) |
 | `mersennet_orders_` | 13 | CLOB order book engine (markets, orders, margin, multi-collateral) |
 | `mersennet_staking_` | 3 | Delegated proof-of-stake reads |
 | `mersennet_bridge_` | 4 | Cross-domain bridge |

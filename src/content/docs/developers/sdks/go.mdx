@@ -1,11 +1,12 @@
 ---
 title: "Go SDK"
+description: "The Mersennet Go SDK (github.com/mersennet/sdk-go): a typed client for JSON-RPC, the on-chain order book and grant-gated privacy reads."
 ---
 
 The Mersennet Go SDK (`github.com/mersennet/sdk-go`) provides a typed client for the JSON-RPC API, MersennetOrders (on-chain order book), and the privacy read side: grant-gated note scanning, portfolio reconstruction, and compliance attestations — the same read, reconstruction and attestation surface as the TypeScript SDK (cross-language digest test vectors pin compatibility). It has no WebSocket client, prover, migration or transaction-signing helpers yet; sign with go-ethereum as shown below.
 
 :::tip[Privacy / shielded features]
-This page covers the **transparent** surface (`eth_*` / `mersennet_*` / `mersennet_orders_*`). For the shielded-note workflow (viewing grants, note scanning, reconstruction, attestations), see **[Shielded SDK](/developers/privacy/shielded-sdk)** and the runnable example in `examples/view-notes-end-to-end/` inside the SDK repository.
+This page covers the **transparent** surface (`eth_*` / `mersennet_*` / `mersennet_orders_*`). For the shielded-note workflow (viewing grants, note scanning, reconstruction, attestations), see **[Shielded SDK](/developers/privacy/shielded-sdk/)** and the runnable example in `examples/view-notes-end-to-end/` inside the SDK repository.
 :::
 
 ## Installation
@@ -219,4 +220,4 @@ if err != nil {
 fmt.Println("Decrypted notes:", len(result.Notes))
 ```
 
-See [Selective disclosure](/privacy/selective-disclosure) for the grant model behind `ViewNotes`.
+See [Selective disclosure](/privacy/selective-disclosure/) for the grant model behind `ViewNotes`.

@@ -1,8 +1,9 @@
 ---
 title: "Mersennet Trade"
+description: "Mersennet Trade, the perpetuals terminal on the native on-chain order book: markets, one-click trading, margin, points and the public API."
 ---
 
-**Mersennet Trade** is the perpetuals trading terminal for Mersennet — a professional-grade interface over the native on-chain Central Limit Order Book (CLOB) powered by [MersennetOrders](/architecture/order-book).
+**Mersennet Trade** is the perpetuals trading terminal for Mersennet — a professional-grade interface over the native on-chain Central Limit Order Book (CLOB) powered by [MersennetOrders](/architecture/order-book/).
 
 :::tip[Live on Testnet]
 Mersennet Trade is live at **[https://trade.mersennet.com](https://trade.mersennet.com)**
@@ -61,7 +62,7 @@ Additional user-created markets appear alongside the genesis five — query `mer
 
 1. Visit [https://trade.mersennet.com](https://trade.mersennet.com)
 2. Connect your MetaMask wallet to Mersennet (Chain ID 131071) — the site can add the network for you
-3. Get testnet MRSN from the [Faucet](/getting-started/faucet)
+3. Get testnet MRSN from the [Faucet](/getting-started/faucet/)
 4. Deposit collateral (escrowed 1:1 from your native MRSN)
 5. Place limit or market orders — long or short, up to the market's max leverage
 
@@ -90,6 +91,6 @@ The terminal's own data layer is public at `https://trade.mersennet.com/api/v1` 
 
 ## Related Resources
 
-- [MersennetOrders Architecture](/architecture/order-book): How the native CLOB precompile works
-- [RPC Methods](/developers/rpc/methods): `mersennet_orders_*` API for bots and integrations
-- [Deployed Contracts](/resources/contracts): Precompile addresses and ABIs
+- [MersennetOrders Architecture](/architecture/order-book/): How the native CLOB precompile works
+- [RPC Methods](/developers/rpc/methods/): `mersennet_orders_*` API for bots and integrations
+- [Deployed Contracts](/resources/contracts/): Precompile addresses and ABIs
