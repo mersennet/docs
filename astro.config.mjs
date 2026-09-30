@@ -28,8 +28,6 @@ export default defineConfig({
       },
       favicon: '/favicon.svg',
       head: [
-        { tag: 'link', attrs: { rel: 'preload', href: '/fonts/SchibstedGrotesk.woff2', as: 'font', type: 'font/woff2', crossorigin: true } },
-        { tag: 'link', attrs: { rel: 'preload', href: '/fonts/JetBrainsMono.woff2', as: 'font', type: 'font/woff2', crossorigin: true } },
         { tag: 'link', attrs: { rel: 'icon', href: '/favicon.ico', sizes: '48x48' } },
         { tag: 'link', attrs: { rel: 'apple-touch-icon', href: '/apple-touch-icon.png' } },
         { tag: 'meta', attrs: { property: 'og:image', content: 'https://docs.mersennet.com/og.jpg' } },
