@@ -37,9 +37,11 @@ export default defineConfig({
         { tag: 'meta', attrs: { property: 'og:image:width', content: '1200' } },
         { tag: 'meta', attrs: { property: 'og:image:height', content: '630' } },
         { tag: 'meta', attrs: { name: 'twitter:image', content: 'https://docs.mersennet.com/og.jpg' } },
+        { tag: 'meta', attrs: { name: 'twitter:site', content: '@mersennetlabs' } },
       ],
       social: [
         { icon: 'telegram', label: 'Telegram chat', href: 'https://t.me/Mersennet' },
+        { icon: 'x.com', label: 'X', href: 'https://x.com/mersennetlabs' },
         { icon: 'github', label: 'GitHub', href: 'https://github.com/mersennet' },
       ],
       lastUpdated: true,
