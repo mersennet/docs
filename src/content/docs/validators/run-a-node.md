@@ -134,11 +134,11 @@ If verification fails, the message says why: port 30303/tcp not reachable from t
 
 ## Becoming a validator
 
-The set is open since block 1,348,200. With your node verified (above), open [trade.mersennet.com/staking](https://trade.mersennet.com/staking) with the operator wallet, choose a self-stake of at least **1,000 MRSN** and press **Bond & register** — you produce blocks from the next hourly epoch. Parameters, lifecycle (pending, active, standby, jailed, exiting), raw precompile calls and operating advice are on [Become a Validator](/validators/become-a-validator).
+The set is open since block 1,348,200. With your node verified (above), open [trade.mersennet.com/staking](https://trade.mersennet.com/staking) with the operator wallet, choose a self-stake of at least **1,000 MRSN** and press **Bond & register** — you produce blocks from the next hourly epoch. Parameters, lifecycle (pending, active, standby, jailed, exiting), raw precompile calls and operating advice are on [Become a Validator](/validators/become-a-validator/).
 
 ## Frequently asked
 
-**My node is running but does not appear in the validator list.** A full node is not a validator until you register it. Verified nodes show on the explorer's *Network* page (with your operator badge); validators show on its *Validators* page after you register on [trade.mersennet.com/staking](https://trade.mersennet.com/staking) — see [Become a Validator](/validators/become-a-validator). `mersennet-check` saying *in sync* and *visible* is what success looks like today; the explorer's Network page lists it as a community node.
+**My node is running but does not appear in the validator list.** A full node is not a validator until you register it. Verified nodes show on the explorer's *Network* page (with your operator badge); validators show on its *Validators* page after you register on [trade.mersennet.com/staking](https://trade.mersennet.com/staking) — see [Become a Validator](/validators/become-a-validator/). `mersennet-check` saying *in sync* and *visible* is what success looks like today; the explorer's Network page lists it as a community node.
 
 **`mersennet-check` prints `State … does not match the chain`, or the log shows `RESTORED STATE ROOT MISMATCH`.** Your node ran an older build through a consensus upgrade and its state diverged. Re-run the installer with `--reset-state` (add the same `--data-dir` / `--operator` flags you used before): it keeps your keys and identity, discards the chain state and restores the latest snapshot — back in sync in about a minute.
 
@@ -152,7 +152,7 @@ curl -fsSL https://mersennet.com/downloads/install.sh | sudo bash -s -- --reset-
 
 **My node stopped advancing (the explorer moves, `mersennet-check` shows the same height).** Since the 16 Sep release the node notices this itself: when its head has not moved for five minutes while the network is at least 60 blocks ahead, it exits and systemd restarts it (log line *"head has not advanced while the network moved on"*). On an older build, `sudo systemctl restart mersennet` does the same by hand. If it happens repeatedly, send us `journalctl -u mersennet -n 300 --no-pager` in the [Telegram chat](https://t.me/Mersennet) or through the terminal's [feedback form](https://trade.mersennet.com/feedback) — such reports are exactly what the testnet is for.
 
-**Do I have to upgrade when a new release comes out?** For a full node: whenever convenient — `mersennet-check` says *update available*. For a **validator: yes, before the next protocol switch height** (listed on [Network Info](/getting-started/network-info/#protocol-upgrades) and announced on [Become a Validator](/validators/become-a-validator) and the [changelog](/resources/changelog); the staking page warns when your node is behind the current release). A validator on an old build applies the old rules from the switch height on, disagrees with the network about the next leader or the validator set, and forks off — it then needs `--reset-state`. Upgrading is the same one-line command as installing; it keeps your keys and data and takes under a minute.
+**Do I have to upgrade when a new release comes out?** For a full node: whenever convenient — `mersennet-check` says *update available*. For a **validator: yes, before the next protocol switch height** (listed on [Network Info](/getting-started/network-info/#protocol-upgrades) and announced on [Become a Validator](/validators/become-a-validator/) and the [changelog](/resources/changelog/); the staking page warns when your node is behind the current release). A validator on an old build applies the old rules from the switch height on, disagrees with the network about the next leader or the validator set, and forks off — it then needs `--reset-state`. Upgrading is the same one-line command as installing; it keeps your keys and data and takes under a minute.
 
 **Do I need to do everything on this page?** No. Steps 1–4 are the whole thing. The sections below are reference material.
 
@@ -333,7 +333,7 @@ Node-local (not consensus). A node whose head stops advancing while the network 
 
 #### `validator_set`: Open Validator Set
 
-Consensus-critical — identical on every node; the installer refreshes it from the canonical config on upgrade. Details on [Become a Validator](/validators/become-a-validator).
+Consensus-critical — identical on every node; the installer refreshes it from the canonical config on upgrade. Details on [Become a Validator](/validators/become-a-validator/).
 
 | Parameter | Type | Testnet value | Description |
 |-----------|------|---------------|-------------|
@@ -341,6 +341,8 @@ Consensus-critical — identical on every node; the installer refreshes it from 
 | `epoch_blocks` | `u64` | `1800` | Epoch length; the active set is recomputed at multiples of it |
 | `min_self_stake_mrsn` | `u64` | `1000` | Minimum self-stake to be eligible, in whole MRSN |
 | `max_validators` | `usize` | `12` | Size of the active set (top by self + delegated stake) |
+| `max_validators_height` | `u64` | `2127600` | From this height (at the next epoch boundary) the active set holds up to `max_validators_after` (`0` = off) |
+| `max_validators_after` | `usize` | `50` | Size of the active set from `max_validators_height` |
 | `unbonding_blocks` | `u64` | `7200` | Blocks before an exiting validator's self-stake is withdrawable |
 | `jail_miss_bps` | `u64` | `2000` | Missed-slot share (basis points) above which a validator is jailed for the next epoch |
 | `jail_min_slots` | `u64` | `5` | Minimum leader slots in the epoch before the miss share is judged |
@@ -383,7 +385,7 @@ Consensus-critical — identical on every node; the installer refreshes it from 
 | `checkpoint_interval` | `u64` | `100` | Blocks between ZK checkpoints |
 
 :::tip
-Check the [Network Information](/getting-started/network-info) page for current seed peer addresses.
+Check the [Network Information](/getting-started/network-info/) page for current seed peer addresses.
 :::
 
 ## Genesis Setup
@@ -778,7 +780,7 @@ du -sh /var/lib/mersennet/data/state/
 
 ## Next Steps
 
-- [Staking Guide](/validators/staking): Stake MRSN and manage delegations
-- [Monitoring & Alerts](/validators/monitoring): Set up Prometheus and Grafana
-- [Node Architecture](/architecture/node-architecture): Understand the node internals
-- [Consensus Mechanism](/architecture/consensus): Deep dive into the BFT proof-of-stake consensus
+- [Staking Guide](/validators/staking/): Stake MRSN and manage delegations
+- [Monitoring & Alerts](/validators/monitoring/): Set up Prometheus and Grafana
+- [Node Architecture](/architecture/node-architecture/): Understand the node internals
+- [Consensus Mechanism](/architecture/consensus/): Deep dive into the BFT proof-of-stake consensus

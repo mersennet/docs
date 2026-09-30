@@ -1,5 +1,6 @@
 ---
 title: "Brand Assets"
+description: "Mersennet brand guidelines: the five-bar mark, colors, typography, logo usage and downloadable assets."
 ---
 
 Brand guidelines for Mersennet: colors, typography, logo usage, and downloadable assets for developers, partners, and community members.

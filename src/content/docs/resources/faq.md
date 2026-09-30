@@ -1,14 +1,13 @@
 ---
 title: "FAQ"
+description: "Answers to common questions about Mersennet: the network, MRSN, the order book, running a node, validators, staking and privacy."
 ---
-
-# Frequently Asked Questions
 
 ## General
 
 ### What is Mersennet?
 
-**Mersennet** is the private, verifiable network: an EVM-compatible Layer 1 with a **native on-chain order book (MersennetOrders)** that contracts can place and fill orders on atomically in one transaction, every block proven with SP1, and account-level privacy arriving at the privacy hard fork. Key features include ~2 second blocks with immediate BFT finality, leader-gated Proof-of-Stake consensus, and a 2⁸⁹ − 1 wei (≈618.97M MRSN) supply cap with halving block rewards.
+**Mersennet** is the private, verifiable network: an EVM-compatible Layer 1 with a **native on-chain order book (MersennetOrders)** that contracts can place and fill orders on atomically in one transaction, every block run through the SP1 proof pipeline (the public testnet uses the development prover), and account-level privacy arriving at the privacy hard fork. Key features include ~2 second blocks with immediate BFT finality, leader-gated Proof-of-Stake consensus, and a 2⁸⁹ − 1 wei (≈618.97M MRSN) supply cap with halving block rewards.
 
 ### Is Mersennet EVM compatible?
 
@@ -26,27 +25,27 @@ Yes. Mersennet is fully EVM compatible. You can deploy Solidity contracts withou
 
 ### How do I get testnet tokens?
 
-1. Add Mersennet to your wallet (see [Wallet Setup](/getting-started/wallet-setup)).
+1. Add Mersennet to your wallet (see [Wallet Setup](/getting-started/wallet-setup/)).
 2. Use the **Faucet** at [https://faucet.mersennet.com](https://faucet.mersennet.com) — 1,000 MRSN (+1 for gas) per address per hour, plus one-click claims of 10,000 MockUSDC/USDT/DAI.
-3. Contracts and scripts can also call the public `faucet()` function on each mock token directly; see [Deployed Contracts](/resources/contracts).
+3. Contracts and scripts can also call the public `faucet()` function on each mock token directly; see [Deployed Contracts](/resources/contracts/).
 
 ### What is the max supply of MRSN?
 
-The supply **cap** is **2⁸⁹ − 1 wei ≈ 618.97M MRSN** (a Mersenne prime) with 18 decimals, a hard protocol ceiling, not the target circulating supply. Block-reward emission follows the halving schedule and converges to **≈ 154.72M MRSN**, well below the cap; the rest of circulating MRSN comes from genesis allocations (ecosystem/grants, foundation, team, sales), with amounts finalized at genesis. See [Tokenomics](/architecture/tokenomics) for details.
+The supply **cap** is **2⁸⁹ − 1 wei ≈ 618.97M MRSN** (a Mersenne prime) with 18 decimals, a hard protocol ceiling, not the target circulating supply. Block-reward emission follows the halving schedule and converges to **≈ 154.72M MRSN**, well below the cap; the rest of circulating MRSN comes from genesis allocations (ecosystem/grants, foundation, team, sales), with amounts finalized at genesis. See [Tokenomics](/architecture/tokenomics/) for details.
 
 ### What is WMRSN?
 
-**WMRSN** is the ERC-20 wrapped version of native MRSN, for DeFi protocols that expect ERC-20 tokens. Wrap with `deposit()` and unwrap with `withdraw()`. Address: `0x5bBF04528469591280D36D46209c7CCD5a68a798` (see [Deployed Contracts](/resources/contracts) for the always-current list).
+**WMRSN** is the ERC-20 wrapped version of native MRSN, for DeFi protocols that expect ERC-20 tokens. Wrap with `deposit()` and unwrap with `withdraw()`. Address: `0x5bBF04528469591280D36D46209c7CCD5a68a798` (see [Deployed Contracts](/resources/contracts/) for the always-current list).
 
 ## Development
 
 ### How do I deploy a contract to Mersennet?
 
-Use Hardhat or Foundry with Mersennet as a network. Add the RPC URL `https://rpc.mersennet.com` and Chain ID `131071`. See [Deploy with Hardhat](/developers/quick-start/hardhat) and [Deploy with Foundry](/developers/quick-start/foundry).
+Use Hardhat or Foundry with Mersennet as a network. Add the RPC URL `https://rpc.mersennet.com` and Chain ID `131071`. See [Deploy with Hardhat](/developers/quick-start/hardhat/) and [Deploy with Foundry](/developers/quick-start/foundry/).
 
 ### What wallets are supported?
 
-Any EIP-1193–compatible wallet — MetaMask, Rabby, Frame, Rainbow, and others — once Mersennet is added as a custom network (see [Wallet Setup](/getting-started/wallet-setup)). Transactions are standard EIP-155 signed transactions: the hash your wallet shows you is the hash on chain, and hardware wallets work through their usual integrations.
+Any EIP-1193–compatible wallet — MetaMask, Rabby, Frame, Rainbow, and others — once Mersennet is added as a custom network (see [Wallet Setup](/getting-started/wallet-setup/)). Transactions are standard EIP-155 signed transactions: the hash your wallet shows you is the hash on chain, and hardware wallets work through their usual integrations.
 
 ### Is there a bridge?
 
@@ -87,7 +86,7 @@ No, and possibly. Testnet MRSN and everything built on it exist to exercise the 
 
 ### What is Mersennet Trade?
 
-Mersennet Trade is the perpetuals trading terminal built on the on-chain CLOB precompile (`MersennetOrders`): explicit bid/ask price discovery, limit and market orders, every action a signed transaction. Its spot page is an off-chain preview for UX testing, not on-chain trading. See [Mersennet Trade](/ecosystem/trade).
+Mersennet Trade is the perpetuals trading terminal built on the on-chain CLOB precompile (`MersennetOrders`): explicit bid/ask price discovery, limit and market orders, every action a signed transaction. Its spot page is an off-chain preview for UX testing, not on-chain trading. See [Mersennet Trade](/ecosystem/trade/).
 
 ## Security
 
@@ -97,4 +96,4 @@ Email **security@mersennet.com** (or message an admin in the [Telegram group](ht
 
 ---
 
-Have more questions? Check the [Getting Started](/getting-started/overview) guides. Node operators: [Run a Node](/validators/run-a-node/) installs a node in one command and [Become a Validator](/validators/become-a-validator/) explains registration — no application needed. Questions and discussion: the official Telegram chat [t.me/Mersennet](https://t.me/Mersennet). Bug reports and product feedback go through the [feedback page in the trade terminal](https://trade.mersennet.com/feedback).
+Have more questions? Check the [Getting Started](/getting-started/overview/) guides. Node operators: [Run a Node](/validators/run-a-node/) installs a node in one command and [Become a Validator](/validators/become-a-validator/) explains registration — no application needed. Questions and discussion: the official Telegram chat [t.me/Mersennet](https://t.me/Mersennet). Bug reports and product feedback go through the [feedback page in the trade terminal](https://trade.mersennet.com/feedback).

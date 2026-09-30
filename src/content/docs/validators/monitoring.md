@@ -1,5 +1,6 @@
 ---
 title: "Monitoring & Alerts"
+description: "Monitor a Mersennet validator: built-in Telegram alerts, mersennet-check, Prometheus metrics and Grafana dashboards."
 ---
 
 Running a validator requires 24/7 visibility into node health, consensus participation, and resource usage. Start with the network's built-in Telegram alerts (nothing to install), then add Prometheus and Grafana if you want dashboards and your own alert rules.
@@ -51,7 +52,7 @@ Mersennet exposes metrics that you should monitor:
 | `mersennet_slashing_events` | Slashing evidence events by kind (slashing risk) |
 
 :::tip
-The full metric list is exposed at the node's `/metrics` endpoint (served on the RPC port). See [Run a Node: Monitoring Setup](/validators/run-a-node#monitoring-setup) for the complete table.
+The full metric list is exposed at the node's `/metrics` endpoint (served on the RPC port). See [Run a Node: Monitoring Setup](/validators/run-a-node/#monitoring-setup) for the complete table.
 :::
 
 ## Prometheus Setup
@@ -208,5 +209,5 @@ To send alerts to email, Slack, or PagerDuty:
 
 ## Next Steps
 
-- [Validator Overview](/validators/overview): Understand validator roles and risks
-- [Staking Guide](/validators/staking): Manage stake and delegations
+- [Validator Overview](/validators/overview/): Understand validator roles and risks
+- [Staking Guide](/validators/staking/): Manage stake and delegations

@@ -1,5 +1,6 @@
 ---
 title: "Validator Overview"
+description: "What Mersennet validators do: produce and vote on blocks, earn rewards by stake, and stay in the active set; how to join."
 ---
 
 Validators are the backbone of Mersennet. They run full nodes, participate in consensus, produce blocks, and earn block rewards in proportion to their stake. This guide explains what validators do, how the Proof-of-Stake consensus works, and what you need to become one.
@@ -85,4 +86,4 @@ Before running a validator, ensure you meet:
 | **Stake** | 1,000 MRSN self-stake to register (open set since block 1,348,200); the top 12 by self + delegated stake are active (50 from block 2,127,600), recomputed every hour — see [Become a Validator](/validators/become-a-validator/) |
 | **Operational** | 24/7 uptime, monitoring, key management, backup procedures |
 
-See [Run a Node](/validators/run-a-node) for the install and [Become a Validator](/validators/become-a-validator/) for registration.
+See [Run a Node](/validators/run-a-node/) for the install and [Become a Validator](/validators/become-a-validator/) for registration.

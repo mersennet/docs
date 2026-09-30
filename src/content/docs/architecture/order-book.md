@@ -1,5 +1,6 @@
 ---
 title: "MersennetOrders (On-chain CLOB)"
+description: "MersennetOrders, the native on-chain order book at precompile 0x0100: markets, matching, margin, settlement and liquidations, callable from contracts."
 ---
 
 ![Abstract illustration of an order book: glowing bid and ask depth bars meeting at the spread](/img/orderbook.webp)

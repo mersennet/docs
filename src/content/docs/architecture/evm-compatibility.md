@@ -1,5 +1,6 @@
 ---
 title: "EVM Compatibility"
+description: "How Mersennet runs the EVM: supported opcodes, precompiles, transaction types and gas, and what differs from Ethereum for Solidity contracts."
 ---
 
 Mersennet implements an **EVM-compatible** execution environment, allowing developers to deploy and run existing Ethereum smart contracts with minimal or no modification. This document describes the EVM implementation, supported features, and differences from Ethereum mainnet.
@@ -68,7 +69,7 @@ Mersennet adds **custom precompiles** for native protocol features:
 | **0x0300** | State-proof verifier | Verify SP1 state-transition proofs on-chain |
 | **0x0400** | **MersennetStaking** | Delegated staking: `delegate`, `undelegate`, `claimRewards`, `withdrawUnbonded` |
 
-See [MersennetOrders (On-chain CLOB)](/architecture/order-book) and the [Staking Guide](/validators/staking/) for full documentation.
+See [MersennetOrders (On-chain CLOB)](/architecture/order-book/) and the [Staking Guide](/validators/staking/) for full documentation.
 
 ## Gas Metering
 

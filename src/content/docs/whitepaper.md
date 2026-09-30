@@ -1,8 +1,9 @@
 ---
 title: "Whitepaper"
+description: "The Mersennet whitepaper: a Layer 1 that combines EVM execution with deterministic, native order matching, and how the testnet differs today."
 ---
 
-# Mersennet: A Hybrid Blockchain Architecture Combining EVM Execution with Deterministic Order Matching
+**Mersennet: A Hybrid Blockchain Architecture Combining EVM Execution with Deterministic Order Matching**
 
 **Version 7.1**  
 **Date: June 2026**  
@@ -13,10 +14,10 @@ title: "Whitepaper"
 ## Preface
 
 :::note[Design versus deployment (updated 20 Sep 2026)]
-This paper describes the protocol design. Where the public testnet differs today, the live behaviour is: **leader-gated BFT PoS** with a deterministic, stake-agnostic round-robin leader per height, one signed finality vote per validator and finality at >2/3 of stake (the two-round prevote/precommit pipeline, stake-weighted proposer election and HotStuff-2 are the roadmap path, not what runs); an **open validator set** through the staking precompile at `0x…0400` since block 1,348,200 (1,000 MRSN minimum self-stake, top 12 by stake (50 from block 2,127,600), 1,800-block epochs, 7,200-block unbonding, six validators active); **downtime is never slashed** — it is benched and jailed — and only equivocation is; P2P messages are signed but **not encrypted** (Noise is planned); the public testnet runs the `sled` storage backend. Section 22 keeps the implementation record current.
+This paper describes the protocol design. Where the public testnet differs today, the live behaviour is: **leader-gated BFT PoS** with a deterministic, stake-agnostic round-robin leader per height, one signed finality vote per validator and finality at >2/3 of stake (the two-round prevote/precommit pipeline, stake-weighted proposer election and HotStuff-2 are the roadmap path, not what runs); an **open validator set** through the staking precompile at `0x…0400` since block 1,348,200 (1,000 MRSN minimum self-stake, top 12 by stake (50 from block 2,127,600), 1,800-block epochs, 7,200-block unbonding; the live set is on the [explorer](https://explorer.mersennet.com/validators)); **downtime is never slashed** — it is benched and jailed — and only equivocation is; P2P messages are signed but **not encrypted** (Noise is planned); the public testnet runs the `sled` storage backend. Section 22 keeps the implementation record current.
 :::
 
-This document is a technical whitepaper describing the Mersennet protocol, a Layer 1 blockchain that unifies EVM execution with native order matching. It is intended as a specification of the system's design, architecture, and rationale. It is not a formal specification in the sense of the Ethereum Yellow Paper; parameters and mechanisms may evolve based on implementation experience and community feedback. Non-core aspects such as API bindings, client libraries, and operator tooling are documented elsewhere. This whitepaper draws structural inspiration from foundational works including the [Bitcoin whitepaper](https://bitcoin.org/bitcoin.pdf) [1], [Ethereum whitepaper](https://ethereum.org/whitepaper/) [2], [Solana](https://solana.com/solana-whitepaper.pdf) [3], and [Polkadot](https://polkadot.network/PolkaDotPaper.pdf) [4].
+This document is a technical whitepaper describing the Mersennet protocol, a Layer 1 blockchain that unifies EVM execution with native order matching. It is intended as a specification of the system's design, architecture, and rationale. It is not a formal specification in the sense of the Ethereum Yellow Paper; parameters and mechanisms may evolve based on implementation experience and community feedback. Non-core aspects such as API bindings, client libraries, and operator tooling are documented elsewhere. This whitepaper draws structural inspiration from foundational works including the [Bitcoin whitepaper](https://bitcoin.org/bitcoin.pdf) [1], [Ethereum whitepaper](https://ethereum.org/whitepaper/) [2], [Solana](https://solana.com/solana-whitepaper.pdf) [3], and [Polkadot](https://assets.polkadot.network/Polkadot-whitepaper.pdf) [4].
 
 **Version History:** v1.0 (initial draft), v2.0 (comprehensive technical), v3.0 (Ethereum-style expansion), v4.0 (incorporates patterns from top blockchain whitepapers), v5.0 (formula fixes, technical depth), v6.0 (parallel EVM execution, HotStuff-2 consensus, CLOB precompile, Frequent Batch Auctions, MEV protection, comprehensive benchmarks), v7.0 (production storage engine, WebSocket subscriptions, block pipeline, Noise P2P encryption, ZK state proofs, Account Abstraction, cross-chain bridges, TypeScript SDK, block explorer), v7.1 (Mersenne-prime tokenomics finalized: 2^89−1 supply cap, 2^61−1 block reward, 33,550,336-block halving; CLOB collateral backed 1:1 by escrowed native MRSN).
 
@@ -41,7 +42,7 @@ We propose Mersennet, a novel Layer 1 blockchain that **decouples the consensus 
 8. **Cross-Chain Bridge Infrastructure**: Multi-chain deposit/withdrawal with relayer verification, supporting Ethereum, Arbitrum, Optimism, Base, and custom chains.
 9. **WebSocket Subscriptions**: Real-time event streaming for blocks, transactions, logs, MersennetOrders trades, order book updates, and batch auction results.
 10. **Noise Protocol Encryption**: Authenticated, encrypted P2P communication using Noise_XX_25519_ChaChaPoly_BLAKE2s.
-11. **ZK State Proofs**: Modular proof framework with mock prover, batch aggregation, and checkpoint system for future SP1/STARK integration.
+11. **ZK State Proofs**: SP1 state-transition proofs with batch aggregation and checkpoints; the public testnet runs the pipeline with the development prover.
 12. **Block Pipeline**: Overlapping execution and consensus for doubled throughput (Monad-class pipelining).
 13. **TypeScript SDK**: Full client library for JSON-RPC, WebSocket subscriptions, and ABI-encoded CLOB precompile interaction.
 14. **Block Explorer**: Standalone web UI for visualizing blocks, transactions, order books, and validator status.
@@ -2662,7 +2663,7 @@ The following items from v5.0's roadmap have been implemented:
 - **Consensus Upgrade Path**: Evaluate Bullshark [11] and Shoal for DAG-based consensus with zero communication overhead, potentially achieving 40-80% latency reduction over HotStuff-2.
 - **State Sharding**: Partition MersennetOrders markets across shards for horizontal throughput scaling. Each shard processes its own order book independently; cross-shard trades use atomic commit protocols.
 - **SDK Expansion**: Python (`sdk-python/`) and Go (`sdk-go/`) client libraries now ship alongside the TypeScript SDK; a Rust client library remains future work.
-- **Public Testnet** *(live)*: the public testnet (chain ID 131071, ~2 s blocks) runs with an open validator set — six validators active in September 2026, two of them community-run — a public RPC, faucet, explorer, trading terminal, signed node releases and a points program for traders and node runners; the shielded pool and the bridge remain future work.
+- **Public Testnet** *(live)*: the public testnet (chain ID 131071, ~2 s blocks) runs with an open validator set — the four genesis validators plus community-run ones, the live set on the [explorer](https://explorer.mersennet.com/validators) — a public RPC, faucet, explorer, trading terminal, signed node releases and a points program for traders and node runners; the shielded pool and the bridge remain future work.
 - **Mainnet Launch**: Production deployment with genesis validator ceremony.
 
 ### 16.6 Research Areas
@@ -2904,7 +2905,7 @@ As Mersennet continues to evolve toward mainnet, we welcome contributions from r
 - [1] Nakamoto, S. (2008). "Bitcoin: A Peer-to-Peer Electronic Cash System." https://bitcoin.org/bitcoin.pdf
 - [2] Buterin, V. (2014). "A Next-Generation Smart Contract and Decentralized Application Platform." https://ethereum.org/whitepaper/
 - [3] Yakovenko, A. (2020). "Solana: A new architecture for a high performance blockchain." https://solana.com/solana-whitepaper.pdf
-- [4] Wood, G. (2016). "Polkadot: Vision for a Heterogeneous Multi-Chain Framework." https://polkadot.network/PolkaDotPaper.pdf
+- [4] Wood, G. (2016). "Polkadot: Vision for a Heterogeneous Multi-Chain Framework." https://assets.polkadot.network/Polkadot-whitepaper.pdf
 - [5] Wood, G. (2014). "Ethereum: A Secure Decentralised Generalised Transaction Ledger." Ethereum Yellow Paper.
 - [6] Buchman, E., Kwon, J., & Milosevic, Z. (2018). "The latest gossip on BFT consensus." arXiv:1807.04938 (Tendermint).
 - [7] Buterin, V. & Griffith, V. (2017). "Casper the Friendly Finality Gadget." https://arxiv.org/abs/1710.09437

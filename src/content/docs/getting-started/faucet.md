@@ -1,5 +1,6 @@
 ---
 title: "Get Testnet MRSN"
+description: "Get free testnet MRSN and mock stablecoins (USDC, USDT, DAI) from the Mersennet faucet: limits, cooldowns and troubleshooting."
 ---
 
 The Mersennet faucet sends free testnet MRSN — the native token you'll use for gas, trading collateral, and experimenting. It also mints the mock stablecoins (USDC, USDT, DAI) used across the testnet.
@@ -23,7 +24,7 @@ One click on **＋ Add Mersennet to wallet** configures MetaMask with the right 
 | MRSN (native) | 1,000 MRSN + 1 MRSN for gas | 1 claim per address per hour, at most 3 claims per connection (IP) per day |
 | MockUSDC / MockUSDT / MockDAI | 10,000 per token | 1 claim per token per address per hour |
 
-The mock tokens also have a public `faucet()` function on-chain, so contracts and scripts can mint them directly — see [Deployed Contracts](/resources/contracts) for addresses.
+The mock tokens also have a public `faucet()` function on-chain, so contracts and scripts can mint them directly — see [Deployed Contracts](/resources/contracts/) for addresses.
 
 ## Scripts and CI
 

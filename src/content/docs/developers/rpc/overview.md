@@ -1,5 +1,6 @@
 ---
 title: "JSON-RPC Overview"
+description: "The Mersennet JSON-RPC API: endpoints, WebSocket subscriptions, rate limits, errors and how it differs from Ethereum JSON-RPC."
 ---
 
 Mersennet exposes a JSON-RPC API compatible with the Ethereum JSON-RPC specification, plus Mersennet–specific extensions. Use it to query chain state, send transactions, and interact with smart contracts.
@@ -61,7 +62,7 @@ Mersennet supports the core Ethereum JSON-RPC methods:
 - **Logs:** `eth_getLogs`
 - **Filters:** `eth_newFilter`, `eth_newBlockFilter`, `eth_newPendingTransactionFilter`, `eth_getFilterChanges`, `eth_getFilterLogs`, `eth_uninstallFilter`
 
-See [RPC Methods Reference](/developers/rpc/methods) for full details.
+See [RPC Methods Reference](/developers/rpc/methods/) for full details.
 
 ### Mersennet Extensions
 
@@ -76,7 +77,7 @@ See [RPC Methods Reference](/developers/rpc/methods) for full details.
 | `mersennet_getCodeAttestation` / `mersennet_getCodeHash` | On-chain contract code-publication registry lookups |
 | `mersennet_orders_*` | MersennetOrders trading methods (submitOrder, cancelOrder, depositCollateral, getOrderBook, getOpenOrders). Writes route through consensus and return `{accepted, txHash}` (unsigned write RPCs are disabled on public endpoints — submit signed precompile transactions instead). |
 | `mersennet_bridge_*` | Internal EVM ⇄ CLOB message-queue RPCs (`enqueue*` / `dequeue*`), node-local and for testing. No external asset bridge is live. |
-| **Shielded / ZK** | Shielded transfers & orders, SP1 state proofs, and selective-disclosure reads; mutations return `-32605` until the privacy hard fork activates, reads such as `mersennet_getShieldedBalance` and `mersennet_getLatestStateProof` work now. See the [Shielded JSON-RPC reference](/developers/privacy/shielded-rpc) |
+| **Shielded / ZK** | Shielded transfers & orders, SP1 state proofs, and selective-disclosure reads; mutations return `-32605` until the privacy hard fork activates, reads such as `mersennet_getShieldedBalance` and `mersennet_getLatestStateProof` work now. See the [Shielded JSON-RPC reference](/developers/privacy/shielded-rpc/) |
 | **WebSocket** | `eth_subscribe` and `mersennet_subscribe` push notifications (new heads, trades, shielded roots, state proofs) |
 
 ### Notes on specific methods

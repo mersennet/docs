@@ -1,5 +1,6 @@
 ---
 title: "Consensus Mechanism"
+description: "Leader-gated BFT proof-of-stake on Mersennet: one leader per height, every validator re-executes and votes, finality at 2/3 of stake, open set by epoch."
 ---
 
 Mersennet uses **leader-gated BFT proof-of-stake**: one elected validator produces each block, every validator re-executes it, and signed finality votes gossip across the network until a 2/3-stake quorum finalizes the height. A two-phase **HotStuff-2** pipeline is implemented in the node and benchmarked as the roadmap upgrade path; it is not live on the testnet. This document is a deep dive into how the live consensus works, from leader election to finalization and slashing.
@@ -94,7 +95,7 @@ The active set is recomputed at every **epoch boundary** (heights divisible by `
 
 1. Judge the ending epoch: a validator that missed more than `jail_miss_bps` (20%) of its leader slots — with at least `jail_min_slots` (5) slots, or that was benched — is **jailed for the next epoch** (since block 1,569,600 consecutive jails escalate 1, 2, 4, 8, 16, 24 epochs); exits requested during the epoch are applied and the self-stake starts unbonding (`unbonding_blocks`, 7,200 ≈ 4 h); pending key rotations take effect. Within an epoch, from the same height, a leader that misses 3 slots is **benched**: out of the leader rotation until the boundary, still voting. No stake is lost for downtime.
 2. Rank eligible validators (registered in an earlier epoch, not jailed, self-stake ≥ minimum) by self-stake + delegations.
-3. The top `max_validators` (12) become the consensus set for the epoch; the leader schedule and the 2/3-stake finality threshold use exactly this set.
+3. The top `max_validators` (12; from block 2,127,600 `max_validators_after`, 50) become the consensus set for the epoch; the leader schedule and the 2/3-stake finality threshold use exactly this set.
 
 Genesis validators are seeded into the registry at activation and are never jailed. Missed slots are counted deterministically from each block: the proposer took the height at the smallest round where it leads, so every leader of an earlier round for that height missed its slot. Unbonded stake becomes withdrawable `unbonding_period` blocks after the unbond.
 
@@ -385,6 +386,7 @@ Core configuration parameters with their default values (the canonical testnet c
 | `epoch_blocks` | `u64` | `1800` | Epoch length (~1 h) |
 | `min_self_stake_mrsn` | `u64` | `1000` | Minimum self-stake to register |
 | `max_validators` | `u64` | `12` | Active set size (top by self + delegated stake) |
+| `max_validators_height` / `max_validators_after` | `u64` / `usize` | `2127600` / `50` | From this height (at the next epoch boundary) the active set holds up to `max_validators_after` validators |
 | `unbonding_blocks` | `u64` | `7200` | Unbonding for self-stake and delegations (~4 h) |
 | `jail_miss_bps` / `jail_min_slots` | `u64` | `2000` / `5` | Jailed after missing >20% of leader slots in an epoch, judged with ≥5 slots (or when benched) |
 | `rewards_to_operator_height` | `u64` | `1440000` | Block rewards credited to the operator wallet from this height |
