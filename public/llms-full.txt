@@ -7502,12 +7502,9 @@ phosphor green (`#7dff9b`) on black.
 
 <img src="/logo.svg" alt="Mersennet mark" width="96" height="96" />
 
-Download: [logo.svg](/logo.svg) · [favicon.svg](/favicon.svg) · [social card](/mersennet-social.svg)
-
-A complete kit lives in the monorepo's `brand/` directory (repository
-currently private — contact the team for the full kit): avatars, banners for
-every platform (X, LinkedIn, YouTube, Discord, Facebook, GitHub), post
-templates, and transparent renders.
+Download the mark and the lockup in [Downloadable Assets](#downloadable-assets) below. Avatars, banners for
+every platform (X, Telegram, LinkedIn, YouTube, Discord, Facebook, GitHub) and
+post templates are in the team's media kit; ask in the Telegram chat.
 
 ### Guidelines
 
@@ -7593,14 +7590,16 @@ The **wordmark** is always JetBrains Mono Bold, all caps, with 0.14em tracking.
 
 ## Downloadable Assets
 
-| Asset | Format | Description |
-|-------|--------|-------------|
-| Logo (mark) | SVG | Five-bar M mark in phosphor green (white, black, and deep-green variants in the kit) |
-| Favicon | SVG | Mark on a rounded black tile |
-| Social Card | SVG (PNG in the kit) | Open Graph / Twitter share image (1200×630) |
+| Asset | Files | Use |
+|-------|-------|-----|
+| Mark, vector | [green](/brand/mersennet-mark-green.svg) · [white](/brand/mersennet-mark-white.svg) · [black](/brand/mersennet-mark-black.svg) · [deep green](/brand/mersennet-mark-deepgreen.svg) (SVG) | Any size; prefer these |
+| Mark, transparent PNG | [green](/brand/logo-green-1024.png) · [white](/brand/logo-white-1024.png) · [black](/brand/logo-black-1024.png) (1024×1024) | Where SVG is not accepted |
+| Lockup (mark + wordmark), transparent PNG | [for dark backgrounds](/brand/lockup-dark-1800x420.png) · [for light backgrounds](/brand/lockup-light-1800x420.png) (1800×420) | Headers, partner pages, slides |
+| Favicon | [favicon.svg](/favicon.svg) | Mark on a rounded black tile |
+| Social card | [SVG](/mersennet-social.svg) (1200×630) | Open Graph / X share image |
 
 :::tip
-The full media kit (vector masters, transparent PNG renders, and platform-exact social sizes) lives in the monorepo's `brand/` directory (repository currently private — contact the team for access).
+Green on dark backgrounds, deep green on light ones; white or black only where a single color is required.
 :::
 
 ## Integration Guide
