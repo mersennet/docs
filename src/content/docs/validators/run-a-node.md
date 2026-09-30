@@ -142,6 +142,8 @@ The set is open since block 1,348,200. With your node verified (above), open [tr
 
 **`mersennet-check` prints `State … does not match the chain`, or the log shows `RESTORED STATE ROOT MISMATCH`.** Your node ran an older build through a consensus upgrade and its state diverged. Re-run the installer with `--reset-state` (add the same `--data-dir` / `--operator` flags you used before): it keeps your keys and identity, discards the chain state and restores the latest snapshot — back in sync in about a minute.
 
+**…right after a `--reset-state` on the 30 Sep release (`8c497bb`), or with `imported-block local state-root recompute differs from canonical` every so often.** Expected, and nothing to do; please do not reset again. Both messages compare your state with the state root in a block's header, which is whatever that block's producer computed. A validator that has not yet upgraded *and* reset once since 30 Sep still carries the fee-share drift that release fixed, so its blocks disagree with every correct node; when such a block is the snapshot's head, the restore check reports it too. Your node keeps the network's state and follows the chain. The messages stop once every validator has upgraded and reset; one reset on `8c497bb` is all a node needs.
+
 ```bash
 curl -fsSL https://mersennet.com/downloads/install.sh | sudo bash -s -- --reset-state --operator 0xYOUR_WALLET
 ```
@@ -533,7 +535,8 @@ Understanding node log messages helps diagnose issues quickly.
 
 | Log Message | Meaning | Action |
 |------------|---------|--------|
-| `RESTORED STATE ROOT MISMATCH` | The restored state does not match the head block | Re-run the installer with `--reset-state` |
+| `RESTORED STATE ROOT MISMATCH` | The restored state does not match the head block | Re-run the installer with `--reset-state`, unless you just did on `8c497bb`: then the head block's producer has not reset yet (see *Troubleshooting*), nothing to do |
+| `imported-block local state-root recompute differs from canonical` | A block's producer computed a different state root than your node | Nothing, while some validators have not reset since the 30 Sep release |
 | `slashing evidence detected kind=double_sign …` | A validator signed two blocks at one height | Nothing to do on a full node; the equivocating validator is slashed |
 | `liveness watchdog: head stalled … exiting` | Head unchanged for 5 min while the network is ≥ 60 blocks ahead | The service restarts and re-syncs itself; if it repeats, send `journalctl -u mersennet -n 300` via the feedback form |
 | `head not advancing, but no evidence the network is ahead` | Either the whole network is paused or this node has no peers and no reference RPC | Check `Peers` in `mersennet-check` and the explorer |
