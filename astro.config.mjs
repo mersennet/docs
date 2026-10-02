@@ -44,6 +44,7 @@ export default defineConfig({
       lastUpdated: true,
       // No "Edit page" link while the docs repository is private: it would 404 for every reader.
       customCss: ['./src/styles/custom.css', 'katex/dist/katex.min.css'],
+      components: { Footer: './src/components/Footer.astro' },
       sidebar: [
         {
           label: 'Getting Started',

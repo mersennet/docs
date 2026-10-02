@@ -1,0 +1,23 @@
+---
+import Default from '@astrojs/starlight/components/Footer.astro';
+---
+
+<Default><slot /></Default>
+<p class="mn-community">
+  Community: <a href="https://t.me/Mersennet">Telegram chat</a>{' · '}<a href="https://t.me/mersennet_announcements">Announcements</a>{' · '}<a href="https://x.com/mersennetlabs">X · @mersennetlabs</a>
+</p>
+
+<style>
+  .mn-community {
+    margin-top: 1.5rem;
+    font-size: var(--sl-text-sm);
+    color: var(--sl-color-gray-3);
+  }
+  .mn-community a {
+    color: var(--sl-color-text-accent);
+    text-decoration: none;
+  }
+  .mn-community a:hover {
+    text-decoration: underline;
+  }
+</style>
