@@ -38,6 +38,7 @@ export default defineConfig({
       ],
       social: [
         { icon: 'telegram', label: 'Telegram chat', href: 'https://t.me/Mersennet' },
+        { icon: 'discord', label: 'Discord', href: 'https://discord.gg/aJSQ63PUes' },
         { icon: 'x.com', label: 'X', href: 'https://x.com/mersennetlabs' },
         { icon: 'github', label: 'GitHub', href: 'https://github.com/mersennet' },
       ],

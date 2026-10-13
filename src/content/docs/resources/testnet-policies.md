@@ -46,7 +46,7 @@ There is no uptime guarantee. What you can rely on:
 
 - **Status**: [status.mersennet.com](https://status.mersennet.com/status/mersennet) checks the chain, RPC, terminal, API, explorer, faucet, snapshots and the exchange's liveness every minute; the team is paged on red.
 - **Incidents** are written up in the [changelog](/resources/changelog/) with cause, effect and fix — for example the 20–25 September exchange pause.
-- **Support**: questions in the [Telegram group](https://t.me/Mersennet); bugs and product feedback through the [feedback form](https://trade.mersennet.com/feedback) (it reaches the team within minutes); security issues to **security@mersennet.com** — never in public, see the [FAQ](/resources/faq/#security).
+- **Support**: questions in the [Telegram group](https://t.me/Mersennet) or on [Discord](https://discord.gg/aJSQ63PUes); bugs and product feedback through the [feedback form](https://trade.mersennet.com/feedback) (it reaches the team within minutes); security issues to **security@mersennet.com** — never in public, see the [FAQ](/resources/faq/#security).
 - **Node operators**: the staking page and `mersennet-check` tell you when your build is behind; the installer upgrades in one command and keeps your keys.
 
 ## Known limitations
