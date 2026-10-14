@@ -21,7 +21,7 @@ One click on **＋ Add Mersennet to wallet** configures MetaMask with the right 
 
 | Claim | Amount | Cooldown |
 |-------|--------|----------|
-| MRSN (native) | 1,000 MRSN + 1 MRSN for gas | 1 claim per address per hour, at most 3 claims per connection (IP) per day |
+| MRSN (native) | 1,000 MRSN + 1 MRSN for gas | 1 claim per address per hour, at most 3 claims per address and 3 per connection (IP) every 24 hours |
 | MockUSDC / MockUSDT / MockDAI | 10,000 per token | 1 claim per token per address per hour |
 
 The mock tokens also have a public `faucet()` function on-chain, so contracts and scripts can mint them directly — see [Deployed Contracts](/resources/contracts/) for addresses.
@@ -54,7 +54,7 @@ Need more for a hackathon, a course or a large integration test? Fund one wallet
 
 | Issue | Solution |
 |-------|----------|
-| `rate limited` error | Each address — and each IP — can claim MRSN once per hour, and one connection can take at most three drips a day (3,003 MRSN — plenty for testing; validators bond 1,000). Wait for the cooldown shown on the page. |
+| `rate limited` error | Each address — and each IP — can claim MRSN once per hour and at most three times every 24 hours (3,003 MRSN — plenty for testing; validators bond 1,000). The page shows which of your three claims are used and when the next one opens. |
 | `challenge failed` | The page's verification widget did not complete or its token expired — wait for the green tick and try again, or reload. |
 | `429` from a script | Scripts without the widget get one drip per address and per IP per day; the page gets more (see above). |
 | Request fails | Check that your address is a valid 0x-prefixed Ethereum address (40 hex characters). |

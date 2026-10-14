@@ -26,7 +26,7 @@ Yes. Mersennet is fully EVM compatible. You can deploy Solidity contracts withou
 ### How do I get testnet tokens?
 
 1. Add Mersennet to your wallet (see [Wallet Setup](/getting-started/wallet-setup/)).
-2. Use the **Faucet** at [https://faucet.mersennet.com](https://faucet.mersennet.com) — 1,000 MRSN (+1 for gas) per address per hour, plus one-click claims of 10,000 MockUSDC/USDT/DAI.
+2. Use the **Faucet** at [https://faucet.mersennet.com](https://faucet.mersennet.com) — 1,000 MRSN (+1 for gas) per address per hour, up to three times a day, plus one-click claims of 10,000 MockUSDC/USDT/DAI.
 3. Contracts and scripts can also call the public `faucet()` function on each mock token directly; see [Deployed Contracts](/resources/contracts/).
 
 ### What is the max supply of MRSN?

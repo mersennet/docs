@@ -30,7 +30,7 @@ Consensus changes activate at announced block heights, listed with live time est
 
 | Surface | Limit |
 |---|---|
-| Faucet | 1 drip (1,001 MRSN) per address per hour; at most 3 drips per connection (IP) per day; 1 mock-token claim per token per address per hour |
+| Faucet | 1 drip (1,001 MRSN) per address per hour; at most 3 drips per address and 3 per connection (IP) every 24 hours; 1 mock-token claim per token per address per hour |
 | Public RPC (`rpc.mersennet.com`) | Fair use behind Cloudflare; `admin_*`, `debug_*`, `miner_*`, `personal_*` are not exposed; `eth_getLogs` spans up to 2,000 blocks per call. Heavy users should [run their own node](/validators/run-a-node/) — it is in sync in about a minute |
 | Trade API | 600 requests per minute per IP; 60 per minute on sensitive endpoints (keys, agents, alerts, auth) |
 
