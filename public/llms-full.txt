@@ -8046,7 +8046,7 @@ There is no uptime guarantee. What you can rely on:
 
 - **Status**: [status.mersennet.com](https://status.mersennet.com/status/mersennet) checks the chain, RPC, terminal, API, explorer, faucet, snapshots and the exchange's liveness every minute; the team is paged on red.
 - **Incidents** are written up in the [changelog](/resources/changelog/) with cause, effect and fix — for example the 20–25 September exchange pause.
-- **Support**: questions in the [Telegram group](https://t.me/Mersennet); bugs and product feedback through the [feedback form](https://trade.mersennet.com/feedback) (it reaches the team within minutes); security issues to **security@mersennet.com** — never in public, see the [FAQ](/resources/faq/#security).
+- **Support**: questions in the [Telegram group](https://t.me/Mersennet) or on [Discord](https://discord.gg/aJSQ63PUes); bugs and product feedback through the [feedback form](https://trade.mersennet.com/feedback) (it reaches the team within minutes); security issues to **security@mersennet.com** — never in public, see the [FAQ](/resources/faq/#security).
 - **Node operators**: the staking page and `mersennet-check` tell you when your build is behind; the installer upgrades in one command and keeps your keys.
 
 ## Known limitations
@@ -8614,17 +8614,65 @@ curl -s http://127.0.0.1:8545 -H 'Content-Type: application/json' \
   -d '{"jsonrpc":"2.0","id":1,"method":"eth_blockNumber","params":[]}'
 ```
 
-## Step 4 — Keep it running
+## Step 4 — Maintenance
 
 | Task | Command |
 |------|---------|
 | Status | `mersennet-check` · `systemctl status mersennet` |
 | Logs | `journalctl -u mersennet -f` |
+| **Stop** (take the node down) | `sudo systemctl stop mersennet` — graceful, the node finishes its in-flight block. It stays down until you run `sudo systemctl start mersennet` or the server reboots; `sudo systemctl disable --now mersennet` keeps it down across reboots (`sudo systemctl enable --now mersennet` brings it back) |
 | Restart | `sudo systemctl restart mersennet` |
 | **Upgrade** to a new release | Re-run the Step 2 command — it replaces the binary, restarts the service, keeps data and keys |
 | Back up your identity | Copy `keys/node_key.json` from your data dir somewhere safe |
+| Move to a new server | [Move the node to a new VPS](#move-the-node-to-a-new-vps) (below) |
 | Let others sync from you | Open **UDP+TCP 30303** inbound (`sudo ufw allow 30303` — the installer does this if ufw is active) |
 | Uninstall | `sudo systemctl disable --now mersennet && sudo rm -f /etc/systemd/system/mersennet.service /usr/local/bin/mersennet /usr/local/bin/mersennet.prev /usr/local/bin/mersennet-check && sudo rm -rf /etc/mersennet && sudo userdel mersennet` — then delete the data dir if you want the chain data gone |
+
+**Validators:** while the node is down it misses its leader slots. Three misses in an epoch bench it for the rest of that epoch; missing more than 20% of an epoch's slots jails it for the next one. No stake is lost either way, so keep stops short and you lose at most an hour of rewards.
+
+### Move the node to a new VPS
+
+Your node's identity is one file: `keys/node_key.json` in the data dir (`/var/lib/mersennet` unless you installed with `--data-dir`). It is the node id on the explorer, what your operator badge is attached to and, **for a validator, the validator key**. Moving a node means moving that file; the chain data stays behind, because the new server restores a fresh snapshot.
+
+:::danger[Never run the same key on two servers at once]
+Two validators with the same `node_key.json` sign two different blocks at one height. That is equivocation: 5% of the stake is slashed and the validator is **tombstoned, permanently removed from the set**. Stop the old node before the key goes live anywhere else. A minute or two of downtime only costs a few leader slots.
+:::
+
+1. **New server: install and let it sync.** Use the same flags as your original install (`--operator`, and `--data-dir` if you use a volume). It starts with a temporary key of its own, which is harmless. Wait until `mersennet-check` says **in sync**.
+
+   ```bash
+   curl -fsSL https://mersennet.com/downloads/install.sh | sudo bash -s -- --operator 0xYOUR_WALLET
+   ```
+
+2. **Old server: stop the node for good.** `disable` keeps it from starting again if the provider reboots the machine.
+
+   ```bash
+   sudo systemctl disable --now mersennet
+   ```
+
+3. **Copy the key across, from your own computer:**
+
+   ```bash
+   scp root@OLD_SERVER_IP:/var/lib/mersennet/keys/node_key.json ./node_key.json
+   scp ./node_key.json root@NEW_SERVER_IP:node_key.json
+   ```
+
+   If you installed with `--data-dir`, the key is in `<your data dir>/keys/node_key.json`; use that path here and in step 4. If you log in as a sudo user rather than root, first run `sudo install -m 600 -o $USER /var/lib/mersennet/keys/node_key.json ~/node_key.json` on the old server, then copy with `scp you@OLD_SERVER_IP:node_key.json ./node_key.json` and `scp ./node_key.json you@NEW_SERVER_IP:node_key.json`, and delete the copy on the old server afterwards.
+
+4. **New server: swap in the key and start.**
+
+   ```bash
+   sudo systemctl stop mersennet
+   sudo install -m 600 -o mersennet -g mersennet ~/node_key.json /var/lib/mersennet/keys/node_key.json
+   rm ~/node_key.json
+   sudo systemctl start mersennet
+   ```
+
+5. **Check:** `mersennet-check` on the new server prints the **same Validator address** as the old server did, then *in sync* and *visible*. A validator's *proposed* count starts climbing again within a few minutes. The verified badge follows the key: the terminal finds the new IP on its own within about 30 minutes.
+
+6. **Clean up:** uninstall on the old server (the Uninstall line in the table above) or delete that VPS, and delete `./node_key.json` from your computer unless that is where you keep your backup.
+
+A full node that is not a validator can skip steps 3 and 4. It gets a new node id, and points keep coming because they follow the operator wallet. Move the key only if you want to keep the same id.
 
 That is the complete guide for running a node. Everything below is background, the validator question, and reference material for operators who want to go deeper.
 
@@ -8666,6 +8714,8 @@ curl -fsSL https://mersennet.com/downloads/install.sh | sudo bash -s -- --reset-
 **My node stopped advancing (the explorer moves, `mersennet-check` shows the same height).** Since the 16 Sep release the node notices this itself: when its head has not moved for five minutes while the network is at least 60 blocks ahead, it exits and systemd restarts it (log line *"head has not advanced while the network moved on"*). On an older build, `sudo systemctl restart mersennet` does the same by hand. If it happens repeatedly, send us `journalctl -u mersennet -n 300 --no-pager` in the [Telegram chat](https://t.me/Mersennet) or through the terminal's [feedback form](https://trade.mersennet.com/feedback) — such reports are exactly what the testnet is for.
 
 **Do I have to upgrade when a new release comes out?** For a full node: whenever convenient — `mersennet-check` says *update available*. For a **validator: yes, before the next protocol switch height** (listed on [Network Info](/getting-started/network-info/#protocol-upgrades) and announced on [Become a Validator](/validators/become-a-validator/) and the [changelog](/resources/changelog/); the staking page warns when your node is behind the current release). A validator on an old build applies the old rules from the switch height on, disagrees with the network about the next leader or the validator set, and forks off — it then needs `--reset-state`. Upgrading is the same one-line command as installing; it keeps your keys and data and takes under a minute.
+
+**How do I move my node to another VPS?** Install on the new server, stop the old node for good, then copy `keys/node_key.json` across. For a validator, never let both servers run that key at once. Step by step: [Move the node to a new VPS](#move-the-node-to-a-new-vps).
 
 **Do I need to do everything on this page?** No. Steps 1–4 are the whole thing. The sections below are reference material.
 
