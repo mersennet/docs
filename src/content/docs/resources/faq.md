@@ -29,6 +29,10 @@ Yes. Mersennet is fully EVM compatible. You can deploy Solidity contracts withou
 2. Use the **Faucet** at [https://faucet.mersennet.com](https://faucet.mersennet.com) — 1,000 MRSN (+1 for gas) per address per hour, up to three times a day, plus one-click claims of 10,000 MockUSDC/USDT/DAI.
 3. Contracts and scripts can also call the public `faucet()` function on each mock token directly; see [Deployed Contracts](/resources/contracts/).
 
+### Does test USDC count as margin?
+
+Not from block 2,670,700 (16 Oct 2026, about 11:10 UTC). Anyone can mint it, so from that block it counts 0 toward margin and new USDC deposits are refused. USDC you deposited can be withdrawn any time from the terminal's Withdraw panel; trade with MRSN as collateral. The mock stablecoins stay useful for testing wallets, transfers and contracts.
+
 ### What is the max supply of MRSN?
 
 The supply **cap** is **2⁸⁹ − 1 wei ≈ 618.97M MRSN** (a Mersenne prime) with 18 decimals, a hard protocol ceiling, not the target circulating supply. Block-reward emission follows the halving schedule and converges to **≈ 154.72M MRSN**, well below the cap; the rest of circulating MRSN comes from genesis allocations (ecosystem/grants, foundation, team, sales), with amounts finalized at genesis. See [Tokenomics](/architecture/tokenomics/) for details.
