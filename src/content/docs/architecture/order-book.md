@@ -293,7 +293,7 @@ Price-time priority:
 - MersennetOrders supports **margin trading**: no margin is enforced before block 1,605,600; from it, 10% initial margin (10× maximum leverage) and 5% maintenance margin
 - **Liquidations**: any keeper can call `liquidate(address)` on an account below maintenance margin (from block 1,605,600); it closes the position at the book and takes a 1% fee split between the keeper and the insurance fund. `isLiquidatable(address)` is the view
 - Smart contracts can call liquidation logic atomically with other operations
-- Collateral is global (not per-market). Native MRSN is the primary collateral; whitelisted ERC-20 tokens can also be posted via `depositTokenCollateral` and count toward margin at a configured haircut (e.g. USDC at 90% weight on testnet)
+- Collateral is global (not per-market). Native MRSN is the primary collateral; whitelisted ERC-20 tokens can also be posted via `depositTokenCollateral` and count toward margin at a configured weight. On the testnet the only registered token, test USDC, counted at 90% until block 2,670,700 (16 Oct 2026) and at 0 since: it is free to mint. Deposits of a zero-weight token are refused; withdrawals stay open
 
 ## Summary
 

@@ -7,6 +7,22 @@ Notable milestones and updates for the Mersennet ecosystem.
 
 ---
 
+## October 2026
+
+### USDC Switch, Security Fork, MRSN/USD Repair
+
+- **16 Oct — test USDC stops counting as margin at block 2,670,700 (about 11:10 UTC)**, from release `8db0944`. The test USDC is free to mint, so from that block it counts 0 toward margin and new deposits of it are refused; USDC already deposited can be withdrawn any time. Accounts whose margin was mostly USDC fall below maintenance at that block and are liquidated.
+- **14–16 Oct — faucet and WebSocket RPC down**, from 14 Oct 20:11 UTC to 16 Oct 06:20 UTC. The public RPC node's disk filled while it unpacked a state snapshot, and its node stopped; HTTP RPC and trading kept running on the second origin. The node now keeps the published snapshot packed, and a watchdog restarts any node whose RPC stays silent for three minutes.
+- **15 Oct — security fork at block 2,623,500**, from release `beaaba3`. From that block every node checks the signature on every transaction in a block and that the block's hash matches its contents; a resting order whose owner cannot cover the fill is cancelled instead of blocking the book; orders priced more than 10× from the last trade are refused.
+- **13 Oct — release `8db0944`**, required before block 2,670,700: a liquidation closes positions with a market order; after the 8 Oct repair, liquidations applied in a different order on some nodes left their accounting 26 units apart, and a one-off correction in blocks 2,554,100–2,850,900 brings every node back to one value; and the USDC switch above.
+- **8 Oct — MRSN/USD repaired at block 2,324,700**, from release `fedfe99`. On 6 Oct a sweep through the thin MRSN/USD book left its last trade, and so the mark of every MRSN/USD position, at about 143× the market price. At the repair block every node cancelled the MRSN/USD orders outside $34.50–$345, re-entered the positions opened on the broken book at $115 and reset the mark to $115. The Maker Vault reopened deposits at 10:20 UTC.
+- **Faucet, 14 Oct**: up to three claims per address every 24 hours, whatever the connection; the page shows which claims are used and when the next one opens.
+- **Community, 14 Oct**: the Discord server is open at [discord.gg/mersennet](https://discord.gg/mersennet).
+- **Docs, 14 Oct**: search works; [Run a Node](/validators/run-a-node/) has a Maintenance step and moving a node to a new VPS.
+- **Telegram alerts bot, 14 Oct**: confirms a validator's upgrade once its node answers on the current release, and reports an upgrade that goes wrong (another build, behind, silent).
+
+---
+
 ## September 2026
 
 ### Open Validator Set, Snapshot Sync, Verified Node Runners
