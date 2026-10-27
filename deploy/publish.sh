@@ -14,12 +14,12 @@ echo "$SHA" > dist/BUILD
 echo "==> rsync to $HOST"
 rsync -az --delete dist/ "$HOST:$DEST/"
 echo "==> sync the standby"
+on_standby() { [[ "$(ssh -o BatchMode=yes "$STANDBY" "cat $DEST/BUILD 2>/dev/null")" == "$SHA" ]]; }
 ssh -o BatchMode=yes "$STANDBY" 'systemctl start standby-sync.service'
-for i in $(seq 1 12); do
-  [[ "$(ssh -o BatchMode=yes "$STANDBY" "cat $DEST/BUILD 2>/dev/null")" == "$SHA" ]] && break
-  sleep 5
-done
-[[ "$(ssh -o BatchMode=yes "$STANDBY" "cat $DEST/BUILD 2>/dev/null")" == "$SHA" ]] && echo "    standby serves $SHA" || { echo "    standby did not pick up $SHA"; exit 1; }
+# A sync the timer started before the rsync above copies the old files, and
+# `systemctl start` only waits for it to finish: then one more run is needed.
+on_standby || ssh -o BatchMode=yes "$STANDBY" 'systemctl start standby-sync.service'
+on_standby && echo "    standby serves $SHA" || { echo "    standby did not pick up $SHA"; exit 1; }
 # The search entry files keep their names while the index they point to is
 # renamed on every build (and the old one deleted above): drop them at the edge.
 echo "==> purge the search entry files at the edge"

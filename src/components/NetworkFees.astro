@@ -1,0 +1,68 @@
+---
+// What common transactions cost right now, in MRSN and dollars. Renders the
+// 1 gwei floor figures; the script replaces them with live ones from the trade API.
+const ACTIONS = [
+  { key: 'transfer', label: 'Send MRSN', gas: 21_000 },
+  { key: 'order', label: 'Place or cancel an order', gas: 72_000 },
+  { key: 'delegate', label: 'Delegate stake', gas: 62_000 },
+];
+---
+
+<table class="network-fees" data-network-fees>
+  <thead>
+    <tr><th>Action</th><th>Gas</th><th>Fee</th><th>In dollars</th></tr>
+  </thead>
+  <tbody>
+    {ACTIONS.map((a) => (
+      <tr data-action={a.key}>
+        <td>{a.label}</td>
+        <td>{a.gas.toLocaleString('en-US')}</td>
+        <td data-mrsn>{String(a.gas / 1e9)} MRSN</td>
+        <td data-usd>—</td>
+      </tr>
+    ))}
+  </tbody>
+</table>
+<p class="network-fees-meta" data-network-fees-meta role="status">At the 1 gwei floor.</p>
+
+<script>
+  const FEES_URL = 'https://trade.mersennet.com/api/v1/stats/fees';
+  const short = (x: number) => String(+x.toPrecision(2));
+
+  async function load() {
+    const table = document.querySelector('[data-network-fees]');
+    if (!table) return;
+    try {
+      const res = await fetch(FEES_URL);
+      if (!res.ok) return;
+      const f = await res.json();
+      for (const a of f.actions ?? []) {
+        const row = table.querySelector(`tr[data-action="${a.key}"]`);
+        if (!row) continue;
+        row.querySelector('[data-mrsn]')!.textContent = `${short(a.mrsn)} MRSN`;
+        row.querySelector('[data-usd]')!.textContent = a.usd != null ? `$${a.usd.toFixed(4)}` : '—';
+      }
+      const meta = document.querySelector('[data-network-fees-meta]');
+      if (meta) {
+        const price = f.mrsnUsd ? ` · 1 MRSN = $${f.mrsnUsd.toFixed(2)} on the testnet's MRSN/USD market` : '';
+        meta.textContent = `Live: base fee ${f.baseFeeGwei} gwei${price} · updated ${new Date(f.updatedAt).toLocaleTimeString()}`;
+      }
+    } catch {
+      // keeps the floor figures
+    }
+  }
+  load();
+  setInterval(load, 60_000);
+</script>
+
+<style>
+  .network-fees td:nth-child(n + 2),
+  .network-fees th:nth-child(n + 2) {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+  .network-fees-meta {
+    font-size: 0.85rem;
+    color: var(--sl-color-gray-3);
+  }
+</style>
