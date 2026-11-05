@@ -1293,49 +1293,7 @@ window).
 
 ## MersennetBridge Methods
 
-Cross-domain bridge between the EVM execution environment and the MersennetOrders CLOB.
-
-### mersennet_bridge_enqueueOrdersToEvm
-
-Enqueue a cross-domain message from the MersennetOrders domain to the EVM domain.
-
-**Parameters:**
-
-1. `payload`: Hex-encoded message payload (`0x…`)
-
-**Returns:** The enqueued bridge message as `{ nonce, from, to, payload }` (`from: "mersennet_orders"`, `to: "mersennet_evm"`).
-
----
-
-### mersennet_bridge_enqueueEvmToOrders
-
-Enqueue a cross-domain message from the EVM domain to the MersennetOrders domain.
-
-**Parameters:**
-
-1. `payload`: Hex-encoded message payload (`0x…`)
-
-**Returns:** The enqueued bridge message as `{ nonce, from, to, payload }` (`from: "mersennet_evm"`, `to: "mersennet_orders"`).
-
----
-
-### mersennet_bridge_dequeueOrdersToEvm
-
-Dequeue the next pending MersennetOrders → EVM bridge message.
-
-**Parameters:** None
-
-**Returns:** A bridge message `{ nonce, from, to, payload }`, or `null` if the queue is empty.
-
----
-
-### mersennet_bridge_dequeueEvmToOrders
-
-Dequeue the next pending EVM → MersennetOrders bridge message.
-
-**Parameters:** None
-
-**Returns:** A bridge message `{ nonce, from, to, payload }`, or `null` if the queue is empty.
+`mersennet_bridge_enqueueOrdersToEvm`, `mersennet_bridge_enqueueEvmToOrders`, `mersennet_bridge_dequeueOrdersToEvm` and `mersennet_bridge_dequeueEvmToOrders` are disabled and return error `-32601`. The EVM ⇄ CLOB message queues are consensus state: they change only through block execution, never through a call to one node. No external asset bridge is live.
 
 ---
 
@@ -1447,4 +1405,4 @@ print(resp.json()["result"])
 | `mersennet_` | transparent equivalents + code attestation + shielded/ZK | Native equivalents, code-publication lookups, and the shielded/state-proof/disclosure surface ([Privacy](/developers/privacy/shielded-rpc/)) |
 | `mersennet_orders_` | 13 | CLOB order book engine (markets, orders, margin, multi-collateral) |
 | `mersennet_staking_` | 3 | Delegated proof-of-stake reads |
-| `mersennet_bridge_` | 4 | Cross-domain bridge |
+| `mersennet_bridge_` | 4 | Disabled (the bridge queues are consensus state) |
