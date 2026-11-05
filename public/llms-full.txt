@@ -4110,49 +4110,7 @@ window).
 
 ## MersennetBridge Methods
 
-Cross-domain bridge between the EVM execution environment and the MersennetOrders CLOB.
-
-### mersennet_bridge_enqueueOrdersToEvm
-
-Enqueue a cross-domain message from the MersennetOrders domain to the EVM domain.
-
-**Parameters:**
-
-1. `payload`: Hex-encoded message payload (`0x…`)
-
-**Returns:** The enqueued bridge message as `{ nonce, from, to, payload }` (`from: "mersennet_orders"`, `to: "mersennet_evm"`).
-
----
-
-### mersennet_bridge_enqueueEvmToOrders
-
-Enqueue a cross-domain message from the EVM domain to the MersennetOrders domain.
-
-**Parameters:**
-
-1. `payload`: Hex-encoded message payload (`0x…`)
-
-**Returns:** The enqueued bridge message as `{ nonce, from, to, payload }` (`from: "mersennet_evm"`, `to: "mersennet_orders"`).
-
----
-
-### mersennet_bridge_dequeueOrdersToEvm
-
-Dequeue the next pending MersennetOrders → EVM bridge message.
-
-**Parameters:** None
-
-**Returns:** A bridge message `{ nonce, from, to, payload }`, or `null` if the queue is empty.
-
----
-
-### mersennet_bridge_dequeueEvmToOrders
-
-Dequeue the next pending EVM → MersennetOrders bridge message.
-
-**Parameters:** None
-
-**Returns:** A bridge message `{ nonce, from, to, payload }`, or `null` if the queue is empty.
+`mersennet_bridge_enqueueOrdersToEvm`, `mersennet_bridge_enqueueEvmToOrders`, `mersennet_bridge_dequeueOrdersToEvm` and `mersennet_bridge_dequeueEvmToOrders` are disabled and return error `-32601`. The EVM ⇄ CLOB message queues are consensus state: they change only through block execution, never through a call to one node. No external asset bridge is live.
 
 ---
 
@@ -4264,7 +4222,7 @@ print(resp.json()["result"])
 | `mersennet_` | transparent equivalents + code attestation + shielded/ZK | Native equivalents, code-publication lookups, and the shielded/state-proof/disclosure surface ([Privacy](/developers/privacy/shielded-rpc/)) |
 | `mersennet_orders_` | 13 | CLOB order book engine (markets, orders, margin, multi-collateral) |
 | `mersennet_staking_` | 3 | Delegated proof-of-stake reads |
-| `mersennet_bridge_` | 4 | Cross-domain bridge |
+| `mersennet_bridge_` | 4 | Disabled (the bridge queues are consensus state) |
 
 
 ---
@@ -4345,7 +4303,7 @@ See [RPC Methods Reference](/developers/rpc/methods/) for full details.
 | `mersennet_getDomainEvents` | Get domain events for a block range |
 | `mersennet_getCodeAttestation` / `mersennet_getCodeHash` | On-chain contract code-publication registry lookups |
 | `mersennet_orders_*` | MersennetOrders trading methods (submitOrder, cancelOrder, depositCollateral, getOrderBook, getOpenOrders). Writes route through consensus and return `{accepted, txHash}` (unsigned write RPCs are disabled on public endpoints — submit signed precompile transactions instead). |
-| `mersennet_bridge_*` | Internal EVM ⇄ CLOB message-queue RPCs (`enqueue*` / `dequeue*`), node-local and for testing. No external asset bridge is live. |
+| `mersennet_bridge_*` | Disabled (error `-32601`): the EVM ⇄ CLOB message queues are consensus state and change only through block execution. No external asset bridge is live. |
 | **Shielded / ZK** | Shielded transfers & orders, SP1 state proofs, and selective-disclosure reads; mutations return `-32605` until the privacy hard fork activates, reads such as `mersennet_getShieldedBalance` and `mersennet_getLatestStateProof` work now. See the [Shielded JSON-RPC reference](/developers/privacy/shielded-rpc/) |
 | **WebSocket** | `eth_subscribe` and `mersennet_subscribe` push notifications (new heads, trades, shielded roots, state proofs) |
 
@@ -12657,14 +12615,7 @@ $n$ = mempool/batch size, $k$ = txs per sender or parallel groups, $m$ = selecte
 
 Collateral withdrawal is performed via the CLOB precompile (`withdrawCollateral(uint256)` at `0x0100`), not a dedicated RPC method.
 
-**Bridge Methods:**
-
-| Method | Description |
-|--------|-------------|
-| `mersennet_bridge_enqueueOrdersToEvm` | Enqueues message to EVM |
-| `mersennet_bridge_enqueueEvmToOrders` | Enqueues message to Orders |
-| `mersennet_bridge_dequeueOrdersToEvm` | Dequeues from Orders→EVM queue |
-| `mersennet_bridge_dequeueEvmToOrders` | Dequeues from EVM→Orders queue |
+**Bridge Methods:** the four `mersennet_bridge_*` queue methods (`enqueueOrdersToEvm`, `enqueueEvmToOrders`, `dequeueOrdersToEvm`, `dequeueEvmToOrders`) are disabled over RPC. The queues are consensus state and change only through block execution.
 
 **Ethereum Compatibility Layer:**
 
