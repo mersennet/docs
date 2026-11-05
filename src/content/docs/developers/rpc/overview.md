@@ -76,7 +76,7 @@ See [RPC Methods Reference](/developers/rpc/methods/) for full details.
 | `mersennet_getDomainEvents` | Get domain events for a block range |
 | `mersennet_getCodeAttestation` / `mersennet_getCodeHash` | On-chain contract code-publication registry lookups |
 | `mersennet_orders_*` | MersennetOrders trading methods (submitOrder, cancelOrder, depositCollateral, getOrderBook, getOpenOrders). Writes route through consensus and return `{accepted, txHash}` (unsigned write RPCs are disabled on public endpoints — submit signed precompile transactions instead). |
-| `mersennet_bridge_*` | Internal EVM ⇄ CLOB message-queue RPCs (`enqueue*` / `dequeue*`), node-local and for testing. No external asset bridge is live. |
+| `mersennet_bridge_*` | Disabled (error `-32601`): the EVM ⇄ CLOB message queues are consensus state and change only through block execution. No external asset bridge is live. |
 | **Shielded / ZK** | Shielded transfers & orders, SP1 state proofs, and selective-disclosure reads; mutations return `-32605` until the privacy hard fork activates, reads such as `mersennet_getShieldedBalance` and `mersennet_getLatestStateProof` work now. See the [Shielded JSON-RPC reference](/developers/privacy/shielded-rpc/) |
 | **WebSocket** | `eth_subscribe` and `mersennet_subscribe` push notifications (new heads, trades, shielded roots, state proofs) |
 

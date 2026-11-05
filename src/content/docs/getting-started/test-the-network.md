@@ -21,7 +21,7 @@ Add the network to your wallet ([Wallet Setup](/getting-started/wallet-setup/) �
 
 ## 2. Trade
 
-[trade.mersennet.com](https://trade.mersennet.com) is a perpetuals terminal on the **native order book** (precompile `0x…0100`): deposit MRSN or USDC as collateral, place limit or market orders, long or short with leverage. Matching and settlement are atomic on-chain — no sequencer, no off-chain matcher. Market makers quote live prices, so books are usually two-sided. Guide: [Mersennet Trade](/ecosystem/trade/).
+[trade.mersennet.com](https://trade.mersennet.com) is a perpetuals terminal on the **native order book** (precompile `0x…0100`): deposit MRSN as collateral (test USDC stopped counting as margin at block 2,670,700 on 16 Oct 2026), place limit or market orders, long or short with leverage. Matching and settlement are atomic on-chain — no sequencer, no off-chain matcher. Market makers quote live prices, so books are usually two-sided. Guide: [Mersennet Trade](/ecosystem/trade/).
 
 ## 3. Run a node
 

@@ -1358,7 +1358,7 @@ Price-time priority:
 - MersennetOrders supports **margin trading**: no margin is enforced before block 1,605,600; from it, 10% initial margin (10× maximum leverage) and 5% maintenance margin
 - **Liquidations**: any keeper can call `liquidate(address)` on an account below maintenance margin (from block 1,605,600); it closes the position at the book and takes a 1% fee split between the keeper and the insurance fund. `isLiquidatable(address)` is the view
 - Smart contracts can call liquidation logic atomically with other operations
-- Collateral is global (not per-market). Native MRSN is the primary collateral; whitelisted ERC-20 tokens can also be posted via `depositTokenCollateral` and count toward margin at a configured haircut (e.g. USDC at 90% weight on testnet)
+- Collateral is global (not per-market). Native MRSN is the primary collateral; whitelisted ERC-20 tokens can also be posted via `depositTokenCollateral` and count toward margin at a configured weight. On the testnet the only registered token, test USDC, counted at 90% until block 2,670,700 (16 Oct 2026) and at 0 since: it is free to mint. Deposits of a zero-weight token are refused; withdrawals stay open
 
 ## Summary
 
@@ -1544,7 +1544,7 @@ Until this switch the base fee could fall to **1 wei**, which made transactions 
 | **Block proposer** | 25% → the proposer's reward recipient (its operator wallet) |
 | **Burned** | 25% (before the switch: 100%) |
 
-What it costs: a simple transfer (21,000 gas) is 0.000021 MRSN; an order on the book (~70,000 gas) about 0.00007 MRSN. Flooding the chain the way the September incident did would cost 24–160 MRSN a day instead of nothing.
+What it costs: a simple transfer (21,000 gas) is 0.000021 MRSN; an order on the book (~70,000 gas) about 0.00007 MRSN. Flooding the chain the way the September incident did would cost 24–160 MRSN a day instead of nothing. The live cost of common actions, in MRSN and dollars, is under [Network fees](/getting-started/network-info/#network-fees).
 
 The split is applied identically by the producing validator and every importing node right after block rewards, so it is part of the state root. The parameters live in the node configuration (`engine.fee_floor_height`, `min_base_fee_wei`, `fee_treasury_bps`, `fee_proposer_bps`, `fee_treasury_address`) and are exposed by `mersennet_orders_getProtocol` under `fees`; the [upgrades page](https://explorer.mersennet.com/upgrades) tracks the activation.
 
@@ -4110,49 +4110,7 @@ window).
 
 ## MersennetBridge Methods
 
-Cross-domain bridge between the EVM execution environment and the MersennetOrders CLOB.
-
-### mersennet_bridge_enqueueOrdersToEvm
-
-Enqueue a cross-domain message from the MersennetOrders domain to the EVM domain.
-
-**Parameters:**
-
-1. `payload`: Hex-encoded message payload (`0x…`)
-
-**Returns:** The enqueued bridge message as `{ nonce, from, to, payload }` (`from: "mersennet_orders"`, `to: "mersennet_evm"`).
-
----
-
-### mersennet_bridge_enqueueEvmToOrders
-
-Enqueue a cross-domain message from the EVM domain to the MersennetOrders domain.
-
-**Parameters:**
-
-1. `payload`: Hex-encoded message payload (`0x…`)
-
-**Returns:** The enqueued bridge message as `{ nonce, from, to, payload }` (`from: "mersennet_evm"`, `to: "mersennet_orders"`).
-
----
-
-### mersennet_bridge_dequeueOrdersToEvm
-
-Dequeue the next pending MersennetOrders → EVM bridge message.
-
-**Parameters:** None
-
-**Returns:** A bridge message `{ nonce, from, to, payload }`, or `null` if the queue is empty.
-
----
-
-### mersennet_bridge_dequeueEvmToOrders
-
-Dequeue the next pending EVM → MersennetOrders bridge message.
-
-**Parameters:** None
-
-**Returns:** A bridge message `{ nonce, from, to, payload }`, or `null` if the queue is empty.
+`mersennet_bridge_enqueueOrdersToEvm`, `mersennet_bridge_enqueueEvmToOrders`, `mersennet_bridge_dequeueOrdersToEvm` and `mersennet_bridge_dequeueEvmToOrders` are disabled and return error `-32601`. The EVM ⇄ CLOB message queues are consensus state: they change only through block execution, never through a call to one node. No external asset bridge is live.
 
 ---
 
@@ -4264,7 +4222,7 @@ print(resp.json()["result"])
 | `mersennet_` | transparent equivalents + code attestation + shielded/ZK | Native equivalents, code-publication lookups, and the shielded/state-proof/disclosure surface ([Privacy](/developers/privacy/shielded-rpc/)) |
 | `mersennet_orders_` | 13 | CLOB order book engine (markets, orders, margin, multi-collateral) |
 | `mersennet_staking_` | 3 | Delegated proof-of-stake reads |
-| `mersennet_bridge_` | 4 | Cross-domain bridge |
+| `mersennet_bridge_` | 4 | Disabled (the bridge queues are consensus state) |
 
 
 ---
@@ -4345,7 +4303,7 @@ See [RPC Methods Reference](/developers/rpc/methods/) for full details.
 | `mersennet_getDomainEvents` | Get domain events for a block range |
 | `mersennet_getCodeAttestation` / `mersennet_getCodeHash` | On-chain contract code-publication registry lookups |
 | `mersennet_orders_*` | MersennetOrders trading methods (submitOrder, cancelOrder, depositCollateral, getOrderBook, getOpenOrders). Writes route through consensus and return `{accepted, txHash}` (unsigned write RPCs are disabled on public endpoints — submit signed precompile transactions instead). |
-| `mersennet_bridge_*` | Internal EVM ⇄ CLOB message-queue RPCs (`enqueue*` / `dequeue*`), node-local and for testing. No external asset bridge is live. |
+| `mersennet_bridge_*` | Disabled (error `-32601`): the EVM ⇄ CLOB message queues are consensus state and change only through block execution. No external asset bridge is live. |
 | **Shielded / ZK** | Shielded transfers & orders, SP1 state proofs, and selective-disclosure reads; mutations return `-32605` until the privacy hard fork activates, reads such as `mersennet_getShieldedBalance` and `mersennet_getLatestStateProof` work now. See the [Shielded JSON-RPC reference](/developers/privacy/shielded-rpc/) |
 | **WebSocket** | `eth_subscribe` and `mersennet_subscribe` push notifications (new heads, trades, shielded roots, state proofs) |
 
@@ -6209,7 +6167,7 @@ One click on **＋ Add Mersennet to wallet** configures MetaMask with the right 
 
 | Claim | Amount | Cooldown |
 |-------|--------|----------|
-| MRSN (native) | 1,000 MRSN + 1 MRSN for gas | 1 claim per address per hour, at most 3 claims per connection (IP) per day |
+| MRSN (native) | 1,000 MRSN + 1 MRSN for gas | 1 claim per address per hour, at most 3 claims per address and 3 per connection (IP) every 24 hours |
 | MockUSDC / MockUSDT / MockDAI | 10,000 per token | 1 claim per token per address per hour |
 
 The mock tokens also have a public `faucet()` function on-chain, so contracts and scripts can mint them directly — see [Deployed Contracts](/resources/contracts/) for addresses.
@@ -6242,7 +6200,7 @@ Need more for a hackathon, a course or a large integration test? Fund one wallet
 
 | Issue | Solution |
 |-------|----------|
-| `rate limited` error | Each address — and each IP — can claim MRSN once per hour, and one connection can take at most three drips a day (3,003 MRSN — plenty for testing; validators bond 1,000). Wait for the cooldown shown on the page. |
+| `rate limited` error | Each address — and each IP — can claim MRSN once per hour and at most three times every 24 hours (3,003 MRSN — plenty for testing; validators bond 1,000). The page shows which of your three claims are used and when the next one opens. |
 | `challenge failed` | The page's verification widget did not complete or its token expired — wait for the green tick and try again, or reload. |
 | `429` from a script | Scripts without the widget get one drip per address and per IP per day; the page gets more (see above). |
 | Request fails | Check that your address is a valid 0x-prefixed Ethereum address (40 hex characters). |
@@ -6270,7 +6228,7 @@ Orders, cancels, deposits and withdrawals are wallet-signed transactions to the 
 ## Step 2: Claim testnet MRSN
 
 1. Open [https://faucet.mersennet.com](https://faucet.mersennet.com) and paste your address, or press **Connect** to fill it in.
-2. Press **Claim 1,000 MRSN**. The faucet sends **1,001 MRSN** (1,000 plus 1 for gas), once per address per hour. The same page hands out 10,000 each of MockUSDC, MockUSDT and MockDAI; you do not need them for this guide.
+2. Press **Claim 1,000 MRSN**. The faucet sends **1,001 MRSN** (1,000 plus 1 for gas), once per address per hour and up to three times a day. The same page hands out 10,000 each of MockUSDC, MockUSDT and MockDAI; you do not need them for this guide.
 3. Back in the terminal, your wallet balance updates within a few seconds.
 
 Details and the HTTP API: [Get Testnet MRSN](/getting-started/faucet/).
@@ -6552,6 +6510,16 @@ Use the following configuration to connect to Mersennet testnet.
 :::tip
 The public WebSocket endpoint `wss://rpc.mersennet.com` is enabled for `eth_subscribe` subscriptions (`newHeads`, `logs`, `newPendingTransactions`) — send regular JSON-RPC calls over HTTPS. Nodes you run yourself serve WebSocket subscriptions on port 8546.
 :::
+
+## Network fees
+
+import NetworkFees from '../../../components/NetworkFees.astro';
+
+Every transaction pays the base fee in MRSN: at least 1 gwei (0.000000001 MRSN) per unit of gas, rising when blocks fill up. There is no tip. What common actions cost right now:
+
+<NetworkFees />
+
+Dollar figures use the price on the testnet's MRSN/USD market. MRSN is a testnet token with no outside market, so read them as a sense of scale. Of each fee, 50% goes to the protocol treasury, 25% to the block proposer and 25% is burned ([how fees work](/architecture/tokenomics/#transaction-fees)). The same figures are on the [explorer](https://explorer.mersennet.com) home and at `GET https://trade.mersennet.com/api/v1/stats/fees`.
 
 ## Node Operators: P2P Bootnodes
 
@@ -6861,7 +6829,7 @@ Add the network to your wallet ([Wallet Setup](/getting-started/wallet-setup/) �
 
 ## 2. Trade
 
-[trade.mersennet.com](https://trade.mersennet.com) is a perpetuals terminal on the **native order book** (precompile `0x…0100`): deposit MRSN or USDC as collateral, place limit or market orders, long or short with leverage. Matching and settlement are atomic on-chain — no sequencer, no off-chain matcher. Market makers quote live prices, so books are usually two-sided. Guide: [Mersennet Trade](/ecosystem/trade/).
+[trade.mersennet.com](https://trade.mersennet.com) is a perpetuals terminal on the **native order book** (precompile `0x…0100`): deposit MRSN as collateral (test USDC stopped counting as margin at block 2,670,700 on 16 Oct 2026), place limit or market orders, long or short with leverage. Matching and settlement are atomic on-chain — no sequencer, no off-chain matcher. Market makers quote live prices, so books are usually two-sided. Guide: [Mersennet Trade](/ecosystem/trade/).
 
 ## 3. Run a node
 
@@ -7630,6 +7598,22 @@ Notable milestones and updates for the Mersennet ecosystem.
 
 ---
 
+## October 2026
+
+### USDC Switch, Security Fork, MRSN/USD Repair
+
+- **16 Oct — test USDC stopped counting as margin at block 2,670,700 (11:13 UTC)**, from release `8db0944`. The test USDC is free to mint, so from that block it counts 0 toward margin and new deposits of it are refused; USDC already deposited can be withdrawn any time. One account whose margin was test USDC fell below maintenance at that block and was liquidated on the order book.
+- **14–16 Oct — faucet and WebSocket RPC down**, from 14 Oct 20:11 UTC to 16 Oct 06:20 UTC. The public RPC node's disk filled while it unpacked a state snapshot, and its node stopped; HTTP RPC and trading kept running on the second origin. The node now keeps the published snapshot packed, and a watchdog restarts any node whose RPC stays silent for three minutes.
+- **15 Oct — security fork at block 2,623,500**, from release `beaaba3`. From that block every node checks the signature on every transaction in a block and that the block's hash matches its contents; a resting order whose owner cannot cover the fill is cancelled instead of blocking the book; orders priced more than 10× from the last trade are refused.
+- **13 Oct — release `8db0944`**, required before block 2,670,700: a liquidation closes positions with a market order; after the 8 Oct repair, liquidations applied in a different order on some nodes left their accounting 26 units apart, and a one-off correction in blocks 2,554,100–2,850,900 brings every node back to one value; and the USDC switch above.
+- **8 Oct — MRSN/USD repaired at block 2,324,700**, from release `fedfe99`. On 6 Oct a sweep through the thin MRSN/USD book left its last trade, and so the mark of every MRSN/USD position, at about 143× the market price. At the repair block every node cancelled the MRSN/USD orders outside $34.50–$345, re-entered the positions opened on the broken book at $115 and reset the mark to $115. The Maker Vault reopened deposits at 10:20 UTC.
+- **Faucet, 14 Oct**: up to three claims per address every 24 hours, whatever the connection; the page shows which claims are used and when the next one opens.
+- **Community, 14 Oct**: the Discord server is open at [discord.gg/mersennet](https://discord.gg/mersennet).
+- **Docs, 14 Oct**: search works; [Run a Node](/validators/run-a-node/) has a Maintenance step and moving a node to a new VPS.
+- **Telegram alerts bot, 14 Oct**: confirms a validator's upgrade once its node answers on the current release, and reports an upgrade that goes wrong (another build, behind, silent).
+
+---
+
 ## September 2026
 
 ### Open Validator Set, Snapshot Sync, Verified Node Runners
@@ -7854,8 +7838,12 @@ Yes. Mersennet is fully EVM compatible. You can deploy Solidity contracts withou
 ### How do I get testnet tokens?
 
 1. Add Mersennet to your wallet (see [Wallet Setup](/getting-started/wallet-setup/)).
-2. Use the **Faucet** at [https://faucet.mersennet.com](https://faucet.mersennet.com) — 1,000 MRSN (+1 for gas) per address per hour, plus one-click claims of 10,000 MockUSDC/USDT/DAI.
+2. Use the **Faucet** at [https://faucet.mersennet.com](https://faucet.mersennet.com) — 1,000 MRSN (+1 for gas) per address per hour, up to three times a day, plus one-click claims of 10,000 MockUSDC/USDT/DAI.
 3. Contracts and scripts can also call the public `faucet()` function on each mock token directly; see [Deployed Contracts](/resources/contracts/).
+
+### Does test USDC count as margin?
+
+Not from block 2,670,700 (16 Oct 2026, about 11:10 UTC). Anyone can mint it, so from that block it counts 0 toward margin and new USDC deposits are refused. USDC you deposited can be withdrawn any time from the terminal's Withdraw panel; trade with MRSN as collateral. The mock stablecoins stay useful for testing wallets, transfers and contracts.
 
 ### What is the max supply of MRSN?
 
@@ -8030,7 +8018,7 @@ Consensus changes activate at announced block heights, listed with live time est
 
 | Surface | Limit |
 |---|---|
-| Faucet | 1 drip (1,001 MRSN) per address per hour; at most 3 drips per connection (IP) per day; 1 mock-token claim per token per address per hour |
+| Faucet | 1 drip (1,001 MRSN) per address per hour; at most 3 drips per address and 3 per connection (IP) every 24 hours; 1 mock-token claim per token per address per hour |
 | Public RPC (`rpc.mersennet.com`) | Fair use behind Cloudflare; `admin_*`, `debug_*`, `miner_*`, `personal_*` are not exposed; `eth_getLogs` spans up to 2,000 blocks per call. Heavy users should [run their own node](/validators/run-a-node/) — it is in sync in about a minute |
 | Trade API | 600 requests per minute per IP; 60 per minute on sensitive endpoints (keys, agents, alerts, auth) |
 
@@ -8046,7 +8034,7 @@ There is no uptime guarantee. What you can rely on:
 
 - **Status**: [status.mersennet.com](https://status.mersennet.com/status/mersennet) checks the chain, RPC, terminal, API, explorer, faucet, snapshots and the exchange's liveness every minute; the team is paged on red.
 - **Incidents** are written up in the [changelog](/resources/changelog/) with cause, effect and fix — for example the 20–25 September exchange pause.
-- **Support**: questions in the [Telegram group](https://t.me/Mersennet); bugs and product feedback through the [feedback form](https://trade.mersennet.com/feedback) (it reaches the team within minutes); security issues to **security@mersennet.com** — never in public, see the [FAQ](/resources/faq/#security).
+- **Support**: questions in the [Telegram group](https://t.me/Mersennet) or on [Discord](https://discord.gg/aJSQ63PUes); bugs and product feedback through the [feedback form](https://trade.mersennet.com/feedback) (it reaches the team within minutes); security issues to **security@mersennet.com** — never in public, see the [FAQ](/resources/faq/#security).
 - **Node operators**: the staking page and `mersennet-check` tell you when your build is behind; the installer upgrades in one command and keeps your keys.
 
 ## Known limitations
@@ -8614,17 +8602,65 @@ curl -s http://127.0.0.1:8545 -H 'Content-Type: application/json' \
   -d '{"jsonrpc":"2.0","id":1,"method":"eth_blockNumber","params":[]}'
 ```
 
-## Step 4 — Keep it running
+## Step 4 — Maintenance
 
 | Task | Command |
 |------|---------|
 | Status | `mersennet-check` · `systemctl status mersennet` |
 | Logs | `journalctl -u mersennet -f` |
+| **Stop** (take the node down) | `sudo systemctl stop mersennet` — graceful, the node finishes its in-flight block. It stays down until you run `sudo systemctl start mersennet` or the server reboots; `sudo systemctl disable --now mersennet` keeps it down across reboots (`sudo systemctl enable --now mersennet` brings it back) |
 | Restart | `sudo systemctl restart mersennet` |
 | **Upgrade** to a new release | Re-run the Step 2 command — it replaces the binary, restarts the service, keeps data and keys |
 | Back up your identity | Copy `keys/node_key.json` from your data dir somewhere safe |
+| Move to a new server | [Move the node to a new VPS](#move-the-node-to-a-new-vps) (below) |
 | Let others sync from you | Open **UDP+TCP 30303** inbound (`sudo ufw allow 30303` — the installer does this if ufw is active) |
 | Uninstall | `sudo systemctl disable --now mersennet && sudo rm -f /etc/systemd/system/mersennet.service /usr/local/bin/mersennet /usr/local/bin/mersennet.prev /usr/local/bin/mersennet-check && sudo rm -rf /etc/mersennet && sudo userdel mersennet` — then delete the data dir if you want the chain data gone |
+
+**Validators:** while the node is down it misses its leader slots. Three misses in an epoch bench it for the rest of that epoch; missing more than 20% of an epoch's slots jails it for the next one. No stake is lost either way, so keep stops short and you lose at most an hour of rewards.
+
+### Move the node to a new VPS
+
+Your node's identity is one file: `keys/node_key.json` in the data dir (`/var/lib/mersennet` unless you installed with `--data-dir`). It is the node id on the explorer, what your operator badge is attached to and, **for a validator, the validator key**. Moving a node means moving that file; the chain data stays behind, because the new server restores a fresh snapshot.
+
+:::danger[Never run the same key on two servers at once]
+Two validators with the same `node_key.json` sign two different blocks at one height. That is equivocation: 5% of the stake is slashed and the validator is **tombstoned, permanently removed from the set**. Stop the old node before the key goes live anywhere else. A minute or two of downtime only costs a few leader slots.
+:::
+
+1. **New server: install and let it sync.** Use the same flags as your original install (`--operator`, and `--data-dir` if you use a volume). It starts with a temporary key of its own, which is harmless. Wait until `mersennet-check` says **in sync**.
+
+   ```bash
+   curl -fsSL https://mersennet.com/downloads/install.sh | sudo bash -s -- --operator 0xYOUR_WALLET
+   ```
+
+2. **Old server: stop the node for good.** `disable` keeps it from starting again if the provider reboots the machine.
+
+   ```bash
+   sudo systemctl disable --now mersennet
+   ```
+
+3. **Copy the key across, from your own computer:**
+
+   ```bash
+   scp root@OLD_SERVER_IP:/var/lib/mersennet/keys/node_key.json ./node_key.json
+   scp ./node_key.json root@NEW_SERVER_IP:node_key.json
+   ```
+
+   If you installed with `--data-dir`, the key is in `<your data dir>/keys/node_key.json`; use that path here and in step 4. If you log in as a sudo user rather than root, first run `sudo install -m 600 -o $USER /var/lib/mersennet/keys/node_key.json ~/node_key.json` on the old server, then copy with `scp you@OLD_SERVER_IP:node_key.json ./node_key.json` and `scp ./node_key.json you@NEW_SERVER_IP:node_key.json`, and delete the copy on the old server afterwards.
+
+4. **New server: swap in the key and start.**
+
+   ```bash
+   sudo systemctl stop mersennet
+   sudo install -m 600 -o mersennet -g mersennet ~/node_key.json /var/lib/mersennet/keys/node_key.json
+   rm ~/node_key.json
+   sudo systemctl start mersennet
+   ```
+
+5. **Check:** `mersennet-check` on the new server prints the **same Validator address** as the old server did, then *in sync* and *visible*. A validator's *proposed* count starts climbing again within a few minutes. The verified badge follows the key: the terminal finds the new IP on its own within about 30 minutes.
+
+6. **Clean up:** uninstall on the old server (the Uninstall line in the table above) or delete that VPS, and delete `./node_key.json` from your computer unless that is where you keep your backup.
+
+A full node that is not a validator can skip steps 3 and 4. It gets a new node id, and points keep coming because they follow the operator wallet. Move the key only if you want to keep the same id.
 
 That is the complete guide for running a node. Everything below is background, the validator question, and reference material for operators who want to go deeper.
 
@@ -8666,6 +8702,8 @@ curl -fsSL https://mersennet.com/downloads/install.sh | sudo bash -s -- --reset-
 **My node stopped advancing (the explorer moves, `mersennet-check` shows the same height).** Since the 16 Sep release the node notices this itself: when its head has not moved for five minutes while the network is at least 60 blocks ahead, it exits and systemd restarts it (log line *"head has not advanced while the network moved on"*). On an older build, `sudo systemctl restart mersennet` does the same by hand. If it happens repeatedly, send us `journalctl -u mersennet -n 300 --no-pager` in the [Telegram chat](https://t.me/Mersennet) or through the terminal's [feedback form](https://trade.mersennet.com/feedback) — such reports are exactly what the testnet is for.
 
 **Do I have to upgrade when a new release comes out?** For a full node: whenever convenient — `mersennet-check` says *update available*. For a **validator: yes, before the next protocol switch height** (listed on [Network Info](/getting-started/network-info/#protocol-upgrades) and announced on [Become a Validator](/validators/become-a-validator/) and the [changelog](/resources/changelog/); the staking page warns when your node is behind the current release). A validator on an old build applies the old rules from the switch height on, disagrees with the network about the next leader or the validator set, and forks off — it then needs `--reset-state`. Upgrading is the same one-line command as installing; it keeps your keys and data and takes under a minute.
+
+**How do I move my node to another VPS?** Install on the new server, stop the old node for good, then copy `keys/node_key.json` across. For a validator, never let both servers run that key at once. Step by step: [Move the node to a new VPS](#move-the-node-to-a-new-vps).
 
 **Do I need to do everything on this page?** No. Steps 1–4 are the whole thing. The sections below are reference material.
 
@@ -12577,14 +12615,7 @@ $n$ = mempool/batch size, $k$ = txs per sender or parallel groups, $m$ = selecte
 
 Collateral withdrawal is performed via the CLOB precompile (`withdrawCollateral(uint256)` at `0x0100`), not a dedicated RPC method.
 
-**Bridge Methods:**
-
-| Method | Description |
-|--------|-------------|
-| `mersennet_bridge_enqueueOrdersToEvm` | Enqueues message to EVM |
-| `mersennet_bridge_enqueueEvmToOrders` | Enqueues message to Orders |
-| `mersennet_bridge_dequeueOrdersToEvm` | Dequeues from Orders→EVM queue |
-| `mersennet_bridge_dequeueEvmToOrders` | Dequeues from EVM→Orders queue |
+**Bridge Methods:** the four `mersennet_bridge_*` queue methods (`enqueueOrdersToEvm`, `enqueueEvmToOrders`, `dequeueOrdersToEvm`, `dequeueEvmToOrders`) are disabled over RPC. The queues are consensus state and change only through block execution.
 
 **Ethereum Compatibility Layer:**
 

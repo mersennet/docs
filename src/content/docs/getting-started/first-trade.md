@@ -18,7 +18,7 @@ Orders, cancels, deposits and withdrawals are wallet-signed transactions to the 
 ## Step 2: Claim testnet MRSN
 
 1. Open [https://faucet.mersennet.com](https://faucet.mersennet.com) and paste your address, or press **Connect** to fill it in.
-2. Press **Claim 1,000 MRSN**. The faucet sends **1,001 MRSN** (1,000 plus 1 for gas), once per address per hour. The same page hands out 10,000 each of MockUSDC, MockUSDT and MockDAI; you do not need them for this guide.
+2. Press **Claim 1,000 MRSN**. The faucet sends **1,001 MRSN** (1,000 plus 1 for gas), once per address per hour and up to three times a day. The same page hands out 10,000 each of MockUSDC, MockUSDT and MockDAI; you do not need them for this guide.
 3. Back in the terminal, your wallet balance updates within a few seconds.
 
 Details and the HTTP API: [Get Testnet MRSN](/getting-started/faucet/).

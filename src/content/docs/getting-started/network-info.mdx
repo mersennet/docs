@@ -24,6 +24,16 @@ Use the following configuration to connect to Mersennet testnet.
 The public WebSocket endpoint `wss://rpc.mersennet.com` is enabled for `eth_subscribe` subscriptions (`newHeads`, `logs`, `newPendingTransactions`) — send regular JSON-RPC calls over HTTPS. Nodes you run yourself serve WebSocket subscriptions on port 8546.
 :::
 
+## Network fees
+
+import NetworkFees from '../../../components/NetworkFees.astro';
+
+Every transaction pays the base fee in MRSN: at least 1 gwei (0.000000001 MRSN) per unit of gas, rising when blocks fill up. There is no tip. What common actions cost right now:
+
+<NetworkFees />
+
+Dollar figures use the price on the testnet's MRSN/USD market. MRSN is a testnet token with no outside market, so read them as a sense of scale. Of each fee, 50% goes to the protocol treasury, 25% to the block proposer and 25% is burned ([how fees work](/architecture/tokenomics/#transaction-fees)). The same figures are on the [explorer](https://explorer.mersennet.com) home and at `GET https://trade.mersennet.com/api/v1/stats/fees`.
+
 ## Node Operators: P2P Bootnodes
 
 Running your own node? These are the canonical seed peers for the testnet

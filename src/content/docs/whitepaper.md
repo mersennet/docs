@@ -3160,14 +3160,7 @@ $n$ = mempool/batch size, $k$ = txs per sender or parallel groups, $m$ = selecte
 
 Collateral withdrawal is performed via the CLOB precompile (`withdrawCollateral(uint256)` at `0x0100`), not a dedicated RPC method.
 
-**Bridge Methods:**
-
-| Method | Description |
-|--------|-------------|
-| `mersennet_bridge_enqueueOrdersToEvm` | Enqueues message to EVM |
-| `mersennet_bridge_enqueueEvmToOrders` | Enqueues message to Orders |
-| `mersennet_bridge_dequeueOrdersToEvm` | Dequeues from Orders→EVM queue |
-| `mersennet_bridge_dequeueEvmToOrders` | Dequeues from EVM→Orders queue |
+**Bridge Methods:** the four `mersennet_bridge_*` queue methods (`enqueueOrdersToEvm`, `enqueueEvmToOrders`, `dequeueOrdersToEvm`, `dequeueEvmToOrders`) are disabled over RPC. The queues are consensus state and change only through block execution.
 
 **Ethereum Compatibility Layer:**
 

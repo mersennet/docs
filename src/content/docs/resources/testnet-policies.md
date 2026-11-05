@@ -30,7 +30,7 @@ Consensus changes activate at announced block heights, listed with live time est
 
 | Surface | Limit |
 |---|---|
-| Faucet | 1 drip (1,001 MRSN) per address per hour; at most 3 drips per connection (IP) per day; 1 mock-token claim per token per address per hour |
+| Faucet | 1 drip (1,001 MRSN) per address per hour; at most 3 drips per address and 3 per connection (IP) every 24 hours; 1 mock-token claim per token per address per hour |
 | Public RPC (`rpc.mersennet.com`) | Fair use behind Cloudflare; `admin_*`, `debug_*`, `miner_*`, `personal_*` are not exposed; `eth_getLogs` spans up to 2,000 blocks per call. Heavy users should [run their own node](/validators/run-a-node/) — it is in sync in about a minute |
 | Trade API | 600 requests per minute per IP; 60 per minute on sensitive endpoints (keys, agents, alerts, auth) |
 
@@ -46,7 +46,7 @@ There is no uptime guarantee. What you can rely on:
 
 - **Status**: [status.mersennet.com](https://status.mersennet.com/status/mersennet) checks the chain, RPC, terminal, API, explorer, faucet, snapshots and the exchange's liveness every minute; the team is paged on red.
 - **Incidents** are written up in the [changelog](/resources/changelog/) with cause, effect and fix — for example the 20–25 September exchange pause.
-- **Support**: questions in the [Telegram group](https://t.me/Mersennet); bugs and product feedback through the [feedback form](https://trade.mersennet.com/feedback) (it reaches the team within minutes); security issues to **security@mersennet.com** — never in public, see the [FAQ](/resources/faq/#security).
+- **Support**: questions in the [Telegram group](https://t.me/Mersennet) or on [Discord](https://discord.gg/aJSQ63PUes); bugs and product feedback through the [feedback form](https://trade.mersennet.com/feedback) (it reaches the team within minutes); security issues to **security@mersennet.com** — never in public, see the [FAQ](/resources/faq/#security).
 - **Node operators**: the staking page and `mersennet-check` tell you when your build is behind; the installer upgrades in one command and keeps your keys.
 
 ## Known limitations

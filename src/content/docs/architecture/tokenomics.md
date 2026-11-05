@@ -169,7 +169,7 @@ Until this switch the base fee could fall to **1 wei**, which made transactions 
 | **Block proposer** | 25% → the proposer's reward recipient (its operator wallet) |
 | **Burned** | 25% (before the switch: 100%) |
 
-What it costs: a simple transfer (21,000 gas) is 0.000021 MRSN; an order on the book (~70,000 gas) about 0.00007 MRSN. Flooding the chain the way the September incident did would cost 24–160 MRSN a day instead of nothing.
+What it costs: a simple transfer (21,000 gas) is 0.000021 MRSN; an order on the book (~70,000 gas) about 0.00007 MRSN. Flooding the chain the way the September incident did would cost 24–160 MRSN a day instead of nothing. The live cost of common actions, in MRSN and dollars, is under [Network fees](/getting-started/network-info/#network-fees).
 
 The split is applied identically by the producing validator and every importing node right after block rewards, so it is part of the state root. The parameters live in the node configuration (`engine.fee_floor_height`, `min_base_fee_wei`, `fee_treasury_bps`, `fee_proposer_bps`, `fee_treasury_address`) and are exposed by `mersennet_orders_getProtocol` under `fees`; the [upgrades page](https://explorer.mersennet.com/upgrades) tracks the activation.
 

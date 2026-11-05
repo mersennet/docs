@@ -26,8 +26,12 @@ Yes. Mersennet is fully EVM compatible. You can deploy Solidity contracts withou
 ### How do I get testnet tokens?
 
 1. Add Mersennet to your wallet (see [Wallet Setup](/getting-started/wallet-setup/)).
-2. Use the **Faucet** at [https://faucet.mersennet.com](https://faucet.mersennet.com) — 1,000 MRSN (+1 for gas) per address per hour, plus one-click claims of 10,000 MockUSDC/USDT/DAI.
+2. Use the **Faucet** at [https://faucet.mersennet.com](https://faucet.mersennet.com) — 1,000 MRSN (+1 for gas) per address per hour, up to three times a day, plus one-click claims of 10,000 MockUSDC/USDT/DAI.
 3. Contracts and scripts can also call the public `faucet()` function on each mock token directly; see [Deployed Contracts](/resources/contracts/).
+
+### Does test USDC count as margin?
+
+Not from block 2,670,700 (16 Oct 2026, about 11:10 UTC). Anyone can mint it, so from that block it counts 0 toward margin and new USDC deposits are refused. USDC you deposited can be withdrawn any time from the terminal's Withdraw panel; trade with MRSN as collateral. The mock stablecoins stay useful for testing wallets, transfers and contracts.
 
 ### What is the max supply of MRSN?
 
