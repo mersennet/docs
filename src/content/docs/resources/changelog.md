@@ -7,9 +7,20 @@ Notable milestones and updates for the Mersennet ecosystem.
 
 ---
 
+## November 2026
+
+### Restart Grace, Delegators' Full Share
+
+- **6 Nov — release `93cd5c1`**, required before block 3,720,600 (Tue 10 Nov, ~12:00 UTC; live estimate on the [upgrades page](https://explorer.mersennet.com/upgrades)). At that block: one bad epoch (a restart, an upgrade, a short outage) no longer jails a validator, only a second bad epoch in a row does; delegators earn D / (S + D) of their validator's block reward before commission instead of D / (S + 2D), and what they were underpaid since 27 Oct is paid from the treasury; a block stamped earlier than its parent is invalid. Upgrading is the [install command](/validators/run-a-node/#step-2--install-one-command) again.
+- **5 Nov — network fees in MRSN and dollars** on the explorer, docs, faucet and order ticket, and the [Account summary](https://trade.mersennet.com/account) page: what a wallet made on trading, the maker vault, staking, its node and referrals.
+
+---
+
 ## October 2026
 
-### USDC Switch, Security Fork, MRSN/USD Repair
+### Bounded Mark Price, USDC Switch, Security Fork, MRSN/USD Repair
+
+- **26 Oct — bounded mark price and circuit breaker at block 3,102,100 (14:39 UTC)**, from release `9486125`. The mark moves at most 2% a block toward the median of the last trade, best bid and best ask; a mark at 3x (or a third of) the epoch's opening halts the market until a repair. Liquidations fill only within 5% of the mark, ARB/USD was relisted at its real price on $0.0001 ticks, and anyone can add MRSN to the insurance fund.
 
 - **16 Oct — test USDC stopped counting as margin at block 2,670,700 (11:13 UTC)**, from release `8db0944`. The test USDC is free to mint, so from that block it counts 0 toward margin and new deposits of it are refused; USDC already deposited can be withdrawn any time. One account whose margin was test USDC fell below maintenance at that block and was liquidated on the order book.
 - **14–16 Oct — faucet and WebSocket RPC down**, from 14 Oct 20:11 UTC to 16 Oct 06:20 UTC. The public RPC node's disk filled while it unpacked a state snapshot, and its node stopped; HTTP RPC and trading kept running on the second origin. The node now keeps the published snapshot packed, and a watchdog restarts any node whose RPC stays silent for three minutes.
