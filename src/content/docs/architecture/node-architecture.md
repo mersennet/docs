@@ -254,7 +254,7 @@ state/
     ├── mersennet_orders   # order-book state
     ├── validator_registry # open validator set
     ├── bridge_*           # EVM ⇄ CLOB message queues
-    ├── blocks, history_index  # recent blocks and the disk-backed hash index
+    ├── blocks, history_index  # every block since genesis and the disk-backed hash index
     └── height_meta, pruning   # chain height, roots, housekeeping
 ```
 
