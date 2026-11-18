@@ -913,7 +913,7 @@ state/
     ├── mersennet_orders   # order-book state
     ├── validator_registry # open validator set
     ├── bridge_*           # EVM ⇄ CLOB message queues
-    ├── blocks, history_index  # recent blocks and the disk-backed hash index
+    ├── blocks, history_index  # every block since genesis and the disk-backed hash index
     └── height_meta, pruning   # chain height, roots, housekeeping
 ```
 
@@ -8539,7 +8539,7 @@ A full node follows the chain and serves RPC; a **validator** additionally signs
 |---|---|---|
 | OS | Ubuntu 22.04+ or Debian 12+ (x86-64) | Ubuntu 24.04 LTS |
 | CPU / RAM | 2 cores / 4 GB | 4 cores / 8 GB |
-| Disk | 40 GB SSD (state is ~15 GB in Sep 2026) | 100 GB SSD (chain data grows ~0.6 GB/day) |
+| Disk | 200 GB SSD (a node holds ~120 GB in Nov 2026) | 300 GB+ SSD (chain data grows ~1.7 GB/day, ~50 GB a month) |
 | Network | 10 Mbps, outbound UDP+TCP 30303 allowed; expect ~10 GB/day of traffic (mostly relayed transactions) | Inbound 30303 open too |
 
 You need `sudo` (root) on the machine. That is the whole list — no Rust, no Git, no build tools (`python3` and `openssl`, present on standard Ubuntu/Debian images, are used for the config merge and the signature check).
@@ -8550,7 +8550,7 @@ Mount it first (e.g. at `/mnt/blockstorage`) and pass `--data-dir` in Step 2. Th
 
 ## Step 2 — Install (one command)
 
-Run from **any directory** — it downloads the latest release, verifies its signature and checksum, installs the binary and config, creates a `mersennet` system user, restores the latest **state snapshot** (about 1.6 GB, SHA-256 verified) so the node only has to sync the last few hours instead of replaying the whole chain, and starts a hardened systemd service:
+Run from **any directory** — it downloads the latest release, verifies its signature and checksum, installs the binary and config, creates a `mersennet` system user, restores the latest **state snapshot** (about 16 GB, SHA-256 verified) so the node only has to sync the last few hours instead of replaying the whole chain, and starts a hardened systemd service:
 
 ```bash
 curl -fsSL https://mersennet.com/downloads/install.sh | sudo bash
@@ -8726,7 +8726,9 @@ curl -fsSL https://mersennet.com/downloads/install.sh | sudo bash -s -- --reset-
 
 **Where does the 1,000,000 MRSN come from and how do I get it?** It is the genesis stake of the four founding validators, written into the genesis config before the chain started. You do not need it: the minimum self-stake for a new validator is 1,000 MRSN.
 
-**How long does the first sync take?** A few minutes: the installer restores the latest published state snapshot (taken every six hours, about 12 GB compressed, SHA-256 verified) and the node then replays only the blocks since. Replaying the whole chain from genesis (`--from-genesis`) currently stops at block 2,670,941: some blocks from October, made by a validator still on an old build, no longer re-derive their hash from the copy other nodes store. A fix is planned; until then use the snapshot (the default). The node verifies every block it imports on top of the snapshot.
+**How long does the first sync take?** A few minutes: the installer restores the latest published state snapshot (taken every six hours, about 16 GB compressed, SHA-256 verified) and the node then replays only the blocks since. Replaying the whole chain from genesis (`--from-genesis`) currently stops at block 2,670,941: some blocks from October, made by a validator still on an old build, no longer re-derive their hash from the copy other nodes store. A fix is planned; until then use the snapshot (the default). The node verifies every block it imports on top of the snapshot.
+
+**Why is `data/state/blobs` so large, and can I shrink it?** It is the chain's block history: every block since genesis (over 4 million), which the database keeps as separate files once a record is large. A full node keeps all of it, so `data/state` is about 120 GB in November 2026 (about 100 GB of it in `blobs`) and grows by about 1.7 GB a day. Do not delete files there: the database would be corrupt and the node would need `--reset-state`. Reinstalling with `--reset-state` does not shrink it either, because the snapshot carries the same history. A pruned mode for validators that keeps only recent blocks (about 15 GB in total) is in the works; until it ships, give the node 300 GB or move it to a larger volume with `--data-dir`.
 
 **Can I run it without systemd, or on another distro / architecture?** Yes — download the bundle from [mersennet.com/downloads](https://mersennet.com/downloads/), extract it and run `./mersennet --config config.json --mode full --rpc` from a directory of your choice (data lands in `./data`, key in `./keys`). Non-x86-64 or glibc < 2.34 systems need a source build (below).
 
@@ -9307,7 +9309,7 @@ Never run two nodes with the same `node_key.json` simultaneously: this may trigg
 |---------|-------|----------|
 | Memory well above the 8 GB recommendation and growing | State growth or a leak | Restart the service (`systemctl restart mersennet`) and report it via the feedback form with `journalctl -u mersennet -n 300` |
 | CPU constantly at 100% | EVM execution or block production | Check for spam transactions; consider `gas_limit_per_block` adjustment |
-| Disk filling up | State database growth (~0.6 GB/day) | Move the data dir to a larger volume: re-run the installer with `--data-dir /mnt/<volume>/mersennet` |
+| Disk filling up | Block history grows ~1.7 GB/day; most of it is `data/state/blobs` (see the FAQ) | Move the data dir to a larger volume: re-run the installer with `--data-dir /mnt/<volume>/mersennet` |
 
 ### Useful Commands
 
