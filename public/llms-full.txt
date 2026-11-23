@@ -2783,7 +2783,8 @@ JSON-RPC 2.0 envelope:
 | `-32600` | Invalid request | Malformed JSON-RPC envelope, empty batch, more than 100 calls in a batch, or a body over 2 MiB. |
 | `-32601` | Method not found | Typo in the method name; a method disabled on this node (`eth_sendTransaction`, `mersennet_orders_addMarket` / `setMarginParams` / `liquidate` over RPC); or any non-subscription method sent over the WebSocket endpoint (`WS: method not supported`). See [Methods](/developers/rpc/methods/). |
 | `-32602` | Invalid params | Wrong type, missing field, or malformed hex (addresses are 20 bytes `0x…`, hashes 32 bytes). The message names the offending parameter. |
-| `-32000` | Execution error | Generic server-side failure while executing the request: the message carries the underlying reason. |
+| `3` | Execution reverted | `eth_call` / `eth_estimateGas` of a call that reverts. `message` is `execution reverted`, plus `: <reason>` when the revert data is a Solidity `Error(string)`; `data` is the revert bytes (`0x…`, `0x` for a bare `revert()`). Same shape as geth, so ethers, viem and wallets decode it (ethers v6: `CALL_EXCEPTION` with `e.data` and `e.reason`). |
+| `-32000` | Execution error | Generic server-side failure while executing the request: the message carries the underlying reason. Also a call that *halts* in `eth_call` / `eth_estimateGas` (`out of gas`, `invalid opcode: INVALID`, `gas required exceeds allowance (N)`, …). |
 
 ## Transaction submission
 
@@ -2797,7 +2798,7 @@ JSON-RPC 2.0 envelope:
 |------|-------|-----|
 | `-32604` | Unsigned mutation disabled | Unsigned `mersennet_orders_*` mutations are disabled on this node; submit a signed transaction to the precompile at `0x…0100`. |
 
-CLOB and staking business errors (unknown market, bad tick/lot size, insufficient collateral, withdrawal exceeds equity, not the order's owner, …) are **reverts with a reason** from block 1,969,200 (Tue 29 Sep 2026, afternoon–evening UTC — live estimate on the [upgrades page](https://explorer.mersennet.com/upgrades)): the transaction fails with `Error(string)` output carrying the precompile's message, and only the call's base gas (20,000) plus the intrinsic cost is charged — the rest is refunded, like a Solidity `require`. `eth_call` returns the same `Error(string)` bytes as its `result`, so a client can simulate an order and show the reason before sending it (the trade terminal does). Before that block a refused call is a precompile *halt*: empty output and the whole gas limit consumed.
+CLOB and staking business errors (unknown market, bad tick/lot size, insufficient collateral, withdrawal exceeds equity, not the order's owner, …) are **reverts with a reason** from block 1,969,200 (Tue 29 Sep 2026, afternoon–evening UTC — live estimate on the [upgrades page](https://explorer.mersennet.com/upgrades)): the transaction fails with `Error(string)` output carrying the precompile's message, and only the call's base gas (20,000) plus the intrinsic cost is charged — the rest is refunded, like a Solidity `require`. `eth_call` and `eth_estimateGas` report the same refusal as a code `3` error (`execution reverted: unknown market`, revert bytes in `data`), so a client can simulate an order and show the reason before sending it (the trade terminal does). Older node releases returned the revert bytes as the `result` of `eth_call` and a gas figure from `eth_estimateGas`; `mersennet_call` keeps that older answer. Before that block a refused call is a precompile *halt*: empty output and the whole gas limit consumed.
 
 Reason strings (verbatim): `unknown market`, `market is halted`, `size must be > 0`, `fok not fillable`, `insufficient collateral for initial margin`, `insufficient equity`, `withdrawal would bring equity below maintenance margin`, `caller does not own this order`, `post-only order would cross the book`, `post-only/expiry flags require GTC time-in-force`, `market symbol already exists`, `invalid market parameters`, `token is not a registered collateral asset`, `account is not liquidatable`, plus the agent-delegation and calldata messages (`invalid agent address`, `missing marketId`, `invalid TimeInForce value`, …).
 
@@ -3056,6 +3057,14 @@ curl -X POST https://rpc.mersennet.com \
   -d '{"jsonrpc":"2.0","method":"eth_call","params":[{"to":"0x5bBF04528469591280D36D46209c7CCD5a68a798","data":"0x70a082310000000000000000000000007f5ce38fb2553e95dd8ef9182a80bc219c9a0d45"},"latest"],"id":1}'
 ```
 
+A call that reverts is an error, as on geth: code `3`, `message` `execution reverted` (plus `: <reason>` for an `Error(string)`), and the revert bytes in `data`:
+
+```json
+{"jsonrpc":"2.0","id":1,"error":{"code":3,"message":"execution reverted: unknown market","data":"0x08c379a0…"}}
+```
+
+A call that halts (out of gas, invalid opcode) is a `-32000` error with the reason. A precompile call that answers `false` (for example a refused `withdrawCollateral`) is a successful call: its `result` is the encoded `false`. See [Errors](/developers/rpc/errors/).
+
 ---
 
 ### eth_estimateGas
@@ -3065,6 +3074,8 @@ Estimates gas for a transaction.
 **Parameters:**
 
 1. `transactionObject`: Same shape as `eth_call`
+
+A call that would revert returns the same code `3` error as `eth_call` (no estimate); a call that does not fit in the gas cap returns `-32000` `gas required exceeds allowance (N)`.
 
 ---
 
@@ -3553,7 +3564,7 @@ Same as `eth_getTransactionCount`.
 
 ### mersennet_call
 
-Same as `eth_call`.
+Legacy alias of `eth_call` with the older answer to a failed call: a revert comes back as the `result` (the raw revert bytes, `0x` for a bare `revert()`) and a halt as `0x`, instead of an error. Prefer `eth_call`.
 
 ---
 
@@ -7602,6 +7613,10 @@ Notable milestones and updates for the Mersennet ecosystem.
 
 ## November 2026
 
+### Smaller Disks, Nodes That Heal Themselves
+
+- **23 Nov, release `e138c31`** (no protocol switch, no deadline; [install command](/validators/run-a-node/#step-2--install-one-command)). **Pruned mode**: with `--prune` a validator keeps the most recent 100,000 blocks; the installer rewrites the chain database down to that, from ~130 GB to about 3 GB in under a minute. The database (sled) leaves dead space behind as it runs, about half of a long-running node's disk; `mersennet-compact` rewrites it with only its live data, `--compact` does it for a node that keeps every block, and `mersennet-check` says when a pruned node is worth compacting again. **Forks heal on their own**: a node on a wrong branch asks its peers for the finality certificate and rolls back; two blocks competing at an unfinalized height resolve to the lower hash on every node; a node too far gone to roll back exits with code 6 and `mersennet-heal` restores the latest snapshot. **Syncing from genesis** (`--from-genesis`) works again past block 2,670,941: blocks of that era are checked against a built-in history checkpoint at block 4,264,001. **`eth_call` / `eth_estimateGas`** report a revert as JSON-RPC error 3 with the reason and the revert data (`mersennet_call` unchanged). Also: a stopping node waits up to 20 s for its head block to be finalized, so a restart no longer leaves it on an orphaned head.
+
 ### Restart Grace, Delegators' Full Share
 
 - **6 Nov — release `93cd5c1`**, required before block 3,720,600 (Tue 10 Nov, ~12:00 UTC; live estimate on the [upgrades page](https://explorer.mersennet.com/upgrades)). At that block: one bad epoch (a restart, an upgrade, a short outage) no longer jails a validator, only a second bad epoch in a row does; delegators earn D / (S + D) of their validator's block reward before commission instead of D / (S + 2D), and what they were underpaid since 27 Oct is paid from the treasury; a block stamped earlier than its parent is invalid. Upgrading is the [install command](/validators/run-a-node/#step-2--install-one-command) again.
@@ -8539,7 +8554,7 @@ A full node follows the chain and serves RPC; a **validator** additionally signs
 |---|---|---|
 | OS | Ubuntu 22.04+ or Debian 12+ (x86-64) | Ubuntu 24.04 LTS |
 | CPU / RAM | 2 cores / 4 GB | 4 cores / 8 GB |
-| Disk | 200 GB SSD (a node holds ~120 GB in Nov 2026) | 300 GB+ SSD (chain data grows ~1.7 GB/day, ~50 GB a month) |
+| Disk | 200 GB SSD (a node holds ~130 GB in Nov 2026; a validator with `--prune` about 3 GB once installed, but the install first unpacks the full snapshot, see below) | 300 GB+ SSD for a full history node (chain data grows ~1.7 GB/day, ~50 GB a month) |
 | Network | 10 Mbps, outbound UDP+TCP 30303 allowed; expect ~10 GB/day of traffic (mostly relayed transactions) | Inbound 30303 open too |
 
 You need `sudo` (root) on the machine. That is the whole list — no Rust, no Git, no build tools (`python3` and `openssl`, present on standard Ubuntu/Debian images, are used for the config merge and the signature check).
@@ -8562,6 +8577,12 @@ Chain data on a mounted volume instead of the OS disk:
 curl -fsSL https://mersennet.com/downloads/install.sh | sudo bash -s -- --data-dir /mnt/blockstorage/mersennet
 ```
 
+**Validators: add `--prune`.** The node then keeps only the most recent 100,000 blocks (about 2.3 days): a validator needs no history. The installer rewrites the chain database with just that, so the disk drops from ~130 GB to about 3 GB; afterwards the node deletes older blocks itself as new ones arrive. The database still gathers dead space again, 1 to 2 GB a day: each upgrade with `--prune` gives it back, and so does `sudo mersennet-compact` at any time (the node stops for about a minute; `mersennet-check` says when it is worth it). On a node that already holds the full history (an upgrade) the rewrite takes under a minute (29 s on 8 vCPUs for 4.27M blocks) with the node stopped, like any upgrade restart. A fresh install with `--prune` unpacks the full snapshot first, so it needs that room once. `--prune=N` keeps N blocks (at least 10,000), `--no-prune` keeps everything again, and the setting survives upgrades. Leave it off on nodes that serve history (explorers, indexers, public RPC): below its floor a pruned node answers block and receipt queries with `null` and refuses `eth_getLogs` ranges with "history pruned".
+
+```bash
+curl -fsSL https://mersennet.com/downloads/install.sh | sudo bash -s -- --prune
+```
+
 Other option: `--rpc-public` listens for JSON-RPC on `0.0.0.0:8545` instead of localhost (only if you know you want that).
 
 The installer ends with `Done. Your node is running as a systemd service.` If it prints an error instead, copy the last log lines it shows when you ask for help.
@@ -8576,6 +8597,8 @@ The installer ends with `Done. Your node is running as a systemd service.` If it
 | `/etc/mersennet/config.json` | Canonical testnet config. Never edit `genesis`, `engine.chain_id` or `token_economics` |
 | `/var/lib/mersennet` (or your `--data-dir`) | `data/` chain state and `keys/node_key.json` (your peer identity — back it up) |
 | `/etc/systemd/system/mersennet.service` | The service (auto-restart, sandboxed) |
+| `/usr/local/bin/mersennet-heal`, `/etc/systemd/system/mersennet-heal.service` | Self-heal: when the node reports that it is on a branch it can no longer roll back (exit code 6), restores the latest snapshot and starts it again |
+| `/usr/local/bin/mersennet-compact` | Rewrites the chain database with only its live data (run by the installer with `--prune` or `--compact`, and by the self-heal on a pruned node) |
 
 Everything it downloads is listed with checksums at [mersennet.com/downloads](https://mersennet.com/downloads/). To inspect before running, download the tarball from that page, extract it, and run `sudo bash install.sh` yourself — the one-liner does exactly that.
 </details>
@@ -8726,9 +8749,11 @@ curl -fsSL https://mersennet.com/downloads/install.sh | sudo bash -s -- --reset-
 
 **Where does the 1,000,000 MRSN come from and how do I get it?** It is the genesis stake of the four founding validators, written into the genesis config before the chain started. You do not need it: the minimum self-stake for a new validator is 1,000 MRSN.
 
-**How long does the first sync take?** A few minutes: the installer restores the latest published state snapshot (taken every six hours, about 16 GB compressed, SHA-256 verified) and the node then replays only the blocks since. Replaying the whole chain from genesis (`--from-genesis`) currently stops at block 2,670,941: some blocks from October, made by a validator still on an old build, no longer re-derive their hash from the copy other nodes store. A fix is planned; until then use the snapshot (the default). The node verifies every block it imports on top of the snapshot.
+**How long does the first sync take?** A few minutes: the installer restores the latest published state snapshot (taken every six hours, about 16 GB compressed, SHA-256 verified) and the node then replays only the blocks since. Replaying the whole chain from genesis (`--from-genesis`) takes about six hours on 8 vCPUs. Some blocks from October, made by a validator still on an old build, no longer re-derive their hash from the copy other nodes store; the node checks that stretch of history against a checkpoint built into the release (block 4,264,001) instead. The node verifies every block it imports on top of the snapshot.
 
-**Why is `data/state/blobs` so large, and can I shrink it?** It is the chain's block history: every block since genesis (over 4 million), which the database keeps as separate files once a record is large. A full node keeps all of it, so `data/state` is about 120 GB in November 2026 (about 100 GB of it in `blobs`) and grows by about 1.7 GB a day. Do not delete files there: the database would be corrupt and the node would need `--reset-state`. Reinstalling with `--reset-state` does not shrink it either, because the snapshot carries the same history. A pruned mode for validators that keeps only recent blocks (about 15 GB in total) is in the works; until it ships, give the node 300 GB or move it to a larger volume with `--data-dir`.
+**Why is `data/state/blobs` so large, and can I shrink it?** Mostly block history: every block since genesis (over 4 million), which the database keeps as separate files once a record is large. About half of it on a long-running node is dead space: the database (sled) frees an old copy of a record only through bookkeeping it loses when the node restarts at the wrong moment, and the file then stays on disk with nothing pointing at it. So `data/state` is about 130 GB in November 2026 and grows by about 1.7 GB a day. Do not delete files there yourself: the database would be corrupt and the node would need `--reset-state`. A validator does not need the history: re-run the installer with `--prune` (Step 2) and the node ends at about 3 GB (it gathers dead space again at 1 to 2 GB a day; `sudo mersennet-compact` gives it back). A node that keeps every block (explorer, indexer, RPC) can drop the dead space with `--compact`: 130 GB became 76 GB in our test, with the node stopped for about 75 minutes on 8 vCPUs, and it needs free disk of about three quarters of `data/state`; afterwards the node rebuilds its transaction index in the background, so lookups of old transactions by hash answer again once that finishes (about 45 minutes for the whole chain). Both run `mersennet-compact`, which keeps the old copy until the node has started on the new one and confirmed its state root.
+
+**The log says `FORK beyond recovery` and the service stopped with exit code 6, or `journalctl -u mersennet-heal` shows a heal.** The network finalized a different block than the one your node holds, too far back for it to roll back on its own (shallower forks it now leaves by itself: it asks its peers for the finality evidence and rolls back, and when two blocks compete at a height nobody finalized, every node follows the same one). Rather than restart into the same state forever, the node exits with code 6 and `mersennet-heal` restores the latest snapshot (SHA-256 verified; your keys and identity are kept; on a pruned node it then rewrites the database down to its history) and starts it again. Nothing to do unless the heal fails: then run the installer with `--reset-state`.
 
 **Can I run it without systemd, or on another distro / architecture?** Yes — download the bundle from [mersennet.com/downloads](https://mersennet.com/downloads/), extract it and run `./mersennet --config config.json --mode full --rpc` from a directory of your choice (data lands in `./data`, key in `./keys`). Non-x86-64 or glibc < 2.34 systems need a source build (below).
 
@@ -8751,7 +8776,7 @@ curl -fsSLO "https://mersennet.com/downloads/$(awk 'NR==1{print $2}' SHA256SUMS)
 sha256sum -c SHA256SUMS --ignore-missing          # must print: ... OK
 tar xzf mersennet-node-linux-x86_64-*.tar.gz && cd mersennet-node-linux-x86_64-*/
 sha256sum -c SHA256SUMS                            # verifies every file in the bundle
-sudo bash install.sh [--data-dir DIR] [--rpc-public] [--from-genesis] [--reset-state] [--operator 0xWALLET]
+sudo bash install.sh [--data-dir DIR] [--rpc-public] [--from-genesis] [--reset-state] [--operator 0xWALLET] [--prune | --prune=N | --no-prune] [--compact]
 ```
 
 The bundle's `install.sh` performs the same snapshot bootstrap as the one-liner. The snapshot manifest is `http://46.225.30.187:8088/latest.json` (served from the public node over plain HTTP because Cloudflare limits proxied downloads to 100 MB; the tarball's SHA-256 is in the manifest and is checked before extraction).
@@ -8836,6 +8861,7 @@ Relative paths resolve against the node's working directory. The RPC defaults to
 | `fee_elasticity_multiplier` | `u64` | `2` | EIP-1559 elasticity (target = limit / multiplier) |
 | `fee_max_change_denominator` | `u64` | `8` | Max base fee change per block (1/8 = 12.5%) |
 | `storage_backend` | `string` | `"sled"` | **Keep `"sled"` on the public testnet.** The published snapshots are sled-format: a node switched to `"redb"` ignores the restored snapshot and replays the chain from genesis (hours), and on release `f67d812` the redb backend has no interrupted-commit guard, so a hard kill mid-block can leave it wedged (`persisted_height=N`, then `FORK DETECTED` at `N+1` on every restart — fixed in the next release, which also self-heals that state). `"memory"` is for tests. |
+| `prune_keep_blocks` | `u64` | `0` | History pruning, node-local: keep only the most recent N blocks (at least 10,000) and delete older ones as new blocks arrive; `0` keeps everything (archive). The installer sets it with `--prune` (100,000), rewrites the database down to that history the first time (`mersennet-compact`), and keeps the setting across upgrades. Below its floor the node answers blocks, transactions and receipts with `null`, refuses `eth_getLogs` ranges with "history pruned", and tells syncing peers it does not hold them so they ask another node. |
 | `resume_root_check` | `string` | `"warn"` | At startup the restored state's root is compared with the head block's: `"warn"` logs `RESTORED STATE ROOT MISMATCH` and continues; `"fatal"` exits (code 5) so the node is never run on state that does not match the chain — the fix is `--reset-state`. The canonical testnet config is authoritative (currently `"warn"`; the flip to `"fatal"` is a scheduled ops step); builds up to `e6eb772` ignore the setting and keep warning |
 
 #### `mempool`: Transaction Pool
