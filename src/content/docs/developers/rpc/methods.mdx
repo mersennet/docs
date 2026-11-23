@@ -239,6 +239,14 @@ curl -X POST https://rpc.mersennet.com \
   -d '{"jsonrpc":"2.0","method":"eth_call","params":[{"to":"0x5bBF04528469591280D36D46209c7CCD5a68a798","data":"0x70a082310000000000000000000000007f5ce38fb2553e95dd8ef9182a80bc219c9a0d45"},"latest"],"id":1}'
 ```
 
+A call that reverts is an error, as on geth: code `3`, `message` `execution reverted` (plus `: <reason>` for an `Error(string)`), and the revert bytes in `data`:
+
+```json
+{"jsonrpc":"2.0","id":1,"error":{"code":3,"message":"execution reverted: unknown market","data":"0x08c379a0…"}}
+```
+
+A call that halts (out of gas, invalid opcode) is a `-32000` error with the reason. A precompile call that answers `false` (for example a refused `withdrawCollateral`) is a successful call: its `result` is the encoded `false`. See [Errors](/developers/rpc/errors/).
+
 ---
 
 ### eth_estimateGas
@@ -248,6 +256,8 @@ Estimates gas for a transaction.
 **Parameters:**
 
 1. `transactionObject`: Same shape as `eth_call`
+
+A call that would revert returns the same code `3` error as `eth_call` (no estimate); a call that does not fit in the gas cap returns `-32000` `gas required exceeds allowance (N)`.
 
 ---
 
@@ -736,7 +746,7 @@ Same as `eth_getTransactionCount`.
 
 ### mersennet_call
 
-Same as `eth_call`.
+Legacy alias of `eth_call` with the older answer to a failed call: a revert comes back as the `result` (the raw revert bytes, `0x` for a bare `revert()`) and a halt as `0x`, instead of an error. Prefer `eth_call`.
 
 ---
 
