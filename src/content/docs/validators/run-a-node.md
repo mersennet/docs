@@ -25,7 +25,7 @@ A full node follows the chain and serves RPC; a **validator** additionally signs
 |---|---|---|
 | OS | Ubuntu 22.04+ or Debian 12+ (x86-64) | Ubuntu 24.04 LTS |
 | CPU / RAM | 2 cores / 4 GB | 4 cores / 8 GB |
-| Disk | 200 GB SSD (a node holds ~120 GB in Nov 2026) | 300 GB+ SSD (chain data grows ~1.7 GB/day, ~50 GB a month) |
+| Disk | 200 GB SSD (a node holds ~130 GB in Nov 2026; a validator with `--prune`, a few GB, see below) | 300 GB+ SSD for a full history node (chain data grows ~1.7 GB/day, ~50 GB a month) |
 | Network | 10 Mbps, outbound UDP+TCP 30303 allowed; expect ~10 GB/day of traffic (mostly relayed transactions) | Inbound 30303 open too |
 
 You need `sudo` (root) on the machine. That is the whole list — no Rust, no Git, no build tools (`python3` and `openssl`, present on standard Ubuntu/Debian images, are used for the config merge and the signature check).
@@ -48,6 +48,12 @@ Chain data on a mounted volume instead of the OS disk:
 curl -fsSL https://mersennet.com/downloads/install.sh | sudo bash -s -- --data-dir /mnt/blockstorage/mersennet
 ```
 
+**Validators: add `--prune`.** The node then keeps only the most recent 100,000 blocks (about 2.3 days) and deletes older ones in the background: a validator needs no history, and its disk drops from ~130 GB to a few GB. The first pass on a node that already holds the full history takes about an hour; the node validates normally meanwhile. `--prune=N` keeps N blocks (at least 10,000), `--no-prune` keeps everything again, and the setting survives upgrades. Leave it off on nodes that serve history (explorers, indexers, public RPC): below its floor a pruned node answers block and receipt queries with `null` and refuses `eth_getLogs` ranges with "history pruned".
+
+```bash
+curl -fsSL https://mersennet.com/downloads/install.sh | sudo bash -s -- --prune
+```
+
 Other option: `--rpc-public` listens for JSON-RPC on `0.0.0.0:8545` instead of localhost (only if you know you want that).
 
 The installer ends with `Done. Your node is running as a systemd service.` If it prints an error instead, copy the last log lines it shows when you ask for help.
@@ -62,6 +68,7 @@ The installer ends with `Done. Your node is running as a systemd service.` If it
 | `/etc/mersennet/config.json` | Canonical testnet config. Never edit `genesis`, `engine.chain_id` or `token_economics` |
 | `/var/lib/mersennet` (or your `--data-dir`) | `data/` chain state and `keys/node_key.json` (your peer identity — back it up) |
 | `/etc/systemd/system/mersennet.service` | The service (auto-restart, sandboxed) |
+| `/usr/local/bin/mersennet-heal`, `/etc/systemd/system/mersennet-heal.service` | Self-heal: when the node reports that it is on a branch it can no longer roll back (exit code 6), restores the latest snapshot and starts it again |
 
 Everything it downloads is listed with checksums at [mersennet.com/downloads](https://mersennet.com/downloads/). To inspect before running, download the tarball from that page, extract it, and run `sudo bash install.sh` yourself — the one-liner does exactly that.
 </details>
@@ -214,7 +221,9 @@ curl -fsSL https://mersennet.com/downloads/install.sh | sudo bash -s -- --reset-
 
 **How long does the first sync take?** A few minutes: the installer restores the latest published state snapshot (taken every six hours, about 16 GB compressed, SHA-256 verified) and the node then replays only the blocks since. Replaying the whole chain from genesis (`--from-genesis`) currently stops at block 2,670,941: some blocks from October, made by a validator still on an old build, no longer re-derive their hash from the copy other nodes store. A fix is planned; until then use the snapshot (the default). The node verifies every block it imports on top of the snapshot.
 
-**Why is `data/state/blobs` so large, and can I shrink it?** It is the chain's block history: every block since genesis (over 4 million), which the database keeps as separate files once a record is large. A full node keeps all of it, so `data/state` is about 120 GB in November 2026 (about 100 GB of it in `blobs`) and grows by about 1.7 GB a day. Do not delete files there: the database would be corrupt and the node would need `--reset-state`. Reinstalling with `--reset-state` does not shrink it either, because the snapshot carries the same history. A pruned mode for validators that keeps only recent blocks (about 15 GB in total) is in the works; until it ships, give the node 300 GB or move it to a larger volume with `--data-dir`.
+**Why is `data/state/blobs` so large, and can I shrink it?** It is the chain's block history: every block since genesis (over 4 million), which the database keeps as separate files once a record is large. A full node keeps all of it, so `data/state` is about 130 GB in November 2026 (most of it in `blobs`) and grows by about 1.7 GB a day. Do not delete files there: the database would be corrupt and the node would need `--reset-state`. A validator does not need the history: re-run the installer with `--prune` (Step 2) and the node deletes all but the most recent 100,000 blocks itself, in the background, and stays at a few GB.
+
+**The log says `FORK beyond recovery` and the service stopped with exit code 6, or `journalctl -u mersennet-heal` shows a heal.** The network finalized a different block than the one your node holds, too far back for it to roll back on its own (shallower forks it now leaves by itself: it asks its peers for the finality evidence and rolls back, and when two blocks compete at a height nobody finalized, every node follows the same one). Rather than restart into the same state forever, the node exits with code 6 and `mersennet-heal` restores the latest snapshot (SHA-256 verified; your keys and identity are kept) and starts it again. Nothing to do unless the heal fails: then run the installer with `--reset-state`.
 
 **Can I run it without systemd, or on another distro / architecture?** Yes — download the bundle from [mersennet.com/downloads](https://mersennet.com/downloads/), extract it and run `./mersennet --config config.json --mode full --rpc` from a directory of your choice (data lands in `./data`, key in `./keys`). Non-x86-64 or glibc < 2.34 systems need a source build (below).
 
@@ -237,7 +246,7 @@ curl -fsSLO "https://mersennet.com/downloads/$(awk 'NR==1{print $2}' SHA256SUMS)
 sha256sum -c SHA256SUMS --ignore-missing          # must print: ... OK
 tar xzf mersennet-node-linux-x86_64-*.tar.gz && cd mersennet-node-linux-x86_64-*/
 sha256sum -c SHA256SUMS                            # verifies every file in the bundle
-sudo bash install.sh [--data-dir DIR] [--rpc-public] [--from-genesis] [--reset-state] [--operator 0xWALLET]
+sudo bash install.sh [--data-dir DIR] [--rpc-public] [--from-genesis] [--reset-state] [--operator 0xWALLET] [--prune | --prune=N | --no-prune]
 ```
 
 The bundle's `install.sh` performs the same snapshot bootstrap as the one-liner. The snapshot manifest is `http://46.225.30.187:8088/latest.json` (served from the public node over plain HTTP because Cloudflare limits proxied downloads to 100 MB; the tarball's SHA-256 is in the manifest and is checked before extraction).
@@ -322,6 +331,7 @@ Relative paths resolve against the node's working directory. The RPC defaults to
 | `fee_elasticity_multiplier` | `u64` | `2` | EIP-1559 elasticity (target = limit / multiplier) |
 | `fee_max_change_denominator` | `u64` | `8` | Max base fee change per block (1/8 = 12.5%) |
 | `storage_backend` | `string` | `"sled"` | **Keep `"sled"` on the public testnet.** The published snapshots are sled-format: a node switched to `"redb"` ignores the restored snapshot and replays the chain from genesis (hours), and on release `f67d812` the redb backend has no interrupted-commit guard, so a hard kill mid-block can leave it wedged (`persisted_height=N`, then `FORK DETECTED` at `N+1` on every restart — fixed in the next release, which also self-heals that state). `"memory"` is for tests. |
+| `prune_keep_blocks` | `u64` | `0` | History pruning, node-local: keep only the most recent N blocks (at least 10,000) and delete older ones in the background; `0` keeps everything (archive). The installer sets it with `--prune` (100,000) and keeps it across upgrades. Below its floor the node answers blocks, transactions and receipts with `null`, refuses `eth_getLogs` ranges with "history pruned", and tells syncing peers it does not hold them so they ask another node. |
 | `resume_root_check` | `string` | `"warn"` | At startup the restored state's root is compared with the head block's: `"warn"` logs `RESTORED STATE ROOT MISMATCH` and continues; `"fatal"` exits (code 5) so the node is never run on state that does not match the chain — the fix is `--reset-state`. The canonical testnet config is authoritative (currently `"warn"`; the flip to `"fatal"` is a scheduled ops step); builds up to `e6eb772` ignore the setting and keep warning |
 
 #### `mempool`: Transaction Pool
