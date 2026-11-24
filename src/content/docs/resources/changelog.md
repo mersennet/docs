@@ -9,6 +9,10 @@ Notable milestones and updates for the Mersennet ecosystem.
 
 ## November 2026
 
+### Precompile Calls from Contracts
+
+- **24 Nov, release `0b3596d`**, required before block 4,567,200 (Mon 30 Nov, ~11:50 UTC; live estimate on the [upgrades page](https://explorer.mersennet.com/upgrades)). A consensus fix for how the order-book and staking precompiles handle calls made from contracts. Validators upgrade with the [install command](/validators/run-a-node/#step-2--install-one-command) (keys, identity and state are kept); a node still on an older build at that block falls out of step and is jailed. Wallets, traders and apps need to do nothing.
+
 ### Smaller Disks, Nodes That Heal Themselves
 
 - **23 Nov, release `e138c31`** (no protocol switch, no deadline; [install command](/validators/run-a-node/#step-2--install-one-command)). **Pruned mode**: with `--prune` a validator keeps the most recent 100,000 blocks; the installer rewrites the chain database down to that, from ~130 GB to about 3 GB in under a minute. The database (sled) leaves dead space behind as it runs, about half of a long-running node's disk; `mersennet-compact` rewrites it with only its live data, `--compact` does it for a node that keeps every block, and `mersennet-check` says when a pruned node is worth compacting again. **Forks heal on their own**: a node on a wrong branch asks its peers for the finality certificate and rolls back; two blocks competing at an unfinalized height resolve to the lower hash on every node; a node too far gone to roll back exits with code 6 and `mersennet-heal` restores the latest snapshot. **Syncing from genesis** (`--from-genesis`) works again past block 2,670,941: blocks of that era are checked against a built-in history checkpoint at block 4,264,001. **`eth_call` / `eth_estimateGas`** report a revert as JSON-RPC error 3 with the reason and the revert data (`mersennet_call` unchanged). Also: a stopping node waits up to 20 s for its head block to be finalized, so a restart no longer leaves it on an orphaned head.
