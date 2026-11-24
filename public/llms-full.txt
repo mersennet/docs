@@ -8556,7 +8556,7 @@ A full node follows the chain and serves RPC; a **validator** additionally signs
 
 | | Minimum | Recommended |
 |---|---|---|
-| OS | Ubuntu 22.04+ or Debian 12+ (x86-64) | Ubuntu 24.04 LTS |
+| OS | Ubuntu 22.04+ or Debian 12+ (x86-64 or ARM64) | Ubuntu 24.04 LTS |
 | CPU / RAM | 2 cores / 4 GB | 4 cores / 8 GB |
 | Disk | 200 GB SSD (a node holds ~130 GB in Nov 2026; a validator with `--prune` about 3 GB once installed, but the install first unpacks the full snapshot, see below) | 300 GB+ SSD for a full history node (chain data grows ~1.7 GB/day, ~50 GB a month) |
 | Network | 10 Mbps, outbound UDP+TCP 30303 allowed; expect ~10 GB/day of traffic (mostly relayed transactions) | Inbound 30303 open too |
@@ -8759,7 +8759,7 @@ curl -fsSL https://mersennet.com/downloads/install.sh | sudo bash -s -- --reset-
 
 **The log says `FORK beyond recovery` and the service stopped with exit code 6, or `journalctl -u mersennet-heal` shows a heal.** The network finalized a different block than the one your node holds, too far back for it to roll back on its own (shallower forks it now leaves by itself: it asks its peers for the finality evidence and rolls back, and when two blocks compete at a height nobody finalized, every node follows the same one). Rather than restart into the same state forever, the node exits with code 6 and `mersennet-heal` restores the latest snapshot (SHA-256 verified; your keys and identity are kept; on a pruned node it then rewrites the database down to its history) and starts it again. Nothing to do unless the heal fails: then run the installer with `--reset-state`.
 
-**Can I run it without systemd, or on another distro / architecture?** Yes — download the bundle from [mersennet.com/downloads](https://mersennet.com/downloads/), extract it and run `./mersennet --config config.json --mode full --rpc` from a directory of your choice (data lands in `./data`, key in `./keys`). Non-x86-64 or glibc < 2.34 systems need a source build (below).
+**Can I run it without systemd, or on another distro / architecture?** Yes — download the bundle from [mersennet.com/downloads](https://mersennet.com/downloads/), extract it and run `./mersennet --config config.json --mode full --rpc` from a directory of your choice (data lands in `./data`, key in `./keys`). Systems other than x86-64 and ARM64 (aarch64), or with glibc < 2.34, need a source build (below).
 
 ---
 
@@ -8776,9 +8776,10 @@ printf -- '-----BEGIN PUBLIC KEY-----\n%s\n-----END PUBLIC KEY-----\n' \
   'MCowBQYDK2VwAyEAGhjx5fsplcdLhVLXX9JEQLeajDFpUEmiylFXO0VoLBc=' > mersennet-release.pub
 openssl pkeyutl -verify -pubin -inkey mersennet-release.pub -rawin -in SHA256SUMS -sigfile SHA256SUMS.sig
 #   -> Signature Verified Successfully
-curl -fsSLO "https://mersennet.com/downloads/$(awk 'NR==1{print $2}' SHA256SUMS)"
+ARCH=$(uname -m | sed 's/^amd64$/x86_64/; s/^arm64$/aarch64/')   # x86_64 or aarch64
+curl -fsSLO "https://mersennet.com/downloads/$(awk -v a="$ARCH" '$2 ~ ("^mersennet-node-linux-" a "-[0-9a-f]+[.]tar[.]gz$") {print $2; exit}' SHA256SUMS)"
 sha256sum -c SHA256SUMS --ignore-missing          # must print: ... OK
-tar xzf mersennet-node-linux-x86_64-*.tar.gz && cd mersennet-node-linux-x86_64-*/
+tar xzf mersennet-node-linux-$ARCH-*.tar.gz && cd mersennet-node-linux-$ARCH-*/
 sha256sum -c SHA256SUMS                            # verifies every file in the bundle
 sudo bash install.sh [--data-dir DIR] [--rpc-public] [--from-genesis] [--reset-state] [--operator 0xWALLET] [--prune | --prune=N | --no-prune] [--compact]
 ```
@@ -8790,10 +8791,10 @@ The bundle README lists the binary's sha256; it matches `sha256sum /opt/mersenne
 ### Build from source
 
 :::note[Source code]
-The node source (`mersennet/mersennet`) is being published under the Business Source License 1.1: read it, audit it, build it and run it as a Mersennet node freely; other networks need a commercial license (licensing@mersennet.com). Until the repository is public, use the signed release bundle below — it is the same build the fleet runs.
+The node source ([`mersennet/mersennet`](https://github.com/mersennet/mersennet)) is published under the Business Source License 1.1: read it, audit it, build it and run it as a Mersennet node freely; other networks need a commercial license (licensing@mersennet.com). Each release is tagged `build-<sha>`; a release that carries a protocol switch is tagged once its switch has passed, so until then use its signed bundle (x86-64 and ARM64), the same build the fleet runs.
 :::
 
-Available once the repository is published (until then Linux x86-64 with glibc ≥ 2.34 — the release bundle — is the only supported path). Requires Rust 1.88+ (edition 2024), `build-essential`, `pkg-config`, `libssl-dev`, Git:
+Build a release tag from the public repository (`build-<sha>`; a release with a protocol switch is tagged once the switch has passed). The signed bundles (Linux x86-64 and ARM64, glibc ≥ 2.34) need no build. Requires Rust 1.88+ (edition 2024), `build-essential`, `pkg-config`, `libssl-dev`, Git:
 
 ```bash
 sudo apt update && sudo apt install -y build-essential pkg-config libssl-dev git
